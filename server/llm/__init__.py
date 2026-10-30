@@ -50,8 +50,9 @@ def ahora() -> str:
 class LLM:
     nombre = "?"
 
-    def __init__(self, modelo: str | None = None):
+    def __init__(self, modelo: str | None = None, mcp: str | None = None):
         self.modelo = modelo
+        self.mcp = mcp  # ruta a mcp.json; solo lo usan los plugins que admiten MCP
 
     async def nueva(self):
         raise NotImplementedError

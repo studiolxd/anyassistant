@@ -110,6 +110,7 @@ def main():
     parser.add_argument("--stt-modelo", default=None)
     parser.add_argument("--llm", default="claude", help=f"plugin: {', '.join(llm.disponibles())}")
     parser.add_argument("--llm-modelo", default=None)
+    parser.add_argument("--mcp", default=None, help="mcp.json con los MCP permitidos (por defecto, el del proyecto)")
     parser.add_argument("--tts", default="avspeech", help=f"voz: {', '.join(tts.disponibles())} o ninguno")
     parser.add_argument("--voz", default=None, help="voz del plugin (macos: Mónica, Eddy…)")
     parser.add_argument("--velocidad", type=int, default=None, help="palabras por minuto")
@@ -144,7 +145,7 @@ def main():
             logging.info("palabra de activación: %s", despertar.crear(args.despertar, **opciones).frase)
             despertador = lambda: despertar.crear(args.despertar, **opciones)
         if args.modo == "asistente":
-            modelo = llm.crear(args.llm, modelo=args.llm_modelo)
+            modelo = llm.crear(args.llm, modelo=args.llm_modelo, mcp=args.mcp)
             logging.info("LLM: %s (%s)", modelo.nombre, modelo.modelo)
             voz = None
             if args.tts != "ninguno":

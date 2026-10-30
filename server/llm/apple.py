@@ -22,8 +22,8 @@ INSTRUCCIONES_APPLE = (
 
 @registrar("apple")
 class Apple(LLM):
-    def __init__(self, modelo=None):
-        super().__init__(modelo or "SystemLanguageModel.default")
+    def __init__(self, modelo=None, mcp=None):
+        super().__init__(modelo or "SystemLanguageModel.default", mcp)
         self._binario = compilar(Path(__file__).with_name("apple_puente.swift"), "fm-puente")
         self._proceso = None
         self._turno = asyncio.Lock()  # el puente atiende una orden cada vez

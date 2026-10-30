@@ -133,6 +133,34 @@ uv run server/main.py --llm-modelo haiku   # Claude Haiku
 uv run server/main.py --llm apple          # modelo de Apple, en local
 ```
 
+### MCP: solo los que tú permitas
+
+Con el plugin `claude`, Jarvis puede usar tus servidores MCP, pero **solo los que
+autorices en `mcp.json`** (en la raíz del proyecto, fuera de git; `--mcp ruta` para
+otro). Sin ese archivo no usa ninguno.
+
+```json
+{
+  "permitidos": {
+    "claude.ai Google Drive": ["search_files", "list_recent_files", "read_file_content"],
+    "plugin:runpod:runpod": "todo"
+  },
+  "mcpServers": { "mi-servidor": { "command": "…", "args": [] } }
+}
+```
+
+- `permitidos`: servidores ya autenticados en Claude Code (conectores de claude.ai y
+  plugins), con el nombre de `claude mcp list`; `"todo"` o la lista de herramientas
+  (las demás de ese servidor las ve, pero se le deniegan).
+- `mcpServers`: servidores propios, en el formato de Claude Code; se permiten enteros.
+
+Claude Code carga siempre todos los conectores de la cuenta: con todos eran 535
+herramientas, ~770.000 tokens y 7 s por respuesta. Los no permitidos se prohíben
+(`--disallowedTools`) y desaparecen; queda el arranque (~3 s, que se hace al oír
+«Hey Jarvis», mientras empiezas a hablar) y `claude mcp list` al arrancar el
+servidor (~8 s). Al usar una herramienta dice «Un momento, lo miro». Hay un
+ejemplo de solo lectura de Drive en `mcp.ejemplo.json`.
+
 Otros LLM son plugins en `server/llm/`:
 
 ```python
