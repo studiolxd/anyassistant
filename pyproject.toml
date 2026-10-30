@@ -10,6 +10,7 @@ dependencies = [
     "numpy>=1.26",
     "onnxruntime>=1.31.1",
     "openwakeword>=0.4.0",
+    "parakeet-mlx>=0.5.3",
     "pillow>=10",
     "scipy>=1.18.1",
     "silero-vad>=6.2.3",

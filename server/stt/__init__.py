@@ -7,11 +7,16 @@ Un plugin es un módulo de este paquete con una clase registrada así:
         def transcribir(self, audio): ...
 """
 
+import threading
+
 import numpy as np
 
 from plugins import Registro
 
 TASA = 16000  # todos los plugins reciben float32 mono a 16 kHz
+
+# Los plugins de MLX (y el despertador de Whisper) comparten la GPU: uno cada vez.
+GPU = threading.Lock()
 
 _registro = Registro(__name__, __path__, "STT")
 registrar = _registro.registrar

@@ -1,8 +1,9 @@
 """Servidor: sirve la web del móvil y hace la señalización WebRTC.
 
-    uv run server/main.py                    # asistente: mlx-whisper + Claude (CLI)
+    uv run server/main.py                    # asistente: Parakeet + Claude (CLI) + AVSpeech
     uv run server/main.py --llm apple        # con el modelo de Apple, en local
     uv run server/main.py --voz Eddy         # otra voz de macOS; --tts ninguno, sin voz
+    uv run server/main.py --silencio 0.45    # cierra antes las frases (más rápido)
     uv run server/main.py --modo transcribir # solo transcribe
     uv run server/main.py --llm otro-plugin  # cualquier módulo de server/llm/
     uv run server/main.py --modo loro        # repite lo que oye (prueba de audio)
@@ -105,11 +106,11 @@ def main():
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--modo", choices=["loro", "transcribir", "asistente"], default="asistente")
-    parser.add_argument("--stt", default="mlx-whisper", help=f"plugin: {', '.join(stt.disponibles())}")
+    parser.add_argument("--stt", default="parakeet", help=f"plugin: {', '.join(stt.disponibles())}")
     parser.add_argument("--stt-modelo", default=None)
     parser.add_argument("--llm", default="claude", help=f"plugin: {', '.join(llm.disponibles())}")
     parser.add_argument("--llm-modelo", default=None)
-    parser.add_argument("--tts", default="macos", help=f"voz: {', '.join(tts.disponibles())} o ninguno")
+    parser.add_argument("--tts", default="avspeech", help=f"voz: {', '.join(tts.disponibles())} o ninguno")
     parser.add_argument("--voz", default=None, help="voz del plugin (macos: Mónica, Eddy…)")
     parser.add_argument("--velocidad", type=int, default=None, help="palabras por minuto")
     parser.add_argument("--idioma", default="es")
@@ -121,12 +122,15 @@ def main():
     parser.add_argument("--palabra", default=None, help="modelo de la palabra (hey_jarvis, alexa…)")
     parser.add_argument("--umbral", type=float, default=None, help="cada plugin tiene el suyo por defecto")
     parser.add_argument("--grabar", default=None, help="guarda en un WAV todo lo que llega (depurar)")
+    parser.add_argument("--silencio", type=float, default=0.6, help="segundos de silencio que cierran una frase")
+    parser.add_argument("--inactividad", type=float, default=120, help="segundos sin hablar para dormirse")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     logging.getLogger("aioice").setLevel(logging.WARNING)
 
     global fabrica_cerebro
+    oido = {"grabar": args.grabar, "silencio": args.silencio, "inactividad": args.inactividad}
     if args.modo in ("transcribir", "asistente"):
         motor = stt.crear(args.stt, idioma=args.idioma, modelo=args.stt_modelo)
         logging.info("cargando STT %s (%s)…", motor.nombre, motor.modelo)
@@ -146,10 +150,15 @@ def main():
                 voz = tts.crear(args.tts, voz=args.voz, velocidad=args.velocidad)
                 logging.info("voz: %s (%s)", voz.nombre, voz.voz)
                 voz.calentar()
-            fabrica_cerebro = asistente.crear(motor, modelo, voz, despertador, args.grabar)
+
+                async def cerrar_voz():
+                    voz.cerrar()
+
+                cerrar_al_salir.append(cerrar_voz)
+            fabrica_cerebro = asistente.crear(motor, modelo, voz, despertador, oido)
             cerrar_al_salir.append(modelo.cerrar)
         else:
-            fabrica_cerebro = transcriptor.crear(motor, despertador, args.grabar)
+            fabrica_cerebro = transcriptor.crear(motor, despertador, oido)
     else:
         fabrica_cerebro = Loro
 

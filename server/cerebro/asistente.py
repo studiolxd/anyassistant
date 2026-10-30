@@ -21,12 +21,12 @@ GUARDA = 0.6  # segundos sordo tras hablar: latencia hasta el altavoz + eco de l
 FIN_DE_FRASE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
 
 
-def crear(stt, llm, tts=None, despertador=None, grabar=None):
+def crear(stt, llm, tts=None, despertador=None, oido=None):
     """Devuelve la fábrica cerebro(altavoz, enviar) que espera Sesion."""
 
     def cerebro(altavoz, enviar):
         return Asistente(
-            stt, despertador() if despertador else None, llm, tts, altavoz, enviar, grabar
+            stt, despertador() if despertador else None, llm, tts, altavoz, enviar, oido
         )
 
     return cerebro
@@ -39,8 +39,8 @@ def partir(texto: str) -> tuple[list[str], str]:
 
 
 class Asistente(Transcriptor):
-    def __init__(self, stt, despertador, llm, tts, altavoz, enviar, grabar=None):
-        super().__init__(stt, despertador, altavoz, enviar, grabar, sordo=self._sordo)
+    def __init__(self, stt, despertador, llm, tts, altavoz, enviar, oido=None):
+        super().__init__(stt, despertador, altavoz, enviar, oido, sordo=self._sordo)
         self.llm = llm
         self.tts = tts
         self.turno = asyncio.Lock()  # una respuesta cada vez, en orden

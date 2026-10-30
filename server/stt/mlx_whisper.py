@@ -1,13 +1,11 @@
 """Whisper en la GPU de Apple Silicon con MLX."""
 
 import sys
-import threading
 
 import numpy as np
 
-from stt import Transcriptor, registrar
+from stt import GPU, Transcriptor, registrar
 
-_cerrojo = threading.Lock()
 _modelos = {}
 
 
@@ -16,7 +14,7 @@ def transcribir_mlx(audio: np.ndarray, modelo: str, idioma: str, pista: str | No
 
     mlx_whisper solo guarda un modelo y recarga si se le pide otro; aquí se
     usan dos a la vez (el de STT y el pequeño de la palabra de activación).
-    El cerrojo evita que dos hilos usen la GPU a la vez.
+    El cerrojo GPU evita que dos hilos la usen a la vez.
     """
     import mlx_whisper
 
@@ -32,7 +30,7 @@ def transcribir_mlx(audio: np.ndarray, modelo: str, idioma: str, pista: str | No
         holder.get_model = classmethod(get_model)
         holder._varios = True
 
-    with _cerrojo:
+    with GPU:
         resultado = mlx_whisper.transcribe(
             audio,
             path_or_hf_repo=modelo,

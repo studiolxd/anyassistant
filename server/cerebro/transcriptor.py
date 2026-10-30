@@ -4,21 +4,22 @@ from audio import pitido
 from cerebro.oido import Oido
 
 
-def crear(stt, despertador=None, grabar=None):
+def crear(stt, despertador=None, oido=None):
     """Devuelve la fábrica cerebro(altavoz, enviar) que espera Sesion.
 
     despertador es una función que crea un Despertador nuevo (uno por sesión,
     porque guarda estado) o None para escuchar sin palabra de activación.
+    oido son opciones para Oido: grabar, silencio, inactividad.
     """
 
     def cerebro(altavoz, enviar):
-        return Transcriptor(stt, despertador() if despertador else None, altavoz, enviar, grabar)
+        return Transcriptor(stt, despertador() if despertador else None, altavoz, enviar, oido)
 
     return cerebro
 
 
 class Transcriptor:
-    def __init__(self, stt, despertador, altavoz, enviar, grabar=None, sordo=None):
+    def __init__(self, stt, despertador, altavoz, enviar, oido=None, sordo=None):
         self.enviar = enviar
         self.altavoz = altavoz
         self.despertador = despertador
@@ -29,8 +30,8 @@ class Transcriptor:
             despertador=despertador,
             al_despertar=self._despierto,
             al_dormir=self._dormir,
-            grabar=grabar,
             sordo=sordo,
+            **(oido or {}),
         )
 
     def _oido(self, texto: str, tiempos: dict):

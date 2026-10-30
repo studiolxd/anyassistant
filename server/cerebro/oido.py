@@ -4,7 +4,7 @@ Recibe PCM de 48 kHz en trozos de 20 ms y lo baja a 16 kHz.
 
 - Con despertador: dormido, solo escucha la palabra. Al oírla entra en modo
   conversación: transcribe frase a frase hasta oír «apágate» o pasar
-  INACTIVIDAD segundos sin voz, y vuelve a dormirse.
+  `inactividad` segundos sin voz, y vuelve a dormirse.
 - Sin despertador: siempre despierto, transcribe todo lo que sea voz.
 
 Las frases se delimitan con el VAD en ventanas de 512 muestras (32 ms) y se
@@ -16,6 +16,7 @@ import logging
 import time
 import wave
 from concurrent.futures import ThreadPoolExecutor
+from difflib import SequenceMatcher
 
 import numpy as np
 from scipy.signal import resample_poly
@@ -28,12 +29,13 @@ log = logging.getLogger("oido")
 VENTANA = 512  # muestras a 16 kHz que pide Silero
 UMBRAL_ON = 0.5  # probabilidad de voz para empezar
 UMBRAL_OFF = 0.35  # por debajo de esto cuenta como silencio
-SILENCIO = 0.6  # segundos de silencio que cierran la frase
+SILENCIO = 0.6  # segundos de silencio que cierran la frase (--silencio)
 MINIMO = 0.2  # segundos de voz mínimos para transcribir (un "hola" ronda 0,3)
 MAXIMO = 15  # segundos máximos de una frase
 PREVIO = 0.3  # audio que se guarda antes de detectar voz (no comerse el inicio)
-INACTIVIDAD = 120  # segundos sin voz tras los que se vuelve a dormir
+INACTIVIDAD = 120  # segundos sin voz tras los que se vuelve a dormir (--inactividad)
 APAGAR = ("apagate", "duermete")  # «Apágate», «Jarvis, duérmete»…
+PARECIDO_APAGAR = 0.75  # Parakeet escribe «Apparaté», «Aparate»…
 
 # Lo que Whisper suele inventarse con ruido o silencio en español.
 FANTASMAS = (
@@ -42,15 +44,20 @@ FANTASMAS = (
     "gracias por ver",
     "suscríbete",
     "¡gracias!",
+    "mm-hmm",  # Parakeet, con ruidos cortos
 )
 
 _hilo = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stt")
 
 
 def es_apagado(texto: str) -> bool:
-    """Una orden corta con «apágate» (no «¿cómo se apaga el horno?»)."""
+    """Una orden corta con «apágate» o parecido (no «¿cómo se apaga el horno?»)."""
     palabras = normalizar(texto)
-    return len(palabras) <= 4 and any(p in APAGAR for p in palabras)
+    return len(palabras) <= 4 and any(
+        SequenceMatcher(None, p, orden).ratio() >= PARECIDO_APAGAR
+        for p in palabras
+        for orden in APAGAR
+    )
 
 
 def cargar_vad():
@@ -66,7 +73,7 @@ def cargar_vad():
 class Oido:
     def __init__(
         self, stt, al_estado, al_oir, despertador=None, al_despertar=None, al_dormir=None,
-        grabar=None, sordo=None,
+        sordo=None, grabar=None, silencio=SILENCIO, inactividad=INACTIVIDAD,
     ):
         import torch
 
@@ -85,7 +92,9 @@ class Oido:
         self.silencio = 0.0
         self.voz = 0.0  # segundos con voz dentro de la frase
         self.despierto = despertador is None
-        self.ultima_actividad = 0.0  # para dormirse tras INACTIVIDAD
+        self.ultima_actividad = 0.0  # para dormirse tras `inactividad`
+        self.fin_de_frase = silencio  # segundos de silencio que cierran la frase
+        self.inactividad = inactividad
         # Mientras el altavoz habla no se escucha, o se oiría a sí mismo.
         self.sordo = sordo or (lambda: False)
         self.grabacion = None  # WAV con todo lo que llega, para depurar
@@ -150,8 +159,8 @@ class Oido:
             return
 
         if not self.hablando:
-            if self.despertador and time.time() - self.ultima_actividad > INACTIVIDAD:
-                self._dormir(f"{INACTIVIDAD} s sin hablar")
+            if self.despertador and time.time() - self.ultima_actividad > self.inactividad:
+                self._dormir(f"{self.inactividad} s sin hablar")
                 return
             self.previo.append(ventana)
             self.previo = self.previo[-int(PREVIO * TASA / VENTANA):]
@@ -170,7 +179,7 @@ class Oido:
             self.silencio = 0.0
             self.voz += VENTANA / TASA
         duracion = len(self.frase) * VENTANA / TASA
-        if self.silencio >= SILENCIO or duracion >= MAXIMO:
+        if self.silencio >= self.fin_de_frase or duracion >= MAXIMO:
             audio = np.concatenate(self.frase)
             voz = self.voz
             self._reiniciar()

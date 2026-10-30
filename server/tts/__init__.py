@@ -33,3 +33,6 @@ class Voz:
 
     def sintetizar(self, texto: str) -> np.ndarray:
         raise NotImplementedError
+
+    def cerrar(self):
+        """Al parar el servidor: libera procesos."""

@@ -16,12 +16,12 @@ Transporte WebRTC (Opus + cancelación de eco de Chrome) por Wi-Fi.
 ## Arrancar
 
 ```
-uv run server/main.py                    # Fase 3: asistente (Whisper + Claude)
+uv run server/main.py                    # Fase 3: asistente (Parakeet + Claude + AVSpeech)
 uv run server/main.py --modo transcribir # Fase 2: solo transcribe
 uv run server/main.py --modo loro        # Fase 1: repite lo que oye (prueba de micro y altavoz)
 ```
 
-La primera vez descarga `whisper-large-v3-turbo` (~1,6 GB).
+La primera vez descarga los modelos (Parakeet ~1,2 GB, Whisper turbo ~1,6 GB, Whisper base).
 
 - Móvil: `http://192.168.1.137:8080` → **Empezar** → permitir micro y cámara.
 - Mac: `http://localhost:8080/monitor` para ver la cámara.
@@ -38,6 +38,25 @@ probar micro, altavoz y red (RTT, jitter y perdidos salen abajo en la pantalla).
 
 Silero VAD separa la voz del ruido; cuando terminas una frase (0,6 s de silencio)
 se transcribe y sale como subtítulo en el móvil. Los tiempos van al log del Mac.
+
+### Motores de transcripción
+
+Comparados con 32 frases reales dichas a la tablet (mediana por frase, en un M4):
+
+| `--stt` / `--stt-modelo` | Mediana | Notas |
+|---|---|---|
+| **`parakeet`** (por defecto) | 114 ms | Parakeet TDT v3; acierta tanto o más que turbo |
+| `mlx-whisper` (turbo) | 938 ms | Rellena el audio hasta 30 s: lento con frases cortas |
+| `mlx-whisper --stt-modelo mlx-community/whisper-small-mlx` | 230 ms | Más errores |
+| `mlx-whisper --stt-modelo mlx-community/whisper-base-mlx` | 76 ms | Muchos errores |
+
+Parakeet detecta el idioma solo y a veces se va al inglés («¿Qué hora es?» →
+«Koda is a very good idea»); si el resultado parece inglés, esa frase se repite
+con Whisper turbo en español. «Apágate» se reconoce por parecido («Apparaté»).
+
+`--silencio` (0,6 s por defecto) es el silencio que cierra una frase: más bajo
+responde antes pero puede cortarte si haces pausas; `--inactividad` (120 s), lo
+que tarda en dormirse si no le hablas.
 
 ### Plugins de STT
 
@@ -136,12 +155,20 @@ Cada frase de la respuesta se sintetiza en cuanto se completa y suena mientras
 llega la siguiente. Mientras habla no escucha (y 0,6 s más, por el eco); tocar la
 pantalla lo calla. El volumen se normaliza al máximo.
 
-Por defecto, las voces de macOS con `say` (Mónica; `say -v '?' | grep es_` para ver
-otras). Otros motores son plugins en `server/tts/` con `sintetizar(texto)` → int16
-mono a 48 kHz.
+Dos plugins con las voces de macOS (Mónica por defecto; `say -v '?' | grep es_`
+para ver otras):
+
+- **`avspeech`** (por defecto): AVSpeechSynthesizer en un puente Swift que mantiene
+  la voz cargada, ~50 ms por frase. Si descargas la versión mejorada de una voz en
+  Ajustes → Accesibilidad → Contenido leído, la usa.
+- `macos`: `say`, ~600 ms por frase (arranca cada vez).
+
+Otros motores son plugins en `server/tts/` con `sintetizar(texto)` → int16 mono a
+48 kHz.
 
 ```
 uv run server/main.py --voz Eddy --velocidad 200   # otra voz, más rápida
+uv run server/main.py --tts macos                  # con `say`
 uv run server/main.py --tts ninguno                # solo texto
 ```
 
@@ -155,7 +182,8 @@ uv run server/main.py --tts ninguno                # solo texto
 - `server/despertar/` — plugins de palabra de activación.
 - `server/llm/` — plugins de LLM.
 - `server/tts/` — plugins de voz.
-- `server/plugins.py` — registro común de plugins; `server/texto.py`, utilidades de texto.
+- `server/plugins.py` — registro común de plugins; `server/texto.py`, utilidades de texto;
+  `server/swift.py`, compila los puentes en Swift de los plugins.
 - `web/` — la página del móvil (JS sin bundler, Chrome ≤ 119) y el monitor.
 
 Próximas fases: ojos (captura bajo demanda), cara, y después app nativa con libwebrtc contra el mismo servidor.
