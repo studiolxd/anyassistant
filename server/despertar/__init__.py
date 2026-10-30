@@ -30,6 +30,7 @@ disponibles = _registro.disponibles
 class Despertador:
     nombre = "?"
     frase = "?"  # cómo se dice, para mostrarlo en la pantalla
+    continuo = False  # True si necesita oír también mientras está despierto
 
     def __init__(self, palabra: str | None = None, umbral: float = 0.5):
         self.palabra = palabra

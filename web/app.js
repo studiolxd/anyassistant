@@ -153,7 +153,7 @@ function ping() {
 
 var TEXTOS = {
   escuchando: 'Te escucho',
-  despierto: 'Dime',
+  despierto: 'Te escucho',
   grabando: 'Grabando…',
   repitiendo: 'Repitiendo',
   oyendo: 'Oyendo…',

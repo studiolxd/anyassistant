@@ -67,10 +67,10 @@ class Altavoz(MediaStreamTrack):
         return frame
 
 
-def pitido() -> np.ndarray:
-    """Dos notas cortas ascendentes: «te escucho»."""
+def pitido(bajando: bool = False) -> np.ndarray:
+    """Dos notas cortas: subiendo, «te escucho»; bajando, «me duermo»."""
     notas = []
-    for frecuencia in (880, 1320):
+    for frecuencia in (1320, 880) if bajando else (880, 1320):
         t = np.arange(int(0.09 * TASA)) / TASA
         envolvente = np.minimum(1, np.minimum(t, t[::-1]) / 0.01)  # sin chasquidos
         notas.append(np.sin(2 * np.pi * frecuencia * t) * envolvente * 0.5 * 32767)

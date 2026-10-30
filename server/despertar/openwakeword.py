@@ -18,6 +18,10 @@ TROZO = 1280  # 80 ms a 16 kHz, lo que espera el modelo
 
 @registrar("openwakeword")
 class OpenWakeWord(Despertador):
+    # Su historial de audio tiene que avanzar siempre, o al dormirse volvería
+    # a oír la palabra vieja y se despertaría solo.
+    continuo = True
+
     def __init__(self, palabra=None, umbral=0.5):
         super().__init__(palabra or "hey_jarvis", umbral)
         import openwakeword

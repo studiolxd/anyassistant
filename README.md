@@ -55,15 +55,22 @@ class MiMotor(Transcriptor):
 y se usa con `--stt mi-motor [--stt-modelo ...]`. Las dependencias pesadas,
 dentro de la clase para no cargarlas si no se usa.
 
-## Palabra de activación
+## Palabra de activación y modo conversación
 
-Por defecto duerme hasta oír **«Hey Jarvis»** (openWakeWord, en la CPU del Mac):
-pita, espera tu frase hasta 5 s, la transcribe y vuelve a dormir.
+Duerme hasta oír **«Hey Jarvis»**; entonces pita y entra en **modo conversación**:
+transcribe frase a frase sin repetir la palabra, hasta que le dices **«apágate»**
+(o «duérmete») o pasan **2 minutos** sin hablarle; al dormirse pita hacia abajo.
+«Hey Jarvis, ¿cómo van las cuentas?» del tirón también vale: despierta y transcribe
+la pregunta.
+
+Por defecto la palabra la busca un Whisper pequeño (`whisper-base`, ~140 ms),
+comparando por cómo suena («Yarvis», «Harvis»…); vale para cualquier palabra.
+openWakeWord sigue como plugin, pero con acento español apenas reconoce «Hey Jarvis».
 
 ```
-uv run server/main.py --palabra alexa          # otra de serie: alexa, hey_mycroft, hey_rhasspy…
-uv run server/main.py --palabra ~/modelos/x.onnx   # un modelo propio de openWakeWord
-uv run server/main.py --umbral 0.6             # más exigente si se despierta solo
+uv run server/main.py --palabra nexus          # cualquier palabra con el plugin whisper
+uv run server/main.py --umbral 0.9             # más exigente si se despierta solo
+uv run server/main.py --despertar openwakeword --palabra alexa   # alexa, hey_jarvis, hey_mycroft…
 uv run server/main.py --despertar ninguno      # sin palabra: transcribe toda la voz
 ```
 
@@ -76,6 +83,7 @@ from despertar import Despertador, registrar
 @registrar("mi-motor")
 class MiMotor(Despertador):
     frase = "Oye Nexus"              # lo que se muestra en la pantalla
+    continuo = False                 # True si necesita oír también estando despierto
     def escuchar(self, audio):       # float32 mono 16 kHz, trozos de cualquier tamaño
         return detectado             # True en el trozo en que oye la palabra
 ```
@@ -90,7 +98,7 @@ y `--despertar mi-motor [--palabra …]`. `server/plugins.py` es el registro com
 - `server/cerebro/` — `loro.py` (Fase 1), `oido.py` (VAD + STT), `transcriptor.py` (Fase 2).
 - `server/stt/` — plugins de voz a texto.
 - `server/despertar/` — plugins de palabra de activación.
-- `server/plugins.py` — registro común de plugins.
+- `server/plugins.py` — registro común de plugins; `server/texto.py`, utilidades de texto.
 - `web/` — la página del móvil (JS sin bundler, Chrome ≤ 119) y el monitor.
 
 Próximas fases: boca (LLM + TTS en streaming con interrupción),

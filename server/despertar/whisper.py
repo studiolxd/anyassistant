@@ -9,12 +9,12 @@ transcribirla entera.
 
 import logging
 import re
-import unicodedata
 from difflib import SequenceMatcher
 
 import numpy as np
 
 from despertar import TASA, Despertador, registrar
+from texto import normalizar
 
 log = logging.getLogger("despertar")
 
@@ -26,12 +26,6 @@ MAXIMO = 15
 PREVIO = 0.3
 PRIMERAS = 3  # la palabra tiene que estar al principio ("…le dijo a Jarvis…" no vale)
 PARECIDO = 0.85  # «ya veis» da 0,83; las buenas, 1,00
-
-
-def normalizar(texto: str) -> list[str]:
-    sin_tildes = unicodedata.normalize("NFKD", texto.lower())
-    sin_tildes = "".join(c for c in sin_tildes if not unicodedata.combining(c))
-    return re.findall(r"[a-zñ]+", sin_tildes)
 
 
 def fonetica(palabra: str) -> str:

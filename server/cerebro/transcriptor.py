@@ -29,6 +29,7 @@ class Transcriptor:
             ),
             despertador=despertador,
             al_despertar=lambda: altavoz.reproducir(pitido()),
+            al_dormir=lambda: altavoz.reproducir(pitido(bajando=True)),
             grabar=grabar,
         )
 
