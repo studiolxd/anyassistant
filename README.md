@@ -16,6 +16,16 @@ Transporte WebRTC (Opus + cancelación de eco de Chrome) por Wi-Fi.
 ## Arrancar
 
 ```
+bin/jarvis arrancar [opciones]   # en segundo plano; p. ej. bin/jarvis arrancar --llm hermes
+bin/jarvis parar
+bin/jarvis reiniciar             # como «Reiníciate»: mismas opciones
+bin/jarvis estado
+bin/jarvis log                   # registro en vivo (.build/jarvis.log)
+```
+
+O en primer plano, para ver el registro directamente:
+
+```
 uv run server/main.py                    # Fase 3: asistente (Parakeet + Claude + AVSpeech)
 uv run server/main.py --modo transcribir # Fase 2: solo transcribe
 uv run server/main.py --modo loro        # Fase 1: repite lo que oye (prueba de micro y altavoz)

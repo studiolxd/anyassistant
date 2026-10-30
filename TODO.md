@@ -6,7 +6,7 @@
   (que ya puede enviar correos y borrar). Un código que la tablet guarda la primera
   vez y sin el que el servidor no acepta conexiones.
 - [ ] **Servicio de macOS (launchd)**: que el servidor arranque solo con el Mac y se
-  reinicie si falla, sin depender de una sesión de terminal.
+  reinicie si falla. De momento, a mano con `bin/jarvis arrancar|parar|reiniciar|estado|log`.
 - [ ] **Dejar de grabar**: quitar `--grabar` del arranque habitual y borrar las
   grabaciones de depuración.
 
