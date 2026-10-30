@@ -110,7 +110,7 @@ def main():
     parser.add_argument("--stt-modelo", default=None)
     parser.add_argument("--llm", default="claude", help=f"plugin: {', '.join(llm.disponibles())}")
     parser.add_argument("--llm-modelo", default=None)
-    parser.add_argument("--mcp", default=None, help="mcp.json con los MCP permitidos (por defecto, el del proyecto)")
+    parser.add_argument("--mcp", default=None, help=".mcp.json con los servidores MCP (por defecto, el del proyecto)")
     parser.add_argument("--tts", default="avspeech", help=f"voz: {', '.join(tts.disponibles())} o ninguno")
     parser.add_argument("--voz", default=None, help="voz del plugin (macos: Mónica, Eddy…)")
     parser.add_argument("--velocidad", type=int, default=None, help="palabras por minuto")

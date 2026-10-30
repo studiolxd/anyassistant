@@ -2,8 +2,8 @@
 
 Una conversación es un proceso `claude -p` en modo stream-json: recibe los
 mensajes por stdin y devuelve la respuesta a trozos (--include-partial-messages).
-Sin las herramientas de Claude Code ni CLAUDE.md. Los MCP, solo los que permita
-mcp.json (ver llm/mcp.py); sin ese archivo, ninguno y arranca en 0,2 s.
+Sin las herramientas de Claude Code ni CLAUDE.md. Los MCP, solo los del .mcp.json
+del proyecto y lo que permita permisos.json (ver llm/mcp.py); sin ellos, ninguno.
 Requiere `claude` instalado y con sesión iniciada.
 """
 
@@ -32,7 +32,8 @@ ESPERA = "Un momento, lo miro. "
 RAIZ = Path(__file__).resolve().parents[2]
 # Un directorio vacío como cwd: así no carga el CLAUDE.md de ningún proyecto.
 VACIO = RAIZ / ".build" / "claude-vacio"
-MCP_JSON = RAIZ / "mcp.json"
+MCP_JSON = RAIZ / ".mcp.json"
+PERMISOS = RAIZ / "permisos.json"
 
 
 @registrar("claude")
@@ -40,7 +41,7 @@ class Claude(LLM):
     def __init__(self, modelo=None, mcp=None):
         super().__init__(modelo or "sonnet", mcp or str(MCP_JSON))
         VACIO.mkdir(parents=True, exist_ok=True)
-        self._mcp = permisos_mcp.argumentos(Path(self.mcp), VACIO.parent / "mcp-propios.json")
+        self._mcp = permisos_mcp.argumentos(Path(self.mcp), PERMISOS)
         self._instrucciones = INSTRUCCIONES_CLAUDE
         if "--allowedTools" in self._mcp:
             self._instrucciones += INSTRUCCIONES_MCP

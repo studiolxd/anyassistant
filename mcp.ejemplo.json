@@ -1,6 +1,0 @@
-{
-  "permitidos": {
-    "claude.ai Google Drive": ["search_files", "list_recent_files", "get_file_metadata", "read_file_content"]
-  },
-  "mcpServers": {}
-}

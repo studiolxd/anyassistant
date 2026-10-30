@@ -1,33 +1,26 @@
-"""Qué servidores MCP puede usar Jarvis con Claude: solo los que diga mcp.json.
+"""Qué servidores MCP puede usar Jarvis con Claude: los del proyecto, y solo lo permitido.
 
-    {
-      "permitidos": {
-        "claude.ai Google Drive": ["search_files", "read_file_content"],
-        "plugin:runpod:runpod": "todo"
-      },
-      "mcpServers": { "mi-servidor": { "command": "...", "args": [] } }
-    }
+- .mcp.json: los servidores, en el formato de Claude Code (scope de proyecto).
+  Se autentican abriendo `claude` en la carpeta del proyecto y usando /mcp: así
+  quedan solo para el proyecto, sin tocar los conectores de la cuenta.
+- permisos.json: qué herramientas de cada uno puede usar Jarvis.
 
-- "permitidos": servidores ya autenticados en Claude Code (conectores de
-  claude.ai y plugins), con el nombre que muestra `claude mcp list`; "todo" o
-  la lista de herramientas que puede usar (las demás de ese servidor las ve,
-  pero si intenta usarlas se le deniegan).
-- "mcpServers": servidores propios, en el formato de Claude Code; se permiten
-  enteros.
+    {"permitidos": {"gmail": ["search_threads", "get_thread"], "holded": "todo"}}
 
-Claude Code carga siempre todos los conectores de la cuenta, así que los que no
-están permitidos se prohíben (--disallowedTools): así ni ve sus herramientas ni
-gastan tokens (con todos cargados eran 535 herramientas y ~770.000 tokens por
-mensaje).
+Claude se arranca solo con los servidores de .mcp.json (--strict-mcp-config, sin
+los conectores de claude.ai ni los plugins). Los que no aparecen en permisos.json
+se prohíben enteros; de los que sí, solo se permiten las herramientas listadas
+(ve las demás, pero se le deniegan).
 """
 
 import json
 import logging
 import re
-import subprocess
 from pathlib import Path
 
 log = logging.getLogger("llm")
+
+NINGUNO = ["--strict-mcp-config", "--setting-sources", ""]
 
 
 def prefijo(servidor: str) -> str:
@@ -35,53 +28,26 @@ def prefijo(servidor: str) -> str:
     return "mcp__" + re.sub(r"[^A-Za-z0-9_-]", "_", servidor)
 
 
-def servidores_instalados() -> list[str]:
-    """Los nombres de `claude mcp list` (tarda unos segundos: comprueba cada uno)."""
-    salida = subprocess.run(
-        ["claude", "mcp", "list"], capture_output=True, text=True, timeout=120
-    ).stdout
-    nombres = []
-    for linea in salida.splitlines():
-        # «claude.ai Google Drive: https://… - ✔ Connected», «plugin:runpod:runpod: https://…»
-        if ": " in linea and " - " in linea:
-            nombres.append(linea.split(": ", 1)[0].strip())
-    return nombres
+def argumentos(servidores: Path, permisos: Path) -> list[str]:
+    """Los argumentos de `claude` para usar solo lo permitido; sin archivos, ningún MCP."""
+    if not servidores.exists() or not permisos.exists():
+        return NINGUNO
+    nombres = json.loads(servidores.read_text()).get("mcpServers", {})
+    permitidos = json.loads(permisos.read_text()).get("permitidos", {})
 
-
-def argumentos(ruta: Path, salida: Path) -> list[str]:
-    """Los argumentos de `claude` para usar solo lo que permite `ruta`.
-
-    Sin archivo, ningún MCP (ni ajustes de usuario: arranca en 0,2 s). Con él
-    hacen falta los ajustes de usuario, o no carga ni los conectores de
-    claude.ai. `salida` es donde se escribe el --mcp-config con los servidores
-    propios.
-    """
-    if not ruta.exists():
-        return ["--strict-mcp-config", "--setting-sources", ""]
-    config = json.loads(ruta.read_text())
-    permitidos = config.get("permitidos", {})
-    propios = config.get("mcpServers", {})
-
-    instalados = servidores_instalados()
     permitir, prohibir = [], []
-    for servidor in instalados:
-        if servidor in propios:
-            continue
-        if servidor not in permitidos:
+    for servidor in nombres:
+        herramientas = permitidos.get(servidor)
+        if herramientas is None:
             prohibir.append(prefijo(servidor))
-        elif permitidos[servidor] == "todo":
+        elif herramientas == "todo":
             permitir.append(prefijo(servidor))
         else:
-            permitir += [f"{prefijo(servidor)}__{h}" for h in permitidos[servidor]]
-    for servidor in propios:
-        permitir.append(prefijo(servidor))
-    for servidor in permitidos.keys() - set(instalados):
-        log.warning("mcp.json permite «%s», pero no está en `claude mcp list`", servidor)
+            permitir += [f"{prefijo(servidor)}__{h}" for h in herramientas]
+    for servidor in permitidos.keys() - nombres.keys():
+        log.warning("permisos.json permite «%s», que no está en .mcp.json", servidor)
 
-    args = ["--setting-sources", "user"]
-    if propios:
-        salida.write_text(json.dumps({"mcpServers": propios}))
-        args += ["--mcp-config", str(salida)]
+    args = [*NINGUNO, "--mcp-config", str(servidores)]
     if permitir:
         args += ["--allowedTools", *permitir]
     if prohibir:

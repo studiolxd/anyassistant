@@ -133,33 +133,31 @@ uv run server/main.py --llm-modelo haiku   # Claude Haiku
 uv run server/main.py --llm apple          # modelo de Apple, en local
 ```
 
-### MCP: solo los que tú permitas
+### MCP: solo los del proyecto y solo lo que permitas
 
-Con el plugin `claude`, Jarvis puede usar tus servidores MCP, pero **solo los que
-autorices en `mcp.json`** (en la raíz del proyecto, fuera de git; `--mcp ruta` para
-otro). Sin ese archivo no usa ninguno.
+Con el plugin `claude`, Jarvis usa **solo los servidores MCP de la carpeta del
+proyecto**, nunca los conectores de tu cuenta de claude.ai, y de ellos **solo las
+herramientas permitidas**. Los dos archivos están fuera de git:
 
-```json
-{
-  "permitidos": {
-    "claude.ai Google Drive": ["search_files", "list_recent_files", "read_file_content"],
-    "plugin:runpod:runpod": "todo"
-  },
-  "mcpServers": { "mi-servidor": { "command": "…", "args": [] } }
-}
-```
+- **`.mcp.json`**: los servidores, en el formato de Claude Code (scope de proyecto).
+  Ver `.mcp.ejemplo.json`: Gmail y Drive (servidores oficiales de Google) y Holded.
+- **`permisos.json`**: qué herramientas de cada uno. `permisos.ejemplo.json` deja
+  Gmail y Drive en solo lectura; un servidor que no aparezca queda prohibido entero.
 
-- `permitidos`: servidores ya autenticados en Claude Code (conectores de claude.ai y
-  plugins), con el nombre de `claude mcp list`; `"todo"` o la lista de herramientas
-  (las demás de ese servidor las ve, pero se le deniegan).
-- `mcpServers`: servidores propios, en el formato de Claude Code; se permiten enteros.
+Sin esos archivos no usa ningún MCP. Al usar una herramienta dice «Un momento, lo
+miro».
 
-Claude Code carga siempre todos los conectores de la cuenta: con todos eran 535
-herramientas, ~770.000 tokens y 7 s por respuesta. Los no permitidos se prohíben
-(`--disallowedTools`) y desaparecen; queda el arranque (~3 s, que se hace al oír
-«Hey Jarvis», mientras empiezas a hablar) y `claude mcp list` al arrancar el
-servidor (~8 s). Al usar una herramienta dice «Un momento, lo miro». Hay un
-ejemplo de solo lectura de Drive en `mcp.ejemplo.json`.
+**Autenticar (solo para este proyecto):**
+
+1. Gmail y Drive: Google no admite registro dinámico de clientes, así que hace falta
+   un cliente OAuth propio en Google Cloud (tipo *Aplicación de escritorio*) con las
+   APIs de Gmail y Drive activadas. Su `clientId` va en `.mcp.json`; los `scopes` de
+   solo lectura (`gmail.readonly`, `drive.readonly`) hacen que Google tampoco deje
+   escribir. El secreto del cliente se da al autenticar (`MCP_CLIENT_SECRET`), no va
+   en el archivo.
+2. Holded: no necesita nada; su OAuth registra el cliente solo.
+3. En la carpeta del proyecto: `claude`, aprobar los servidores de `.mcp.json` y
+   `/mcp` → cada servidor → *Authenticate*.
 
 Otros LLM son plugins en `server/llm/`:
 

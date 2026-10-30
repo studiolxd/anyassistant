@@ -1,0 +1,6 @@
+{
+  "permitidos": {
+    "gmail": ["search_threads", "get_thread", "get_message", "list_labels", "list_drafts", "get_draft"],
+    "drive": ["search_files", "list_recent_files", "get_file_metadata", "get_file_permissions", "read_file_content", "download_file_content"]
+  }
+}

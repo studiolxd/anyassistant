@@ -3,4 +3,5 @@ __pycache__/
 *.wav
 .DS_Store
 .build/
-mcp.json
+.mcp.json
+permisos.json
