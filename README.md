@@ -16,8 +16,9 @@ Transporte WebRTC (Opus + cancelación de eco de Chrome) por Wi-Fi.
 ## Arrancar
 
 ```
-uv run server/main.py                 # Fase 2: transcribe (Silero VAD + mlx-whisper)
-uv run server/main.py --modo loro     # Fase 1: repite lo que oye (prueba de micro y altavoz)
+uv run server/main.py                    # Fase 3: asistente (Whisper + modelo de Apple)
+uv run server/main.py --modo transcribir # Fase 2: solo transcribe
+uv run server/main.py --modo loro        # Fase 1: repite lo que oye (prueba de micro y altavoz)
 ```
 
 La primera vez descarga `whisper-large-v3-turbo` (~1,6 GB).
@@ -90,16 +91,43 @@ class MiMotor(Despertador):
 
 y `--despertar mi-motor [--palabra …]`. `server/plugins.py` es el registro común.
 
+## Fase 3 · Respuestas (LLM)
+
+Lo que dices va al LLM y la respuesta aparece en pantalla según se genera.
+Cada «Hey Jarvis» empieza una conversación nueva; la recuerda hasta que se duerme.
+
+Por defecto, el **modelo de Apple** que trae macOS (Foundation Models, local, sin
+claves; macOS 26+ con Apple Intelligence). Es una API solo de Swift: el plugin
+compila `server/llm/apple_puente.swift` la primera vez en `.build/` y le habla por
+stdin/stdout. La fecha y la hora se las da como herramienta (`fechaHora`): en el
+prompt las repetía en cada respuesta.
+
+Otros LLM son plugins en `server/llm/`:
+
+```python
+# server/llm/mi_llm.py
+from llm import INSTRUCCIONES, LLM, registrar
+
+@registrar("mi-llm")
+class MiLLM(LLM):
+    async def nueva(self): ...           # conversación nueva
+    async def responder(self, texto):    # trozos de la respuesta según llegan
+        yield "Hola"
+```
+
+y `--llm mi-llm [--llm-modelo …]`.
+
 ## Estructura
 
 - `server/main.py` — HTTP, señalización (`/offer`), monitor (`/video.mjpg`, `/estado`).
 - `server/transporte.py` — sesión WebRTC: pistas, DataChannel `control`, último fotograma.
 - `server/audio.py` — PCM mono 48 kHz; `Altavoz` es la pista de salida.
-- `server/cerebro/` — `loro.py` (Fase 1), `oido.py` (VAD + STT), `transcriptor.py` (Fase 2).
+- `server/cerebro/` — `loro.py` (Fase 1), `oido.py` (VAD + STT), `transcriptor.py` (Fase 2), `asistente.py` (Fase 3).
 - `server/stt/` — plugins de voz a texto.
 - `server/despertar/` — plugins de palabra de activación.
+- `server/llm/` — plugins de LLM.
 - `server/plugins.py` — registro común de plugins; `server/texto.py`, utilidades de texto.
 - `web/` — la página del móvil (JS sin bundler, Chrome ≤ 119) y el monitor.
 
-Próximas fases: boca (LLM + TTS en streaming con interrupción),
+Próximas fases: boca (TTS en streaming con interrupción),
 ojos (captura bajo demanda), cara, y después app nativa con libwebrtc contra el mismo servidor.

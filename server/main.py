@@ -1,6 +1,8 @@
 """Servidor: sirve la web del móvil y hace la señalización WebRTC.
 
-    uv run server/main.py                    # transcribe con mlx-whisper
+    uv run server/main.py                    # asistente: mlx-whisper + modelo de Apple
+    uv run server/main.py --modo transcribir # solo transcribe
+    uv run server/main.py --llm otro-plugin  # cualquier módulo de server/llm/
     uv run server/main.py --modo loro        # repite lo que oye (prueba de audio)
     uv run server/main.py --stt otro-plugin  # cualquier módulo de server/stt/
     uv run server/main.py --despertar ninguno  # sin palabra de activación
@@ -15,8 +17,9 @@ from pathlib import Path
 from aiohttp import web
 
 import despertar
+import llm
 import stt
-from cerebro import transcriptor
+from cerebro import asistente, transcriptor
 from cerebro.loro import Loro
 from transporte import Sesion
 
@@ -95,9 +98,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)
-    parser.add_argument("--modo", choices=["loro", "transcribir"], default="transcribir")
+    parser.add_argument("--modo", choices=["loro", "transcribir", "asistente"], default="asistente")
     parser.add_argument("--stt", default="mlx-whisper", help=f"plugin: {', '.join(stt.disponibles())}")
     parser.add_argument("--stt-modelo", default=None)
+    parser.add_argument("--llm", default="apple", help=f"plugin: {', '.join(llm.disponibles())}")
+    parser.add_argument("--llm-modelo", default=None)
     parser.add_argument("--idioma", default="es")
     parser.add_argument(
         "--despertar",
@@ -113,7 +118,7 @@ def main():
     logging.getLogger("aioice").setLevel(logging.WARNING)
 
     global fabrica_cerebro
-    if args.modo == "transcribir":
+    if args.modo in ("transcribir", "asistente"):
         motor = stt.crear(args.stt, idioma=args.idioma, modelo=args.stt_modelo)
         logging.info("cargando STT %s (%s)…", motor.nombre, motor.modelo)
         motor.calentar()
@@ -124,7 +129,12 @@ def main():
                 opciones["umbral"] = args.umbral
             logging.info("palabra de activación: %s", despertar.crear(args.despertar, **opciones).frase)
             despertador = lambda: despertar.crear(args.despertar, **opciones)
-        fabrica_cerebro = transcriptor.crear(motor, despertador, args.grabar)
+        if args.modo == "asistente":
+            modelo = llm.crear(args.llm, modelo=args.llm_modelo)
+            logging.info("LLM: %s (%s)", modelo.nombre, modelo.modelo)
+            fabrica_cerebro = asistente.crear(motor, modelo, despertador, args.grabar)
+        else:
+            fabrica_cerebro = transcriptor.crear(motor, despertador, args.grabar)
     else:
         fabrica_cerebro = Loro
 

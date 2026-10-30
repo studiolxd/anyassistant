@@ -25,14 +25,18 @@ class Transcriptor:
         self.oido = Oido(
             stt,
             al_estado=self._estado,
-            al_oir=lambda texto, tiempos: enviar(
-                {"tipo": "texto", "texto": texto, "tiempos": tiempos}
-            ),
+            al_oir=self._oido,
             despertador=despertador,
-            al_despertar=lambda: altavoz.reproducir(pitido()),
+            al_despertar=self._despierto,
             al_dormir=self._dormir,
             grabar=grabar,
         )
+
+    def _oido(self, texto: str, tiempos: dict):
+        self.enviar({"tipo": "texto", "texto": texto, "tiempos": tiempos})
+
+    def _despierto(self):
+        self.altavoz.reproducir(pitido())
 
     def _dormir(self, por_orden: bool):
         self.altavoz.reproducir(pitido(bajando=True))

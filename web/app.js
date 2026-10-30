@@ -157,6 +157,7 @@ var TEXTOS = {
   grabando: 'Grabando…',
   repitiendo: 'Repitiendo',
   oyendo: 'Oyendo…',
+  pensando: 'Pensando…',
   transcribiendo: 'Transcribiendo…'
 };
 
@@ -167,16 +168,22 @@ function mensaje(m) {
       : TEXTOS[m.estado] || m.estado;
     ojo.className = 'conectado ' + m.estado;
   } else if (m.tipo === 'texto') {
-    subtitulo(m.texto, m.tiempos, m.autor);
+    subtitulo(m);
   }
 }
 
-function subtitulo(texto, tiempos, autor) {
+// Las respuestas llegan a trozos con el mismo id: se actualiza el mismo párrafo.
+function subtitulo(m) {
   var lista = document.getElementById('subtitulos');
-  var p = document.createElement('p');
-  p.textContent = texto;
-  if (autor === 'asistente') p.className = 'asistente';
-  if (tiempos) p.title = tiempos.stt_ms + ' ms';
+  var p = m.id && document.getElementById('respuesta-' + m.id);
+  if (p) {
+    p.textContent = m.texto;
+    return;
+  }
+  p = document.createElement('p');
+  p.textContent = m.texto;
+  if (m.id) p.id = 'respuesta-' + m.id;
+  if (m.autor === 'asistente') p.className = 'asistente';
   lista.appendChild(p);
   while (lista.children.length > 3) lista.removeChild(lista.firstChild);
 }

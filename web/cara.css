@@ -60,3 +60,4 @@ html, body {
 #ojo.despierto { background: #3d9; }
 #subtitulos p.asistente { color: #4a8a99; font-style: italic; }
 #subtitulos p.asistente:last-child { color: #7cd3e8; }
+#ojo.pensando { background: #b93; }
