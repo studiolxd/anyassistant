@@ -150,8 +150,9 @@ miro».
 **Autenticar (solo para este proyecto):**
 
 1. Gmail y Drive: Google no admite registro dinámico de clientes, así que hace falta
-   un cliente OAuth propio en Google Cloud (tipo *Aplicación de escritorio*) con las
-   APIs de Gmail y Drive activadas. Su `clientId` va en `.mcp.json`; los `scopes` de
+   un cliente OAuth propio en Google Cloud (tipo *Aplicación de escritorio*) con la
+   **Gmail MCP API** y la **Drive MCP API** activadas (los servidores son
+   `gmailmcp.googleapis.com` y `drivemcp.googleapis.com`). Su `clientId` va en `.mcp.json`; los `scopes` de
    solo lectura (`gmail.readonly`, `drive.readonly`) hacen que Google tampoco deje
    escribir. El secreto del cliente se da al autenticar (`MCP_CLIENT_SECRET`), no va
    en el archivo.
