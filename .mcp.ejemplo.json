@@ -1,23 +1,5 @@
 {
   "mcpServers": {
-    "gmail": {
-      "type": "http",
-      "url": "https://gmailmcp.googleapis.com/mcp/v1",
-      "oauth": {
-        "clientId": "TU_CLIENT_ID.apps.googleusercontent.com",
-        "callbackPort": 8765,
-        "scopes": "https://www.googleapis.com/auth/gmail.readonly"
-      }
-    },
-    "drive": {
-      "type": "http",
-      "url": "https://drivemcp.googleapis.com/mcp/v1",
-      "oauth": {
-        "clientId": "TU_CLIENT_ID.apps.googleusercontent.com",
-        "callbackPort": 8765,
-        "scopes": "https://www.googleapis.com/auth/drive.readonly"
-      }
-    },
     "holded": {
       "type": "http",
       "url": "https://mcp.holded.com/mcp",

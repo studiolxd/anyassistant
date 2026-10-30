@@ -140,34 +140,32 @@ proyecto**, nunca los conectores de tu cuenta de claude.ai, y de ellos **solo la
 herramientas permitidas**. Los dos archivos están fuera de git:
 
 - **`.mcp.json`**: los servidores, en el formato de Claude Code (scope de proyecto).
-  Ver `.mcp.ejemplo.json`: Gmail y Drive (servidores oficiales de Google) y Holded.
-- **`permisos.json`**: qué herramientas de cada uno. `permisos.ejemplo.json` deja
-  Gmail y Drive en solo lectura; un servidor que no aparezca queda prohibido entero.
+  Ver `.mcp.ejemplo.json` (Holded).
+- **`permisos.json`**: qué herramientas de cada uno (`"todo"` o una lista); un
+  servidor que no aparezca queda prohibido entero. Con Holded va `"todo"`: el solo
+  lectura se elige al autorizarlo en Holded.
 
 Sin esos archivos no usa ningún MCP. Al usar una herramienta dice «Un momento, lo
 miro».
 
-**Autenticar (solo para este proyecto):**
+**Autenticar (solo para este proyecto):** en la carpeta, `claude` → aprobar los
+servidores de `.mcp.json` → `/mcp` → *Authenticate*.
 
-1. Gmail y Drive: Google no admite registro dinámico de clientes, así que hace falta
-   un cliente OAuth propio en Google Cloud (tipo *Aplicación de escritorio*) con la
-   **Gmail MCP API** y la **Drive MCP API** activadas (los servidores son
-   `gmailmcp.googleapis.com` y `drivemcp.googleapis.com`). Su `clientId` va en `.mcp.json`; los `scopes` de
-   solo lectura (`gmail.readonly`, `drive.readonly`) hacen que Google tampoco deje
-   escribir. El secreto del cliente se da al autenticar (`MCP_CLIENT_SECRET`), no va
-   en el archivo.
-2. Holded: su registro automático de clientes falla en Claude Code (devuelve
-   `"software_id": null` y el SDK lo rechaza), así que se registra uno a mano y su
-   `clientId` va en `.mcp.json` (puerto de vuelta 8766):
+**Holded:** su registro automático de clientes falla en Claude Code (devuelve
+`"software_id": null` y el SDK lo rechaza), así que se registra uno a mano y su
+`clientId` va en `.mcp.json` (puerto de vuelta 8766):
 
-   ```
-   curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: application/json" \
-     -d '{"client_name":"Jarvis","redirect_uris":["http://localhost:8766/callback"],
-          "grant_types":["authorization_code","refresh_token"],"response_types":["code"],
-          "token_endpoint_auth_method":"none"}'
-   ```
-3. En la carpeta del proyecto: `claude`, aprobar los servidores de `.mcp.json` y
-   `/mcp` → cada servidor → *Authenticate*.
+```
+curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: application/json" \
+  -d '{"client_name":"Jarvis","redirect_uris":["http://localhost:8766/callback"],
+       "grant_types":["authorization_code","refresh_token"],"response_types":["code"],
+       "token_endpoint_auth_method":"none"}'
+```
+
+**Gmail y Drive** (servidores MCP oficiales de Google, `gmailmcp`/`drivemcp.googleapis.com`):
+probados y descartados. Exigen un cliente OAuth propio y, sobre todo, que el proyecto
+de Google Cloud esté en el *Google Workspace Developer Preview Program*, al que no
+pueden apuntarse las cuentas personales.
 
 Otros LLM son plugins en `server/llm/`:
 
