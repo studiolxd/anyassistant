@@ -124,6 +124,13 @@ class Claude(LLM):
                             yield ESPERA
                 elif evento.get("type") == "result":
                     if evento.get("is_error"):
-                        log.warning("error de Claude: %s", evento.get("result"))
-                        yield "Perdona, no he podido responder."
+                        error = str(evento.get("result", ""))
+                        log.warning("error de Claude: %s", error)
+                        if "login" in error.lower():
+                            # Sin sesión: este proceso ya no sirve aunque se vuelva a
+                            # iniciar sesión; el siguiente mensaje arranca otro.
+                            self._proceso.kill()
+                            yield "No tengo sesión en Claude: hay que ejecutar barra login en Claude Code."
+                        else:
+                            yield "Perdona, no he podido responder."
                     return
