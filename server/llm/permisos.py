@@ -88,7 +88,8 @@ def cargar(raiz: Path, servidores: Path) -> Permisos:
                 continue
             permitir.append(f"Bash({comando}:*)")
             relativo = str(comando.relative_to(raiz))
-            textos.append(ayuda(comando).replace(relativo, str(comando)))
+            # La ruta relativa («bin/gog») por la completa, salvo si ya lo es.
+            textos.append(re.sub(rf"(?<![\w/]){re.escape(relativo)}", str(comando), ayuda(comando)))
         instrucciones = (
             "\nPuedes ejecutar en la terminal solo estos comandos, con su ruta completa, "
             "de uno en uno y sin tuberías ni redirecciones:\n\n" + "\n\n".join(textos)
