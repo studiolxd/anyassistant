@@ -1,0 +1,60 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  color: #ccc;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+#empezar {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;  /* sin `inset`: Chrome 81 no lo tiene */
+  margin: auto;
+  width: 60%;
+  height: 20%;
+  font-size: 2em;
+  background: #222;
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 12px;
+}
+
+#cara {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#cara[hidden] { display: none; }
+
+#ojo {
+  width: 40vmin;
+  height: 40vmin;
+  border-radius: 50%;
+  background: #333;
+  transition: transform 0.08s, background 0.3s;
+}
+
+#ojo.conectado { background: #2a7; }
+#ojo.grabando { background: #c83; }
+#ojo.repitiendo { background: #37c; }
+#ojo.error { background: #a33; }
+
+#estado { font-size: 1.4em; margin-top: 1.5em; }
+#datos { font-size: 0.9em; color: #777; font-family: monospace; }
+
+#ojo.oyendo { background: #c83; }
+#ojo.transcribiendo { background: #85c; }
+
+#subtitulos {
+  width: 90%;
+  min-height: 7em;
+  text-align: center;
+}
+#subtitulos p { margin: 0.3em 0; font-size: 1.1em; color: #666; }
+#subtitulos p:last-child { font-size: 1.5em; color: #fff; }
+#ojo.dormido { background: #1d4f3c; }
+#ojo.despierto { background: #3d9; }

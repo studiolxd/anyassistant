@@ -1,0 +1,16 @@
+[project]
+name = "nexus-voz"
+version = "0.1.0"
+description = "Nexus 4 como ojos, boca y oídos de un asistente que corre en el Mac"
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.9",
+    "aiortc>=1.9",
+    "mlx-whisper>=0.4.3",
+    "numpy>=1.26",
+    "onnxruntime>=1.31.1",
+    "openwakeword>=0.4.0",
+    "pillow>=10",
+    "scipy>=1.18.1",
+    "silero-vad>=6.2.3",
+]
