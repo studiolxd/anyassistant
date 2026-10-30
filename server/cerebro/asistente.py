@@ -8,9 +8,11 @@ siguiente. Mientras habla no escucha; tocar la pantalla lo calla.
 """
 
 import asyncio
+import json
 import logging
 import re
 import time
+from pathlib import Path
 
 from audio import normalizar
 from cerebro.transcriptor import Transcriptor
@@ -24,6 +26,21 @@ log = logging.getLogger("asistente")
 GUARDA = 1.2
 ECO_MAXIMO = 5  # palabras: un eco es un trozo corto de lo que acaba de decir
 ECO_RECIENTE = 6  # segundos tras hablar en los que se busca su eco (luego ya no)
+
+# Confirmación de acciones que escriben: bin/jarvis-confirmar apunta la pendiente;
+# si el usuario dice «sí», aquí se autoriza esa misma acción durante un minuto.
+CONFIRMAR = Path(__file__).resolve().parents[2] / ".build" / "confirmar"
+SI = {"si", "vale", "adelante", "hazlo", "confirmo", "claro", "correcto", "dale", "ok", "okay",
+      "venga", "perfecto", "exacto", "afirmativo", "confirmado", "por", "favor"}
+NO = {"no", "espera", "cancela", "cancelar", "para", "nada", "tampoco", "mejor"}
+
+
+def es_si(texto: str) -> bool:
+    """«Sí», «Vale, hazlo», «Sí, por favor»… pero no «No, espera» ni frases largas."""
+    oidas = palabras(texto)
+    return 0 < len(oidas) <= 6 and "no" not in oidas and not (set(oidas) & NO) and bool(
+        set(oidas) & (SI - {"por", "favor"})
+    )
 FIN_DE_FRASE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
 
 
@@ -91,8 +108,27 @@ class Asistente(Transcriptor):
         if self._es_eco(texto):
             log.info("eco descartado: «%s»", texto)
             return
+        self._confirmar(texto)
         super()._oido(texto, tiempos)
         asyncio.ensure_future(self._responder(texto))
+
+    def _confirmar(self, texto: str):
+        """Si hay una acción esperando el «sí» del usuario, la autoriza o la cancela."""
+        pendiente_json = CONFIRMAR / "pendiente.json"
+        try:
+            pendiente = json.loads(pendiente_json.read_text())
+        except (OSError, ValueError):
+            return
+        pendiente_json.unlink(missing_ok=True)
+        if time.time() - pendiente.get("cuando", 0) > 120:
+            return
+        if es_si(texto):
+            (CONFIRMAR / "confirmada.json").write_text(
+                json.dumps({"firma": pendiente["firma"], "hasta": time.time() + 60})
+            )
+            log.info("confirmado: %s", pendiente.get("accion"))
+        else:
+            log.info("no confirmado («%s»): %s", texto, pendiente.get("accion"))
 
     async def _responder(self, texto: str):
         async with self.turno:

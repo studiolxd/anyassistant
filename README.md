@@ -143,15 +143,24 @@ y **comandos del proyecto**, nunca los conectores de tu cuenta de claude.ai ni o
 ```json
 {
   "permitidos": { "holded": "todo" },
-  "comandos": ["bin/gog"]
+  "comandos": { "bin/gog": "todo" },
+  "confirmar": true
 }
 ```
 
 - `permitidos`: herramientas de cada servidor de **`.mcp.json`** (`"todo"` o una
   lista); un servidor que no aparezca queda prohibido entero.
-- `comandos`: programas que puede ejecutar. Claude recibe la terminal de Claude Code
-  **limitada a ellos** (lo demás se le deniega: probado con `ls`, `curl` y `touch`)
-  y, en el prompt, lo que muestra `<comando> ayuda`.
+- `comandos`: programas que puede ejecutar, con su política (la lee el propio
+  comando). Claude recibe la terminal de Claude Code **limitada a ellos** (lo demás se
+  le deniega: probado con `ls`, `curl` y `touch`) y, en el prompt, lo que muestra
+  `<comando> ayuda`.
+- `confirmar` (sí por defecto): **las acciones que escriben necesitan tu «sí» por voz**.
+  Un hook de Claude Code (`bin/jarvis-confirmar`) frena cualquier `bin/gog` que no sea
+  de lectura y cualquier herramienta MCP que no sea `get_`/`list_`/`search_`…, y Claude
+  te pregunta. Si dices «sí» (o «vale», «adelante»…; «sí, pero…» no cuenta), el servidor
+  autoriza **esa misma llamada**, una vez y durante un minuto; cualquier otra respuesta
+  la cancela. Claude no puede saltárselo: no puede escribir archivos ni ejecutar otra
+  cosa.
 
 Sin `permisos.json` no usa nada. Al usar una herramienta dice «Un momento, lo miro».
 
@@ -173,15 +182,15 @@ curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: 
 #### Gmail, Calendar, Drive, Docs y Sheets (`bin/gog`)
 
 Con [gog](https://gogcli.sh) (`brew install openclaw/tap/gogcli`). `bin/gog` lo
-lanza siempre:
+lanza siempre con el cliente `jarvis` (su propio depósito de tokens), la configuración
+en `.gog/` dentro del proyecto y `--no-input`, y se niega si le intentan cambiar esas
+opciones. Su política, en `permisos.json`:
 
-- con el cliente `jarvis` (su propio depósito de tokens) y la configuración en `.gog/`,
-  dentro del proyecto;
-- con `--readonly` y una autorización que solo pide **permisos de lectura** a Google:
-  aunque se intentara, Google no dejaría escribir;
-- con `--gmail-no-send`, `--no-input` y solo las órdenes de lectura
-  (`--enable-commands-exact`); enviar, borrar o descargar no existen para Jarvis;
-- negándose si le intentan cambiar cualquiera de esas opciones.
+- `"lectura"`: `--readonly`, `--gmail-no-send` y solo órdenes de lectura; la
+  autorización solo pide permisos de lectura a Google.
+- `"todo"`: puede escribir (siempre con la confirmación por voz), salvo gestionar la
+  sesión de gog, copias, administración y actualizarse.
+- una lista de órdenes (`["gmail.search", "calendar.create"]`).
 
 Para prepararlo:
 
@@ -190,7 +199,12 @@ Para prepararlo:
 2. En *Google Auth Platform*, tu correo como usuario de prueba.
 3. Descargar el JSON del cliente OAuth (*Aplicación de escritorio*) como
    `google-cliente.json` en la raíz del proyecto.
-4. `bin/gog-autorizar tu@gmail.com` (abre el navegador).
+4. `bin/gog-autorizar tu@gmail.com` (abre el navegador): pide los permisos según la
+   política; al cambiarla, hay que volver a autorizar.
+
+En modo *Prueba*, Google hace caducar la autorización cada 7 días; para evitarlo, en
+*Google Auth Platform → Público* publicar la app (para uso propio no hace falta que
+Google la verifique: sale el aviso de «app no verificada» y se continúa).
 
 Los servidores MCP oficiales de Google (`gmailmcp`/`drivemcp.googleapis.com`) se
 probaron y se descartaron: exigen el *Google Workspace Developer Preview Program*,
@@ -248,7 +262,8 @@ uv run server/main.py --tts ninguno                # solo texto
 - `server/stt/` — plugins de voz a texto.
 - `server/despertar/` — plugins de palabra de activación.
 - `server/llm/` — plugins de LLM; `permisos.py`, qué MCP y comandos puede usar Claude.
-- `bin/gog`, `bin/gog-autorizar` — Google (gog) en solo lectura para Jarvis, y su autorización.
+- `bin/gog`, `bin/gog-autorizar` — Google (gog) para Jarvis con su política, y su autorización.
+- `bin/jarvis-confirmar` — hook que pide tu «sí» antes de cualquier acción que escriba.
 - `server/tts/` — plugins de voz.
 - `server/plugins.py` — registro común de plugins; `server/texto.py`, utilidades de texto;
   `server/swift.py`, compila los puentes en Swift de los plugins.

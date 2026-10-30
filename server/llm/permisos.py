@@ -7,7 +7,8 @@
 
     {
       "permitidos": {"holded": "todo", "otro": ["get_x", "list_y"]},
-      "comandos": ["bin/gog"]
+      "comandos": {"bin/gog": "todo"},
+      "confirmar": true
     }
 
   "permitidos": herramientas de cada servidor de .mcp.json ("todo" o una lista;
@@ -15,7 +16,10 @@
   aparece se prohíbe entero.
   "comandos": programas (rutas relativas al proyecto) que puede ejecutar, y nada
   más: se le da la terminal de Claude Code limitada a ellos, y en el prompt la
-  salida de `<comando> ayuda` para que sepa usarlos.
+  salida de `<comando> ayuda` para que sepa usarlos. El valor de cada uno es su
+  política, que lee el propio comando (bin/gog: "lectura", "todo" o una lista).
+  "confirmar" (sí por defecto): las acciones que escriben necesitan el «sí» del
+  usuario, con el hook bin/jarvis-confirmar.
 
 Claude se arranca solo con los servidores de .mcp.json (--strict-mcp-config, sin
 los conectores de claude.ai ni los plugins) y sin sus herramientas propias
@@ -59,7 +63,7 @@ def cargar(raiz: Path, servidores: Path) -> Permisos:
     archivo = raiz / "permisos.json"
     config = json.loads(archivo.read_text()) if archivo.exists() else {}
     permitidos = config.get("permitidos", {})
-    comandos = [raiz / c for c in config.get("comandos", [])]
+    comandos = [raiz / c for c in config.get("comandos", [])]  # lista o {ruta: política}
 
     args = ["--strict-mcp-config", "--setting-sources", ""]
     permitir, prohibir = [], []
@@ -97,6 +101,14 @@ def cargar(raiz: Path, servidores: Path) -> Permisos:
     else:
         args += ["--tools", ""]
 
+    if permitir and config.get("confirmar", True):
+        ajustes = raiz / ".build" / "claude-ajustes.json"
+        ajustes.write_text(json.dumps({"hooks": {"PreToolUse": [{
+            "matcher": "Bash|mcp__.*",
+            "hooks": [{"type": "command", "command": str(raiz / "bin" / "jarvis-confirmar")}],
+        }]}}))
+        args += ["--settings", str(ajustes)]
+        log.info("las acciones que escriben piden confirmación")
     if permitir:
         args += ["--allowedTools", *permitir]
     if prohibir:

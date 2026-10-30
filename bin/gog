@@ -1,43 +1,95 @@
-#!/bin/sh
-# gog para Jarvis: Gmail, Calendar, Drive, Docs y Sheets en solo lectura.
-#
-# Siempre con el cliente «jarvis» (su propio depósito de tokens), configuración
-# en .gog/ dentro del proyecto, --readonly (y la autorización solo pide permisos
-# de lectura a Google), sin enviar correo, sin preguntar nada y solo con las
-# órdenes de LECTURA. Se niega si le intentan cambiar esas opciones.
-RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
-export GOG_HOME="$RAIZ/.gog"
+#!/usr/bin/python3
+"""gog para Jarvis: Google (Gmail, Calendar, Drive, Docs, Sheets…) con la política de permisos.json.
 
-LECTURA="gmail.search,gmail.get,gmail.labels.list,\
-calendar.calendars,calendar.events,calendar.event,calendar.freebusy,calendar.conflicts,\
-drive.ls,drive.search,drive.get,drive.tree,\
-docs.cat,docs.info,sheets.get"
+    "comandos": {"bin/gog": "lectura" | "todo" | ["gmail.search", "calendar.create", …]}
 
-if [ "$1" = "ayuda" ]; then
-  cat <<AYUDA
-$0: Gmail, Calendar, Drive, Docs y Sheets en solo lectura (gog). Usa --plain.
-  $0 gmail search 'is:unread newer_than:7d' --max 10 --plain
-  $0 gmail get <messageId> --plain
-  $0 calendar events --today --all --plain        (también --tomorrow, --week, --from FECHA --days N, --query texto)
-  $0 calendar calendars --plain
-  $0 drive search 'texto' --max 10 --plain
-  $0 drive ls --plain                              (archivos recientes de Mi unidad)
-  $0 docs cat <docId>                              (un Google Doc como texto)
-  $0 sheets get <spreadsheetId> 'Hoja1!A1:F30' --plain
-Las búsquedas de Gmail usan su sintaxis (from:, subject:, is:unread, after:2026/10/01…).
-AYUDA
-  exit 0
-fi
+Siempre con el cliente «jarvis» (su propio depósito de tokens), la configuración
+en .gog/ dentro del proyecto y sin preguntar nada. Con "lectura" (o una lista
+solo de lectura) añade --readonly y --gmail-no-send. Con "todo" deja hacer todo
+salvo gestionar la sesión de gog (auth, login, logout…), copias, administración
+y actualizarse. Se niega si le intentan cambiar estas opciones. Las acciones que
+escriben, además, pasan por la confirmación de voz (bin/jarvis-confirmar).
+"""
 
-for arg in "$@"; do
-  case "$arg" in
-    --enable-commands*|--home*|--client*|--readonly*|--no-readonly*|--gmail-no-send*|\
-    --access-token*|--account*|-a|--no-input*|--force|-y)
-      echo "bin/gog no permite cambiar $arg" >&2
-      exit 2
-      ;;
-  esac
-done
+import json
+import os
+import sys
 
-exec gog --client jarvis --account auto --readonly --gmail-no-send --no-input \
-  --enable-commands-exact "$LECTURA" "$@"
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+YO = os.path.join(RAIZ, "bin", "gog")
+
+LECTURA = [
+    "gmail.search", "gmail.get", "gmail.labels.list",
+    "calendar.calendars", "calendar.events", "calendar.event", "calendar.freebusy", "calendar.conflicts",
+    "drive.ls", "drive.search", "drive.get", "drive.tree",
+    "docs.cat", "docs.info", "sheets.get",
+]
+NUNCA = {"auth", "login", "logout", "backup", "admin", "update", "config"}
+PROHIBIDAS = ("--enable-commands", "--enable-commands-exact", "--home", "--client", "--readonly",
+              "--no-readonly", "--gmail-no-send", "--access-token", "--account", "-a", "--no-input")
+
+AYUDA = f"""{YO}: Google con gog. Usa --plain para leer.
+  {YO} gmail search 'is:unread newer_than:7d' --max 10 --plain
+  {YO} gmail get <messageId> --plain
+  {YO} calendar events --today --all --plain   (también --tomorrow, --week, --from FECHA --days N, --query texto)
+  {YO} calendar calendars --plain
+  {YO} drive search 'texto' --max 10 --plain
+  {YO} drive ls --plain
+  {YO} docs cat <docId>
+  {YO} sheets get <spreadsheetId> 'Hoja1!A1:F30' --plain
+Las búsquedas de Gmail usan su sintaxis (from:, subject:, is:unread, after:2026/10/01…)."""
+
+AYUDA_ESCRITURA = f"""
+También puede escribir ({{}}). Mira las opciones con «{YO} <servicio> <orden> --help»; por ejemplo:
+  {YO} gmail send --to x@y.com --subject 'Asunto' --body 'Texto'
+  {YO} calendar create primary --summary 'Dentista' --from 2026-11-03T10:00 --to 2026-11-03T11:00
+  {YO} drive mkdir 'Carpeta'
+Antes de escribir, el sistema pide confirmación al usuario: si la llamada se bloquea
+por eso, pregúntale y, si dice que sí, repite exactamente la misma llamada."""
+
+
+def politica():
+    try:
+        with open(os.path.join(RAIZ, "permisos.json")) as f:
+            comandos = json.load(f).get("comandos", {})
+    except (OSError, ValueError):
+        return "lectura"
+    if isinstance(comandos, dict):
+        return comandos.get("bin/gog", "lectura")
+    return "lectura"  # lista antigua: solo dice que se puede usar
+
+
+def opciones(pol):
+    base = ["--client", "jarvis", "--account", "auto", "--no-input"]
+    if pol == "todo":
+        return base
+    ordenes = LECTURA if pol == "lectura" else list(pol)
+    base += ["--enable-commands-exact", ",".join(ordenes)]
+    if all(o in LECTURA for o in ordenes):
+        base += ["--readonly", "--gmail-no-send"]
+    elif not any(o.startswith(("gmail.send", "gmail.reply", "gmail.forward", "send")) for o in ordenes):
+        base += ["--gmail-no-send"]
+    return base
+
+
+def main():
+    args = sys.argv[1:]
+    pol = politica()
+    if args[:1] == ["ayuda"]:
+        texto = AYUDA
+        if pol != "lectura":
+            texto += AYUDA_ESCRITURA.format("todo" if pol == "todo" else ", ".join(pol))
+        print(texto)
+        return
+    for arg in args:
+        if arg in ("-y", "--force") or arg.split("=")[0] in PROHIBIDAS:
+            sys.exit(f"bin/gog no permite cambiar {arg}")
+    orden = next((a for a in args if not a.startswith("-")), "")
+    if orden in NUNCA:
+        sys.exit(f"bin/gog no permite «{orden}»")
+    os.environ["GOG_HOME"] = os.path.join(RAIZ, ".gog")
+    os.execvp("gog", ["gog", *opciones(pol), *args])
+
+
+if __name__ == "__main__":
+    main()
