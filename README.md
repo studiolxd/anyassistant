@@ -139,9 +139,19 @@ Hay dos plugins:
   stdin/stdout. La hora se la da como herramienta (`fechaHora`): en el prompt la
   repetía en cada respuesta. Más rápido (~0,5 s) pero más flojo (~3B).
 
+- **`hermes`**: [Hermes Agent](https://hermes-agent.nousresearch.com) por su API
+  compatible con OpenAI (`hermes gateway`, `127.0.0.1:8642`, clave `API_SERVER_KEY` de
+  `~/.hermes/.env`). Usa sus propias herramientas, memoria y credenciales, con el
+  modelo que tenga configurado; cada conversación es una sesión suya
+  (`X-Hermes-Session-Id`). `permisos.json` no le aplica. Cuando Hermes pide aprobar
+  algo (`approval.request`), Jarvis pregunta por voz y responde `once` o `deny`; pero
+  con `approvals.mode: smart` (su valor por defecto) un modelo auxiliar decide solo
+  los casos claros, y solo le llegan a Jarvis los dudosos.
+
 ```
 uv run server/main.py --llm-modelo haiku   # Claude Haiku
 uv run server/main.py --llm apple          # modelo de Apple, en local
+uv run server/main.py --llm hermes         # Hermes Agent
 ```
 
 ### Herramientas: solo las del proyecto y solo lo que permitas

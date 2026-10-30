@@ -127,7 +127,10 @@ class Asistente(Transcriptor):
         if self._es_eco(texto, tiempos):
             log.info("eco descartado: «%s»", texto)
             return
-        self._confirmar(texto)
+        if self._confirmar(texto):
+            # Era la respuesta a una aprobación del propio LLM (Hermes): no es un mensaje nuevo.
+            Transcriptor._oido(self, texto, tiempos)
+            return
         orden = orden_de_sistema(texto)
         if orden:
             Transcriptor._oido(self, texto, tiempos)  # se ve en pantalla, pero no va al LLM
@@ -157,16 +160,20 @@ class Asistente(Transcriptor):
         else:
             self._estado(self.oido.en_espera)
 
-    def _confirmar(self, texto: str):
-        """Si hay una acción esperando el «sí» del usuario, la autoriza o la cancela."""
+    def _confirmar(self, texto: str) -> bool:
+        """Si hay una acción esperando el «sí» del usuario, la autoriza o la cancela.
+
+        Devuelve True si la frase era solo para eso y no debe ir al LLM («consumir»:
+        aprobaciones que el plugin resuelve él mismo, como las de Hermes).
+        """
         pendiente_json = CONFIRMAR / "pendiente.json"
         try:
             pendiente = json.loads(pendiente_json.read_text())
         except (OSError, ValueError):
-            return
-        pendiente_json.unlink(missing_ok=True)
+            return False
         if time.time() - pendiente.get("cuando", 0) > 120:
-            return
+            pendiente_json.unlink(missing_ok=True)
+            return False
         if es_si(texto):
             (CONFIRMAR / "confirmada.json").write_text(
                 json.dumps({"firma": pendiente["firma"], "hasta": time.time() + 60})
@@ -174,6 +181,8 @@ class Asistente(Transcriptor):
             log.info("confirmado: %s", pendiente.get("accion"))
         else:
             log.info("no confirmado («%s»): %s", texto, pendiente.get("accion"))
+        pendiente_json.unlink(missing_ok=True)
+        return bool(pendiente.get("consumir"))
 
     async def _responder(self, texto: str):
         async with self.turno:
