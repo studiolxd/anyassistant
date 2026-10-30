@@ -133,27 +133,35 @@ uv run server/main.py --llm-modelo haiku   # Claude Haiku
 uv run server/main.py --llm apple          # modelo de Apple, en local
 ```
 
-### MCP: solo los del proyecto y solo lo que permitas
+### Herramientas: solo las del proyecto y solo lo que permitas
 
-Con el plugin `claude`, Jarvis usa **solo los servidores MCP de la carpeta del
-proyecto**, nunca los conectores de tu cuenta de claude.ai, y de ellos **solo las
-herramientas permitidas**. Los dos archivos están fuera de git:
+Con el plugin `claude`, Jarvis puede usar **servidores MCP de la carpeta del proyecto**
+y **comandos del proyecto**, nunca los conectores de tu cuenta de claude.ai ni otras
+órdenes de terminal. Todo se decide en **`permisos.json`** (fuera de git; ver
+`permisos.ejemplo.json`):
 
-- **`.mcp.json`**: los servidores, en el formato de Claude Code (scope de proyecto).
-  Ver `.mcp.ejemplo.json` (Holded).
-- **`permisos.json`**: qué herramientas de cada uno (`"todo"` o una lista); un
-  servidor que no aparezca queda prohibido entero. Con Holded va `"todo"`: el solo
-  lectura se elige al autorizarlo en Holded.
+```json
+{
+  "permitidos": { "holded": "todo" },
+  "comandos": ["bin/google"]
+}
+```
 
-Sin esos archivos no usa ningún MCP. Al usar una herramienta dice «Un momento, lo
-miro».
+- `permitidos`: herramientas de cada servidor de **`.mcp.json`** (`"todo"` o una
+  lista); un servidor que no aparezca queda prohibido entero.
+- `comandos`: programas que puede ejecutar. Claude recibe la terminal de Claude Code
+  **limitada a ellos** (lo demás se le deniega: probado con `ls`, `curl` y `touch`)
+  y, en el prompt, lo que muestra `<comando> ayuda`.
 
-**Autenticar (solo para este proyecto):** en la carpeta, `claude` → aprobar los
-servidores de `.mcp.json` → `/mcp` → *Authenticate*.
+Sin `permisos.json` no usa nada. Al usar una herramienta dice «Un momento, lo miro».
 
-**Holded:** su registro automático de clientes falla en Claude Code (devuelve
-`"software_id": null` y el SDK lo rechaza), así que se registra uno a mano y su
-`clientId` va en `.mcp.json` (puerto de vuelta 8766):
+#### Holded (MCP)
+
+En `.mcp.json` (ver `.mcp.ejemplo.json`); se autentica en la carpeta del proyecto:
+`claude` → aprobar los servidores → `/mcp` → *Authenticate*. El solo lectura se elige
+al autorizarlo en Holded. Su registro automático de clientes falla en Claude Code
+(devuelve `"software_id": null`), así que se registra uno a mano y su `clientId` va en
+`.mcp.json` (puerto de vuelta 8766):
 
 ```
 curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: application/json" \
@@ -162,10 +170,22 @@ curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: 
        "token_endpoint_auth_method":"none"}'
 ```
 
-**Gmail y Drive** (servidores MCP oficiales de Google, `gmailmcp`/`drivemcp.googleapis.com`):
-probados y descartados. Exigen un cliente OAuth propio y, sobre todo, que el proyecto
-de Google Cloud esté en el *Google Workspace Developer Preview Program*, al que no
-pueden apuntarse las cuentas personales.
+#### Gmail, Calendar y Drive (`bin/google`)
+
+Un comando propio con las APIs normales de Google y **solo permisos de lectura**
+(`gmail.readonly`, `calendar.readonly`, `drive.readonly`): aunque se intentara, Google
+no dejaría escribir. `bin/google ayuda` muestra las órdenes. Para prepararlo:
+
+1. En Google Cloud, activar **Gmail API**, **Google Calendar API** y **Google Drive API**.
+2. En *Google Auth Platform*: tu correo como usuario de prueba y, en *Acceso a datos*,
+   los tres permisos de lectura.
+3. Descargar el JSON del cliente OAuth (*Aplicación de escritorio*) como
+   `google-cliente.json` en la raíz del proyecto.
+4. `bin/google autorizar` (abre el navegador). El token queda en `google-token.json`.
+
+Los servidores MCP oficiales de Google (`gmailmcp`/`drivemcp.googleapis.com`) se
+probaron y se descartaron: exigen el *Google Workspace Developer Preview Program*,
+cerrado a cuentas personales.
 
 Otros LLM son plugins en `server/llm/`:
 
@@ -218,7 +238,8 @@ uv run server/main.py --tts ninguno                # solo texto
 - `server/cerebro/` — `loro.py` (Fase 1), `oido.py` (VAD + STT), `transcriptor.py` (Fase 2), `asistente.py` (Fase 3).
 - `server/stt/` — plugins de voz a texto.
 - `server/despertar/` — plugins de palabra de activación.
-- `server/llm/` — plugins de LLM.
+- `server/llm/` — plugins de LLM; `permisos.py`, qué MCP y comandos puede usar Claude.
+- `bin/google`, `herramientas/google_cli.py` — Gmail, Calendar y Drive en solo lectura.
 - `server/tts/` — plugins de voz.
 - `server/plugins.py` — registro común de plugins; `server/texto.py`, utilidades de texto;
   `server/swift.py`, compila los puentes en Swift de los plugins.

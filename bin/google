@@ -1,0 +1,4 @@
+#!/bin/sh
+# Gmail, Calendar y Drive en solo lectura (ver herramientas/google_cli.py).
+RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
+exec uv run --quiet --project "$RAIZ" python "$RAIZ/herramientas/google_cli.py" "$@"

@@ -2,8 +2,8 @@
 
 Una conversación es un proceso `claude -p` en modo stream-json: recibe los
 mensajes por stdin y devuelve la respuesta a trozos (--include-partial-messages).
-Sin las herramientas de Claude Code ni CLAUDE.md. Los MCP, solo los del .mcp.json
-del proyecto y lo que permita permisos.json (ver llm/mcp.py); sin ellos, ninguno.
+Sin las herramientas de Claude Code ni CLAUDE.md. Los MCP y comandos, solo los
+del proyecto que permita permisos.json (ver llm/permisos.py); sin él, ninguno.
 Requiere `claude` instalado y con sesión iniciada.
 """
 
@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 
 from llm import INSTRUCCIONES, LLM, ahora, registrar
-from llm import mcp as permisos_mcp
+from llm import permisos
 
 log = logging.getLogger("llm")
 
@@ -25,6 +25,7 @@ INSTRUCCIONES_MCP = """
 Tienes herramientas para consultar servicios del usuario: úsalas cuando hagan
 falta y resume el resultado en una o dos frases para decirlas en voz alta."""
 
+
 # Si va a usar una herramienta sin haber dicho nada, para que no haya silencio
 # (pedírselo en el prompt no basta: casi nunca lo hace).
 ESPERA = "Un momento, lo miro. "
@@ -33,7 +34,6 @@ RAIZ = Path(__file__).resolve().parents[2]
 # Un directorio vacío como cwd: así no carga el CLAUDE.md de ningún proyecto.
 VACIO = RAIZ / ".build" / "claude-vacio"
 MCP_JSON = RAIZ / ".mcp.json"
-PERMISOS = RAIZ / "permisos.json"
 
 
 @registrar("claude")
@@ -41,10 +41,10 @@ class Claude(LLM):
     def __init__(self, modelo=None, mcp=None):
         super().__init__(modelo or "sonnet", mcp or str(MCP_JSON))
         VACIO.mkdir(parents=True, exist_ok=True)
-        self._mcp = permisos_mcp.argumentos(Path(self.mcp), PERMISOS)
+        self._permisos = permisos.cargar(RAIZ, Path(self.mcp))
         self._instrucciones = INSTRUCCIONES_CLAUDE
-        if "--allowedTools" in self._mcp:
-            self._instrucciones += INSTRUCCIONES_MCP
+        if self._permisos.herramientas:
+            self._instrucciones += INSTRUCCIONES_MCP + self._permisos.instrucciones
         self._proceso = None
         self._turno = asyncio.Lock()
 
@@ -57,8 +57,7 @@ class Claude(LLM):
             "--model", self.modelo,
             "--system-prompt", self._instrucciones,
             "--no-session-persistence",
-            *self._mcp,
-            "--tools", "",  # sin herramientas propias de Claude Code (Bash, Edit…)
+            *self._permisos.argumentos,
             cwd=VACIO,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,

@@ -5,3 +5,5 @@ __pycache__/
 .build/
 .mcp.json
 permisos.json
+google-cliente.json
+google-token.json

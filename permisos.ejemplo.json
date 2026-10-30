@@ -1,5 +1,8 @@
 {
   "permitidos": {
     "holded": "todo"
-  }
+  },
+  "comandos": [
+    "bin/google"
+  ]
 }
