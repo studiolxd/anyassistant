@@ -20,7 +20,11 @@
     },
     "holded": {
       "type": "http",
-      "url": "https://mcp.holded.com/mcp"
+      "url": "https://mcp.holded.com/mcp",
+      "oauth": {
+        "clientId": "ID_DEL_CLIENTE_REGISTRADO_EN_HOLDED",
+        "callbackPort": 8766
+      }
     }
   }
 }

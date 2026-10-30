@@ -156,7 +156,16 @@ miro».
    solo lectura (`gmail.readonly`, `drive.readonly`) hacen que Google tampoco deje
    escribir. El secreto del cliente se da al autenticar (`MCP_CLIENT_SECRET`), no va
    en el archivo.
-2. Holded: no necesita nada; su OAuth registra el cliente solo.
+2. Holded: su registro automático de clientes falla en Claude Code (devuelve
+   `"software_id": null` y el SDK lo rechaza), así que se registra uno a mano y su
+   `clientId` va en `.mcp.json` (puerto de vuelta 8766):
+
+   ```
+   curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: application/json" \
+     -d '{"client_name":"Jarvis","redirect_uris":["http://localhost:8766/callback"],
+          "grant_types":["authorization_code","refresh_token"],"response_types":["code"],
+          "token_endpoint_auth_method":"none"}'
+   ```
 3. En la carpeta del proyecto: `claude`, aprobar los servidores de `.mcp.json` y
    `/mcp` → cada servidor → *Authenticate*.
 
