@@ -130,6 +130,21 @@ class MiLLM(LLM):
 
 y `--llm mi-llm [--llm-modelo …]`.
 
+## Voz (TTS)
+
+Cada frase de la respuesta se sintetiza en cuanto se completa y suena mientras
+llega la siguiente. Mientras habla no escucha (y 0,6 s más, por el eco); tocar la
+pantalla lo calla. El volumen se normaliza al máximo.
+
+Por defecto, las voces de macOS con `say` (Mónica; `say -v '?' | grep es_` para ver
+otras). Otros motores son plugins en `server/tts/` con `sintetizar(texto)` → int16
+mono a 48 kHz.
+
+```
+uv run server/main.py --voz Eddy --velocidad 200   # otra voz, más rápida
+uv run server/main.py --tts ninguno                # solo texto
+```
+
 ## Estructura
 
 - `server/main.py` — HTTP, señalización (`/offer`), monitor (`/video.mjpg`, `/estado`).
@@ -139,8 +154,8 @@ y `--llm mi-llm [--llm-modelo …]`.
 - `server/stt/` — plugins de voz a texto.
 - `server/despertar/` — plugins de palabra de activación.
 - `server/llm/` — plugins de LLM.
+- `server/tts/` — plugins de voz.
 - `server/plugins.py` — registro común de plugins; `server/texto.py`, utilidades de texto.
 - `web/` — la página del móvil (JS sin bundler, Chrome ≤ 119) y el monitor.
 
-Próximas fases: boca (TTS en streaming con interrupción),
-ojos (captura bajo demanda), cara, y después app nativa con libwebrtc contra el mismo servidor.
+Próximas fases: ojos (captura bajo demanda), cara, y después app nativa con libwebrtc contra el mismo servidor.

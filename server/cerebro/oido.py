@@ -65,7 +65,8 @@ def cargar_vad():
 
 class Oido:
     def __init__(
-        self, stt, al_estado, al_oir, despertador=None, al_despertar=None, al_dormir=None, grabar=None
+        self, stt, al_estado, al_oir, despertador=None, al_despertar=None, al_dormir=None,
+        grabar=None, sordo=None,
     ):
         import torch
 
@@ -85,7 +86,8 @@ class Oido:
         self.voz = 0.0  # segundos con voz dentro de la frase
         self.despierto = despertador is None
         self.ultima_actividad = 0.0  # para dormirse tras INACTIVIDAD
-        self.sordo = False  # el cerebro lo activa mientras el altavoz habla
+        # Mientras el altavoz habla no se escucha, o se oiría a sí mismo.
+        self.sordo = sordo or (lambda: False)
         self.grabacion = None  # WAV con todo lo que llega, para depurar
         if grabar:
             # Un archivo por sesión: al reconectar no se pisa lo grabado.
@@ -107,7 +109,7 @@ class Oido:
         if self.grabacion:
             self.grabacion.writeframes((np.clip(audio, -1, 1) * 32767).astype(np.int16).tobytes())
         if self.despertador and (not self.despierto or self.despertador.continuo):
-            oida = self.despertador.escuchar(audio) and not self.sordo
+            oida = self.despertador.escuchar(audio) and not self.sordo()
             if not self.despierto:
                 if oida:
                     frase = getattr(self.despertador, "frase_oida", None)
@@ -142,8 +144,9 @@ class Oido:
 
     def _ventana(self, ventana: np.ndarray):
         prob = self.vad(self._torch.from_numpy(ventana), TASA).item()
-        if self.sordo:
+        if self.sordo():
             self._reiniciar()
+            self.ultima_actividad = time.time()  # hablar él también cuenta
             return
 
         if not self.hablando:

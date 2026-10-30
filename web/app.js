@@ -16,9 +16,10 @@ document.getElementById('empezar').onclick = function () {
   iniciar();
 };
 
-// Si se sale de pantalla completa, tocar la cara la recupera.
+// Tocar la cara: recupera la pantalla completa y, si está hablando, lo calla.
 document.getElementById('cara').onclick = function () {
   if (!document.fullscreenElement) pantallaCompleta();
+  if (canal && canal.readyState === 'open') canal.send(JSON.stringify({ tipo: 'tocar' }));
 };
 
 function pantallaCompleta() {
@@ -158,6 +159,7 @@ var TEXTOS = {
   repitiendo: 'Repitiendo',
   oyendo: 'Oyendo…',
   pensando: 'Pensando…',
+  hablando: 'Hablando · toca para callar',
   transcribiendo: 'Transcribiendo…'
 };
 

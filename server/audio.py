@@ -75,3 +75,11 @@ def pitido(bajando: bool = False) -> np.ndarray:
         envolvente = np.minimum(1, np.minimum(t, t[::-1]) / 0.01)  # sin chasquidos
         notas.append(np.sin(2 * np.pi * frecuencia * t) * envolvente * 0.5 * 32767)
     return np.concatenate(notas).astype(np.int16)
+
+
+def normalizar(pcm: np.ndarray, pico: float = 0.95) -> np.ndarray:
+    """Sube (o baja) el volumen hasta que el pico llegue a `pico` de la escala."""
+    maximo = np.abs(pcm).max() if len(pcm) else 0
+    if not maximo:
+        return pcm
+    return np.clip(pcm.astype(np.float32) * (pico * 32767 / maximo), -32768, 32767).astype(np.int16)

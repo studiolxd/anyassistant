@@ -2,6 +2,7 @@
 
     uv run server/main.py                    # asistente: mlx-whisper + Claude (CLI)
     uv run server/main.py --llm apple        # con el modelo de Apple, en local
+    uv run server/main.py --voz Eddy         # otra voz de macOS; --tts ninguno, sin voz
     uv run server/main.py --modo transcribir # solo transcribe
     uv run server/main.py --llm otro-plugin  # cualquier módulo de server/llm/
     uv run server/main.py --modo loro        # repite lo que oye (prueba de audio)
@@ -20,6 +21,7 @@ from aiohttp import web
 import despertar
 import llm
 import stt
+import tts
 from cerebro import asistente, transcriptor
 from cerebro.loro import Loro
 from transporte import Sesion
@@ -107,6 +109,9 @@ def main():
     parser.add_argument("--stt-modelo", default=None)
     parser.add_argument("--llm", default="claude", help=f"plugin: {', '.join(llm.disponibles())}")
     parser.add_argument("--llm-modelo", default=None)
+    parser.add_argument("--tts", default="macos", help=f"voz: {', '.join(tts.disponibles())} o ninguno")
+    parser.add_argument("--voz", default=None, help="voz del plugin (macos: Mónica, Eddy…)")
+    parser.add_argument("--velocidad", type=int, default=None, help="palabras por minuto")
     parser.add_argument("--idioma", default="es")
     parser.add_argument(
         "--despertar",
@@ -136,7 +141,12 @@ def main():
         if args.modo == "asistente":
             modelo = llm.crear(args.llm, modelo=args.llm_modelo)
             logging.info("LLM: %s (%s)", modelo.nombre, modelo.modelo)
-            fabrica_cerebro = asistente.crear(motor, modelo, despertador, args.grabar)
+            voz = None
+            if args.tts != "ninguno":
+                voz = tts.crear(args.tts, voz=args.voz, velocidad=args.velocidad)
+                logging.info("voz: %s (%s)", voz.nombre, voz.voz)
+                voz.calentar()
+            fabrica_cerebro = asistente.crear(motor, modelo, voz, despertador, args.grabar)
             cerrar_al_salir.append(modelo.cerrar)
         else:
             fabrica_cerebro = transcriptor.crear(motor, despertador, args.grabar)

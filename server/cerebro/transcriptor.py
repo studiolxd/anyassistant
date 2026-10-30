@@ -18,7 +18,7 @@ def crear(stt, despertador=None, grabar=None):
 
 
 class Transcriptor:
-    def __init__(self, stt, despertador, altavoz, enviar, grabar=None):
+    def __init__(self, stt, despertador, altavoz, enviar, grabar=None, sordo=None):
         self.enviar = enviar
         self.altavoz = altavoz
         self.despertador = despertador
@@ -30,6 +30,7 @@ class Transcriptor:
             al_despertar=self._despierto,
             al_dormir=self._dormir,
             grabar=grabar,
+            sordo=sordo,
         )
 
     def _oido(self, texto: str, tiempos: dict):

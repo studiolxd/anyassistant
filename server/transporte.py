@@ -67,6 +67,8 @@ class Sesion:
     def _mensaje(self, datos: dict):
         if datos.get("tipo") == "ping":
             self.enviar({"tipo": "pong", "t": datos["t"]})
+        elif hasattr(self.cerebro, "al_mensaje"):
+            self.cerebro.al_mensaje(datos)
 
     async def _leer_audio(self, track):
         try:
