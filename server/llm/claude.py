@@ -23,7 +23,10 @@ solo si te preguntan por ellas y no las menciones si no."""
 
 INSTRUCCIONES_MCP = """
 Tienes herramientas para consultar servicios del usuario: úsalas cuando hagan
-falta y resume el resultado en una o dos frases para decirlas en voz alta."""
+falta y resume el resultado en una o dos frases para decirlas en voz alta.
+Para acciones que modifican datos no pidas confirmación por tu cuenta: el sistema
+la pide solo. Pregunta únicamente si no está claro qué hacer (qué correos, qué
+día…); si está claro, llama directamente a la herramienta."""
 
 
 # Si va a usar una herramienta sin haber dicho nada, para que no haya silencio

@@ -25,7 +25,10 @@ log = logging.getLogger("asistente")
 # colaba la última palabra («…¿necesitas algo más?» → «¿Algo más?»).
 GUARDA = 1.2
 ECO_MAXIMO = 5  # palabras: un eco es un trozo corto de lo que acaba de decir
-ECO_RECIENTE = 6  # segundos tras hablar en los que se busca su eco (luego ya no)
+# Un eco empieza nada más acabar de hablar (tras la guarda); una respuesta tuya
+# que repite sus palabras («¿Borro solo los dos promocionales…?» → «Solo los dos
+# promocionales») suele empezar más tarde: solo cuenta lo que empieza en este margen.
+ECO_RECIENTE = 2.5
 
 # Confirmación de acciones que escriben: bin/jarvis-confirmar apunta la pendiente;
 # si el usuario dice «sí», aquí se autoriza esa misma acción durante un minuto.
@@ -78,9 +81,11 @@ class Asistente(Transcriptor):
     def _sordo(self) -> bool:
         return self.altavoz.hablando or time.time() - self.altavoz.ultimo_sonido < self.guarda
 
-    def _es_eco(self, texto: str) -> bool:
+    def _es_eco(self, texto: str, tiempos: dict) -> bool:
         """Un trozo corto de lo último que ha dicho: su propia voz colándose por el micro."""
-        if time.time() - self.altavoz.ultimo_sonido > ECO_RECIENTE:
+        # Cuándo empezó la frase: ahora, menos lo que tardó el STT y lo que dura.
+        empezo = time.time() - tiempos.get("stt_ms", 0) / 1000 - tiempos.get("audio_s", 0)
+        if empezo - self.altavoz.ultimo_sonido > ECO_RECIENTE:
             return False
         oidas = palabras(texto)
         dichas = " ".join(self.dicho)
@@ -105,7 +110,7 @@ class Asistente(Transcriptor):
         asyncio.ensure_future(self.llm.nueva())
 
     def _oido(self, texto: str, tiempos: dict):
-        if self._es_eco(texto):
+        if self._es_eco(texto, tiempos):
             log.info("eco descartado: «%s»", texto)
             return
         self._confirmar(texto)
