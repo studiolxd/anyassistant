@@ -1,0 +1,43 @@
+#!/bin/sh
+# gog para Jarvis: Gmail, Calendar, Drive, Docs y Sheets en solo lectura.
+#
+# Siempre con el cliente «jarvis» (su propio depósito de tokens), configuración
+# en .gog/ dentro del proyecto, --readonly (y la autorización solo pide permisos
+# de lectura a Google), sin enviar correo, sin preguntar nada y solo con las
+# órdenes de LECTURA. Se niega si le intentan cambiar esas opciones.
+RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
+export GOG_HOME="$RAIZ/.gog"
+
+LECTURA="gmail.search,gmail.get,gmail.labels.list,\
+calendar.calendars,calendar.events,calendar.event,calendar.freebusy,calendar.conflicts,\
+drive.ls,drive.search,drive.get,drive.tree,\
+docs.cat,docs.info,sheets.get"
+
+if [ "$1" = "ayuda" ]; then
+  cat <<AYUDA
+$0: Gmail, Calendar, Drive, Docs y Sheets en solo lectura (gog). Usa --plain.
+  $0 gmail search 'is:unread newer_than:7d' --max 10 --plain
+  $0 gmail get <messageId> --plain
+  $0 calendar events --today --all --plain        (también --tomorrow, --week, --from FECHA --days N, --query texto)
+  $0 calendar calendars --plain
+  $0 drive search 'texto' --max 10 --plain
+  $0 drive ls --plain                              (archivos recientes de Mi unidad)
+  $0 docs cat <docId>                              (un Google Doc como texto)
+  $0 sheets get <spreadsheetId> 'Hoja1!A1:F30' --plain
+Las búsquedas de Gmail usan su sintaxis (from:, subject:, is:unread, after:2026/10/01…).
+AYUDA
+  exit 0
+fi
+
+for arg in "$@"; do
+  case "$arg" in
+    --enable-commands*|--home*|--client*|--readonly*|--no-readonly*|--gmail-no-send*|\
+    --access-token*|--account*|-a|--no-input*|--force|-y)
+      echo "bin/gog no permite cambiar $arg" >&2
+      exit 2
+      ;;
+  esac
+done
+
+exec gog --client jarvis --account auto --readonly --gmail-no-send --no-input \
+  --enable-commands-exact "$LECTURA" "$@"

@@ -6,4 +6,4 @@ __pycache__/
 .mcp.json
 permisos.json
 google-cliente.json
-google-token.json
+.gog/

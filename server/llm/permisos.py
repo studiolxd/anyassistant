@@ -7,7 +7,7 @@
 
     {
       "permitidos": {"holded": "todo", "otro": ["get_x", "list_y"]},
-      "comandos": ["bin/google"]
+      "comandos": ["bin/gog"]
     }
 
   "permitidos": herramientas de cada servidor de .mcp.json ("todo" o una lista;

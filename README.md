@@ -143,7 +143,7 @@ y **comandos del proyecto**, nunca los conectores de tu cuenta de claude.ai ni o
 ```json
 {
   "permitidos": { "holded": "todo" },
-  "comandos": ["bin/google"]
+  "comandos": ["bin/gog"]
 }
 ```
 
@@ -170,18 +170,27 @@ curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: 
        "token_endpoint_auth_method":"none"}'
 ```
 
-#### Gmail, Calendar y Drive (`bin/google`)
+#### Gmail, Calendar, Drive, Docs y Sheets (`bin/gog`)
 
-Un comando propio con las APIs normales de Google y **solo permisos de lectura**
-(`gmail.readonly`, `calendar.readonly`, `drive.readonly`): aunque se intentara, Google
-no dejaría escribir. `bin/google ayuda` muestra las órdenes. Para prepararlo:
+Con [gog](https://gogcli.sh) (`brew install openclaw/tap/gogcli`). `bin/gog` lo
+lanza siempre:
 
-1. En Google Cloud, activar **Gmail API**, **Google Calendar API** y **Google Drive API**.
-2. En *Google Auth Platform*: tu correo como usuario de prueba y, en *Acceso a datos*,
-   los tres permisos de lectura.
+- con el cliente `jarvis` (su propio depósito de tokens) y la configuración en `.gog/`,
+  dentro del proyecto;
+- con `--readonly` y una autorización que solo pide **permisos de lectura** a Google:
+  aunque se intentara, Google no dejaría escribir;
+- con `--gmail-no-send`, `--no-input` y solo las órdenes de lectura
+  (`--enable-commands-exact`); enviar, borrar o descargar no existen para Jarvis;
+- negándose si le intentan cambiar cualquiera de esas opciones.
+
+Para prepararlo:
+
+1. En Google Cloud, activar **Gmail API**, **Google Calendar API**, **Google Drive API**,
+   **Google Docs API** y **Google Sheets API**.
+2. En *Google Auth Platform*, tu correo como usuario de prueba.
 3. Descargar el JSON del cliente OAuth (*Aplicación de escritorio*) como
    `google-cliente.json` en la raíz del proyecto.
-4. `bin/google autorizar` (abre el navegador). El token queda en `google-token.json`.
+4. `bin/gog-autorizar tu@gmail.com` (abre el navegador).
 
 Los servidores MCP oficiales de Google (`gmailmcp`/`drivemcp.googleapis.com`) se
 probaron y se descartaron: exigen el *Google Workspace Developer Preview Program*,
@@ -239,7 +248,7 @@ uv run server/main.py --tts ninguno                # solo texto
 - `server/stt/` — plugins de voz a texto.
 - `server/despertar/` — plugins de palabra de activación.
 - `server/llm/` — plugins de LLM; `permisos.py`, qué MCP y comandos puede usar Claude.
-- `bin/google`, `herramientas/google_cli.py` — Gmail, Calendar y Drive en solo lectura.
+- `bin/gog`, `bin/gog-autorizar` — Google (gog) en solo lectura para Jarvis, y su autorización.
 - `server/tts/` — plugins de voz.
 - `server/plugins.py` — registro común de plugins; `server/texto.py`, utilidades de texto;
   `server/swift.py`, compila los puentes en Swift de los plugins.
