@@ -75,7 +75,7 @@ class Oido:
         self.al_estado = al_estado
         self.al_oir = al_oir
         self.al_despertar = al_despertar or (lambda: None)
-        self.al_dormir = al_dormir or (lambda: None)
+        self.al_dormir = al_dormir or (lambda por_orden: None)
         self.vad = cargar_vad()
         self.pendiente = np.zeros(0, dtype=np.float32)
         self.previo = []
@@ -130,15 +130,15 @@ class Oido:
         self.al_estado("despierto")
         self.al_despertar()
 
-    def _dormir(self, motivo: str):
+    def _dormir(self, motivo: str, por_orden: bool = False):
         if not self.despertador or not self.despierto:
             return
         log.info("a dormir: %s", motivo)
         self._reiniciar()
         self.despierto = False
         self.despertador.reiniciar()
+        self.al_dormir(por_orden)
         self.al_estado("dormido")
-        self.al_dormir()
 
     def _ventana(self, ventana: np.ndarray):
         prob = self.vad(self._torch.from_numpy(ventana), TASA).item()
@@ -204,7 +204,7 @@ class Oido:
                 self.al_estado(self.en_espera)
                 return
         if texto and es_apagado(texto):
-            self._dormir(f"«{texto}»")
+            self._dormir(f"«{texto}»", por_orden=True)
             return
         if not texto or any(f in texto.lower() for f in FANTASMAS):
             log.info("descartado: %r %s", texto, tiempos)

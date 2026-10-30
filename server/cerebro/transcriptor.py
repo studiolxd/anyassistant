@@ -20,6 +20,7 @@ def crear(stt, despertador=None, grabar=None):
 class Transcriptor:
     def __init__(self, stt, despertador, altavoz, enviar, grabar=None):
         self.enviar = enviar
+        self.altavoz = altavoz
         self.despertador = despertador
         self.oido = Oido(
             stt,
@@ -29,9 +30,14 @@ class Transcriptor:
             ),
             despertador=despertador,
             al_despertar=lambda: altavoz.reproducir(pitido()),
-            al_dormir=lambda: altavoz.reproducir(pitido(bajando=True)),
+            al_dormir=self._dormir,
             grabar=grabar,
         )
+
+    def _dormir(self, por_orden: bool):
+        self.altavoz.reproducir(pitido(bajando=True))
+        if por_orden:
+            self.enviar({"tipo": "texto", "texto": "Hasta la próxima", "autor": "asistente"})
 
     def _estado(self, estado: str):
         mensaje = {"tipo": "estado", "estado": estado}

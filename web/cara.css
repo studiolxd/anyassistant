@@ -58,3 +58,5 @@ html, body {
 #subtitulos p:last-child { font-size: 1.5em; color: #fff; }
 #ojo.dormido { background: #1d4f3c; }
 #ojo.despierto { background: #3d9; }
+#subtitulos p.asistente { color: #4a8a99; font-style: italic; }
+#subtitulos p.asistente:last-child { color: #7cd3e8; }

@@ -167,14 +167,15 @@ function mensaje(m) {
       : TEXTOS[m.estado] || m.estado;
     ojo.className = 'conectado ' + m.estado;
   } else if (m.tipo === 'texto') {
-    subtitulo(m.texto, m.tiempos);
+    subtitulo(m.texto, m.tiempos, m.autor);
   }
 }
 
-function subtitulo(texto, tiempos) {
+function subtitulo(texto, tiempos, autor) {
   var lista = document.getElementById('subtitulos');
   var p = document.createElement('p');
   p.textContent = texto;
+  if (autor === 'asistente') p.className = 'asistente';
   if (tiempos) p.title = tiempos.stt_ms + ' ms';
   lista.appendChild(p);
   while (lista.children.length > 3) lista.removeChild(lista.firstChild);
