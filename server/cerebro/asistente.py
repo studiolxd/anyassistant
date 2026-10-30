@@ -14,19 +14,25 @@ import time
 
 from audio import normalizar
 from cerebro.transcriptor import Transcriptor
+from texto import normalizar as palabras
 
 log = logging.getLogger("asistente")
 
-GUARDA = 0.6  # segundos sordo tras hablar: latencia hasta el altavoz + eco de la sala
+# Segundos sordo tras hablar (--eco): lo que tarda su voz en ir a la tablet,
+# sonar y volver por el micro, más el eco de la sala. Con 0,6 s en la tablet se
+# colaba la última palabra («…¿necesitas algo más?» → «¿Algo más?»).
+GUARDA = 1.2
+ECO_MAXIMO = 5  # palabras: un eco es un trozo corto de lo que acaba de decir
+ECO_RECIENTE = 6  # segundos tras hablar en los que se busca su eco (luego ya no)
 FIN_DE_FRASE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
 
 
-def crear(stt, llm, tts=None, despertador=None, oido=None):
+def crear(stt, llm, tts=None, despertador=None, oido=None, guarda=GUARDA):
     """Devuelve la fábrica cerebro(altavoz, enviar) que espera Sesion."""
 
     def cerebro(altavoz, enviar):
         return Asistente(
-            stt, despertador() if despertador else None, llm, tts, altavoz, enviar, oido
+            stt, despertador() if despertador else None, llm, tts, altavoz, enviar, oido, guarda
         )
 
     return cerebro
@@ -39,8 +45,10 @@ def partir(texto: str) -> tuple[list[str], str]:
 
 
 class Asistente(Transcriptor):
-    def __init__(self, stt, despertador, llm, tts, altavoz, enviar, oido=None):
+    def __init__(self, stt, despertador, llm, tts, altavoz, enviar, oido=None, guarda=GUARDA):
         super().__init__(stt, despertador, altavoz, enviar, oido, sordo=self._sordo)
+        self.guarda = guarda
+        self.dicho = []  # palabras de lo último que ha dicho, para reconocer su eco
         self.llm = llm
         self.tts = tts
         self.turno = asyncio.Lock()  # una respuesta cada vez, en orden
@@ -51,7 +59,15 @@ class Asistente(Transcriptor):
             asyncio.ensure_future(self._boca())
 
     def _sordo(self) -> bool:
-        return self.altavoz.hablando or time.time() - self.altavoz.ultimo_sonido < GUARDA
+        return self.altavoz.hablando or time.time() - self.altavoz.ultimo_sonido < self.guarda
+
+    def _es_eco(self, texto: str) -> bool:
+        """Un trozo corto de lo último que ha dicho: su propia voz colándose por el micro."""
+        if time.time() - self.altavoz.ultimo_sonido > ECO_RECIENTE:
+            return False
+        oidas = palabras(texto)
+        dichas = " ".join(self.dicho)
+        return 0 < len(oidas) <= ECO_MAXIMO and f" {' '.join(oidas)} " in f" {dichas} "
 
     def al_conectar(self):
         super().al_conectar()
@@ -72,6 +88,9 @@ class Asistente(Transcriptor):
         asyncio.ensure_future(self.llm.nueva())
 
     def _oido(self, texto: str, tiempos: dict):
+        if self._es_eco(texto):
+            log.info("eco descartado: «%s»", texto)
+            return
         super()._oido(texto, tiempos)
         asyncio.ensure_future(self._responder(texto))
 
@@ -105,6 +124,7 @@ class Asistente(Transcriptor):
             }
             self.enviar({**mensaje, "texto": respuesta, "parcial": False, "tiempos": tiempos})
             log.info("«%s» %s", respuesta, tiempos)
+            self.dicho = palabras(respuesta)
             if not self.tts and self.cortada != numero:
                 self._estado(self.oido.en_espera)
 

@@ -152,8 +152,12 @@ y `--llm mi-llm [--llm-modelo …]`.
 ## Voz (TTS)
 
 Cada frase de la respuesta se sintetiza en cuanto se completa y suena mientras
-llega la siguiente. Mientras habla no escucha (y 0,6 s más, por el eco); tocar la
-pantalla lo calla. El volumen se normaliza al máximo.
+llega la siguiente. Tocar la pantalla lo calla. El volumen se normaliza al máximo.
+
+Para no oírse a sí mismo: mientras habla no escucha, ni durante `--eco` segundos
+después (1,2 por defecto: su voz tarda en ir a la tablet, sonar y volver por el
+micro). Y si aun así lo que oye en los segundos siguientes es un trozo corto de lo
+que acaba de decir («¿Algo más?» tras «¿Necesitas algo más?»), lo descarta.
 
 Dos plugins con las voces de macOS (Mónica por defecto; `say -v '?' | grep es_`
 para ver otras):

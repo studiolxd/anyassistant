@@ -113,6 +113,7 @@ def main():
     parser.add_argument("--tts", default="avspeech", help=f"voz: {', '.join(tts.disponibles())} o ninguno")
     parser.add_argument("--voz", default=None, help="voz del plugin (macos: Mónica, Eddy…)")
     parser.add_argument("--velocidad", type=int, default=None, help="palabras por minuto")
+    parser.add_argument("--eco", type=float, default=1.2, help="segundos sin escuchar tras hablar")
     parser.add_argument("--idioma", default="es")
     parser.add_argument(
         "--despertar",
@@ -155,7 +156,7 @@ def main():
                     voz.cerrar()
 
                 cerrar_al_salir.append(cerrar_voz)
-            fabrica_cerebro = asistente.crear(motor, modelo, voz, despertador, oido)
+            fabrica_cerebro = asistente.crear(motor, modelo, voz, despertador, oido, args.eco)
             cerrar_al_salir.append(modelo.cerrar)
         else:
             fabrica_cerebro = transcriptor.crear(motor, despertador, oido)
