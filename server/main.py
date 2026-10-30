@@ -14,6 +14,9 @@
 import argparse
 import asyncio
 import logging
+import os
+import signal
+import sys
 import uuid
 from pathlib import Path
 
@@ -31,6 +34,7 @@ WEB = Path(__file__).resolve().parent.parent / "web"
 sesiones: dict[str, Sesion] = {}
 fabrica_cerebro = Loro  # lo fija main() según --modo
 cerrar_al_salir = []  # corrutinas a esperar al parar (procesos de los plugins)
+reiniciar = False  # SIGHUP («Reiníciate» por voz): parar limpio y volver a arrancar
 
 
 async def offer(request: web.Request) -> web.Response:
@@ -95,10 +99,14 @@ async def sin_cache(request: web.Request, handler):
 
 
 async def al_cerrar(app: web.Application):
-    for sesion in sesiones.values():
-        await sesion.cerrar()
-    for cerrar in cerrar_al_salir:
-        await cerrar()
+    # Con tiempo máximo: si algo se cuelga al cerrar, el proceso no debe quedarse
+    # vivo (y «Reiníciate» no volvería nunca).
+    pasos = [sesion.cerrar() for sesion in sesiones.values()] + [cerrar() for cerrar in cerrar_al_salir]
+    for paso in pasos:
+        try:
+            await asyncio.wait_for(paso, 5)
+        except Exception as e:
+            logging.warning("al cerrar: %r", e)
 
 
 def main():
@@ -172,7 +180,20 @@ def main():
     app.router.add_get("/estado", estado)
     app.router.add_static("/web/", WEB)
     app.on_shutdown.append(al_cerrar)
-    web.run_app(app, host=args.host, port=args.port)
+    async def escuchar_sighup(app):
+        def al_sighup():
+            global reiniciar
+            reiniciar = True
+            raise web.GracefulExit()  # como Ctrl+C: cierra sesiones y plugins
+
+        asyncio.get_running_loop().add_signal_handler(signal.SIGHUP, al_sighup)
+
+    app.on_startup.append(escuchar_sighup)
+    # shutdown_timeout corto: el monitor de la cámara (/video.mjpeg) nunca acaba solo.
+    web.run_app(app, host=args.host, port=args.port, shutdown_timeout=3)
+    if reiniciar:
+        logging.info("reiniciando…")
+        os.execv(sys.executable, [sys.executable, *sys.argv])
 
 
 if __name__ == "__main__":

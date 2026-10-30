@@ -26,7 +26,11 @@ Tienes herramientas para consultar servicios del usuario: úsalas cuando hagan
 falta y resume el resultado en una o dos frases para decirlas en voz alta.
 Para acciones que modifican datos no pidas confirmación por tu cuenta: el sistema
 la pide solo. Pregunta únicamente si no está claro qué hacer (qué correos, qué
-día…); si está claro, llama directamente a la herramienta."""
+día…); si está claro, llama directamente a la herramienta.
+Si una herramienta dice que no está autorizada o que hay que iniciar sesión, explica
+cómo arreglarlo en el proyecto de Jarvis (no en claude.ai): Holded y otros MCP, con
+«claude» en la carpeta del proyecto y /mcp; Google, con bin/gog-autorizar. Después
+basta con decirte «recarga las herramientas»."""
 
 
 # Si va a usar una herramienta sin haber dicho nada, para que no haya silencio
@@ -44,10 +48,7 @@ class Claude(LLM):
     def __init__(self, modelo=None, mcp=None):
         super().__init__(modelo or "sonnet", mcp or str(MCP_JSON))
         VACIO.mkdir(parents=True, exist_ok=True)
-        self._permisos = permisos.cargar(RAIZ, Path(self.mcp))
-        self._instrucciones = INSTRUCCIONES_CLAUDE
-        if self._permisos.herramientas:
-            self._instrucciones += INSTRUCCIONES_MCP + self._permisos.instrucciones
+        self._cargar_permisos()
         self._proceso = None
         self._turno = asyncio.Lock()
 
@@ -85,9 +86,17 @@ class Claude(LLM):
     async def cerrar(self):
         await self._cerrar()
 
+    def _cargar_permisos(self):
+        """Lee .mcp.json y permisos.json: en cada conversación, para coger cambios sin reiniciar."""
+        self._permisos = permisos.cargar(RAIZ, Path(self.mcp))
+        self._instrucciones = INSTRUCCIONES_CLAUDE
+        if self._permisos.herramientas:
+            self._instrucciones += INSTRUCCIONES_MCP + self._permisos.instrucciones
+
     async def nueva(self):
         async with self._turno:
             await self._cerrar()
+            self._cargar_permisos()
             await self._arrancar()
 
     async def responder(self, texto: str):

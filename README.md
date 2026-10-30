@@ -110,6 +110,17 @@ class MiMotor(Despertador):
 
 y `--despertar mi-motor [--palabra …]`. `server/plugins.py` es el registro común.
 
+## Órdenes de voz del sistema
+
+Las atiende el servidor directamente, sin pasar por el LLM:
+
+- **«Apágate»** / «Duérmete»: vuelve a dormir hasta el próximo «Hey Jarvis».
+- **«Recarga las herramientas»**: vuelve a leer `.mcp.json` y `permisos.json` y arranca
+  el LLM de nuevo (tras autorizar o reautorizar un MCP). También se releen solos en
+  cada «Hey Jarvis».
+- **«Reiníciate»**: reinicia el servidor entero (por ejemplo, tras cambiar el código);
+  la tablet se reconecta sola en unos segundos.
+
 ## Fase 3 · Respuestas (LLM)
 
 Lo que dices va al LLM y la respuesta aparece en pantalla según se genera.

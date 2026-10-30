@@ -62,5 +62,9 @@ class LLM:
     def responder(self, texto: str) -> AsyncIterator[str]:
         raise NotImplementedError
 
+    async def recargar(self):
+        """Vuelve a leer su configuración (permisos, herramientas) y empieza de nuevo."""
+        await self.nueva()
+
     async def cerrar(self):
         """Al parar el servidor: libera procesos o conexiones."""

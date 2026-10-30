@@ -10,7 +10,9 @@ siguiente. Mientras habla no escucha; tocar la pantalla lo calla.
 import asyncio
 import json
 import logging
+import os
 import re
+import signal
 import time
 from pathlib import Path
 
@@ -36,6 +38,18 @@ CONFIRMAR = Path(__file__).resolve().parents[2] / ".build" / "confirmar"
 SI = {"si", "vale", "adelante", "hazlo", "confirmo", "claro", "correcto", "dale", "ok", "okay",
       "venga", "perfecto", "exacto", "afirmativo", "confirmado", "por", "favor"}
 NO = {"no", "espera", "cancela", "cancelar", "para", "nada", "tampoco", "mejor"}
+
+
+def orden_de_sistema(texto: str) -> str | None:
+    """«Recarga las herramientas» → "recargar"; «Reiníciate» → "reiniciar". Solo órdenes cortas."""
+    oidas = palabras(texto)
+    if not 0 < len(oidas) <= 5:
+        return None
+    if any(p.startswith("recarg") for p in oidas):
+        return "recargar"
+    if any(p in ("reiniciate", "reinicia", "reiniciar", "reinicio") for p in oidas):
+        return "reiniciar"
+    return None
 
 
 def es_si(texto: str) -> bool:
@@ -114,8 +128,34 @@ class Asistente(Transcriptor):
             log.info("eco descartado: «%s»", texto)
             return
         self._confirmar(texto)
+        orden = orden_de_sistema(texto)
+        if orden:
+            Transcriptor._oido(self, texto, tiempos)  # se ve en pantalla, pero no va al LLM
+            asyncio.ensure_future(self._orden(orden))
+            return
         super()._oido(texto, tiempos)
         asyncio.ensure_future(self._responder(texto))
+
+    async def _orden(self, orden: str):
+        if orden == "recargar":
+            log.info("recargando herramientas")
+            await self.llm.recargar()
+            self._decir("Listo, he recargado las herramientas.")
+        else:
+            log.info("reiniciando el servidor")
+            self._decir("Me reinicio. Vuelvo en unos segundos.")
+            await asyncio.sleep(3)  # que dé tiempo a decirlo
+            os.kill(os.getpid(), signal.SIGHUP)  # main.py lo trata como «reiníciate»
+
+    def _decir(self, texto: str):
+        """Una frase fija del sistema: a la pantalla y, si hay voz, al altavoz."""
+        self.numero += 1
+        self.enviar({"tipo": "texto", "autor": "asistente", "id": self.numero, "texto": texto, "parcial": False})
+        if self.tts:
+            self.frases.put_nowait((self.numero, texto))
+            self.frases.put_nowait((self.numero, None))
+        else:
+            self._estado(self.oido.en_espera)
 
     def _confirmar(self, texto: str):
         """Si hay una acción esperando el «sí» del usuario, la autoriza o la cancela."""
