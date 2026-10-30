@@ -111,6 +111,10 @@ class Claude(LLM):
                     if delta.get("type") == "text_delta":
                         dicho = True
                         yield delta["text"]
+                    elif bloque.get("type") == "text" and dicho:
+                        # Texto nuevo tras una herramienta: sin el espacio se pegaba
+                        # al anterior («…contactos.Tienes 72…»).
+                        yield " "
                     elif bloque.get("type") == "tool_use":
                         log.info("herramienta: %s", bloque.get("name"))
                         if not dicho:
