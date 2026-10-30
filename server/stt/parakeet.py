@@ -1,11 +1,12 @@
-"""Parakeet TDT v3 de NVIDIA en MLX: multilingüe (español incluido) y mucho más
-rápido que Whisper con frases cortas, porque no rellena el audio hasta 30 s.
+"""NVIDIA's Parakeet TDT v3 on MLX: multilingual and much faster than Whisper on
+short sentences, because it doesn't pad the audio to 30 s.
 
-Detecta el idioma solo y no se le puede forzar: con frases cortas o voces raras
-a veces se va al inglés («¿Qué hora es?» → «Koda is a very good idea»). Si el
-resultado parece de otro idioma y se pidió español, esa frase se repite con
-Whisper (--stt-modelo no le afecta; el respaldo es RESPALDO); y si Whisper
-devuelve una de sus alucinaciones típicas («Gracias.»), se descarta.
+It detects the language by itself and cannot be forced: with short sentences or
+odd voices it sometimes drifts into English («¿Qué hora es?» → «Koda is a very
+good idea»). If the result looks like another language than the one requested,
+that sentence is redone with Whisper (FALLBACK; --stt-model doesn't affect it);
+and if Whisper returns one of its typical hallucinations for that language
+(locale stt.fallback_hallucinations, e.g. «Gracias.»), it is dropped.
 """
 
 import logging
@@ -13,63 +14,62 @@ import re
 
 import numpy as np
 
-from stt import GPU, Transcriptor, registrar
-from texto import normalizar
+import i18n
+from stt import GPU, Transcriber, register
+from text import words
 
 log = logging.getLogger("stt")
 
-RESPALDO = "mlx-community/whisper-large-v3-turbo"
-# Palabras muy inglesas y nada españolas (sin «a», «me», «no»…, que lo son las dos).
-INGLES = {
+FALLBACK = "mlx-community/whisper-large-v3-turbo"
+# Very English words that are not words in other languages (no «a», «me», «no»…).
+ENGLISH = {
     "the", "is", "are", "was", "i", "you", "it", "its", "of", "and", "to", "this",
     "that", "very", "good", "done", "idea", "what", "okay", "yeah", "oh", "hmm",
     "mm", "so", "my", "we", "they", "be", "do", "have", "with", "for", "on", "in",
     "see", "yes", "true", "s",  # «That's» → that + s
 }
-# Lo que Whisper se inventa con ruido en español: si Parakeet no entendió nada y
-# Whisper devuelve esto, es que no había nada que entender.
-ALUCINACIONES = {"gracias", "muchas gracias", "gracias por ver", "subtitulos realizados por la comunidad de amara org"}
 
 
-def parece_ingles(texto: str) -> bool:
-    """Inglés o, en general, no español: «That's true.», «See», «tři»."""
-    if re.search(r"[^\W\d_a-záéíóúüñ]", texto.lower()):
-        return True  # letras que no existen en español («ř», «ø»…)
-    palabras = normalizar(texto)
-    return bool(palabras) and sum(p in INGLES for p in palabras) / len(palabras) >= 0.3
+def wrong_language(text: str) -> bool:
+    """English or, more generally, not the active language: «That's true.», «See», «tři»."""
+    letters = re.escape(i18n.L("stt.letters"))
+    if re.search(rf"[^\W\d_a-z{letters}]", text.lower()):
+        return True  # letters the language doesn't have («ř», «ø»…)
+    found = words(text)
+    return bool(found) and sum(w in ENGLISH for w in found) / len(found) >= 0.3
 
 
-@registrar("parakeet")
-class Parakeet(Transcriptor):
-    def __init__(self, idioma="es", modelo=None):
-        super().__init__(idioma, modelo or "mlx-community/parakeet-tdt-0.6b-v3")
+@register("parakeet")
+class Parakeet(Transcriber):
+    def __init__(self, language="en", model=None):
+        super().__init__(language, model or "mlx-community/parakeet-tdt-0.6b-v3")
         import mlx.core as mx
         from parakeet_mlx import from_pretrained
         from parakeet_mlx.audio import get_logmel
 
         self._mx = mx
         self._logmel = get_logmel
-        self._modelo = from_pretrained(self.modelo)
+        self._model = from_pretrained(self.model)
 
-    def calentar(self):
-        super().calentar()
-        if self.idioma != "en":
-            self._respaldo(np.zeros(8000, dtype=np.float32))
+    def warm_up(self):
+        super().warm_up()
+        if self.language != "en":
+            self._fallback(np.zeros(8000, dtype=np.float32))
 
-    def transcribir(self, audio: np.ndarray) -> str:
+    def transcribe(self, audio: np.ndarray) -> str:
         with GPU:
-            mel = self._logmel(self._mx.array(audio), self._modelo.preprocessor_config)
-            texto = self._modelo.generate(mel)[0].text.strip()
-        if self.idioma != "en" and parece_ingles(texto):
-            corregido = self._respaldo(audio)
-            if " ".join(normalizar(corregido)) in ALUCINACIONES:
-                log.info("parakeet: «%s»; Whisper se lo inventa («%s»): descartado", texto, corregido)
+            mel = self._logmel(self._mx.array(audio), self._model.preprocessor_config)
+            text = self._model.generate(mel)[0].text.strip()
+        if self.language != "en" and wrong_language(text):
+            corrected = self._fallback(audio)
+            if " ".join(words(corrected)) in i18n.L.list("stt.fallback_hallucinations"):
+                log.info("parakeet: «%s»; Whisper made it up («%s»): dropped", text, corrected)
                 return ""
-            log.info("parakeet se fue a otro idioma («%s»); con Whisper: «%s»", texto, corregido)
-            return corregido
-        return texto
+            log.info("parakeet drifted to another language («%s»); with Whisper: «%s»", text, corrected)
+            return corrected
+        return text
 
-    def _respaldo(self, audio: np.ndarray) -> str:
-        from stt.mlx_whisper import transcribir_mlx
+    def _fallback(self, audio: np.ndarray) -> str:
+        from stt.mlx_whisper import transcribe_mlx
 
-        return transcribir_mlx(audio, RESPALDO, self.idioma)
+        return transcribe_mlx(audio, FALLBACK, self.language)

@@ -1,7 +1,7 @@
 [project]
-name = "nexus-voz"
+name = "jarvis"
 version = "0.1.0"
-description = "Nexus 4 como ojos, boca y oídos de un asistente que corre en el Mac"
+description = "An old phone or tablet as the eyes, mouth and ears of a voice assistant running on the Mac"
 requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.9",

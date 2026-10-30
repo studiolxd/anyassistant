@@ -1,7 +1,7 @@
-"""Audio en PCM mono 16 bits a 48 kHz, en trozos de 20 ms.
+"""Audio as 16-bit mono PCM at 48 kHz, in 20 ms chunks.
 
-- a_mono: convierte lo que llega del micro (Opus decodificado) a ese formato.
-- Altavoz: pista de salida; reproduce lo que se le encole y silencio si no hay nada.
+- to_mono: converts what arrives from the microphone (decoded Opus) to that format.
+- Speaker: the outgoing track; plays whatever is queued, silence otherwise.
 """
 
 import asyncio
@@ -12,74 +12,74 @@ import numpy as np
 from aiortc import MediaStreamTrack
 from av import AudioFrame
 
-TASA = 48000
-MUESTRAS = 960  # 20 ms
+RATE = 48000
+SAMPLES = 960  # 20 ms
 
 
-def a_mono(frame) -> np.ndarray:
-    datos = frame.to_ndarray()
-    canales = len(frame.layout.channels)
+def to_mono(frame) -> np.ndarray:
+    data = frame.to_ndarray()
+    channels = len(frame.layout.channels)
     if frame.format.is_planar:
-        mono = datos.mean(axis=0)
+        mono = data.mean(axis=0)
     else:
-        mono = datos.reshape(-1, canales).mean(axis=1)
+        mono = data.reshape(-1, channels).mean(axis=1)
     return mono.astype(np.int16)
 
 
-class Altavoz(MediaStreamTrack):
+class Speaker(MediaStreamTrack):
     kind = "audio"
 
     def __init__(self):
         super().__init__()
-        self._cola = np.zeros(0, dtype=np.int16)
-        self._inicio = None
+        self._queue = np.zeros(0, dtype=np.int16)
+        self._start = None
         self._pts = 0
-        self.ultimo_sonido = 0.0  # cuándo salió la última muestra con sonido
+        self.last_sound = 0.0  # when the last non-silent sample went out
 
     @property
-    def hablando(self) -> bool:
-        return len(self._cola) > 0
+    def speaking(self) -> bool:
+        return len(self._queue) > 0
 
-    def reproducir(self, pcm: np.ndarray):
-        self._cola = np.concatenate([self._cola, pcm.astype(np.int16)])
+    def play(self, pcm: np.ndarray):
+        self._queue = np.concatenate([self._queue, pcm.astype(np.int16)])
 
-    def callar(self):
-        self._cola = np.zeros(0, dtype=np.int16)
+    def stop(self):
+        self._queue = np.zeros(0, dtype=np.int16)
 
     async def recv(self) -> AudioFrame:
-        if self._inicio is None:
-            self._inicio = time.time()
-        espera = self._inicio + self._pts / TASA - time.time()
-        if espera > 0:
-            await asyncio.sleep(espera)
+        if self._start is None:
+            self._start = time.time()
+        wait = self._start + self._pts / RATE - time.time()
+        if wait > 0:
+            await asyncio.sleep(wait)
 
-        trozo, self._cola = self._cola[:MUESTRAS], self._cola[MUESTRAS:]
-        if len(trozo):
-            self.ultimo_sonido = time.time()
-        if len(trozo) < MUESTRAS:
-            trozo = np.pad(trozo, (0, MUESTRAS - len(trozo)))
+        chunk, self._queue = self._queue[:SAMPLES], self._queue[SAMPLES:]
+        if len(chunk):
+            self.last_sound = time.time()
+        if len(chunk) < SAMPLES:
+            chunk = np.pad(chunk, (0, SAMPLES - len(chunk)))
 
-        frame = AudioFrame.from_ndarray(trozo.reshape(1, -1), format="s16", layout="mono")
-        frame.sample_rate = TASA
+        frame = AudioFrame.from_ndarray(chunk.reshape(1, -1), format="s16", layout="mono")
+        frame.sample_rate = RATE
         frame.pts = self._pts
-        frame.time_base = fractions.Fraction(1, TASA)
-        self._pts += MUESTRAS
+        frame.time_base = fractions.Fraction(1, RATE)
+        self._pts += SAMPLES
         return frame
 
 
-def pitido(bajando: bool = False) -> np.ndarray:
-    """Dos notas cortas: subiendo, «te escucho»; bajando, «me duermo»."""
-    notas = []
-    for frecuencia in (1320, 880) if bajando else (880, 1320):
-        t = np.arange(int(0.09 * TASA)) / TASA
-        envolvente = np.minimum(1, np.minimum(t, t[::-1]) / 0.01)  # sin chasquidos
-        notas.append(np.sin(2 * np.pi * frecuencia * t) * envolvente * 0.5 * 32767)
-    return np.concatenate(notas).astype(np.int16)
+def beep(falling: bool = False) -> np.ndarray:
+    """Two short notes: rising means «I'm listening»; falling, «going to sleep»."""
+    notes = []
+    for frequency in (1320, 880) if falling else (880, 1320):
+        t = np.arange(int(0.09 * RATE)) / RATE
+        envelope = np.minimum(1, np.minimum(t, t[::-1]) / 0.01)  # no clicks
+        notes.append(np.sin(2 * np.pi * frequency * t) * envelope * 0.5 * 32767)
+    return np.concatenate(notes).astype(np.int16)
 
 
-def normalizar(pcm: np.ndarray, pico: float = 0.95) -> np.ndarray:
-    """Sube (o baja) el volumen hasta que el pico llegue a `pico` de la escala."""
-    maximo = np.abs(pcm).max() if len(pcm) else 0
-    if not maximo:
+def normalize(pcm: np.ndarray, peak: float = 0.95) -> np.ndarray:
+    """Raises (or lowers) the volume until the peak reaches `peak` of full scale."""
+    maximum = np.abs(pcm).max() if len(pcm) else 0
+    if not maximum:
         return pcm
-    return np.clip(pcm.astype(np.float32) * (pico * 32767 / maximo), -32768, 32767).astype(np.int16)
+    return np.clip(pcm.astype(np.float32) * (peak * 32767 / maximum), -32768, 32767).astype(np.int16)

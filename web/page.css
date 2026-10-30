@@ -1,0 +1,64 @@
+/* The page: start button, layout, texts and clock. The faces are in faces.css. */
+
+:root {
+  --green: #3ddc97;
+  --green-dim: #1d4f3c;
+  --amber: #e0b54a;
+  --blue: #5bc6e8;
+  --violet: #a98cf0;
+  --red: #e05555;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  color: #ccc;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+#start {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;  /* no `inset`: Chrome 81 doesn't have it */
+  margin: auto;
+  width: 60%;
+  height: 20%;
+  font-size: 2em;
+  background: #222;
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 12px;
+}
+
+#screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#screen[hidden] { display: none; }
+
+#status { font-size: 1.4em; margin: 1.2em 0 0; color: #888; }
+#stats { font-size: 0.9em; color: #555; font-family: monospace; }
+
+#captions {
+  width: 90%;
+  min-height: 7em;
+  margin-top: 0.6em;
+  text-align: center;
+}
+#captions p { margin: 0.3em 0; font-size: 1.1em; color: #666; }
+#captions p:last-child { font-size: 1.5em; color: #fff; }
+#captions p.assistant { color: #4a8a99; font-style: italic; }
+#captions p.assistant:last-child { color: #7cd3e8; }
+
+/* Clock: only while asleep; the face stays small below it. */
+#clock { display: none; text-align: center; color: #3f7f6a; }
+#time { margin: 0; font-size: 24vmin; font-weight: 200; line-height: 1; }
+#date { margin: 1vmin 0 4vmin; font-size: 5vmin; }
+body[data-state="asleep"] #clock { display: block; }
+body[data-state="asleep"] #captions,
+body[data-state="asleep"] #stats { display: none; }

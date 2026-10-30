@@ -1,40 +1,42 @@
 # TODO
 
-## Antes del uso diario
+## Before daily use
 
-- [ ] **Emparejamiento**: ahora cualquiera en la Wi-Fi puede conectarse y usar Jarvis
-  (que ya puede enviar correos y borrar). Un código que la tablet guarda la primera
-  vez y sin el que el servidor no acepta conexiones.
-- [ ] **Servicio de macOS (launchd)**: que el servidor arranque solo con el Mac y se
-  reinicie si falla. De momento, a mano con `bin/jarvis arrancar|parar|reiniciar|estado|log`.
-- [ ] **Dejar de grabar**: quitar `--grabar` del arranque habitual y borrar las
-  grabaciones de depuración.
+- [ ] **Pairing**: right now anyone on the Wi-Fi can connect and use Jarvis (which
+  can already send emails and delete things). A code the tablet stores the first
+  time, without which the server refuses connections.
+- [ ] **macOS service (launchd)**: start the server with the Mac and restart it if
+  it fails. For now, by hand with `bin/jarvis start|stop|restart|status|log`.
+- [ ] **Stop recording**: `--record` is no longer used by default; delete the old
+  debugging recordings.
 
-## Calidad de la conversación
+## Conversation quality
 
-- [ ] **Interrumpir por voz** («Jarvis, para») mientras habla; hoy solo tocando la
-  pantalla. Difícil con la cancelación de eco de la tablet.
-- [ ] **Latencia** (~2–3 s, casi todo hasta la primera frase de Claude): arrancar el
-  proceso antes, Haiku para respuestas cortas…
-- [ ] **Palabra de activación**: vigilar falsos positivos y negativos; quizá un nombre
-  en español.
+- [ ] **Interrupt by voice** («Jarvis, stop») while it speaks; today only by tapping
+  the screen. Hard with the tablet's echo cancellation.
+- [ ] **Latency** (~2–3 s, mostly until Claude's first sentence): start the process
+  earlier, Haiku for short answers…
+- [ ] **Wake word**: watch false positives and negatives; maybe a name in the
+  user's language.
 
-## Funciones
+## Features
 
-- [ ] **Ojos (Fase 4)**: mirar por la cámara cuando se pida («¿qué ves?», «lee esto»).
-- [ ] **Memoria entre conversaciones** con Claude (Hermes ya la tiene).
-- [x] **Cara**: «ojos» (por defecto) y «orbe» (`?cara=orbe`), reloj al dormir, estado
-  «pregunta»; `?demo` recorre los estados sin conectar. Falta elegir una.
-- [ ] **App nativa Android**: arranque al encender, pantalla apagada (Fase 6).
+- [ ] **Eyes (Phase 4)**: look through the camera when asked («what do you see?», «read this»).
+- [ ] **Memory across conversations** with Claude (Hermes already has it).
+- [x] **Face**: «eyes» (default) and «orb» (`?face=orb`), clock while asleep,
+  «question» state; `?demo` cycles through the states without connecting. One
+  still has to be chosen.
+- [ ] **Native Android app**: start at boot, screen off (Phase 6).
+- [x] **Languages**: English base and Spanish in `locales/`; detected from the Mac.
 
-## Mantenimiento
+## Maintenance
 
-- [ ] **Pruebas automáticas** en el repositorio (las de ahora son scripts sueltos).
+- [ ] **Automated tests** in the repository (today they are loose scripts).
 
-## Pendiente de hacer a mano
+## To do by hand
 
-- [ ] Reautorizar **Holded**: `claude` en la carpeta del proyecto → `/mcp` → holded.
-- [ ] **Publicar la app de Google** (Google Auth Platform → Público) para que la
-  autorización no caduque cada 7 días; luego `bin/gog-autorizar` otra vez.
-- [ ] **IP fija para el Mac** (Wi-Fi → Detalles → Dirección privada: Fija, o reserva
-  DHCP en el router).
+- [ ] Re-authorize **Holded**: `claude` in the project folder → `/mcp` → holded.
+- [ ] **Publish the Google app** (Google Auth Platform → Audience) so the
+  authorization doesn't expire every 7 days; then `bin/gog-authorize` again.
+- [ ] **Fixed IP for the Mac** (Wi-Fi → Details → Private address: Fixed, or a DHCP
+  reservation on the router).

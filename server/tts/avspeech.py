@@ -1,8 +1,8 @@
-"""Las voces de macOS con AVSpeechSynthesizer, que se queda cargado (~50 ms por frase).
+"""macOS voices through AVSpeechSynthesizer, which stays loaded (~50 ms per sentence).
 
-Mismas voces que `say` (Mónica, Eddy, Reed…). Si en Ajustes → Accesibilidad →
-Contenido leído se descarga la versión mejorada de una voz, la usa.
-Habla con avspeech_puente.swift, que se compila la primera vez en .build/.
+Same voices as `say`. If the enhanced version of a voice is downloaded (System
+Settings → Accessibility → Spoken Content), it uses it.
+Talks to avspeech_bridge.swift, built the first time into .build/.
 """
 
 import base64
@@ -14,36 +14,37 @@ from pathlib import Path
 import numpy as np
 from scipy.signal import resample_poly
 
-from swift import compilar
-from tts import TASA, Voz, registrar
+import i18n
+from swift import build
+from tts import RATE, Voice, register
 
 
-@registrar("avspeech")
-class AVSpeech(Voz):
-    def __init__(self, voz=None, velocidad=None):
-        super().__init__(voz or "Mónica", velocidad)
-        binario = compilar(Path(__file__).with_name("avspeech_puente.swift"), "avspeech-puente")
-        self._proceso = subprocess.Popen(
-            [str(binario)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True
+@register("avspeech")
+class AVSpeech(Voice):
+    def __init__(self, voice=None, rate=None):
+        super().__init__(voice, rate)
+        binary = build(Path(__file__).with_name("avspeech_bridge.swift"), "avspeech-bridge")
+        self._process = subprocess.Popen(
+            [str(binary)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True
         )
-        self._turno = threading.Lock()  # sintetizar() se llama desde hilos
+        self._turn = threading.Lock()  # synthesize() is called from threads
 
-    def sintetizar(self, texto: str) -> np.ndarray:
-        orden = {"texto": texto, "voz": self.voz}
-        if self.velocidad:
-            orden["velocidad"] = self.velocidad
-        with self._turno:
-            self._proceso.stdin.write(json.dumps(orden) + "\n")
-            self._proceso.stdin.flush()
-            respuesta = json.loads(self._proceso.stdout.readline())
-        if "error" in respuesta:
-            raise RuntimeError(respuesta["error"])
-        audio = np.frombuffer(base64.b64decode(respuesta["audio"]), dtype=np.float32)
-        tasa = round(respuesta["tasa"])
-        if tasa != TASA:
-            mcd = np.gcd(tasa, TASA)
-            audio = resample_poly(audio, TASA // mcd, tasa // mcd)
+    def synthesize(self, text: str) -> np.ndarray:
+        command = {"text": text, "voice": self.voice, "language": i18n.L("tts_language")}
+        if self.rate:
+            command["rate"] = self.rate
+        with self._turn:
+            self._process.stdin.write(json.dumps(command) + "\n")
+            self._process.stdin.flush()
+            answer = json.loads(self._process.stdout.readline())
+        if "error" in answer:
+            raise RuntimeError(answer["error"])
+        audio = np.frombuffer(base64.b64decode(answer["audio"]), dtype=np.float32)
+        sample_rate = round(answer["sample_rate"])
+        if sample_rate != RATE:
+            divisor = np.gcd(sample_rate, RATE)
+            audio = resample_poly(audio, RATE // divisor, sample_rate // divisor)
         return (np.clip(audio, -1, 1) * 32767).astype(np.int16)
 
-    def cerrar(self):
-        self._proceso.kill()
+    def close(self):
+        self._process.kill()

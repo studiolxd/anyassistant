@@ -1,23 +1,23 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-  <title>Nexus voz</title>
-  <link rel="stylesheet" href="/web/cara.css?v=16">
-  <link rel="stylesheet" href="/web/rostros.css?v=16">
+  <title>Jarvis</title>
+  <link rel="stylesheet" href="/web/page.css?v=17">
+  <link rel="stylesheet" href="/web/faces.css?v=17">
 </head>
 <body>
-  <button id="empezar">Empezar</button>
-  <div id="cara" hidden>
-    <div id="reloj"><p id="hora"></p><p id="fecha"></p></div>
-    <div id="rostro"></div>
-    <p id="estado">Conectando…</p>
-    <div id="subtitulos"></div>
-    <p id="datos"></p>
+  <button id="start" hidden></button>
+  <div id="screen" hidden>
+    <div id="clock"><p id="time"></p><p id="date"></p></div>
+    <div id="face"></div>
+    <p id="status"></p>
+    <div id="captions"></div>
+    <p id="stats"></p>
   </div>
-  <audio id="altavoz" autoplay></audio>
-  <script src="/web/rostro.js?v=16"></script>
-  <script src="/web/app.js?v=16"></script>
+  <audio id="speaker" autoplay></audio>
+  <script src="/web/face.js?v=17"></script>
+  <script src="/web/app.js?v=17"></script>
 </body>
 </html>

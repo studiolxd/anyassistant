@@ -1,0 +1,114 @@
+{
+  "language_name": "English",
+  "stt_language": "en",
+  "tts_voice": "Samantha",
+  "tts_language": "en-US",
+  "speech": {
+    "warm_up": "Hello.",
+    "wait": "One moment, let me check.",
+    "goodbye": "See you soon",
+    "reloaded": "Done, I've reloaded the tools.",
+    "restarting": "Restarting. I'll be back in a few seconds.",
+    "llm_failed": "Sorry, I couldn't answer.",
+    "connection_cut": "Sorry, I lost the connection to Claude.",
+    "no_login": "I'm not signed in to Claude: run slash login in Claude Code.",
+    "guardrail": "I'd rather not answer that.",
+    "hermes_down": "I can't reach Hermes: is its gateway running?",
+    "hermes_approval": "Hermes wants to do this: {action}. Shall I go ahead?"
+  },
+  "commands": {
+    "sleep": [
+      "sleep",
+      "goodnight"
+    ],
+    "reload": [
+      "reload"
+    ],
+    "restart": [
+      "restart",
+      "reboot"
+    ],
+    "yes": [
+      "yes",
+      "yeah",
+      "yep",
+      "sure",
+      "ok",
+      "okay",
+      "confirm",
+      "confirmed",
+      "correct",
+      "absolutely"
+    ],
+    "no": [
+      "no",
+      "nope",
+      "wait",
+      "cancel",
+      "stop",
+      "dont"
+    ]
+  },
+  "stt": {
+    "letters": "",
+    "hallucinations": [
+      "thanks for watching",
+      "thank you for watching",
+      "amara.org",
+      "please subscribe",
+      "mm-hmm"
+    ],
+    "fallback_hallucinations": []
+  },
+  "wake": {
+    "whisper_prompt": "The assistant's name is {name}."
+  },
+  "calendar": {
+    "days": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "now_style": "ampm",
+    "now_format": "{weekday}, {month} {day}, {year}, {hour}:{minute} {ampm}"
+  },
+  "ui": {
+    "start": "Start",
+    "connecting": "Connecting…",
+    "connected": "Connected",
+    "connection_lost": "Connection lost, retrying…",
+    "other_tab": "Open in another tab",
+    "no_media": "No microphone/camera: {error}. Did you enable the Chrome flag?",
+    "asleep": "Say “{wake}”",
+    "awake": "Listening",
+    "listening": "Listening",
+    "hearing": "Hearing…",
+    "transcribing": "Transcribing…",
+    "thinking": "Thinking…",
+    "speaking": "Speaking · tap to stop",
+    "question": "Yes or no?",
+    "recording": "Recording…",
+    "repeating": "Repeating",
+    "error": "Error",
+    "monitor_waiting": "Waiting for the phone…",
+    "monitor_connected": "Connected · {frames} frames received"
+  }
+}

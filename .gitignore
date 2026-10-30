@@ -3,7 +3,8 @@ __pycache__/
 *.wav
 .DS_Store
 .build/
+# Local configuration and secrets
 .mcp.json
-permisos.json
-google-cliente.json
+permissions.json
+google-client.json
 .gog/

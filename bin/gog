@@ -1,94 +1,94 @@
 #!/usr/bin/python3
-"""gog para Jarvis: Google (Gmail, Calendar, Drive, Docs, Sheets…) con la política de permisos.json.
+"""gog for Jarvis: Google (Gmail, Calendar, Drive, Docs, Sheets…) under permissions.json's policy.
 
-    "comandos": {"bin/gog": "lectura" | "todo" | ["gmail.search", "calendar.create", …]}
+    "commands": {"bin/gog": "read" | "all" | ["gmail.search", "calendar.create", …]}
 
-Siempre con el cliente «jarvis» (su propio depósito de tokens), la configuración
-en .gog/ dentro del proyecto y sin preguntar nada. Con "lectura" (o una lista
-solo de lectura) añade --readonly y --gmail-no-send. Con "todo" deja hacer todo
-salvo gestionar la sesión de gog (auth, login, logout…), copias, administración
-y actualizarse. Se niega si le intentan cambiar estas opciones. Las acciones que
-escriben, además, pasan por la confirmación de voz (bin/jarvis-confirmar).
+Always with the «jarvis» client (its own token store), the configuration in .gog/
+inside the project and never prompting. With "read" (or a read-only list) it adds
+--readonly and --gmail-no-send. With "all" it allows everything except managing
+gog's session (auth, login, logout…), backups, administration and self-updating.
+It refuses attempts to change these options. Actions that write also go through
+the voice confirmation (bin/jarvis-confirm).
 """
 
 import json
 import os
 import sys
 
-RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-YO = os.path.join(RAIZ, "bin", "gog")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ME = os.path.join(ROOT, "bin", "gog")
 
-LECTURA = [
+READ = [
     "gmail.search", "gmail.get", "gmail.labels.list",
     "calendar.calendars", "calendar.events", "calendar.event", "calendar.freebusy", "calendar.conflicts",
     "drive.ls", "drive.search", "drive.get", "drive.tree",
     "docs.cat", "docs.info", "sheets.get",
 ]
-NUNCA = {"auth", "login", "logout", "backup", "admin", "update", "config"}
-PROHIBIDAS = ("--enable-commands", "--enable-commands-exact", "--home", "--client", "--readonly",
-              "--no-readonly", "--gmail-no-send", "--access-token", "--account", "-a", "--no-input")
+NEVER = {"auth", "login", "logout", "backup", "admin", "update", "config"}
+FORBIDDEN = ("--enable-commands", "--enable-commands-exact", "--home", "--client", "--readonly",
+             "--no-readonly", "--gmail-no-send", "--access-token", "--account", "-a", "--no-input")
 
-AYUDA = f"""{YO}: Google con gog. Usa --plain para leer.
-  {YO} gmail search 'is:unread newer_than:7d' --max 10 --plain
-  {YO} gmail get <messageId> --plain
-  {YO} calendar events --today --all --plain   (también --tomorrow, --week, --from FECHA --days N, --query texto)
-  {YO} calendar calendars --plain
-  {YO} drive search 'texto' --max 10 --plain
-  {YO} drive ls --plain
-  {YO} docs cat <docId>
-  {YO} sheets get <spreadsheetId> 'Hoja1!A1:F30' --plain
-Las búsquedas de Gmail usan su sintaxis (from:, subject:, is:unread, after:2026/10/01…)."""
+HELP = f"""{ME}: Google through gog. Use --plain to read.
+  {ME} gmail search 'is:unread newer_than:7d' --max 10 --plain
+  {ME} gmail get <messageId> --plain
+  {ME} calendar events --today --all --plain   (also --tomorrow, --week, --from DATE --days N, --query text)
+  {ME} calendar calendars --plain
+  {ME} drive search 'text' --max 10 --plain
+  {ME} drive ls --plain
+  {ME} docs cat <docId>
+  {ME} sheets get <spreadsheetId> 'Sheet1!A1:F30' --plain
+Gmail searches use Gmail's syntax (from:, subject:, is:unread, after:2026/10/01…)."""
 
-AYUDA_ESCRITURA = f"""
-También puede escribir ({{}}). Mira las opciones con «{YO} <servicio> <orden> --help»; por ejemplo:
-  {YO} gmail send --to x@y.com --subject 'Asunto' --body 'Texto'
-  {YO} calendar create primary --summary 'Dentista' --from 2026-11-03T10:00 --to 2026-11-03T11:00
-  {YO} drive mkdir 'Carpeta'
-Antes de escribir, el sistema pide confirmación al usuario: si la llamada se bloquea
-por eso, pregúntale y, si dice que sí, repite exactamente la misma llamada."""
+HELP_WRITE = f"""
+It can also write ({{}}). See the options with «{ME} <service> <command> --help»; for example:
+  {ME} gmail send --to x@y.com --subject 'Subject' --body 'Text'
+  {ME} calendar create primary --summary 'Dentist' --from 2026-11-03T10:00 --to 2026-11-03T11:00
+  {ME} drive mkdir 'Folder'
+Before writing, the system asks the user for confirmation: if the call is blocked
+for that reason, ask them and, if they say yes, repeat exactly the same call."""
 
 
-def politica():
+def policy():
     try:
-        with open(os.path.join(RAIZ, "permisos.json")) as f:
-            comandos = json.load(f).get("comandos", {})
+        with open(os.path.join(ROOT, "permissions.json")) as f:
+            commands = json.load(f).get("commands", {})
     except (OSError, ValueError):
-        return "lectura"
-    if isinstance(comandos, dict):
-        return comandos.get("bin/gog", "lectura")
-    return "lectura"  # lista antigua: solo dice que se puede usar
+        return "read"
+    if isinstance(commands, dict):
+        return commands.get("bin/gog", "read")
+    return "read"  # a plain list only says it may be used
 
 
-def opciones(pol):
+def options(pol):
     base = ["--client", "jarvis", "--account", "auto", "--no-input"]
-    if pol == "todo":
+    if pol == "all":
         return base
-    ordenes = LECTURA if pol == "lectura" else list(pol)
-    base += ["--enable-commands-exact", ",".join(ordenes)]
-    if all(o in LECTURA for o in ordenes):
+    allowed = READ if pol == "read" else list(pol)
+    base += ["--enable-commands-exact", ",".join(allowed)]
+    if all(c in READ for c in allowed):
         base += ["--readonly", "--gmail-no-send"]
-    elif not any(o.startswith(("gmail.send", "gmail.reply", "gmail.forward", "send")) for o in ordenes):
+    elif not any(c.startswith(("gmail.send", "gmail.reply", "gmail.forward", "send")) for c in allowed):
         base += ["--gmail-no-send"]
     return base
 
 
 def main():
     args = sys.argv[1:]
-    pol = politica()
-    if args[:1] == ["ayuda"]:
-        texto = AYUDA
-        if pol != "lectura":
-            texto += AYUDA_ESCRITURA.format("todo" if pol == "todo" else ", ".join(pol))
-        print(texto)
+    pol = policy()
+    if args[:1] == ["help"]:
+        text = HELP
+        if pol != "read":
+            text += HELP_WRITE.format("all" if pol == "all" else ", ".join(pol))
+        print(text)
         return
     for arg in args:
-        if arg in ("-y", "--force") or arg.split("=")[0] in PROHIBIDAS:
-            sys.exit(f"bin/gog no permite cambiar {arg}")
-    orden = next((a for a in args if not a.startswith("-")), "")
-    if orden in NUNCA:
-        sys.exit(f"bin/gog no permite «{orden}»")
-    os.environ["GOG_HOME"] = os.path.join(RAIZ, ".gog")
-    os.execvp("gog", ["gog", *opciones(pol), *args])
+        if arg in ("-y", "--force") or arg.split("=")[0] in FORBIDDEN:
+            sys.exit(f"bin/gog doesn't allow changing {arg}")
+    command = next((a for a in args if not a.startswith("-")), "")
+    if command in NEVER:
+        sys.exit(f"bin/gog doesn't allow «{command}»")
+    os.environ["GOG_HOME"] = os.path.join(ROOT, ".gog")
+    os.execvp("gog", ["gog", *options(pol), *args])
 
 
 if __name__ == "__main__":

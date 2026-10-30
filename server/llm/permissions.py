@@ -1,0 +1,114 @@
+"""What Jarvis may use with Claude: the project's MCP servers and commands, only what is allowed.
+
+- .mcp.json: MCP servers, in Claude Code's format (project scope). They are
+  authenticated by opening `claude` in the project folder and using /mcp, so they
+  belong to the project only, without touching the account's connectors.
+- permissions.json:
+
+    {
+      "allowed": {"holded": "all", "other": ["get_x", "list_y"]},
+      "commands": {"bin/gog": "all"},
+      "confirm": true
+    }
+
+  "allowed": tools of each .mcp.json server ("all" or a list; it sees the server's
+  other tools, but they are denied). A server that isn't listed is denied entirely.
+  "commands": programs (paths relative to the project) it may run, and nothing
+  else: it gets Claude Code's terminal limited to them, plus the output of
+  `<command> help` in the prompt so it knows how to use them. Each value is the
+  command's policy, read by the command itself (bin/gog: "read", "all" or a list).
+  "confirm" (on by default): actions that write need the user's «yes», through
+  the bin/jarvis-confirm hook.
+
+Claude starts only with the .mcp.json servers (--strict-mcp-config: no claude.ai
+connectors, no plugins) and without its own tools (Bash, Edit…) other than that
+limited terminal.
+"""
+
+import json
+import logging
+import re
+import subprocess
+from dataclasses import dataclass, field
+from pathlib import Path
+
+log = logging.getLogger("llm")
+
+
+@dataclass
+class Permissions:
+    arguments: list[str] = field(default_factory=list)  # for `claude`
+    instructions: str = ""  # for the system prompt
+    tools: bool = False  # whether it may use any (MCP or command)
+
+
+def prefix(server: str) -> str:
+    """«claude.ai Google Drive» → «mcp__claude_ai_Google_Drive», as Claude Code names it."""
+    return "mcp__" + re.sub(r"[^A-Za-z0-9_-]", "_", server)
+
+
+def command_help(command: Path) -> str:
+    try:
+        output = subprocess.run([str(command), "help"], capture_output=True, text=True, timeout=30).stdout
+    except OSError as e:
+        log.warning("cannot run %s: %s", command, e)
+        return ""
+    return output.strip()
+
+
+def load(root: Path, servers: Path) -> Permissions:
+    path = root / "permissions.json"
+    config = json.loads(path.read_text()) if path.exists() else {}
+    allowed = config.get("allowed", {})
+    commands = [root / c for c in config.get("commands", [])]  # list or {path: policy}
+
+    args = ["--strict-mcp-config", "--setting-sources", ""]
+    allow, deny = [], []
+
+    if servers.exists() and allowed:
+        names = json.loads(servers.read_text()).get("mcpServers", {})
+        args += ["--mcp-config", str(servers)]
+        for server in names:
+            tools = allowed.get(server)
+            if tools is None:
+                deny.append(prefix(server))
+            elif tools == "all":
+                allow.append(prefix(server))
+            else:
+                allow += [f"{prefix(server)}__{t}" for t in tools]
+        for server in allowed.keys() - names.keys():
+            log.warning("permissions.json allows «%s», which isn't in .mcp.json", server)
+
+    instructions = ""
+    if commands:
+        args += ["--tools", "Bash"]
+        texts = []
+        for command in commands:
+            if not command.exists():
+                log.warning("permissions.json allows %s, which doesn't exist", command)
+                continue
+            allow.append(f"Bash({command}:*)")
+            relative = str(command.relative_to(root))
+            # The relative path («bin/gog») becomes the full one, unless it already is.
+            texts.append(re.sub(rf"(?<![\w/]){re.escape(relative)}", str(command), command_help(command)))
+        instructions = (
+            "\nIn the terminal you may run only these commands, with their full path, "
+            "one at a time and without pipes or redirections:\n\n" + "\n\n".join(texts)
+        )
+    else:
+        args += ["--tools", ""]
+
+    if allow and config.get("confirm", True):
+        settings = root / ".build" / "claude-settings.json"
+        settings.write_text(json.dumps({"hooks": {"PreToolUse": [{
+            "matcher": "Bash|mcp__.*",
+            "hooks": [{"type": "command", "command": str(root / "bin" / "jarvis-confirm")}],
+        }]}}))
+        args += ["--settings", str(settings)]
+        log.info("actions that write ask for confirmation")
+    if allow:
+        args += ["--allowedTools", *allow]
+    if deny:
+        args += ["--disallowedTools", *deny]
+    log.info("allowed: %s", ", ".join(allow) or "nothing")
+    return Permissions(args, instructions, bool(allow))

@@ -1,14 +1,14 @@
-"""Servidor: sirve la web del móvil y hace la señalización WebRTC.
+"""Server: serves the phone's web page and does the WebRTC signaling.
 
-    uv run server/main.py                    # asistente: Parakeet + Claude (CLI) + AVSpeech
-    uv run server/main.py --llm apple        # con el modelo de Apple, en local
-    uv run server/main.py --voz Eddy         # otra voz de macOS; --tts ninguno, sin voz
-    uv run server/main.py --silencio 0.45    # cierra antes las frases (más rápido)
-    uv run server/main.py --modo transcribir # solo transcribe
-    uv run server/main.py --llm otro-plugin  # cualquier módulo de server/llm/
-    uv run server/main.py --modo loro        # repite lo que oye (prueba de audio)
-    uv run server/main.py --stt otro-plugin  # cualquier módulo de server/stt/
-    uv run server/main.py --despertar ninguno  # sin palabra de activación
+    uv run server/main.py                       # assistant: Parakeet + Claude (CLI) + AVSpeech
+    uv run server/main.py --lang es             # language (default: the Mac's, if available)
+    uv run server/main.py --llm apple           # Apple's model, local
+    uv run server/main.py --voice Eddy          # another macOS voice; --tts none for no voice
+    uv run server/main.py --silence 0.45        # ends sentences sooner (faster)
+    uv run server/main.py --mode transcribe     # only transcribes
+    uv run server/main.py --mode parrot         # repeats what it hears (audio test)
+    uv run server/main.py --wake none           # no wake word
+    uv run server/main.py --stt|--llm|--tts X   # any module in server/stt|llm|tts/
 """
 
 import argparse
@@ -22,61 +22,61 @@ from pathlib import Path
 
 from aiohttp import web
 
-import despertar
+import i18n
 import llm
 import stt
 import tts
-from cerebro import asistente, transcriptor
-from cerebro.loro import Loro
-from transporte import Sesion
+import wake
+from brain import assistant, transcriber
+from brain.parrot import Parrot
+from transport import Session
 
 WEB = Path(__file__).resolve().parent.parent / "web"
-sesiones: dict[str, Sesion] = {}
-fabrica_cerebro = Loro  # lo fija main() según --modo
-cerrar_al_salir = []  # corrutinas a esperar al parar (procesos de los plugins)
-reiniciar = False  # SIGHUP («Reiníciate» por voz): parar limpio y volver a arrancar
+sessions: dict[str, Session] = {}
+brain_factory = Parrot  # set by main() according to --mode
+close_on_exit = []  # coroutines to await when stopping (plugin processes)
+restart = False  # SIGHUP («restart» by voice): stop cleanly and start again
 
 
 async def offer(request: web.Request) -> web.Response:
-    datos = await request.json()
-    sesion = Sesion(uuid.uuid4().hex[:6], fabrica_cerebro)
-    # Un solo móvil: la conexión nueva sustituye a las anteriores.
-    for vieja in list(sesiones.values()):
-        await vieja.cerrar()
-    sesiones.clear()
-    sesiones[sesion.id] = sesion
-    respuesta = await sesion.responder(datos["sdp"], datos["type"])
-    return web.json_response({"sdp": respuesta.sdp, "type": respuesta.type})
+    data = await request.json()
+    session = Session(uuid.uuid4().hex[:6], brain_factory)
+    # A single phone: the new connection replaces the previous ones.
+    for old in list(sessions.values()):
+        await old.close()
+    sessions.clear()
+    sessions[session.id] = session
+    answer = await session.answer(data["sdp"], data["type"])
+    return web.json_response({"sdp": answer.sdp, "type": answer.type})
 
 
-def sesion_actual() -> Sesion | None:
-    return next(iter(sesiones.values()), None)
+def current_session() -> Session | None:
+    return next(iter(sessions.values()), None)
 
 
 async def video_mjpeg(request: web.Request) -> web.StreamResponse:
-    """Lo que ve la cámara, para mirarlo desde el navegador del Mac."""
-    resp = web.StreamResponse(
-        headers={"Content-Type": "multipart/x-mixed-replace; boundary=frame"}
-    )
-    await resp.prepare(request)
+    """What the camera sees, to watch it from the Mac's browser."""
+    response = web.StreamResponse(headers={"Content-Type": "multipart/x-mixed-replace; boundary=frame"})
+    await response.prepare(request)
     while True:
-        sesion = sesion_actual()
-        imagen = sesion.jpeg() if sesion else None
-        if imagen:
-            await resp.write(
-                b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + imagen + b"\r\n"
-            )
+        session = current_session()
+        image = session.jpeg() if session else None
+        if image:
+            await response.write(b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + image + b"\r\n")
         await asyncio.sleep(1 / 10)
 
 
-async def estado(request: web.Request) -> web.Response:
-    sesion = sesion_actual()
-    return web.json_response(
-        {
-            "conectado": bool(sesion and sesion.pc.connectionState == "connected"),
-            "frames": sesion.frames if sesion else 0,
-        }
-    )
+async def status(request: web.Request) -> web.Response:
+    session = current_session()
+    return web.json_response({
+        "connected": bool(session and session.pc.connectionState == "connected"),
+        "frames": session.frames if session else 0,
+    })
+
+
+async def texts(request: web.Request) -> web.Response:
+    """The page's texts in the active language (locale «ui»)."""
+    return web.json_response({"lang": i18n.L.code, "ui": i18n.L.data["ui"]})
 
 
 async def index(request: web.Request) -> web.FileResponse:
@@ -88,111 +88,110 @@ async def monitor(request: web.Request) -> web.FileResponse:
 
 
 @web.middleware
-async def sin_cache(request: web.Request, handler):
-    # Prototipo: que el móvil coja siempre la última versión de la web.
-    # Y sin keep-alive: al reiniciar el servidor, Chrome 81 se quedaba colgado
-    # reutilizando una conexión muerta en vez de abrir otra.
-    resp = await handler(request)
-    resp.headers["Cache-Control"] = "no-store"
-    resp.force_close()
-    return resp
+async def no_cache(request: web.Request, handler):
+    # Prototype: the phone always gets the latest version of the page.
+    # And no keep-alive: after a server restart, Chrome 81 got stuck reusing a
+    # dead connection instead of opening a new one.
+    response = await handler(request)
+    response.headers["Cache-Control"] = "no-store"
+    response.force_close()
+    return response
 
 
-async def al_cerrar(app: web.Application):
-    # Con tiempo máximo: si algo se cuelga al cerrar, el proceso no debe quedarse
-    # vivo (y «Reiníciate» no volvería nunca).
-    pasos = [sesion.cerrar() for sesion in sesiones.values()] + [cerrar() for cerrar in cerrar_al_salir]
-    for paso in pasos:
+async def on_shutdown(app: web.Application):
+    # With a time limit: if something hangs while closing, the process must not stay
+    # alive (and «restart» would never come back).
+    steps = [s.close() for s in sessions.values()] + [close() for close in close_on_exit]
+    for step in steps:
         try:
-            await asyncio.wait_for(paso, 5)
+            await asyncio.wait_for(step, 5)
         except Exception as e:
-            logging.warning("al cerrar: %r", e)
+            logging.warning("while closing: %r", e)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)
-    parser.add_argument("--modo", choices=["loro", "transcribir", "asistente"], default="asistente")
-    parser.add_argument("--stt", default="parakeet", help=f"plugin: {', '.join(stt.disponibles())}")
-    parser.add_argument("--stt-modelo", default=None)
-    parser.add_argument("--llm", default="claude", help=f"plugin: {', '.join(llm.disponibles())}")
-    parser.add_argument("--llm-modelo", default=None)
-    parser.add_argument("--mcp", default=None, help=".mcp.json con los servidores MCP (por defecto, el del proyecto)")
-    parser.add_argument("--tts", default="avspeech", help=f"voz: {', '.join(tts.disponibles())} o ninguno")
-    parser.add_argument("--voz", default=None, help="voz del plugin (macos: Mónica, Eddy…)")
-    parser.add_argument("--velocidad", type=int, default=None, help="palabras por minuto")
-    parser.add_argument("--eco", type=float, default=1.2, help="segundos sin escuchar tras hablar")
-    parser.add_argument("--idioma", default="es")
-    parser.add_argument(
-        "--despertar",
-        default="whisper",
-        help=f"palabra de activación: {', '.join(despertar.disponibles())} o ninguno",
-    )
-    parser.add_argument("--palabra", default=None, help="modelo de la palabra (hey_jarvis, alexa…)")
-    parser.add_argument("--umbral", type=float, default=None, help="cada plugin tiene el suyo por defecto")
-    parser.add_argument("--grabar", default=None, help="guarda en un WAV todo lo que llega (depurar)")
-    parser.add_argument("--silencio", type=float, default=0.6, help="segundos de silencio que cierran una frase")
-    parser.add_argument("--inactividad", type=float, default=120, help="segundos sin hablar para dormirse")
+    parser.add_argument("--lang", default=None, help=f"language: {', '.join(i18n.available())} (default: the Mac's)")
+    parser.add_argument("--mode", choices=["parrot", "transcribe", "assistant"], default="assistant")
+    parser.add_argument("--stt", default="parakeet", help=f"plugin: {', '.join(stt.available())}")
+    parser.add_argument("--stt-model", default=None)
+    parser.add_argument("--llm", default="claude", help=f"plugin: {', '.join(llm.available())}")
+    parser.add_argument("--llm-model", default=None)
+    parser.add_argument("--mcp", default=None, help=".mcp.json with the MCP servers (default: the project's)")
+    parser.add_argument("--tts", default="avspeech", help=f"voice: {', '.join(tts.available())} or none")
+    parser.add_argument("--voice", default=None, help="the plugin's voice (default: the language's)")
+    parser.add_argument("--rate", type=int, default=None, help="words per minute")
+    parser.add_argument("--echo-guard", type=float, default=1.2, help="seconds without listening after speaking")
+    parser.add_argument("--wake", default="whisper", help=f"wake word: {', '.join(wake.available())} or none")
+    parser.add_argument("--wake-word", default=None, help="the word or model (jarvis, hey_jarvis, alexa…)")
+    parser.add_argument("--threshold", type=float, default=None, help="each wake plugin has its own default")
+    parser.add_argument("--record", default=None, help="saves everything that arrives to a WAV (debugging)")
+    parser.add_argument("--silence", type=float, default=0.6, help="seconds of silence that end a sentence")
+    parser.add_argument("--idle-timeout", type=float, default=120, help="seconds without speech before sleeping")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     logging.getLogger("aioice").setLevel(logging.WARNING)
+    i18n.use(args.lang or i18n.detect())  # before the plugins: they take its language and voice
 
-    global fabrica_cerebro
-    oido = {"grabar": args.grabar, "silencio": args.silencio, "inactividad": args.inactividad}
-    if args.modo in ("transcribir", "asistente"):
-        motor = stt.crear(args.stt, idioma=args.idioma, modelo=args.stt_modelo)
-        logging.info("cargando STT %s (%s)…", motor.nombre, motor.modelo)
-        motor.calentar()
-        despertador = None
-        if args.despertar != "ninguno":
-            opciones = {"palabra": args.palabra}
-            if args.umbral is not None:
-                opciones["umbral"] = args.umbral
-            logging.info("palabra de activación: %s", despertar.crear(args.despertar, **opciones).frase)
-            despertador = lambda: despertar.crear(args.despertar, **opciones)
-        if args.modo == "asistente":
-            modelo = llm.crear(args.llm, modelo=args.llm_modelo, mcp=args.mcp)
-            logging.info("LLM: %s (%s)", modelo.nombre, modelo.modelo)
-            voz = None
-            if args.tts != "ninguno":
-                voz = tts.crear(args.tts, voz=args.voz, velocidad=args.velocidad)
-                logging.info("voz: %s (%s)", voz.nombre, voz.voz)
-                voz.calentar()
+    global brain_factory
+    ear = {"record": args.record, "silence": args.silence, "idle_timeout": args.idle_timeout}
+    if args.mode in ("transcribe", "assistant"):
+        engine = stt.create(args.stt, language=i18n.L.stt_language, model=args.stt_model)
+        logging.info("loading STT %s (%s)…", engine.name, engine.model)
+        engine.warm_up()
+        wake_factory = None
+        if args.wake != "none":
+            options = {"word": args.wake_word}
+            if args.threshold is not None:
+                options["threshold"] = args.threshold
+            logging.info("wake word: %s", wake.create(args.wake, **options).phrase)
+            wake_factory = lambda: wake.create(args.wake, **options)  # noqa: E731
+        if args.mode == "assistant":
+            model = llm.create(args.llm, model=args.llm_model, mcp=args.mcp)
+            logging.info("LLM: %s (%s)", model.name, model.model)
+            voice = None
+            if args.tts != "none":
+                voice = tts.create(args.tts, voice=args.voice, rate=args.rate)
+                logging.info("voice: %s (%s)", voice.name, voice.voice)
+                voice.warm_up()
 
-                async def cerrar_voz():
-                    voz.cerrar()
+                async def close_voice():
+                    voice.close()
 
-                cerrar_al_salir.append(cerrar_voz)
-            fabrica_cerebro = asistente.crear(motor, modelo, voz, despertador, oido, args.eco)
-            cerrar_al_salir.append(modelo.cerrar)
+                close_on_exit.append(close_voice)
+            brain_factory = assistant.create(engine, model, voice, wake_factory, ear, args.echo_guard)
+            close_on_exit.append(model.close)
         else:
-            fabrica_cerebro = transcriptor.crear(motor, despertador, oido)
+            brain_factory = transcriber.create(engine, wake_factory, ear)
     else:
-        fabrica_cerebro = Loro
+        brain_factory = Parrot
 
-    app = web.Application(middlewares=[sin_cache])
+    app = web.Application(middlewares=[no_cache])
     app.router.add_get("/", index)
     app.router.add_get("/monitor", monitor)
     app.router.add_post("/offer", offer)
     app.router.add_get("/video.mjpg", video_mjpeg)
-    app.router.add_get("/estado", estado)
+    app.router.add_get("/status", status)
+    app.router.add_get("/i18n", texts)
     app.router.add_static("/web/", WEB)
-    app.on_shutdown.append(al_cerrar)
-    async def escuchar_sighup(app):
-        def al_sighup():
-            global reiniciar
-            reiniciar = True
-            raise web.GracefulExit()  # como Ctrl+C: cierra sesiones y plugins
+    app.on_shutdown.append(on_shutdown)
 
-        asyncio.get_running_loop().add_signal_handler(signal.SIGHUP, al_sighup)
+    async def listen_for_sighup(app):
+        def on_sighup():
+            global restart
+            restart = True
+            raise web.GracefulExit()  # like Ctrl+C: closes sessions and plugins
 
-    app.on_startup.append(escuchar_sighup)
-    # shutdown_timeout corto: el monitor de la cámara (/video.mjpeg) nunca acaba solo.
+        asyncio.get_running_loop().add_signal_handler(signal.SIGHUP, on_sighup)
+
+    app.on_startup.append(listen_for_sighup)
+    # Short shutdown_timeout: the camera monitor (/video.mjpg) never ends by itself.
     web.run_app(app, host=args.host, port=args.port, shutdown_timeout=3)
-    if reiniciar:
-        logging.info("reiniciando…")
+    if restart:
+        logging.info("restarting…")
         os.execv(sys.executable, [sys.executable, *sys.argv])
 
 

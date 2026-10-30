@@ -1,4 +1,4 @@
-"""Compila los puentes en Swift de los plugins (APIs de Apple sin acceso desde Python)."""
+"""Builds the plugins' Swift bridges (Apple APIs that Python cannot reach)."""
 
 import logging
 import subprocess
@@ -9,12 +9,12 @@ log = logging.getLogger("swift")
 BUILD = Path(__file__).resolve().parent.parent / ".build"
 
 
-def compilar(fuente: Path, nombre: str) -> Path:
-    """Compila `fuente` en .build/<nombre> si no existe o está desfasado."""
-    binario = BUILD / nombre
-    if binario.exists() and binario.stat().st_mtime >= fuente.stat().st_mtime:
-        return binario
-    log.info("compilando %s…", fuente.name)
+def build(source: Path, name: str) -> Path:
+    """Compiles `source` into .build/<name> unless it exists and is up to date."""
+    binary = BUILD / name
+    if binary.exists() and binary.stat().st_mtime >= source.stat().st_mtime:
+        return binary
+    log.info("building %s…", source.name)
     BUILD.mkdir(exist_ok=True)
-    subprocess.run(["swiftc", "-O", str(fuente), "-o", str(binario)], check=True)
-    return binario
+    subprocess.run(["swiftc", "-O", str(source), "-o", str(binary)], check=True)
+    return binary

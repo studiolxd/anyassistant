@@ -1,0 +1,139 @@
+{
+  "language_name": "Spanish (Spain)",
+  "stt_language": "es",
+  "tts_voice": "Mónica",
+  "tts_language": "es-ES",
+  "speech": {
+    "warm_up": "Hola.",
+    "wait": "Un momento, lo miro.",
+    "goodbye": "Hasta la próxima",
+    "reloaded": "Listo, he recargado las herramientas.",
+    "restarting": "Me reinicio. Vuelvo en unos segundos.",
+    "llm_failed": "Perdona, no he podido responder.",
+    "connection_cut": "Perdona, se me ha cortado la conexión con Claude.",
+    "no_login": "No tengo sesión en Claude: hay que ejecutar barra login en Claude Code.",
+    "guardrail": "Prefiero no responder a eso.",
+    "hermes_down": "No puedo hablar con Hermes: ¿está en marcha su gateway?",
+    "hermes_approval": "Hermes quiere hacer esto: {action}. ¿Lo hago?"
+  },
+  "commands": {
+    "sleep": [
+      "apagate",
+      "duermete"
+    ],
+    "reload": [
+      "recarg"
+    ],
+    "restart": [
+      "reiniciate",
+      "reinicia",
+      "reiniciar",
+      "reinicio"
+    ],
+    "yes": [
+      "si",
+      "vale",
+      "adelante",
+      "hazlo",
+      "confirmo",
+      "claro",
+      "correcto",
+      "dale",
+      "ok",
+      "okay",
+      "venga",
+      "perfecto",
+      "exacto",
+      "afirmativo",
+      "confirmado"
+    ],
+    "no": [
+      "no",
+      "espera",
+      "cancela",
+      "cancelar",
+      "para",
+      "nada",
+      "tampoco",
+      "mejor"
+    ]
+  },
+  "stt": {
+    "letters": "áéíóúüñ",
+    "hallucinations": [
+      "amara.org",
+      "subtítulos",
+      "gracias por ver",
+      "suscríbete",
+      "¡gracias!",
+      "mm-hmm"
+    ],
+    "fallback_hallucinations": [
+      "gracias",
+      "muchas gracias",
+      "gracias por ver",
+      "subtitulos realizados por la comunidad de amara org"
+    ]
+  },
+  "wake": {
+    "whisper_prompt": "El asistente se llama {name}."
+  },
+  "calendar": {
+    "days": [
+      "lunes",
+      "martes",
+      "miércoles",
+      "jueves",
+      "viernes",
+      "sábado",
+      "domingo"
+    ],
+    "months": [
+      "enero",
+      "febrero",
+      "marzo",
+      "abril",
+      "mayo",
+      "junio",
+      "julio",
+      "agosto",
+      "septiembre",
+      "octubre",
+      "noviembre",
+      "diciembre"
+    ],
+    "now_style": "periods",
+    "now_format": "{weekday} {day} de {month} de {year}, {article} {hour} {minutes} {period}",
+    "periods": {
+      "morning": "de la mañana",
+      "afternoon": "de la tarde",
+      "night": "de la noche",
+      "early_morning": "de la madrugada"
+    },
+    "on_the_hour": "en punto",
+    "past_the_hour": "y {minute}",
+    "article_one": "la",
+    "article_other": "las"
+  },
+  "ui": {
+    "start": "Empezar",
+    "connecting": "Conectando…",
+    "connected": "Conectado",
+    "connection_lost": "Conexión perdida, reintentando…",
+    "other_tab": "Abierta en otra pestaña",
+    "no_media": "Sin micro/cámara: {error}. ¿Activaste el flag de Chrome?",
+    "asleep": "Di «{wake}»",
+    "awake": "Te escucho",
+    "listening": "Te escucho",
+    "hearing": "Oyendo…",
+    "transcribing": "Transcribiendo…",
+    "thinking": "Pensando…",
+    "speaking": "Hablando · toca para callar",
+    "question": "¿Sí o no?",
+    "recording": "Grabando…",
+    "repeating": "Repitiendo",
+    "error": "Error",
+    "monitor_waiting": "Esperando al móvil…",
+    "monitor_connected": "Conectado · {frames} fotogramas recibidos"
+  }
+}

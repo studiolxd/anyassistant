@@ -1,41 +1,41 @@
-"""Registro de plugins compartido por stt/, despertar/ y los que vengan.
+"""Plugin registry shared by stt/, wake/, llm/, tts/ and any future plugin package.
 
-Cada paquete de plugins crea su registro y expone registrar/crear/disponibles.
-Los plugins son módulos del paquete; al pedir la lista se importan todos, así
-que las dependencias pesadas van dentro de las clases, no arriba del módulo.
+Each plugin package creates its registry and exposes register/create/available.
+Plugins are the package's modules; listing them imports them all, so heavy
+dependencies must be imported inside the classes, not at module level.
 """
 
 import importlib
 import pkgutil
 
 
-class Registro:
-    def __init__(self, paquete: str, ruta, que: str):
-        self.paquete = paquete
-        self.ruta = ruta
-        self.que = que
+class Registry:
+    def __init__(self, package: str, path, kind: str):
+        self.package = package
+        self.path = path
+        self.kind = kind
         self._plugins: dict[str, type] = {}
 
-    def registrar(self, nombre: str):
-        def decorador(clase):
-            clase.nombre = nombre
-            self._plugins[nombre] = clase
-            return clase
+    def register(self, name: str):
+        def decorator(cls):
+            cls.name = name
+            self._plugins[name] = cls
+            return cls
 
-        return decorador
+        return decorator
 
-    def disponibles(self) -> list[str]:
-        self._descubrir()
+    def available(self) -> list[str]:
+        self._discover()
         return sorted(self._plugins)
 
-    def crear(self, nombre: str, **opciones):
-        self._descubrir()
-        if nombre not in self._plugins:
+    def create(self, name: str, **options):
+        self._discover()
+        if name not in self._plugins:
             raise ValueError(
-                f"{self.que} desconocido: {nombre}. Hay: {', '.join(sorted(self._plugins))}"
+                f"Unknown {self.kind}: {name}. Available: {', '.join(sorted(self._plugins))}"
             )
-        return self._plugins[nombre](**opciones)
+        return self._plugins[name](**options)
 
-    def _descubrir(self):
-        for modulo in pkgutil.iter_modules(self.ruta):
-            importlib.import_module(f"{self.paquete}.{modulo.name}")
+    def _discover(self):
+        for module in pkgutil.iter_modules(self.path):
+            importlib.import_module(f"{self.package}.{module.name}")

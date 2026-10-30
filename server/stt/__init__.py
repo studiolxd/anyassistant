@@ -1,39 +1,39 @@
-"""Plugins de transcripción (voz → texto).
+"""Speech-to-text plugins.
 
-Un plugin es un módulo de este paquete con una clase registrada así:
+A plugin is a module of this package with a class registered like this:
 
-    @registrar("nombre")
-    class MiMotor(Transcriptor):
-        def transcribir(self, audio): ...
+    @register("name")
+    class MyEngine(Transcriber):
+        def transcribe(self, audio): ...
 """
 
 import threading
 
 import numpy as np
 
-from plugins import Registro
+from plugins import Registry
 
-TASA = 16000  # todos los plugins reciben float32 mono a 16 kHz
+RATE = 16000  # every plugin receives float32 mono at 16 kHz
 
-# Los plugins de MLX (y el despertador de Whisper) comparten la GPU: uno cada vez.
+# The MLX plugins (and the Whisper wake word) share the GPU: one at a time.
 GPU = threading.Lock()
 
-_registro = Registro(__name__, __path__, "STT")
-registrar = _registro.registrar
-crear = _registro.crear
-disponibles = _registro.disponibles
+_registry = Registry(__name__, __path__, "STT")
+register = _registry.register
+create = _registry.create
+available = _registry.available
 
 
-class Transcriptor:
-    nombre = "?"
+class Transcriber:
+    name = "?"
 
-    def __init__(self, idioma: str = "es", modelo: str | None = None):
-        self.idioma = idioma
-        self.modelo = modelo
+    def __init__(self, language: str = "en", model: str | None = None):
+        self.language = language
+        self.model = model
 
-    def calentar(self):
-        """Carga el modelo para que la primera frase no espere."""
-        self.transcribir(np.zeros(TASA // 2, dtype=np.float32))
+    def warm_up(self):
+        """Loads the model so the first sentence doesn't wait."""
+        self.transcribe(np.zeros(RATE // 2, dtype=np.float32))
 
-    def transcribir(self, audio: np.ndarray) -> str:
+    def transcribe(self, audio: np.ndarray) -> str:
         raise NotImplementedError

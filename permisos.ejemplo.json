@@ -1,9 +1,0 @@
-{
-  "permitidos": {
-    "holded": "todo"
-  },
-  "comandos": {
-    "bin/gog": "lectura"
-  },
-  "confirmar": true
-}

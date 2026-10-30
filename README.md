@@ -1,222 +1,248 @@
-# Nexus voz
+# Jarvis
 
-El Nexus 4 hace de ojos, boca y oídos; todo el procesamiento va en el Mac.
-Transporte WebRTC (Opus + cancelación de eco de Chrome) por Wi-Fi.
+An old phone or tablet becomes the eyes, mouth and ears of a voice assistant;
+all the processing runs on the Mac. WebRTC transport (Opus + Chrome's echo
+cancellation) over Wi-Fi.
 
-## Fase 0 · Preparar el móvil
+## Phase 0 · Preparing the phone
 
-1. ROM con Android 7.1 y Chrome actualizado desde Play Store.
-2. IP fija para el Mac (ahora `192.168.1.137`): en macOS, Wi-Fi → Detalles de la red →
-   *Dirección Wi-Fi privada* en **Fija** (en *Rotativa* cambia de IP), y mejor aún una
-   reserva DHCP en el router. El móvil, en la red de 5 GHz si la hay.
-3. En Chrome del móvil: `chrome://flags` → *Insecure origins treated as secure* →
+1. A ROM with Android 7.1 or later and an up-to-date Chrome (a Lenovo tablet with
+   Android 4.4 and Chrome 81 also works).
+2. A fixed IP for the Mac (currently `192.168.1.137`): in macOS, Wi-Fi → network
+   Details → *Private Wi-Fi address* set to **Fixed** (with *Rotating* the IP changes),
+   or better, a DHCP reservation on the router. The phone on the 5 GHz network if there is one.
+3. In the phone's Chrome: `chrome://flags` → *Insecure origins treated as secure* →
    `http://192.168.1.137:8080` → *Enabled* → Relaunch.
-4. Ajustes → Batería → optimización: Chrome *sin optimizar*.
+4. Settings → Battery → optimization: Chrome *not optimized*.
 
-## Arrancar
-
-```
-bin/jarvis arrancar [opciones]   # en segundo plano; p. ej. bin/jarvis arrancar --llm hermes
-bin/jarvis parar
-bin/jarvis reiniciar             # como «Reiníciate»: mismas opciones
-bin/jarvis estado
-bin/jarvis log                   # registro en vivo (.build/jarvis.log)
-```
-
-O en primer plano, para ver el registro directamente:
+## Running it
 
 ```
-uv run server/main.py                    # Fase 3: asistente (Parakeet + Claude + AVSpeech)
-uv run server/main.py --modo transcribir # Fase 2: solo transcribe
-uv run server/main.py --modo loro        # Fase 1: repite lo que oye (prueba de micro y altavoz)
+bin/jarvis start [options]   # in the background; e.g. bin/jarvis start --llm hermes
+bin/jarvis stop
+bin/jarvis restart           # like saying «restart»: same options
+bin/jarvis status
+bin/jarvis log               # live log (.build/jarvis.log)
 ```
 
-La primera vez descarga los modelos (Parakeet ~1,2 GB, Whisper turbo ~1,6 GB, Whisper base).
+Or in the foreground, to see the log directly:
 
-- Móvil: `http://192.168.1.137:8080` → **Empezar** → permitir micro y cámara.
-- Mac: `http://localhost:8080/monitor` para ver la cámara.
+```
+uv run server/main.py                    # Phase 3: assistant (Parakeet + Claude + AVSpeech)
+uv run server/main.py --mode transcribe  # Phase 2: transcription only
+uv run server/main.py --mode parrot      # Phase 1: repeats what it hears (mic and speaker test)
+```
 
-La primera vez macOS pregunta si Python puede aceptar conexiones entrantes: *Permitir*.
+The first time it downloads the models (Parakeet ~1.2 GB, Whisper turbo ~1.6 GB, Whisper base).
 
-## Fase 1 · Loro
+- Phone: `http://192.168.1.137:8080` → **Start** → allow microphone and camera.
+- Mac: `http://localhost:8080/monitor` to watch the camera.
 
-Graba lo que dices y lo repite al terminar; mientras repite no escucha (un eco
-directo se acoplaba: la cancelación de eco de la tablet no basta). Sirve para
-probar micro, altavoz y red (RTT, jitter y perdidos salen abajo en la pantalla).
+The first time, macOS asks whether Python may accept incoming connections: *Allow*.
 
-## Fase 2 · Oídos
+## Languages
 
-Silero VAD separa la voz del ruido; cuando terminas una frase (0,6 s de silencio)
-se transcribe y sale como subtítulo en el móvil. Los tiempos van al log del Mac.
+Everything Jarvis says, shows or understands lives in `locales/<code>.json`:
+spoken sentences (`speech`), the page's texts (`ui`), the voice commands it
+understands (`commands`: sleep, reload, restart, yes, no), Whisper's typical
+hallucinations for that language (`stt`), the default voice and the recognition
+language. **English (`en.json`) is the base**; a missing key in another language
+falls back to it, so **adding a language means adding a file**. Even how the
+date and time are said aloud is set there (`calendar.now_style`: `ampm` or
+`periods`, with its format).
 
-### Motores de transcripción
+The language is the Mac's preferred one when there is a locale for it (Spanish
+here), or `--lang`:
 
-Comparados con 32 frases reales dichas a la tablet (mediana por frase, en un M4):
+```
+uv run server/main.py --lang en
+```
 
-| `--stt` / `--stt-modelo` | Mediana | Notas |
+The LLM gets English instructions plus «Always reply in {language}».
+
+## Phase 1 · Parrot
+
+It records what you say and plays it back when you stop; while repeating it
+doesn't listen (a straight echo fed back: the tablet's echo cancellation isn't
+enough). Useful to test the microphone, the speaker and the network (RTT, jitter
+and lost packets show at the bottom of the screen).
+
+## Phase 2 · Ears
+
+Silero VAD separates speech from noise; when you finish a sentence (0.6 s of
+silence) it is transcribed and shown as a caption on the phone. Timings go to the
+Mac's log.
+
+### Transcription engines
+
+Compared with 32 real sentences said to the tablet (median per sentence, on an M4):
+
+| `--stt` / `--stt-model` | Median | Notes |
 |---|---|---|
-| **`parakeet`** (por defecto) | 114 ms | Parakeet TDT v3; acierta tanto o más que turbo |
-| `mlx-whisper` (turbo) | 938 ms | Rellena el audio hasta 30 s: lento con frases cortas |
-| `mlx-whisper --stt-modelo mlx-community/whisper-small-mlx` | 230 ms | Más errores |
-| `mlx-whisper --stt-modelo mlx-community/whisper-base-mlx` | 76 ms | Muchos errores |
+| **`parakeet`** (default) | 114 ms | Parakeet TDT v3; as accurate as turbo or better |
+| `mlx-whisper` (turbo) | 938 ms | Pads the audio to 30 s: slow on short sentences |
+| `mlx-whisper --stt-model mlx-community/whisper-small-mlx` | 230 ms | More mistakes |
+| `mlx-whisper --stt-model mlx-community/whisper-base-mlx` | 76 ms | Many mistakes |
 
-Parakeet detecta el idioma solo y a veces se va al inglés («¿Qué hora es?» →
-«Koda is a very good idea»); si el resultado parece inglés, esa frase se repite
-con Whisper turbo en español. «Apágate» se reconoce por parecido («Apparaté»).
+Parakeet detects the language by itself and sometimes drifts into English
+(«¿Qué hora es?» → «Koda is a very good idea»); if the result looks like another
+language, that sentence is redone with Whisper turbo in the right one. The sleep
+command is matched by similarity («Apparaté» for «Apágate»).
 
-`--silencio` (0,6 s por defecto) es el silencio que cierra una frase: más bajo
-responde antes pero puede cortarte si haces pausas; `--inactividad` (120 s), lo
-que tarda en dormirse si no le hablas.
+`--silence` (0.6 s by default) is the silence that ends a sentence: lower answers
+sooner but may cut you off if you pause; `--idle-timeout` (120 s) is how long it
+takes to fall asleep if you don't talk to it.
 
-### Plugins de STT
+### STT plugins
 
-Cada módulo de `server/stt/` es un motor. Para añadir uno:
+Each module in `server/stt/` is an engine. To add one:
 
 ```python
-# server/stt/mi_motor.py
-from stt import Transcriptor, registrar
+# server/stt/my_engine.py
+from stt import Transcriber, register
 
-@registrar("mi-motor")
-class MiMotor(Transcriptor):
-    def transcribir(self, audio):  # float32 mono 16 kHz → str
+@register("my-engine")
+class MyEngine(Transcriber):
+    def transcribe(self, audio):  # float32 mono 16 kHz → str
         ...
 ```
 
-y se usa con `--stt mi-motor [--stt-modelo ...]`. Las dependencias pesadas,
-dentro de la clase para no cargarlas si no se usa.
+and use it with `--stt my-engine [--stt-model ...]`. Heavy dependencies go inside
+the class, so they aren't loaded when unused.
 
-## Palabra de activación y modo conversación
+## Wake word and conversation mode
 
-Duerme hasta oír **«Hey Jarvis»**; entonces pita y entra en **modo conversación**:
-transcribe frase a frase sin repetir la palabra, hasta que le dices **«apágate»**
-(o «duérmete») o pasan **2 minutos** sin hablarle; al dormirse pita hacia abajo.
-«Hey Jarvis, ¿cómo van las cuentas?» del tirón también vale: despierta y transcribe
-la pregunta.
+It sleeps until it hears **«Hey Jarvis»**; then it beeps and enters
+**conversation mode**: it transcribes sentence by sentence without repeating the
+word, until you say the sleep command (**«go to sleep»** / **«apágate»**) or
+**2 minutes** pass without talking to it; it beeps downwards when falling asleep.
+«Hey Jarvis, what time is it?» in one go also works: it wakes up and transcribes
+the question.
 
-Por defecto la palabra la busca un Whisper pequeño (`whisper-base`, ~140 ms),
-comparando por cómo suena («Yarvis», «Harvis»…); vale para cualquier palabra.
-openWakeWord sigue como plugin, pero con acento español apenas reconoce «Hey Jarvis».
+By default the word is found by a small Whisper (`whisper-base`, ~140 ms),
+comparing by how it sounds («Yarvis», «Harvis»…); it works for any word.
+openWakeWord remains as a plugin, but with a Spanish accent it barely recognizes
+«Hey Jarvis».
 
 ```
-uv run server/main.py --palabra nexus          # cualquier palabra con el plugin whisper
-uv run server/main.py --umbral 0.9             # más exigente si se despierta solo
-uv run server/main.py --despertar openwakeword --palabra alexa   # alexa, hey_jarvis, hey_mycroft…
-uv run server/main.py --despertar ninguno      # sin palabra: transcribe toda la voz
+uv run server/main.py --wake-word nexus       # any word with the whisper plugin
+uv run server/main.py --threshold 0.9         # stricter if it wakes up by itself
+uv run server/main.py --wake openwakeword --wake-word alexa   # alexa, hey_jarvis, hey_mycroft…
+uv run server/main.py --wake none             # no word: transcribes all speech
 ```
 
-Otros motores (Vosk, Porcupine…) son plugins en `server/despertar/`:
+Other engines (Vosk, Porcupine…) are plugins in `server/wake/`:
 
 ```python
-# server/despertar/mi_motor.py
-from despertar import Despertador, registrar
+# server/wake/my_engine.py
+from wake import WakeWord, register
 
-@registrar("mi-motor")
-class MiMotor(Despertador):
-    frase = "Oye Nexus"              # lo que se muestra en la pantalla
-    continuo = False                 # True si necesita oír también estando despierto
-    def escuchar(self, audio):       # float32 mono 16 kHz, trozos de cualquier tamaño
-        return detectado             # True en el trozo en que oye la palabra
+@register("my-engine")
+class MyEngine(WakeWord):
+    phrase = "Hey Nexus"             # what the screen shows
+    continuous = False               # True if it also needs to hear while awake
+    def listen(self, audio):         # float32 mono 16 kHz, chunks of any size
+        return detected              # True on the chunk where it hears the word
 ```
 
-y `--despertar mi-motor [--palabra …]`. `server/plugins.py` es el registro común.
+and `--wake my-engine [--wake-word …]`. `server/plugins.py` is the shared registry.
 
-## Cara
+## Face
 
-Dos, a elegir en la dirección de la tablet:
+Two, chosen in the tablet's address:
 
-- **`?cara=ojos`** (por defecto): dos ojos que parpadean; cerrados y respirando al
-  dormir, más claros y algo más grandes con tu voz, mirando a un lado con puntos al
-  pensar, con boca de barras que sigue su voz al hablar, ceja levantada y «?» cuando
-  espera tu «sí», caídos y en rojo si hay error.
-- **`?cara=orbe`**: una esfera que respira, late con tu voz, tiene un anillo girando al
-  pensar y lanza ondas al hablar.
+- **`?face=eyes`** (default): two blinking eyes; closed and breathing while asleep,
+  brighter and slightly bigger with your voice, looking to one side with dots while
+  thinking, with a mouth of bars that follows its voice while speaking, a raised
+  eyebrow and «?» while waiting for your «yes», drooping and red on errors.
+- **`?face=orb`**: a sphere that breathes, beats with your voice, has a spinning
+  ring while thinking and sends out waves while speaking.
 
-Dormido, la pantalla muestra la hora y la fecha en grande. `?demo` (o `?demo&cara=orbe`)
-recorre todos los estados sin conectarse, para verlas. Todo es CSS y transformaciones
-(`web/rostros.css`, `web/rostro.js`), para que vaya fluido en la tablet.
+Asleep, the screen shows the time and date in large type. `?demo` (or
+`?demo&face=orb`) cycles through every state without connecting, to look at them.
+It is all CSS and transforms (`web/faces.css`, `web/face.js`), so it runs smoothly
+on the tablet. `?video=normal|low|off` sets the camera's quality.
 
-## Órdenes de voz del sistema
+## System voice commands
 
-Las atiende el servidor directamente, sin pasar por el LLM:
+The server handles them directly, without going through the LLM (words per
+language in `locales/*.json` → `commands`):
 
-- **«Apágate»** / «Duérmete»: vuelve a dormir hasta el próximo «Hey Jarvis».
-- **«Recarga las herramientas»**: vuelve a leer `.mcp.json` y `permisos.json` y arranca
-  el LLM de nuevo (tras autorizar o reautorizar un MCP). También se releen solos en
-  cada «Hey Jarvis».
-- **«Reiníciate»**: reinicia el servidor entero (por ejemplo, tras cambiar el código);
-  la tablet se reconecta sola en unos segundos.
+- **Sleep** («go to sleep» / «apágate», «duérmete»): back to sleep until the next «Hey Jarvis».
+- **Reload** («reload the tools» / «recarga las herramientas»): reads `.mcp.json` and
+  `permissions.json` again and restarts the LLM (after authorizing or
+  re-authorizing an MCP server). They are also reread on every «Hey Jarvis».
+- **Restart** («restart» / «reiníciate»): restarts the whole server (e.g. after
+  changing the code); the tablet reconnects by itself in a few seconds.
 
-## Fase 3 · Respuestas (LLM)
+## Phase 3 · Answers (LLM)
 
-Lo que dices va al LLM y la respuesta aparece en pantalla según se genera.
-Cada «Hey Jarvis» empieza una conversación nueva; la recuerda hasta que se duerme.
+What you say goes to the LLM and the answer appears on screen as it is generated.
+Each «Hey Jarvis» starts a new conversation, remembered until it falls asleep.
 
-Hay dos plugins:
+There are three plugins:
 
-- **`claude`** (por defecto): Claude a través de la CLI `claude` de Claude Code, con
-  tu sesión y tu suscripción, sin API key. Cada conversación es un proceso
-  `claude -p` en modo stream-json, sin herramientas, MCP ni CLAUDE.md, para que
-  arranque rápido. Sonnet por defecto; `--llm-modelo haiku` gasta menos cuota.
-  Primera palabra en ~0,6 s.
-- **`apple`**: el modelo que trae macOS (Foundation Models, local, sin claves;
-  macOS 26+ con Apple Intelligence). Es una API solo de Swift: el plugin compila
-  `server/llm/apple_puente.swift` la primera vez en `.build/` y le habla por
-  stdin/stdout. La hora se la da como herramienta (`fechaHora`): en el prompt la
-  repetía en cada respuesta. Más rápido (~0,5 s) pero más flojo (~3B).
-
-- **`hermes`**: [Hermes Agent](https://hermes-agent.nousresearch.com) por su API
-  compatible con OpenAI (`hermes gateway`, `127.0.0.1:8642`, clave `API_SERVER_KEY` de
-  `~/.hermes/.env`). Usa sus propias herramientas, memoria y credenciales, con el
-  modelo que tenga configurado; cada conversación es una sesión suya
-  (`X-Hermes-Session-Id`). `permisos.json` no le aplica. Cuando Hermes pide aprobar
-  algo (`approval.request`), Jarvis pregunta por voz y responde `once` o `deny`; pero
-  con `approvals.mode: smart` (su valor por defecto) un modelo auxiliar decide solo
-  los casos claros, y solo le llegan a Jarvis los dudosos.
+- **`claude`** (default): Claude through Claude Code's `claude` CLI, with your
+  session and subscription, no API key. Each conversation is a `claude -p` process
+  in stream-json mode, without Claude Code's own tools or CLAUDE.md, so it starts
+  fast. Sonnet by default; `--llm-model haiku` uses less quota. First word in ~0.6 s.
+- **`apple`**: the model that comes with macOS (Foundation Models, local, no keys;
+  macOS 26+ with Apple Intelligence). It is a Swift-only API: the plugin builds
+  `server/llm/apple_bridge.swift` the first time into `.build/` and talks to it
+  over stdin/stdout. It gets the time as a tool (`dateTime`): given in the prompt,
+  it repeated it in every answer. Faster (~0.5 s) but weaker (~3B).
+- **`hermes`**: [Hermes Agent](https://hermes-agent.nousresearch.com) through its
+  OpenAI-compatible API (`hermes gateway`, `127.0.0.1:8642`, key `API_SERVER_KEY`
+  from `~/.hermes/.env`). It uses its own tools, memory and credentials, with
+  whatever model it has configured; each conversation is one of its sessions
+  (`X-Hermes-Session-Id`). `permissions.json` doesn't apply to it. When Hermes asks
+  to approve something (`approval.request`), Jarvis asks by voice and answers `once`
+  or `deny`; but with `approvals.mode: smart` (its default) an auxiliary model
+  decides the clear cases by itself, and only the doubtful ones reach Jarvis.
 
 ```
-uv run server/main.py --llm-modelo haiku   # Claude Haiku
-uv run server/main.py --llm apple          # modelo de Apple, en local
-uv run server/main.py --llm hermes         # Hermes Agent
+uv run server/main.py --llm-model haiku   # Claude Haiku
+uv run server/main.py --llm apple         # Apple's model, local
+uv run server/main.py --llm hermes        # Hermes Agent
 ```
 
-### Herramientas: solo las del proyecto y solo lo que permitas
+### Tools: only the project's, and only what you allow
 
-Con el plugin `claude`, Jarvis puede usar **servidores MCP de la carpeta del proyecto**
-y **comandos del proyecto**, nunca los conectores de tu cuenta de claude.ai ni otras
-órdenes de terminal. Todo se decide en **`permisos.json`** (fuera de git; ver
-`permisos.ejemplo.json`):
+With the `claude` plugin, Jarvis can use **MCP servers from the project folder**
+and **project commands**, never your claude.ai account's connectors nor other
+terminal commands. Everything is decided in **`permissions.json`** (outside git;
+see `permissions.example.json`):
 
 ```json
 {
-  "permitidos": { "holded": "todo" },
-  "comandos": { "bin/gog": "todo" },
-  "confirmar": true
+  "allowed": { "holded": "all" },
+  "commands": { "bin/gog": "all" },
+  "confirm": true
 }
 ```
 
-- `permitidos`: herramientas de cada servidor de **`.mcp.json`** (`"todo"` o una
-  lista); un servidor que no aparezca queda prohibido entero.
-- `comandos`: programas que puede ejecutar, con su política (la lee el propio
-  comando). Claude recibe la terminal de Claude Code **limitada a ellos** (lo demás se
-  le deniega: probado con `ls`, `curl` y `touch`) y, en el prompt, lo que muestra
-  `<comando> ayuda`.
-- `confirmar` (sí por defecto): **las acciones que escriben necesitan tu «sí» por voz**.
-  Un hook de Claude Code (`bin/jarvis-confirmar`) frena cualquier `bin/gog` que no sea
-  de lectura y cualquier herramienta MCP que no sea `get_`/`list_`/`search_`…, y Claude
-  te pregunta. Si dices «sí» (o «vale», «adelante»…; «sí, pero…» no cuenta), el servidor
-  autoriza **esa misma llamada**, una vez y durante un minuto; cualquier otra respuesta
-  la cancela. Claude no puede saltárselo: no puede escribir archivos ni ejecutar otra
-  cosa.
+- `allowed`: tools of each **`.mcp.json`** server (`"all"` or a list); a server that
+  isn't listed is denied entirely.
+- `commands`: programs it may run, with their policy (read by the command itself).
+  Claude gets Claude Code's terminal **limited to them** (anything else is denied:
+  tested with `ls`, `curl` and `touch`) and, in the prompt, what `<command> help` shows.
+- `confirm` (on by default): **actions that write need your «yes» by voice**. A
+  Claude Code hook (`bin/jarvis-confirm`) stops any `bin/gog` call that isn't a
+  read and any MCP tool that isn't `get_`/`list_`/`search_`…, and Claude asks you.
+  If you say «yes» (or «sure», «go ahead»…; «yes, but…» doesn't count), the server
+  authorizes **that same call**, once and for one minute; any other answer cancels
+  it. Claude can't get around it: it can't write files or run anything else.
 
-Sin `permisos.json` no usa nada. Al usar una herramienta dice «Un momento, lo miro».
+Without `permissions.json` it uses nothing. When it uses a tool it says «One
+moment, let me check».
 
 #### Holded (MCP)
 
-En `.mcp.json` (ver `.mcp.ejemplo.json`); se autentica en la carpeta del proyecto:
-`claude` → aprobar los servidores → `/mcp` → *Authenticate*. El solo lectura se elige
-al autorizarlo en Holded. Su registro automático de clientes falla en Claude Code
-(devuelve `"software_id": null`), así que se registra uno a mano y su `clientId` va en
-`.mcp.json` (puerto de vuelta 8766):
+In `.mcp.json` (see `.mcp.example.json`); authenticated in the project folder:
+`claude` → approve the servers → `/mcp` → *Authenticate*. Read-only is chosen when
+authorizing it in Holded. Its automatic client registration fails in Claude Code
+(it returns `"software_id": null`), so a client is registered by hand and its
+`clientId` goes in `.mcp.json` (callback port 8766):
 
 ```
 curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: application/json" \
@@ -225,94 +251,95 @@ curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: 
        "token_endpoint_auth_method":"none"}'
 ```
 
-#### Gmail, Calendar, Drive, Docs y Sheets (`bin/gog`)
+#### Gmail, Calendar, Drive, Docs and Sheets (`bin/gog`)
 
-Con [gog](https://gogcli.sh) (`brew install openclaw/tap/gogcli`). `bin/gog` lo
-lanza siempre con el cliente `jarvis` (su propio depósito de tokens), la configuración
-en `.gog/` dentro del proyecto y `--no-input`, y se niega si le intentan cambiar esas
-opciones. Su política, en `permisos.json`:
+With [gog](https://gogcli.sh) (`brew install openclaw/tap/gogcli`). `bin/gog` always
+runs it with the `jarvis` client (its own token store), the configuration in `.gog/`
+inside the project and `--no-input`, and refuses attempts to change those options.
+Its policy, in `permissions.json`:
 
-- `"lectura"`: `--readonly`, `--gmail-no-send` y solo órdenes de lectura; la
-  autorización solo pide permisos de lectura a Google.
-- `"todo"`: puede escribir (siempre con la confirmación por voz), salvo gestionar la
-  sesión de gog, copias, administración y actualizarse.
-- una lista de órdenes (`["gmail.search", "calendar.create"]`).
+- `"read"`: `--readonly`, `--gmail-no-send` and read commands only; the
+  authorization asks Google for read-only permissions.
+- `"all"`: it can write (always with the voice confirmation), except managing gog's
+  session, backups, administration and self-updating.
+- a list of commands (`["gmail.search", "calendar.create"]`).
 
-Para prepararlo:
+To set it up:
 
-1. En Google Cloud, activar **Gmail API**, **Google Calendar API**, **Google Drive API**,
-   **Google Docs API** y **Google Sheets API**.
-2. En *Google Auth Platform*, tu correo como usuario de prueba.
-3. Descargar el JSON del cliente OAuth (*Aplicación de escritorio*) como
-   `google-cliente.json` en la raíz del proyecto.
-4. `bin/gog-autorizar tu@gmail.com` (abre el navegador): pide los permisos según la
-   política; al cambiarla, hay que volver a autorizar.
+1. In Google Cloud, enable **Gmail API**, **Google Calendar API**, **Google Drive API**,
+   **Google Docs API** and **Google Sheets API**.
+2. In *Google Auth Platform*, your email as a test user.
+3. Download the OAuth client's JSON (*Desktop app*) as `google-client.json` in the
+   project's root.
+4. `bin/gog-authorize you@gmail.com` (opens the browser): asks for the permissions
+   matching the policy; after changing it, authorize again.
 
-En modo *Prueba*, Google hace caducar la autorización cada 7 días; para evitarlo, en
-*Google Auth Platform → Público* publicar la app (para uso propio no hace falta que
-Google la verifique: sale el aviso de «app no verificada» y se continúa).
+In *Testing* mode Google expires the authorization every 7 days; to avoid it,
+publish the app in *Google Auth Platform → Audience* (for your own use Google
+doesn't need to verify it: an «unverified app» warning shows and you continue).
 
-Los servidores MCP oficiales de Google (`gmailmcp`/`drivemcp.googleapis.com`) se
-probaron y se descartaron: exigen el *Google Workspace Developer Preview Program*,
-cerrado a cuentas personales.
+Google's official MCP servers (`gmailmcp`/`drivemcp.googleapis.com`) were tried and
+dropped: they require the *Google Workspace Developer Preview Program*, closed to
+personal accounts.
 
-Otros LLM son plugins en `server/llm/`:
+Other LLMs are plugins in `server/llm/`:
 
 ```python
-# server/llm/mi_llm.py
-from llm import INSTRUCCIONES, LLM, registrar
+# server/llm/my_llm.py
+from llm import LLM, instructions, register
 
-@registrar("mi-llm")
-class MiLLM(LLM):
-    async def nueva(self): ...           # conversación nueva
-    async def responder(self, texto):    # trozos de la respuesta según llegan
-        yield "Hola"
-    async def cerrar(self): ...          # opcional, al parar el servidor
+@register("my-llm")
+class MyLLM(LLM):
+    async def new(self): ...            # new conversation
+    async def answer(self, text):       # pieces of the answer as they arrive
+        yield "Hello"
+    async def close(self): ...          # optional, when the server stops
 ```
 
-y `--llm mi-llm [--llm-modelo …]`.
+and `--llm my-llm [--llm-model …]`.
 
-## Voz (TTS)
+## Voice (TTS)
 
-Cada frase de la respuesta se sintetiza en cuanto se completa y suena mientras
-llega la siguiente. Tocar la pantalla lo calla. El volumen se normaliza al máximo.
+Each sentence of the answer is synthesized as soon as it is complete and plays
+while the next one arrives. Tapping the screen stops it. The volume is normalized
+to the maximum.
 
-Para no oírse a sí mismo: mientras habla no escucha, ni durante `--eco` segundos
-después (1,2 por defecto: su voz tarda en ir a la tablet, sonar y volver por el
-micro). Y si aun así lo que oye en los segundos siguientes es un trozo corto de lo
-que acaba de decir («¿Algo más?» tras «¿Necesitas algo más?»), lo descarta.
+So it doesn't hear itself: while speaking it doesn't listen, nor for `--echo-guard`
+seconds afterwards (1.2 by default: its voice takes time to reach the tablet, play
+and come back through the microphone). And if what it hears in the following
+seconds is still a short piece of what it just said («Anything else?» after «Do you
+need anything else?»), it drops it.
 
-Dos plugins con las voces de macOS (Mónica por defecto; `say -v '?' | grep es_`
-para ver otras):
+Two plugins with macOS voices (the language's voice by default: Samantha in
+English, Mónica in Spanish; `say -v '?'` lists them):
 
-- **`avspeech`** (por defecto): AVSpeechSynthesizer en un puente Swift que mantiene
-  la voz cargada, ~50 ms por frase. Si descargas la versión mejorada de una voz en
-  Ajustes → Accesibilidad → Contenido leído, la usa.
-- `macos`: `say`, ~600 ms por frase (arranca cada vez).
+- **`avspeech`** (default): AVSpeechSynthesizer in a Swift bridge that keeps the
+  voice loaded, ~50 ms per sentence. If you download the enhanced version of a voice
+  (System Settings → Accessibility → Spoken Content), it uses it.
+- `macos`: `say`, ~600 ms per sentence (it starts every time).
 
-Otros motores son plugins en `server/tts/` con `sintetizar(texto)` → int16 mono a
+Other engines are plugins in `server/tts/` with `synthesize(text)` → int16 mono at
 48 kHz.
 
 ```
-uv run server/main.py --voz Eddy --velocidad 200   # otra voz, más rápida
-uv run server/main.py --tts macos                  # con `say`
-uv run server/main.py --tts ninguno                # solo texto
+uv run server/main.py --voice Eddy --rate 200   # another voice, faster
+uv run server/main.py --tts macos               # with `say`
+uv run server/main.py --tts none                # text only
 ```
 
-## Estructura
+## Layout
 
-- `server/main.py` — HTTP, señalización (`/offer`), monitor (`/video.mjpg`, `/estado`).
-- `server/transporte.py` — sesión WebRTC: pistas, DataChannel `control`, último fotograma.
-- `server/audio.py` — PCM mono 48 kHz; `Altavoz` es la pista de salida.
-- `server/cerebro/` — `loro.py` (Fase 1), `oido.py` (VAD + STT), `transcriptor.py` (Fase 2), `asistente.py` (Fase 3).
-- `server/stt/` — plugins de voz a texto.
-- `server/despertar/` — plugins de palabra de activación.
-- `server/llm/` — plugins de LLM; `permisos.py`, qué MCP y comandos puede usar Claude.
-- `bin/gog`, `bin/gog-autorizar` — Google (gog) para Jarvis con su política, y su autorización.
-- `bin/jarvis-confirmar` — hook que pide tu «sí» antes de cualquier acción que escriba.
-- `server/tts/` — plugins de voz.
-- `server/plugins.py` — registro común de plugins; `server/texto.py`, utilidades de texto;
-  `server/swift.py`, compila los puentes en Swift de los plugins.
-- `web/` — la página del móvil (JS sin bundler, Chrome ≤ 119) y el monitor.
+- `server/main.py` — HTTP, signaling (`/offer`), texts (`/i18n`), monitor (`/video.mjpg`, `/status`).
+- `server/i18n.py` and `locales/` — languages.
+- `server/transport.py` — WebRTC session: tracks, `control` DataChannel, last frame.
+- `server/audio.py` — 48 kHz mono PCM; `Speaker` is the outgoing track.
+- `server/brain/` — `parrot.py` (Phase 1), `ear.py` (VAD + STT), `transcriber.py` (Phase 2), `assistant.py` (Phase 3).
+- `server/stt/`, `server/wake/`, `server/llm/`, `server/tts/` — plugins; `llm/permissions.py`, which MCP servers and commands Claude may use.
+- `server/plugins.py` — shared plugin registry; `server/text.py`, text utilities;
+  `server/swift.py`, builds the plugins' Swift bridges.
+- `bin/jarvis` — starts and stops the server.
+- `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
+- `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
+- `web/` — the phone's page (plain JS, old Chrome) and the monitor.
 
-Próximas fases: ojos (captura bajo demanda), cara, y después app nativa con libwebrtc contra el mismo servidor.
+See `TODO.md` for what's next.

@@ -1,7 +1,7 @@
-"""El modelo de Apple que viene con macOS (Foundation Models, ~3B, en local).
+"""Apple's model that comes with macOS (Foundation Models, ~3B, local).
 
-Habla con apple_puente.swift, que se compila la primera vez en .build/.
-Requiere macOS 26+ con Apple Intelligence activado.
+Talks to apple_bridge.swift, built the first time into .build/.
+Requires macOS 26+ with Apple Intelligence enabled.
 """
 
 import asyncio
@@ -10,63 +10,64 @@ import logging
 import subprocess
 from pathlib import Path
 
-from llm import INSTRUCCIONES, LLM, ahora, registrar
-from swift import compilar
+import i18n
+from llm import LLM, instructions, register
+from swift import build
 
 log = logging.getLogger("llm")
 
-# Si se le da la hora en el prompt la repite en cada respuesta: va como herramienta.
-INSTRUCCIONES_APPLE = (
-    INSTRUCCIONES + "\nSi te preguntan la fecha o la hora, consúltalas con la herramienta fechaHora."
-)
+# Given the time in the prompt, it repeats it in every answer: it goes as a tool.
+DATE_TIME_TOOL = "\nIf asked for the date or the time, look them up with the dateTime tool."
 
-@registrar("apple")
+
+@register("apple")
 class Apple(LLM):
-    def __init__(self, modelo=None, mcp=None):
-        super().__init__(modelo or "SystemLanguageModel.default", mcp)
-        self._binario = compilar(Path(__file__).with_name("apple_puente.swift"), "fm-puente")
-        self._proceso = None
-        self._turno = asyncio.Lock()  # el puente atiende una orden cada vez
+    def __init__(self, model=None, mcp=None):
+        super().__init__(model or "SystemLanguageModel.default", mcp)
+        self._binary = build(Path(__file__).with_name("apple_bridge.swift"), "fm-bridge")
+        self._process = None
+        self._turn = asyncio.Lock()  # the bridge handles one command at a time
 
-    async def _arrancar(self):
-        if self._proceso and self._proceso.returncode is None:
+    async def _start(self):
+        if self._process and self._process.returncode is None:
             return
-        self._proceso = await asyncio.create_subprocess_exec(
-            str(self._binario), stdin=subprocess.PIPE, stdout=subprocess.PIPE
+        self._process = await asyncio.create_subprocess_exec(
+            str(self._binary), stdin=subprocess.PIPE, stdout=subprocess.PIPE
         )
-        listo = await self._leer()
-        if "error" in listo:
-            raise RuntimeError(f"modelo de Apple: {listo['error']}")
+        ready = await self._read()
+        if "error" in ready:
+            raise RuntimeError(f"Apple model: {ready['error']}")
 
-    async def _leer(self) -> dict:
-        return json.loads(await self._proceso.stdout.readline())
+    async def _read(self) -> dict:
+        return json.loads(await self._process.stdout.readline())
 
-    async def _enviar(self, orden: dict):
-        self._proceso.stdin.write(json.dumps(orden).encode() + b"\n")
-        await self._proceso.stdin.drain()
+    async def _send(self, command: dict):
+        self._process.stdin.write(json.dumps(command).encode() + b"\n")
+        await self._process.stdin.drain()
 
-    async def cerrar(self):
-        if self._proceso and self._proceso.returncode is None:
-            self._proceso.kill()
-            await self._proceso.wait()
+    async def close(self):
+        if self._process and self._process.returncode is None:
+            self._process.kill()
+            await self._process.wait()
 
-    async def nueva(self):
-        async with self._turno:
-            await self._arrancar()
-            await self._enviar({"tipo": "nueva", "instrucciones": INSTRUCCIONES_APPLE})
-            await self._leer()
+    async def new(self):
+        async with self._turn:
+            await self._start()
+            await self._send({"type": "new", "instructions": instructions() + DATE_TIME_TOOL})
+            await self._read()
 
-    async def responder(self, texto: str):
-        async with self._turno:
-            await self._arrancar()
-            await self._enviar({"tipo": "preguntar", "texto": texto, "ahora": ahora()})
+    async def answer(self, text: str):
+        async with self._turn:
+            await self._start()
+            await self._send({"type": "ask", "text": text, "now": i18n.L.now_spoken()})
             while True:
-                mensaje = await self._leer()
-                if "delta" in mensaje:
-                    yield mensaje["delta"]
-                elif "error" in mensaje:
-                    log.warning("error del modelo: %s", mensaje["error"])
-                    yield mensaje.get("mensaje", "Perdona, no he podido responder.")
+                message = await self._read()
+                if "delta" in message:
+                    yield message["delta"]
+                elif "error" in message:
+                    log.warning("model error: %s", message["error"])
+                    key = "speech.guardrail" if message["error"] == "guardrail" else "speech.llm_failed"
+                    yield i18n.L(key)
                     return
                 else:
                     return

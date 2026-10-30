@@ -1,70 +1,54 @@
-"""Plugins de LLM (texto → respuesta en streaming).
+"""LLM plugins (text → streamed answer).
 
-Un plugin es un módulo de este paquete con una clase registrada así:
+A plugin is a module of this package with a class registered like this:
 
-    @registrar("nombre")
-    class MiLLM(LLM):
-        async def nueva(self): ...              # empieza conversación (olvida la anterior)
-        async def responder(self, texto):       # async generator de trozos de texto
-            yield "Hola"
-        async def cerrar(self): ...             # opcional, al parar el servidor
+    @register("name")
+    class MyLLM(LLM):
+        async def new(self): ...                # starts a conversation (forgets the last one)
+        async def answer(self, text):           # async generator of text pieces
+            yield "Hello"
+        async def close(self): ...              # optional, when the server stops
 """
 
-import time
 from collections.abc import AsyncIterator
 
-from plugins import Registro
+import i18n
+from plugins import Registry
 
-_registro = Registro(__name__, __path__, "LLM")
-registrar = _registro.registrar
-crear = _registro.crear
-disponibles = _registro.disponibles
+_registry = Registry(__name__, __path__, "LLM")
+register = _registry.register
+create = _registry.create
+available = _registry.available
 
-DIAS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
-MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
-         "septiembre", "octubre", "noviembre", "diciembre")
-
-INSTRUCCIONES = """Eres Jarvis, un asistente de voz que habla español de España.
-Lo que te llega es lo que el usuario ha dicho en voz alta, transcrito
-automáticamente: puede tener errores; interprétalo con sentido común.
-Tu respuesta se leerá en voz alta: sé breve (una a tres frases), natural y
-directo. Nada de listas, markdown, emojis ni símbolos. Si no sabes algo, dilo.
-No des por hecho el género del usuario: usa formas neutras («tendrás que hacerlo
-tú» y no «tú mismo»)."""
+INSTRUCTIONS = """You are Jarvis, a voice assistant. Always reply in {language}.
+What you receive is what the user said out loud, transcribed automatically: it
+may contain mistakes; interpret it with common sense.
+Your answer will be read aloud: be brief (one to three sentences), natural and
+direct. No lists, markdown, emojis or symbols. If you don't know something, say so.
+Don't assume the user's gender: use neutral forms."""
 
 
-def ahora() -> str:
-    """«viernes 30 de octubre de 2026, las 8 y 42 de la noche».
-
-    En forma hablada: con «20:42» el modelo de Apple se lía al pasarlo a voz
-    («las dos veinte y cuarenta dos»).
-    """
-    t = time.localtime()
-    hora = t.tm_hour % 12 or 12
-    parte = "de la mañana" if 6 <= t.tm_hour < 12 else "de la tarde" if 12 <= t.tm_hour < 20 else (
-        "de la noche" if t.tm_hour >= 20 else "de la madrugada")
-    minutos = "en punto" if t.tm_min == 0 else f"y {t.tm_min}"
-    articulo = "la" if hora == 1 else "las"
-    fecha = f"{DIAS[t.tm_wday]} {t.tm_mday} de {MESES[t.tm_mon - 1]} de {t.tm_year}"
-    return f"{fecha}, {articulo} {hora} {minutos} {parte}"
+def instructions() -> str:
+    """The system instructions, in the active language."""
+    return INSTRUCTIONS.format(language=i18n.L.name)
 
 
 class LLM:
-    nombre = "?"
+    name = "?"
 
-    def __init__(self, modelo: str | None = None, mcp: str | None = None):
-        self.modelo = modelo
-        self.mcp = mcp  # ruta a mcp.json; solo lo usan los plugins que admiten MCP
+    def __init__(self, model: str | None = None, mcp: str | None = None):
+        self.model = model
+        self.mcp = mcp  # path to .mcp.json; only plugins that support MCP use it
 
-    async def nueva(self):
+    async def new(self):
         raise NotImplementedError
 
-    def responder(self, texto: str) -> AsyncIterator[str]:
+    def answer(self, text: str) -> AsyncIterator[str]:
         raise NotImplementedError
 
-    async def recargar(self):
-        """Vuelve a leer su configuración (permisos, herramientas) y empieza de nuevo."""
-        await self.nueva()
+    async def reload(self):
+        """Reads its configuration again (permissions, tools) and starts over."""
+        await self.new()
 
-    async def cerrar(self):
-        """Al parar el servidor: libera procesos o conexiones."""
+    async def close(self):
+        """When the server stops: releases processes or connections."""

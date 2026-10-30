@@ -1,14 +1,14 @@
-"""Hermes Agent como LLM, por su API compatible con OpenAI (`hermes gateway`).
+"""Hermes Agent as the LLM, through its OpenAI-compatible API (`hermes gateway`).
 
-Hermes usa sus propias herramientas, memoria y credenciales: lo que ya tenga
-configurado no hay que darlo otra vez. permisos.json no le aplica; lo que sí se
-mantiene es la confirmación por voz: cuando Hermes pide aprobar una acción
-(evento SSE `approval.request`), Jarvis te pregunta y responde a Hermes con
-`once` si dices «sí» o `deny` si no (POST /v1/runs/{id}/approval).
+Hermes uses its own tools, memory and credentials: whatever it already has set up
+doesn't need to be granted again. permissions.json doesn't apply to it; what is
+kept is the voice confirmation: when Hermes asks to approve an action (SSE event
+`approval.request`), Jarvis asks you and answers Hermes with `once` if you say
+«yes» or `deny` otherwise (POST /v1/runs/{id}/approval).
 
-La clave se lee de API_SERVER_KEY en ~/.hermes/.env (o HERMES_API_KEY), y la
-dirección de HERMES_API_URL (por defecto http://127.0.0.1:8642).
-Cada conversación es una sesión de Hermes (cabecera X-Hermes-Session-Id).
+The key comes from API_SERVER_KEY in ~/.hermes/.env (or HERMES_API_KEY), and the
+address from HERMES_API_URL (default http://127.0.0.1:8642).
+Each conversation is a Hermes session (X-Hermes-Session-Id header).
 """
 
 import asyncio
@@ -19,137 +19,136 @@ import time
 import uuid
 from pathlib import Path
 
-from llm import INSTRUCCIONES, LLM, registrar
+import i18n
+from llm import LLM, instructions, register
 
 log = logging.getLogger("llm")
 
 URL = os.environ.get("HERMES_API_URL", "http://127.0.0.1:8642")
 ENV = Path.home() / ".hermes" / ".env"
-# Mismos archivos que la confirmación de Claude (bin/jarvis-confirmar, cerebro/asistente.py).
-CONFIRMAR = Path(__file__).resolve().parents[2] / ".build" / "confirmar"
-ESPERA = "Un momento, lo miro. "
-PLAZO = 120  # segundos para contestar a una aprobación; luego se deniega
+# Same files as Claude's confirmation (bin/jarvis-confirm, brain/assistant.py).
+CONFIRM = Path(__file__).resolve().parents[2] / ".build" / "confirm"
+DEADLINE = 120  # seconds to answer an approval; then it is denied
 
 
-def clave() -> str:
+def api_key() -> str:
     if os.environ.get("HERMES_API_KEY"):
         return os.environ["HERMES_API_KEY"]
     try:
-        for linea in ENV.read_text().splitlines():
-            if linea.startswith("API_SERVER_KEY="):
-                return linea.split("=", 1)[1].strip().strip('"')
+        for line in ENV.read_text().splitlines():
+            if line.startswith("API_SERVER_KEY="):
+                return line.split("=", 1)[1].strip().strip('"')
     except OSError:
         pass
-    raise RuntimeError(f"Falta API_SERVER_KEY en {ENV}: activa la API de Hermes")
+    raise RuntimeError(f"API_SERVER_KEY missing in {ENV}: enable Hermes's API")
 
 
-@registrar("hermes")
+@register("hermes")
 class Hermes(LLM):
-    def __init__(self, modelo=None, mcp=None):
-        super().__init__(modelo or "hermes-agent", mcp)
-        self._clave = clave()
+    def __init__(self, model=None, mcp=None):
+        super().__init__(model or "hermes-agent", mcp)
+        self._key = api_key()
         self._http = None
-        self._sesion = None
-        self._turno = asyncio.Lock()
+        self._session = None
+        self._turn = asyncio.Lock()
 
-    async def _cliente(self):
+    async def _client(self):
         import aiohttp
 
         if self._http is None or self._http.closed:
             self._http = aiohttp.ClientSession(
-                base_url=URL, headers={"Authorization": f"Bearer {self._clave}"},
+                base_url=URL, headers={"Authorization": f"Bearer {self._key}"},
                 timeout=aiohttp.ClientTimeout(total=None, sock_connect=5),
             )
         return self._http
 
-    async def nueva(self):
-        self._sesion = f"jarvis-{uuid.uuid4().hex[:12]}"
+    async def new(self):
+        self._session = f"jarvis-{uuid.uuid4().hex[:12]}"
 
-    async def cerrar(self):
+    async def close(self):
         if self._http and not self._http.closed:
             await self._http.close()
 
-    async def responder(self, texto: str):
+    async def answer(self, text: str):
         import aiohttp
 
-        async with self._turno:
-            if not self._sesion:
-                await self.nueva()
-            http = await self._cliente()
-            cuerpo = {
-                "model": self.modelo, "stream": True,
-                "messages": [{"role": "system", "content": INSTRUCCIONES},
-                             {"role": "user", "content": texto}],
+        async with self._turn:
+            if not self._session:
+                await self.new()
+            http = await self._client()
+            body = {
+                "model": self.model, "stream": True,
+                "messages": [{"role": "system", "content": instructions()},
+                             {"role": "user", "content": text}],
             }
-            dicho = False
+            said = False
             try:
-                async with http.post("/v1/chat/completions", json=cuerpo,
-                                     headers={"X-Hermes-Session-Id": self._sesion}) as r:
+                async with http.post("/v1/chat/completions", json=body,
+                                     headers={"X-Hermes-Session-Id": self._session}) as r:
                     if r.status != 200:
-                        log.warning("Hermes respondió %s: %s", r.status, (await r.text())[:300])
-                        yield "Perdona, Hermes no ha podido responder."
+                        log.warning("Hermes answered %s: %s", r.status, (await r.text())[:300])
+                        yield i18n.L("speech.llm_failed")
                         return
-                    evento = None
-                    async for linea in r.content:
-                        linea = linea.decode().strip()
-                        if linea.startswith("event:"):
-                            evento = linea[6:].strip()
+                    event = None
+                    async for line in r.content:
+                        line = line.decode().strip()
+                        if line.startswith("event:"):
+                            event = line[6:].strip()
                             continue
-                        if not linea.startswith("data:"):
-                            evento = None if not linea else evento
+                        if not line.startswith("data:"):
+                            event = None if not line else event
                             continue
-                        datos = linea[5:].strip()
-                        if datos == "[DONE]":
+                        data = line[5:].strip()
+                        if data == "[DONE]":
                             return
-                        datos = json.loads(datos)
-                        if evento == "approval.request":
-                            pregunta = self._aprobacion(datos)
-                            dicho = True
-                            yield pregunta
-                        elif evento == "hermes.tool.progress":
-                            log.info("herramienta de Hermes: %s", datos.get("tool") or datos.get("name"))
-                            if not dicho:
-                                dicho = True
-                                yield ESPERA
-                        elif evento is None:
-                            delta = (datos.get("choices") or [{}])[0].get("delta", {}).get("content")
+                        data = json.loads(data)
+                        if event == "approval.request":
+                            said = True
+                            yield self._approval(data)
+                        elif event == "hermes.tool.progress":
+                            log.info("Hermes tool: %s", data.get("tool") or data.get("name"))
+                            if not said:
+                                said = True
+                                yield i18n.L("speech.wait") + " "
+                        elif event is None:
+                            delta = (data.get("choices") or [{}])[0].get("delta", {}).get("content")
                             if delta:
-                                dicho = True
+                                said = True
                                 yield delta
-                        evento = None
+                        event = None
             except aiohttp.ClientConnectorError:
-                yield "No puedo hablar con Hermes: ¿está en marcha su gateway?"
+                yield i18n.L("speech.hermes_down")
 
-    def _aprobacion(self, datos: dict) -> str:
-        """Apunta la aprobación como pendiente, espera tu «sí» en segundo plano y devuelve la pregunta."""
-        run_id = datos.get("run_id", "")
-        accion = datos.get("description") or datos.get("reason") or datos.get("command") or "una acción"
-        log.info("Hermes pide aprobación (%s): %s", run_id, accion)
-        CONFIRMAR.mkdir(parents=True, exist_ok=True)
-        # «consumir»: el «sí» o el «no» es para Hermes, no un mensaje nuevo para él.
-        (CONFIRMAR / "pendiente.json").write_text(json.dumps(
-            {"firma": run_id, "accion": accion, "cuando": time.time(), "consumir": True}, ensure_ascii=False))
-        asyncio.ensure_future(self._esperar_respuesta(run_id))
-        return f" Hermes quiere hacer esto: {accion}. ¿Lo hago?"
+    def _approval(self, data: dict) -> str:
+        """Records the approval as pending, waits for your «yes» in the background, returns the question."""
+        run_id = data.get("run_id", "")
+        action = data.get("description") or data.get("reason") or data.get("command") or "?"
+        log.info("Hermes asks for approval (%s): %s", run_id, action)
+        CONFIRM.mkdir(parents=True, exist_ok=True)
+        # «consume»: the «yes» or «no» is for Hermes, not a new message to it.
+        (CONFIRM / "pending.json").write_text(json.dumps(
+            {"signature": run_id, "action": action, "at": time.time(), "consume": True}, ensure_ascii=False))
+        asyncio.ensure_future(self._await_answer(run_id))
+        return " " + i18n.L("speech.hermes_approval", action=action)
 
-    async def _esperar_respuesta(self, run_id: str):
-        pendiente, confirmada = CONFIRMAR / "pendiente.json", CONFIRMAR / "confirmada.json"
-        limite = time.time() + PLAZO
-        eleccion = "deny"
-        while time.time() < limite:
+    async def _await_answer(self, run_id: str):
+        pending, confirmed = CONFIRM / "pending.json", CONFIRM / "confirmed.json"
+        deadline = time.time() + DEADLINE
+        choice = "deny"
+        while time.time() < deadline:
             await asyncio.sleep(0.2)
             try:
-                if json.loads(confirmada.read_text()).get("firma") == run_id:
-                    confirmada.unlink(missing_ok=True)
-                    eleccion = "once"
+                if json.loads(confirmed.read_text()).get("signature") == run_id:
+                    confirmed.unlink(missing_ok=True)
+                    choice = "once"
                     break
             except (OSError, ValueError):
                 pass
-            if not pendiente.exists():
-                break  # respondió algo que no era «sí»
-        pendiente.unlink(missing_ok=True)
-        log.info("aprobación de Hermes (%s): %s", run_id, eleccion)
-        http = await self._cliente()
-        async with http.post(f"/v1/runs/{run_id}/approval", json={"choice": eleccion}) as r:
+            if not pending.exists():
+                break  # the answer wasn't «yes»
+        pending.unlink(missing_ok=True)
+        log.info("Hermes approval (%s): %s", run_id, choice)
+        http = await self._client()
+        async with http.post(f"/v1/runs/{run_id}/approval", json={"choice": choice}) as r:
             if r.status != 200:
-                log.warning("Hermes no aceptó la aprobación: %s %s", r.status, (await r.text())[:200])
+                log.warning("Hermes rejected the approval: %s %s", r.status, (await r.text())[:200])

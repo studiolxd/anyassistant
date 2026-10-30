@@ -1,0 +1,9 @@
+{
+  "allowed": {
+    "holded": "all"
+  },
+  "commands": {
+    "bin/gog": "read"
+  },
+  "confirm": true
+}

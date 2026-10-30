@@ -1,51 +1,51 @@
-"""Whisper en la GPU de Apple Silicon con MLX."""
+"""Whisper on the Apple Silicon GPU with MLX."""
 
 import sys
 
 import numpy as np
 
-from stt import GPU, Transcriptor, registrar
+from stt import GPU, Transcriber, register
 
-_modelos = {}
+_models = {}
 
 
-def transcribir_mlx(audio: np.ndarray, modelo: str, idioma: str, pista: str | None = None) -> str:
-    """Transcribe con cualquier modelo MLX; los deja todos cargados en memoria.
+def transcribe_mlx(audio: np.ndarray, model: str, language: str, prompt: str | None = None) -> str:
+    """Transcribes with any MLX Whisper model, keeping all of them loaded.
 
-    mlx_whisper solo guarda un modelo y recarga si se le pide otro; aquí se
-    usan dos a la vez (el de STT y el pequeño de la palabra de activación).
-    El cerrojo GPU evita que dos hilos la usen a la vez.
+    mlx_whisper keeps a single model and reloads when asked for another; here two
+    are used at once (the STT one and the small wake-word one). The GPU lock stops
+    two threads from using it at the same time.
     """
     import mlx_whisper
 
     holder = sys.modules["mlx_whisper.transcribe"].ModelHolder
-    if not getattr(holder, "_varios", False):
+    if not getattr(holder, "_many", False):
         from mlx_whisper.load_models import load_model
 
-        def get_model(cls, ruta, dtype):
-            if ruta not in _modelos:
-                _modelos[ruta] = load_model(ruta, dtype=dtype)
-            return _modelos[ruta]
+        def get_model(cls, path, dtype):
+            if path not in _models:
+                _models[path] = load_model(path, dtype=dtype)
+            return _models[path]
 
         holder.get_model = classmethod(get_model)
-        holder._varios = True
+        holder._many = True
 
     with GPU:
-        resultado = mlx_whisper.transcribe(
+        result = mlx_whisper.transcribe(
             audio,
-            path_or_hf_repo=modelo,
-            language=idioma,
-            # Frases sueltas: sin contexto previo se inventa menos.
+            path_or_hf_repo=model,
+            language=language,
+            # Standalone sentences: without previous context it makes up less.
             condition_on_previous_text=False,
-            initial_prompt=pista,
+            initial_prompt=prompt,
         )
-    return resultado["text"].strip()
+    return result["text"].strip()
 
 
-@registrar("mlx-whisper")
-class MlxWhisper(Transcriptor):
-    def __init__(self, idioma="es", modelo=None):
-        super().__init__(idioma, modelo or "mlx-community/whisper-large-v3-turbo")
+@register("mlx-whisper")
+class MlxWhisper(Transcriber):
+    def __init__(self, language="en", model=None):
+        super().__init__(language, model or "mlx-community/whisper-large-v3-turbo")
 
-    def transcribir(self, audio: np.ndarray) -> str:
-        return transcribir_mlx(audio, self.modelo, self.idioma)
+    def transcribe(self, audio: np.ndarray) -> str:
+        return transcribe_mlx(audio, self.model, self.language)

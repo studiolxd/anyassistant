@@ -1,24 +1,29 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Nexus monitor</title>
+  <title>Jarvis monitor</title>
   <style>
     html, body { margin: 0; height: 100%; background: #111; color: #ccc; font-family: sans-serif; }
     body { display: flex; flex-direction: column; }
-    #estado { margin: 0; padding: 0.5em; text-align: center; }
+    #status { margin: 0; padding: 0.5em; text-align: center; }
     img { flex: 1; min-height: 0; width: 100%; object-fit: contain; background: #000; }
   </style>
 </head>
 <body>
-  <p id="estado">Esperando al móvil…</p>
-  <img src="/video.mjpg" alt="Cámara del móvil">
+  <p id="status"></p>
+  <img src="/video.mjpg" alt="Phone camera">
   <script>
-    setInterval(async function () {
-      var e = await (await fetch('/estado')).json();
-      document.getElementById('estado').textContent =
-        e.conectado ? 'Conectado · ' + e.frames + ' fotogramas recibidos' : 'Esperando al móvil…';
-    }, 1000);
+    // What the phone's camera sees, from the Mac. Texts from /i18n, like the phone's page.
+    fetch('/i18n').then(function (r) { return r.json(); }).then(function (data) {
+      document.documentElement.lang = data.lang;
+      setInterval(async function () {
+        var s = await (await fetch('/status')).json();
+        document.getElementById('status').textContent = s.connected
+          ? data.ui.monitor_connected.replace('{frames}', s.frames)
+          : data.ui.monitor_waiting;
+      }, 1000);
+    });
   </script>
 </body>
 </html>

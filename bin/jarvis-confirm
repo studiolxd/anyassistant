@@ -1,0 +1,108 @@
+#!/usr/bin/python3
+"""Claude Code PreToolUse hook: actions that write need the user's «yes».
+
+Claude Code runs it before every tool, with {tool_name, tool_input} on stdin. If
+the action writes (a bin/gog call that isn't a read, or an MCP tool that isn't
+get_/list_/search_…) and the user hasn't confirmed it, it blocks it (exit code 2:
+the message reaches Claude) and records it in .build/confirm/pending.json. When
+the user says «yes», the voice server (brain/assistant.py) writes confirmed.json
+with the same signature, and the same call, repeated within a minute, goes
+through once.
+
+Claude cannot forge it: it has no tools to write files and its terminal only
+runs the allowed commands.
+"""
+
+import hashlib
+import json
+import os
+import shlex
+import sys
+import time
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FOLDER = os.path.join(ROOT, ".build", "confirm")
+PENDING = os.path.join(FOLDER, "pending.json")
+CONFIRMED = os.path.join(FOLDER, "confirmed.json")
+
+# gog commands that only read (service, command); anything else counts as writing.
+GOG_READ = {
+    ("gmail", "search"), ("gmail", "find"), ("gmail", "query"), ("gmail", "ls"), ("gmail", "list"),
+    ("gmail", "get"), ("gmail", "info"), ("gmail", "show"), ("gmail", "thread"), ("gmail", "labels"),
+    ("gmail", "url"), ("gmail", "history"),
+    ("calendar", "calendars"), ("calendar", "events"), ("calendar", "list"), ("calendar", "ls"),
+    ("calendar", "event"), ("calendar", "get"), ("calendar", "info"), ("calendar", "show"),
+    ("calendar", "freebusy"), ("calendar", "conflicts"), ("calendar", "colors"),
+    ("drive", "ls"), ("drive", "search"), ("drive", "get"), ("drive", "tree"), ("drive", "du"),
+    ("drive", "permissions"),
+    ("docs", "cat"), ("docs", "text"), ("docs", "read"), ("docs", "info"), ("docs", "get"),
+    ("docs", "show"), ("docs", "list-tabs"),
+    ("sheets", "get"), ("sheets", "read"), ("sheets", "show"),
+    ("contacts", "list"), ("contacts", "search"), ("contacts", "get"),
+    ("tasks", "list"), ("tasks", "lists"),
+}
+MCP_READ = ("get_", "list_", "search_", "find_", "preview_", "download_")
+
+
+def describe_gog(command):
+    """The bin/gog action in words, or None if it only reads."""
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return command
+    if not parts or not parts[0].endswith("bin/gog"):
+        return None
+    found = [p for p in parts[1:] if not p.startswith("-")]
+    if found[:1] == ["help"] or "--help" in parts or "-h" in parts:
+        return None
+    if tuple(found[:2]) in GOG_READ:
+        return None
+    return " ".join(parts[1:])
+
+
+def describe(tool, tool_input):
+    if tool == "Bash":
+        return describe_gog(tool_input.get("command", ""))
+    if tool.startswith("mcp__"):
+        name = tool.split("__")[-1]
+        if name.startswith(MCP_READ):
+            return None
+        return f"{tool.split('__')[1]}: {name} {json.dumps(tool_input, ensure_ascii=False)}"
+    return None
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def main():
+    data = json.load(sys.stdin)
+    tool, tool_input = data.get("tool_name", ""), data.get("tool_input", {})
+    action = describe(tool, tool_input)
+    if action is None:
+        sys.exit(0)
+
+    signature = hashlib.sha256(json.dumps([tool, tool_input], sort_keys=True).encode()).hexdigest()
+    confirmed = read(CONFIRMED)
+    if confirmed and confirmed.get("signature") == signature and confirmed.get("until", 0) > time.time():
+        os.remove(CONFIRMED)  # good for one use only
+        sys.exit(0)
+
+    os.makedirs(FOLDER, exist_ok=True)
+    with open(PENDING, "w") as f:
+        json.dump({"signature": signature, "action": action, "at": time.time()}, f, ensure_ascii=False)
+    print(
+        "This action changes data and needs the user's confirmation. Don't assume it: ask "
+        "them in one short sentence whether to do it (say what you are going to do). If they "
+        "answer yes, repeat exactly the same call; if not, don't do it.",
+        file=sys.stderr,
+    )
+    sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

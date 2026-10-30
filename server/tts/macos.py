@@ -1,4 +1,4 @@
-"""Las voces de macOS con `say` (Mónica, Eddy, Reed…: `say -v '?' | grep es_`)."""
+"""macOS voices through `say` (`say -v '?'` lists them)."""
 
 import subprocess
 import tempfile
@@ -7,21 +7,18 @@ from pathlib import Path
 
 import numpy as np
 
-from tts import TASA, Voz, registrar
+from tts import RATE, Voice, register
 
 
-@registrar("macos")
-class MacOS(Voz):
-    def __init__(self, voz=None, velocidad=None):
-        super().__init__(voz or "Mónica", velocidad)
-
-    def sintetizar(self, texto: str) -> np.ndarray:
-        with tempfile.TemporaryDirectory() as carpeta:
-            salida = Path(carpeta) / "voz.wav"
-            orden = ["say", "-v", self.voz, "-o", str(salida),
-                     "--file-format=WAVE", f"--data-format=LEI16@{TASA}"]
-            if self.velocidad:
-                orden += ["-r", str(self.velocidad)]  # palabras por minuto
-            subprocess.run(orden + ["--", texto], check=True)
-            with wave.open(str(salida)) as w:
+@register("macos")
+class MacOS(Voice):
+    def synthesize(self, text: str) -> np.ndarray:
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder) / "voice.wav"
+            command = ["say", "-v", self.voice, "-o", str(output),
+                       "--file-format=WAVE", f"--data-format=LEI16@{RATE}"]
+            if self.rate:
+                command += ["-r", str(self.rate)]  # words per minute
+            subprocess.run(command + ["--", text], check=True)
+            with wave.open(str(output)) as w:
                 return np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16)

@@ -1,63 +1,63 @@
 #!/bin/sh
-# Arranca y para el servidor de Jarvis a mano (sin launchd).
+# Starts and stops the Jarvis server by hand (no launchd).
 #
-#   bin/jarvis arrancar [opciones del servidor]   p. ej. --llm hermes, --silencio 0.45
-#   bin/jarvis parar
-#   bin/jarvis reiniciar     (como «Reiníciate»: cierra limpio y se relanza con las mismas opciones)
-#   bin/jarvis estado
-#   bin/jarvis log           (el registro en vivo; Ctrl+C para salir)
+#   bin/jarvis start [server options]   e.g. --llm hermes, --lang en, --silence 0.45
+#   bin/jarvis stop
+#   bin/jarvis restart                  (like saying «restart»: stops cleanly and comes back with the same options)
+#   bin/jarvis status
+#   bin/jarvis log                      (the live log; Ctrl+C to leave)
 #
-# El PID va en .build/jarvis.pid y el registro en .build/jarvis.log.
-RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
-PID="$RAIZ/.build/jarvis.pid"
-LOG="$RAIZ/.build/jarvis.log"
-PUERTO=8080
+# The PID goes to .build/jarvis.pid and the log to .build/jarvis.log.
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PID="$ROOT/.build/jarvis.pid"
+LOG="$ROOT/.build/jarvis.log"
+PORT=8080
 
-vivo() { [ -f "$PID" ] && kill -0 "$(cat "$PID")" 2>/dev/null; }
+alive() { [ -f "$PID" ] && kill -0 "$(cat "$PID")" 2>/dev/null; }
 
 case "$1" in
-  arrancar)
+  start)
     shift
-    if vivo; then echo "Jarvis ya está en marcha (PID $(cat "$PID"))."; exit 0; fi
-    mkdir -p "$RAIZ/.build"
-    cd "$RAIZ" || exit 1
+    if alive; then echo "Jarvis is already running (PID $(cat "$PID"))."; exit 0; fi
+    mkdir -p "$ROOT/.build"
+    cd "$ROOT" || exit 1
     uv sync --quiet || exit 1
-    # El python del entorno directamente (no `uv run`), para que el PID sea el del servidor.
-    PYTHONUNBUFFERED=1 nohup "$RAIZ/.venv/bin/python" server/main.py "$@" >> "$LOG" 2>&1 &
+    # The environment's python directly (not `uv run`), so the PID is the server's.
+    PYTHONUNBUFFERED=1 nohup "$ROOT/.venv/bin/python" server/main.py "$@" >> "$LOG" 2>&1 &
     echo $! > "$PID"
-    printf "Arrancando Jarvis (PID %s)" "$(cat "$PID")"
+    printf "Starting Jarvis (PID %s)" "$(cat "$PID")"
     i=0
     while [ $i -lt 120 ]; do
-      if curl -s -o /dev/null "http://127.0.0.1:$PUERTO/"; then echo " · listo en http://127.0.0.1:$PUERTO"; exit 0; fi
-      if ! vivo; then echo " · se ha parado; mira $LOG"; exit 1; fi
+      if curl -s -o /dev/null "http://127.0.0.1:$PORT/"; then echo " · ready at http://127.0.0.1:$PORT"; exit 0; fi
+      if ! alive; then echo " · it stopped; see $LOG"; exit 1; fi
       printf "."; sleep 1; i=$((i + 1))
     done
-    echo " · tarda más de lo normal; mira $LOG"
+    echo " · taking longer than usual; see $LOG"
     ;;
-  parar)
-    if ! vivo; then echo "Jarvis no está en marcha."; rm -f "$PID"; exit 0; fi
+  stop)
+    if ! alive; then echo "Jarvis isn't running."; rm -f "$PID"; exit 0; fi
     P=$(cat "$PID")
-    kill -TERM "$P"  # cierre limpio: sesiones, Claude, voz
+    kill -TERM "$P"  # clean shutdown: sessions, Claude, voice
     i=0
     while kill -0 "$P" 2>/dev/null && [ $i -lt 15 ]; do sleep 1; i=$((i + 1)); done
     if kill -0 "$P" 2>/dev/null; then
-      echo "No se ha cerrado en 15 s: lo fuerzo."
+      echo "It didn't stop within 15 s: forcing it."
       pkill -KILL -P "$P" 2>/dev/null
       kill -KILL "$P" 2>/dev/null
     fi
     rm -f "$PID"
-    echo "Jarvis parado."
+    echo "Jarvis stopped."
     ;;
-  reiniciar)
-    if ! vivo; then echo "Jarvis no está en marcha: usa «$0 arrancar»."; exit 1; fi
+  restart)
+    if ! alive; then echo "Jarvis isn't running: use «$0 start»."; exit 1; fi
     kill -HUP "$(cat "$PID")"
-    echo "Reiniciando Jarvis (mismo PID, mismas opciones)…"
+    echo "Restarting Jarvis (same PID, same options)…"
     ;;
-  estado)
-    if vivo; then
-      echo "Jarvis en marcha (PID $(cat "$PID")): $(curl -s -m 3 "http://127.0.0.1:$PUERTO/estado" || echo 'sin respuesta')"
+  status)
+    if alive; then
+      echo "Jarvis is running (PID $(cat "$PID")): $(curl -s -m 3 "http://127.0.0.1:$PORT/status" || echo 'no answer')"
     else
-      echo "Jarvis no está en marcha."
+      echo "Jarvis isn't running."
     fi
     ;;
   log)

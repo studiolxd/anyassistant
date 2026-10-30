@@ -1,0 +1,245 @@
+"""Phase 3: listens, transcribes, answers with an LLM plugin and says it out loud.
+
+Each «Hey Jarvis» starts a new conversation in the LLM, which remembers it until
+it falls asleep. The answer reaches the screen in pieces as it is generated
+("text" messages with the same id and partial=True until the last one), and as
+soon as a sentence is complete it is synthesized and played while the next one
+arrives. While it speaks it doesn't listen; tapping the screen stops it.
+"""
+
+import asyncio
+import json
+import logging
+import os
+import re
+import signal
+import time
+from pathlib import Path
+
+import i18n
+from audio import normalize
+from brain.transcriber import Transcriber
+from text import words
+
+log = logging.getLogger("assistant")
+
+# Seconds deaf after speaking (--echo-guard): the time its voice takes to reach the
+# tablet, play and come back through the microphone, plus room echo. With 0.6 s on
+# the tablet the last word leaked in («…anything else?» → «Anything else?»).
+GUARD = 1.2
+ECHO_MAX_WORDS = 5  # an echo is a short piece of what it just said
+# An echo starts right after it stops speaking (after the guard); an answer of yours
+# that repeats its words («Delete only the two promotional ones…?» → «Only the two
+# promotional ones») usually starts later: only what starts within this margin counts.
+ECHO_WINDOW = 2.5
+
+# Confirming actions that write: bin/jarvis-confirm records the pending one; if the
+# user says «yes», this authorizes that same action for one minute.
+CONFIRM = Path(__file__).resolve().parents[2] / ".build" / "confirm"
+END_OF_SENTENCE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
+
+
+def system_command(text: str) -> str | None:
+    """«Reload the tools» → "reload"; «Restart» → "restart". Only short commands."""
+    heard = words(text)
+    if not 0 < len(heard) <= 5:
+        return None
+    if any(w.startswith(tuple(i18n.L.list("commands.reload"))) for w in heard):
+        return "reload"
+    if set(heard) & set(i18n.L.list("commands.restart")):
+        return "restart"
+    return None
+
+
+def is_yes(text: str) -> bool:
+    """«Yes», «Sure, do it»… but not «No, wait» nor long sentences."""
+    heard = set(words(text))
+    return (0 < len(heard) <= 6 and not heard & set(i18n.L.list("commands.no"))
+            and bool(heard & set(i18n.L.list("commands.yes"))))
+
+
+def create(stt, llm, tts=None, wake=None, ear=None, guard=GUARD):
+    """Returns the brain(speaker, send) factory that Session expects."""
+
+    def brain(speaker, send):
+        return Assistant(stt, wake() if wake else None, llm, tts, speaker, send, ear, guard)
+
+    return brain
+
+
+def split(text: str) -> tuple[list[str], str]:
+    """Complete sentences and the unfinished rest: «Hi. How a» → (["Hi."], "How a")."""
+    pieces = END_OF_SENTENCE.split(text)
+    return [p.strip() for p in pieces[:-1] if p.strip()], pieces[-1]
+
+
+class Assistant(Transcriber):
+    def __init__(self, stt, wake, llm, tts, speaker, send, ear=None, guard=GUARD):
+        super().__init__(stt, wake, speaker, send, ear, deaf=self._deaf)
+        self.guard = guard
+        self.said = []  # words of the last thing it said, to recognize its echo
+        self.llm = llm
+        self.tts = tts
+        self.turn = asyncio.Lock()  # one answer at a time, in order
+        self.number = 0
+        self.cut = 0  # number of the answer that was told to stop
+        self.sentences = asyncio.Queue()  # (number, sentence); sentence None = end of answer
+        if tts:
+            asyncio.ensure_future(self._mouth())
+
+    def _idle_state(self) -> str:
+        """The resting state, or «question» if an action awaits your «yes» (the face shows it)."""
+        try:
+            pending = json.loads((CONFIRM / "pending.json").read_text())
+            if time.time() - pending.get("at", 0) < 120:
+                return "question"
+        except (OSError, ValueError):
+            pass
+        return self.ear.idle_state
+
+    def _deaf(self) -> bool:
+        return self.speaker.speaking or time.time() - self.speaker.last_sound < self.guard
+
+    def _is_echo(self, text: str, timings: dict) -> bool:
+        """A short piece of what it just said: its own voice leaking into the microphone."""
+        # When the sentence started: now, minus the STT time and its duration.
+        started = time.time() - timings.get("stt_ms", 0) / 1000 - timings.get("audio_s", 0)
+        if started - self.speaker.last_sound > ECHO_WINDOW:
+            return False
+        heard = words(text)
+        return 0 < len(heard) <= ECHO_MAX_WORDS and f" {' '.join(heard)} " in f" {' '.join(self.said)} "
+
+    def on_connect(self):
+        super().on_connect()
+        asyncio.ensure_future(self.llm.new())
+
+    def on_message(self, data: dict):
+        if data.get("type") == "tap" and (self.turn.locked() or self.speaker.speaking):
+            self.stop()
+
+    def stop(self):
+        log.info("stopped")
+        self.cut = self.number
+        self.speaker.stop()
+        self._state(self._idle_state())
+
+    def _woke_up(self):
+        super()._woke_up()
+        asyncio.ensure_future(self.llm.new())
+
+    def _heard(self, text: str, timings: dict):
+        if self._is_echo(text, timings):
+            log.info("echo dropped: «%s»", text)
+            return
+        if self._confirm(text):
+            # It was the answer to an approval the LLM itself asked for (Hermes): not a new message.
+            Transcriber._heard(self, text, timings)
+            return
+        command = system_command(text)
+        if command:
+            Transcriber._heard(self, text, timings)  # shown on screen, but not sent to the LLM
+            asyncio.ensure_future(self._command(command))
+            return
+        super()._heard(text, timings)
+        asyncio.ensure_future(self._answer(text))
+
+    async def _command(self, command: str):
+        if command == "reload":
+            log.info("reloading tools")
+            await self.llm.reload()
+            self._say(i18n.L("speech.reloaded"))
+        else:
+            log.info("restarting the server")
+            self._say(i18n.L("speech.restarting"))
+            await asyncio.sleep(3)  # time to say it
+            os.kill(os.getpid(), signal.SIGHUP)  # main.py treats it as «restart»
+
+    def _say(self, text: str):
+        """A fixed system sentence: to the screen and, if there is a voice, to the speaker."""
+        self.number += 1
+        self.send({"type": "text", "author": "assistant", "id": self.number, "text": text, "partial": False})
+        if self.tts:
+            self.sentences.put_nowait((self.number, text))
+            self.sentences.put_nowait((self.number, None))
+        else:
+            self._state(self._idle_state())
+
+    def _confirm(self, text: str) -> bool:
+        """If an action awaits the user's «yes», authorizes or cancels it.
+
+        Returns True if the sentence was only for that and must not go to the LLM
+        («consume»: approvals the plugin resolves itself, like Hermes's).
+        """
+        pending_json = CONFIRM / "pending.json"
+        try:
+            pending = json.loads(pending_json.read_text())
+        except (OSError, ValueError):
+            return False
+        if time.time() - pending.get("at", 0) > 120:
+            pending_json.unlink(missing_ok=True)
+            return False
+        if is_yes(text):
+            (CONFIRM / "confirmed.json").write_text(
+                json.dumps({"signature": pending["signature"], "until": time.time() + 60})
+            )
+            log.info("confirmed: %s", pending.get("action"))
+        else:
+            log.info("not confirmed («%s»): %s", text, pending.get("action"))
+        pending_json.unlink(missing_ok=True)
+        return bool(pending.get("consume"))
+
+    async def _answer(self, text: str):
+        async with self.turn:
+            self.number += 1
+            number = self.number
+            message = {"type": "text", "author": "assistant", "id": number}
+            self._state("thinking")
+            start = time.time()
+            first = None
+            answer = rest = ""
+            # Even if cut off, the whole answer is read: the plugin has to finish it.
+            async for piece in self.llm.answer(text):
+                if self.cut == number:
+                    continue
+                first = first or time.time() - start
+                answer += piece
+                self.send({**message, "text": answer, "partial": True})
+                if self.tts:
+                    sentences, rest = split(rest + piece)
+                    for sentence in sentences:
+                        self.sentences.put_nowait((number, sentence))
+            if self.tts:
+                if rest.strip():
+                    self.sentences.put_nowait((number, rest.strip()))
+                self.sentences.put_nowait((number, None))
+            timings = {
+                "llm_first_ms": round((first or 0) * 1000),
+                "llm_ms": round((time.time() - start) * 1000),
+            }
+            self.send({**message, "text": answer, "partial": False, "timings": timings})
+            log.info("«%s» %s", answer, timings)
+            self.said = words(answer)
+            if not self.tts and self.cut != number:
+                self._state(self._idle_state())
+
+    async def _mouth(self):
+        """Says the sentences in order as they arrive; synthesizes one while the previous plays."""
+        loop = asyncio.get_running_loop()
+        while True:
+            number, sentence = await self.sentences.get()
+            if number == self.cut:
+                continue
+            if sentence is None:  # end of the answer: wait until it finishes playing
+                while self.speaker.speaking and number != self.cut:
+                    await asyncio.sleep(0.05)
+                if number != self.cut:
+                    self._state(self._idle_state())
+                continue
+            start = time.time()
+            pcm = await loop.run_in_executor(None, self.tts.synthesize, sentence)
+            if number == self.cut:
+                continue
+            if not self.speaker.speaking:
+                self._state("speaking")
+            self.speaker.play(normalize(pcm))
+            log.info("voice «%s» (%d ms)", sentence, (time.time() - start) * 1000)

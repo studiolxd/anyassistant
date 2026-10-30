@@ -1,38 +1,40 @@
-"""Plugins de voz (texto → audio).
+"""Text-to-speech plugins.
 
-Un plugin es un módulo de este paquete con una clase registrada así:
+A plugin is a module of this package with a class registered like this:
 
-    @registrar("nombre")
-    class MiVoz(Voz):
-        def sintetizar(self, texto): ...   # → int16 mono a 48 kHz
+    @register("name")
+    class MyVoice(Voice):
+        def synthesize(self, text): ...   # → int16 mono at 48 kHz
 
-sintetizar() se llama en un hilo aparte, frase a frase.
+synthesize() is called from a separate thread, sentence by sentence. The default
+voice comes from the active locale (tts_voice).
 """
 
 import numpy as np
 
-from plugins import Registro
+import i18n
+from plugins import Registry
 
-TASA = 48000  # lo que espera el Altavoz
+RATE = 48000  # what the Speaker expects
 
-_registro = Registro(__name__, __path__, "TTS")
-registrar = _registro.registrar
-crear = _registro.crear
-disponibles = _registro.disponibles
+_registry = Registry(__name__, __path__, "TTS")
+register = _registry.register
+create = _registry.create
+available = _registry.available
 
 
-class Voz:
-    nombre = "?"
+class Voice:
+    name = "?"
 
-    def __init__(self, voz: str | None = None, velocidad: int | None = None):
-        self.voz = voz
-        self.velocidad = velocidad
+    def __init__(self, voice: str | None = None, rate: int | None = None):
+        self.voice = voice or i18n.L.tts_voice
+        self.rate = rate  # words per minute
 
-    def calentar(self):
-        self.sintetizar("Hola.")
+    def warm_up(self):
+        self.synthesize(i18n.L("speech.warm_up"))
 
-    def sintetizar(self, texto: str) -> np.ndarray:
+    def synthesize(self, text: str) -> np.ndarray:
         raise NotImplementedError
 
-    def cerrar(self):
-        """Al parar el servidor: libera procesos."""
+    def close(self):
+        """When the server stops: releases processes."""

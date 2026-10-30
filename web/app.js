@@ -1,246 +1,252 @@
-// Cliente del móvil: micro y cámara al Mac, audio del Mac al altavoz.
-// JS sin bundler para el Chrome de Android 7 (≤ 119).
+// The phone's client: microphone and camera to the Mac, the Mac's audio to the speaker.
+// Plain JS without a bundler, for old Chrome versions (81 on Android 4.4).
+// The texts come from the server (/i18n) in the active language.
 
 var pc = null;
-var canal = null;
-var estado = document.getElementById('estado');
-var datos = document.getElementById('datos');
+var channel = null;
+var statusLine = document.getElementById('status');
+var stats = document.getElementById('stats');
 var rtt = null;
+var T = {};  // texts of the active language (locale «ui»)
 
-document.getElementById('empezar').onclick = function () {
+function text(key, values) {
+  var s = T[key] || key;
+  for (var name in values || {}) s = s.split('{' + name + '}').join(values[name]);
+  return s;
+}
+
+// Loads the texts and then shows the start button (or the demo).
+fetch('/i18n').then(function (r) { return r.json(); }).then(function (data) {
+  T = data.ui;
+  document.documentElement.lang = data.lang;
+  Face.language(data.lang);
+  var start = document.getElementById('start');
+  start.textContent = text('start');
+  statusLine.textContent = text('connecting');
+  if (new URLSearchParams(location.search).has('demo')) demo();
+  else start.hidden = false;
+});
+
+document.getElementById('start').onclick = function () {
   this.hidden = true;
-  document.getElementById('cara').hidden = false;
-  pantallaCompleta();
-  mantenerDespierto();
-  iniciar();
+  document.getElementById('screen').hidden = false;
+  fullScreen();
+  keepAwake();
+  begin();
 };
 
-// Tocar la cara: recupera la pantalla completa y, si está hablando, lo calla.
-document.getElementById('cara').onclick = function () {
-  if (!document.fullscreenElement) pantallaCompleta();
-  if (canal && canal.readyState === 'open') canal.send(JSON.stringify({ tipo: 'tocar' }));
+// Tapping the face: goes back to full screen and, if it is speaking, stops it.
+document.getElementById('screen').onclick = function () {
+  if (!document.fullscreenElement) fullScreen();
+  if (channel && channel.readyState === 'open') channel.send(JSON.stringify({ type: 'tap' }));
 };
 
-function pantallaCompleta() {
+function fullScreen() {
   var el = document.documentElement;
   if (el.requestFullscreen) el.requestFullscreen().catch(function () {});
 }
 
-function mantenerDespierto() {
+function keepAwake() {
   if (!('wakeLock' in navigator)) return;
-  var pedir = function () {
+  var request = function () {
     navigator.wakeLock.request('screen').catch(function () {});
   };
-  pedir();
+  request();
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') pedir();
+    if (document.visibilityState === 'visible') request();
   });
 }
 
-// ?video=normal|bajo|no; por defecto, bajo en aparatos con ≤ 1 GB de RAM.
+// ?video=normal|low|off; by default, low on devices with ≤ 1 GB of RAM.
 var VIDEO = {
   normal: { facingMode: 'user', width: 640, height: 480, frameRate: 15 },
-  bajo: { facingMode: 'user', width: 320, height: 240, frameRate: 10 },
-  no: false
+  low: { facingMode: 'user', width: 320, height: 240, frameRate: 10 },
+  off: false
 };
 
-function calidadVideo() {
-  var pedida = new URLSearchParams(location.search).get('video');
-  if (pedida in VIDEO) return pedida;
-  return (navigator.deviceMemory || 2) <= 1 ? 'bajo' : 'normal';
+function videoQuality() {
+  var asked = new URLSearchParams(location.search).get('video');
+  if (asked in VIDEO) return asked;
+  return (navigator.deviceMemory || 2) <= 1 ? 'low' : 'normal';
 }
 
-var medios = null;
-var reintento = null;
+var media = null;
+var retry = null;
 
-// Una sola pestaña conectada: al empezar en una, las demás se apagan.
-var pestanas = 'BroadcastChannel' in window ? new BroadcastChannel('nexus-voz') : null;
-var apagada = false;
-if (pestanas) pestanas.onmessage = function (ev) {
-  if (ev.data !== 'empiezo' || !medios) return;
-  apagada = true;
-  clearTimeout(reintento);
+// A single connected tab: when one starts, the others shut down.
+var tabs = 'BroadcastChannel' in window ? new BroadcastChannel('jarvis') : null;
+var shutDown = false;
+if (tabs) tabs.onmessage = function (ev) {
+  if (ev.data !== 'starting' || !media) return;
+  shutDown = true;
+  clearTimeout(retry);
   if (pc) pc.close();
-  medios.getTracks().forEach(function (t) { t.stop(); });
-  fallo('Abierta en otra pestaña');
+  media.getTracks().forEach(function (t) { t.stop(); });
+  fail(text('other_tab'));
 };
 
-async function iniciar() {
-  if (pestanas) pestanas.postMessage('empiezo');
+async function begin() {
+  if (tabs) tabs.postMessage('starting');
   try {
-    medios = await navigator.mediaDevices.getUserMedia({
+    media = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video: VIDEO[calidadVideo()]
+      video: VIDEO[videoQuality()]
     });
   } catch (e) {
-    fallo('Sin micro/cámara: ' + e.name + '. ¿Activaste el flag de Chrome?');
+    fail(text('no_media', { error: e.name }));
     return;
   }
-  vumetro(medios);
+  levelMeter(media);
   setInterval(ping, 1000);
-  setInterval(estadisticas, 2000);
-  conectar();
+  setInterval(collectStats, 2000);
+  connect();
 }
 
-// Si el servidor se reinicia o se cae la Wi-Fi, se reconecta sin recargar la página.
-function reconectar() {
-  if (reintento || apagada) return;
-  fallo('Conexión perdida, reintentando…');
-  reintento = setTimeout(function () { reintento = null; conectar(); }, 2000);
+// If the server restarts or the Wi-Fi drops, it reconnects without reloading the page.
+function reconnect() {
+  if (retry || shutDown) return;
+  fail(text('connection_lost'));
+  retry = setTimeout(function () { retry = null; connect(); }, 2000);
 }
 
-async function conectar() {
+async function connect() {
   if (pc) pc.close();
   pc = new RTCPeerConnection({ iceServers: [] });
-  var este = pc;
-  medios.getAudioTracks().forEach(function (t) { pc.addTrack(t, medios); });
-  medios.getVideoTracks().forEach(function (t) {
-    pc.addTransceiver(t, { direction: 'sendonly', streams: [medios] });
+  var current = pc;
+  media.getAudioTracks().forEach(function (t) { pc.addTrack(t, media); });
+  media.getVideoTracks().forEach(function (t) {
+    pc.addTransceiver(t, { direction: 'sendonly', streams: [media] });
   });
 
-  canal = pc.createDataChannel('control');
-  canal.onmessage = function (ev) { mensaje(JSON.parse(ev.data)); };
+  channel = pc.createDataChannel('control');
+  channel.onmessage = function (ev) { message(JSON.parse(ev.data)); };
 
   pc.ontrack = function (ev) {
     var stream = ev.streams[0] || new MediaStream([ev.track]);
-    document.getElementById('altavoz').srcObject = stream;
-    Rostro.altavoz(stream);  // para mover la boca con su voz
+    document.getElementById('speaker').srcObject = stream;
+    Face.speaker(stream);  // so the mouth follows its voice
   };
   pc.onconnectionstatechange = function () {
-    if (este !== pc) return;
-    if (pc.connectionState === 'connected' && Rostro.actual() === 'error') {
-      Rostro.estado('conectado');
-      estado.textContent = 'Conectado';
+    if (current !== pc) return;
+    if (pc.connectionState === 'connected' && Face.current() === 'error') {
+      Face.state('connected');
+      statusLine.textContent = text('connected');
     } else if (pc.connectionState === 'failed') {
-      reconectar();
+      reconnect();
     } else if (pc.connectionState === 'disconnected') {
-      // Suele recuperarse solo en unos segundos; solo se reconecta si no.
+      // It usually recovers by itself in a few seconds; only reconnect if not.
       setTimeout(function () {
-        if (este === pc && pc.connectionState === 'disconnected') reconectar();
+        if (current === pc && pc.connectionState === 'disconnected') reconnect();
       }, 5000);
     }
   };
 
   try {
     await pc.setLocalDescription(await pc.createOffer());
-    await esperarIce(pc);
-    var corte = new AbortController();
-    setTimeout(function () { corte.abort(); }, 15000);
-    var resp = await fetch('/offer', {
+    await iceGathered(pc);
+    var abort = new AbortController();
+    setTimeout(function () { abort.abort(); }, 15000);
+    var response = await fetch('/offer', {
       method: 'POST',
-      signal: corte.signal,
+      signal: abort.signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sdp: pc.localDescription.sdp, type: pc.localDescription.type })
     });
-    await pc.setRemoteDescription(await resp.json());
+    await pc.setRemoteDescription(await response.json());
   } catch (e) {
-    if (este === pc) reconectar();
+    if (current === pc) reconnect();
   }
 }
 
-// En la red local no hace falta trickle ICE: se espera a tener todos los candidatos.
-function esperarIce(pc) {
-  return new Promise(function (resolver) {
-    if (pc.iceGatheringState === 'complete') return resolver();
+// On the local network there's no need for trickle ICE: wait for all the candidates.
+function iceGathered(pc) {
+  return new Promise(function (resolve) {
+    if (pc.iceGatheringState === 'complete') return resolve();
     pc.addEventListener('icegatheringstatechange', function () {
-      if (pc.iceGatheringState === 'complete') resolver();
+      if (pc.iceGatheringState === 'complete') resolve();
     });
-    setTimeout(resolver, 2000);
+    setTimeout(resolve, 2000);
   });
 }
 
 function ping() {
-  if (canal && canal.readyState === 'open') canal.send(JSON.stringify({ tipo: 'ping', t: performance.now() }));
+  if (channel && channel.readyState === 'open') channel.send(JSON.stringify({ type: 'ping', t: performance.now() }));
 }
 
-var TEXTOS = {
-  escuchando: 'Te escucho',
-  despierto: 'Te escucho',
-  grabando: 'Grabando…',
-  repitiendo: 'Repitiendo',
-  oyendo: 'Oyendo…',
-  pensando: 'Pensando…',
-  hablando: 'Hablando · toca para callar',
-  pregunta: '¿Sí o no?',
-  transcribiendo: 'Transcribiendo…'
-};
-
-function mensaje(m) {
-  if (m.tipo === 'pong') rtt = Math.round(performance.now() - m.t);
-  else if (m.tipo === 'estado') {
-    estado.textContent = m.estado === 'dormido' ? 'Di «' + m.frase + '»'
-      : TEXTOS[m.estado] || m.estado;
-    Rostro.estado(m.estado);
-  } else if (m.tipo === 'texto') {
-    subtitulo(m);
-  }
+function showState(state, wakePhrase) {
+  statusLine.textContent = state === 'asleep' ? text('asleep', { wake: wakePhrase || 'Hey Jarvis' }) : text(state);
+  Face.state(state);
 }
 
-// Las respuestas llegan a trozos con el mismo id: se actualiza el mismo párrafo.
-function subtitulo(m) {
-  var lista = document.getElementById('subtitulos');
-  var p = m.id && document.getElementById('respuesta-' + m.id);
+function message(m) {
+  if (m.type === 'pong') rtt = Math.round(performance.now() - m.t);
+  else if (m.type === 'state') showState(m.state, m.wake_phrase);
+  else if (m.type === 'text') caption(m);
+}
+
+// Answers arrive in pieces with the same id: the same paragraph is updated.
+function caption(m) {
+  var list = document.getElementById('captions');
+  var p = m.id && document.getElementById('answer-' + m.id);
   if (p) {
-    p.textContent = m.texto;
+    p.textContent = m.text;
     return;
   }
   p = document.createElement('p');
-  p.textContent = m.texto;
-  if (m.id) p.id = 'respuesta-' + m.id;
-  if (m.autor === 'asistente') p.className = 'asistente';
-  lista.appendChild(p);
-  while (lista.children.length > 3) lista.removeChild(lista.firstChild);
+  p.textContent = m.text;
+  if (m.id) p.id = 'answer-' + m.id;
+  if (m.author === 'assistant') p.className = 'assistant';
+  list.appendChild(p);
+  while (list.children.length > 3) list.removeChild(list.firstChild);
 }
 
-async function estadisticas() {
+async function collectStats() {
   if (!pc) return;
-  var informe = await pc.getStats();
-  var jitter = null, perdidos = null;
-  informe.forEach(function (s) {
+  var report = await pc.getStats();
+  var jitter = null, lost = null;
+  report.forEach(function (s) {
     if (s.type === 'inbound-rtp' && s.kind === 'audio') {
       jitter = Math.round(s.jitter * 1000);
-      perdidos = s.packetsLost;
+      lost = s.packetsLost;
     }
   });
-  datos.textContent = 'RTT ' + rtt + ' ms · jitter ' + jitter + ' ms · perdidos ' + perdidos;
+  stats.textContent = 'RTT ' + rtt + ' ms · jitter ' + jitter + ' ms · lost ' + lost;
 }
 
-// La cara reacciona al volumen del micro.
-function vumetro(medios) {
-  var ctx = new AudioContext();
-  var analizador = ctx.createAnalyser();
-  analizador.fftSize = 512;
-  ctx.createMediaStreamSource(medios).connect(analizador);
-  var buf = new Uint8Array(analizador.fftSize);
-  (function bucle() {
-    analizador.getByteTimeDomainData(buf);
-    var pico = 0;
-    for (var i = 0; i < buf.length; i++) pico = Math.max(pico, Math.abs(buf[i] - 128));
-    Rostro.voz(pico / 128);
-    requestAnimationFrame(bucle);
+// The face reacts to the microphone's volume.
+function levelMeter(media) {
+  var context = new AudioContext();
+  var analyser = context.createAnalyser();
+  analyser.fftSize = 512;
+  context.createMediaStreamSource(media).connect(analyser);
+  var buffer = new Uint8Array(analyser.fftSize);
+  (function loop() {
+    analyser.getByteTimeDomainData(buffer);
+    var peak = 0;
+    for (var i = 0; i < buffer.length; i++) peak = Math.max(peak, Math.abs(buffer[i] - 128));
+    Face.voice(peak / 128);
+    requestAnimationFrame(loop);
   })();
 }
 
-function fallo(texto) {
-  Rostro.estado('error');
-  estado.textContent = texto;
+function fail(message) {
+  Face.state('error');
+  statusLine.textContent = message;
 }
 
-// ?demo: sin conectar, pasa por todos los estados para ver la cara (?demo&cara=orbe).
-if (new URLSearchParams(location.search).has('demo')) {
-  document.getElementById('empezar').hidden = true;
-  document.getElementById('cara').hidden = false;
-  var DEMO = ['dormido', 'despierto', 'oyendo', 'pensando', 'hablando', 'pregunta', 'error'];
-  var paso = 0;
-  var cambiar = function () {
-    var e = DEMO[paso++ % DEMO.length];
-    Rostro.estado(e);
-    estado.textContent = e === 'dormido' ? 'Di «Hey Jarvis»' : (TEXTOS[e] || e);
-    datos.textContent = 'demo: ' + e;
+// ?demo: without connecting, cycles through every state to see the face (?demo&face=orb).
+function demo() {
+  document.getElementById('screen').hidden = false;
+  var STATES = ['asleep', 'awake', 'hearing', 'thinking', 'speaking', 'question', 'error'];
+  var step = 0;
+  var next = function () {
+    var state = STATES[step++ % STATES.length];
+    showState(state);
+    stats.textContent = 'demo: ' + state;
   };
-  setInterval(function () {  // voz simulada mientras «oye»
-    Rostro.voz(Rostro.actual() === 'oyendo' ? 0.3 + 0.3 * Math.sin(Date.now() / 150) : 0);
+  setInterval(function () {  // simulated voice while «hearing»
+    Face.voice(Face.current() === 'hearing' ? 0.3 + 0.3 * Math.sin(Date.now() / 150) : 0);
   }, 50);
-  cambiar();
-  setInterval(cambiar, 3000);
+  next();
+  setInterval(next, 3000);
 }
