@@ -1,3 +1,14 @@
+/* La página: botón de inicio, distribución, textos y reloj. Las caras, en rostros.css. */
+
+:root {
+  --verde: #3ddc97;
+  --verde-tenue: #1d4f3c;
+  --ambar: #e0b54a;
+  --azul: #5bc6e8;
+  --violeta: #a98cf0;
+  --rojo: #e05555;
+}
+
 html, body {
   margin: 0;
   height: 100%;
@@ -30,35 +41,24 @@ html, body {
 
 #cara[hidden] { display: none; }
 
-#ojo {
-  width: 40vmin;
-  height: 40vmin;
-  border-radius: 50%;
-  background: #333;
-  transition: transform 0.08s, background 0.3s;
-}
-
-#ojo.conectado { background: #2a7; }
-#ojo.grabando { background: #c83; }
-#ojo.repitiendo { background: #37c; }
-#ojo.error { background: #a33; }
-
-#estado { font-size: 1.4em; margin-top: 1.5em; }
-#datos { font-size: 0.9em; color: #777; font-family: monospace; }
-
-#ojo.oyendo { background: #c83; }
-#ojo.transcribiendo { background: #85c; }
+#estado { font-size: 1.4em; margin: 1.2em 0 0; color: #888; }
+#datos { font-size: 0.9em; color: #555; font-family: monospace; }
 
 #subtitulos {
   width: 90%;
   min-height: 7em;
+  margin-top: 0.6em;
   text-align: center;
 }
 #subtitulos p { margin: 0.3em 0; font-size: 1.1em; color: #666; }
 #subtitulos p:last-child { font-size: 1.5em; color: #fff; }
-#ojo.dormido { background: #1d4f3c; }
-#ojo.despierto { background: #3d9; }
 #subtitulos p.asistente { color: #4a8a99; font-style: italic; }
 #subtitulos p.asistente:last-child { color: #7cd3e8; }
-#ojo.pensando { background: #b93; }
-#ojo.hablando { background: #37c; }
+
+/* Reloj: solo dormido; la cara se queda pequeña debajo. */
+#reloj { display: none; text-align: center; color: #3f7f6a; }
+#hora { margin: 0; font-size: 24vmin; font-weight: 200; line-height: 1; }
+#fecha { margin: 1vmin 0 4vmin; font-size: 5vmin; }
+body[data-estado="dormido"] #reloj { display: block; }
+body[data-estado="dormido"] #subtitulos,
+body[data-estado="dormido"] #datos { display: none; }

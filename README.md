@@ -110,6 +110,21 @@ class MiMotor(Despertador):
 
 y `--despertar mi-motor [--palabra …]`. `server/plugins.py` es el registro común.
 
+## Cara
+
+Dos, a elegir en la dirección de la tablet:
+
+- **`?cara=ojos`** (por defecto): dos ojos que parpadean; cerrados y respirando al
+  dormir, más claros y algo más grandes con tu voz, mirando a un lado con puntos al
+  pensar, con boca de barras que sigue su voz al hablar, ceja levantada y «?» cuando
+  espera tu «sí», caídos y en rojo si hay error.
+- **`?cara=orbe`**: una esfera que respira, late con tu voz, tiene un anillo girando al
+  pensar y lanza ondas al hablar.
+
+Dormido, la pantalla muestra la hora y la fecha en grande. `?demo` (o `?demo&cara=orbe`)
+recorre todos los estados sin conectarse, para verlas. Todo es CSS y transformaciones
+(`web/rostros.css`, `web/rostro.js`), para que vaya fluido en la tablet.
+
 ## Órdenes de voz del sistema
 
 Las atiende el servidor directamente, sin pasar por el LLM:

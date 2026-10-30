@@ -92,6 +92,16 @@ class Asistente(Transcriptor):
         if tts:
             asyncio.ensure_future(self._boca())
 
+    def _en_espera(self) -> str:
+        """El estado de reposo, o «pregunta» si hay una acción esperando tu «sí» (la cara lo muestra)."""
+        try:
+            pendiente = json.loads((CONFIRMAR / "pendiente.json").read_text())
+            if time.time() - pendiente.get("cuando", 0) < 120:
+                return "pregunta"
+        except (OSError, ValueError):
+            pass
+        return self.oido.en_espera
+
     def _sordo(self) -> bool:
         return self.altavoz.hablando or time.time() - self.altavoz.ultimo_sonido < self.guarda
 
@@ -117,7 +127,7 @@ class Asistente(Transcriptor):
         log.info("callado")
         self.cortada = self.numero
         self.altavoz.callar()
-        self._estado(self.oido.en_espera)
+        self._estado(self._en_espera())
 
     def _despierto(self):
         super()._despierto()
@@ -158,7 +168,7 @@ class Asistente(Transcriptor):
             self.frases.put_nowait((self.numero, texto))
             self.frases.put_nowait((self.numero, None))
         else:
-            self._estado(self.oido.en_espera)
+            self._estado(self._en_espera())
 
     def _confirmar(self, texto: str) -> bool:
         """Si hay una acción esperando el «sí» del usuario, la autoriza o la cancela.
@@ -216,7 +226,7 @@ class Asistente(Transcriptor):
             log.info("«%s» %s", respuesta, tiempos)
             self.dicho = palabras(respuesta)
             if not self.tts and self.cortada != numero:
-                self._estado(self.oido.en_espera)
+                self._estado(self._en_espera())
 
     async def _boca(self):
         """Dice las frases en orden según llegan; sintetiza una mientras suena la anterior."""
@@ -229,7 +239,7 @@ class Asistente(Transcriptor):
                 while self.altavoz.hablando and numero != self.cortada:
                     await asyncio.sleep(0.05)
                 if numero != self.cortada:
-                    self._estado(self.oido.en_espera)
+                    self._estado(self._en_espera())
                 continue
             inicio = time.time()
             pcm = await bucle.run_in_executor(None, self.tts.sintetizar, frase)

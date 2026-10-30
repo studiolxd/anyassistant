@@ -23,7 +23,8 @@
 
 - [ ] **Ojos (Fase 4)**: mirar por la cámara cuando se pida («¿qué ves?», «lee esto»).
 - [ ] **Memoria entre conversaciones** con Claude (Hermes ya la tiene).
-- [ ] **Cara**: que la pantalla sea más expresiva que un círculo de colores.
+- [x] **Cara**: «ojos» (por defecto) y «orbe» (`?cara=orbe`), reloj al dormir, estado
+  «pregunta»; `?demo` recorre los estados sin conectar. Falta elegir una.
 - [ ] **App nativa Android**: arranque al encender, pantalla apagada (Fase 6).
 
 ## Mantenimiento

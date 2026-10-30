@@ -1,0 +1,130 @@
+/* Las dos caras de Jarvis. El estado llega en body[data-estado]:
+   dormido, despierto, oyendo, pensando, hablando, pregunta, error.
+   Solo transform/opacity/colores, sin desenfoques animados: la tablet es modesta. */
+
+#rostro { position: relative; display: flex; flex-direction: column; align-items: center; }
+.latido { transition: transform 0.1s; }
+.interrogacion {
+  display: none;
+  position: absolute;
+  font-size: 12vmin;
+  font-weight: bold;
+  color: var(--violeta);
+}
+body[data-estado="pregunta"] .interrogacion { display: block; }
+
+@keyframes respirar { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.8; } }
+@keyframes punto { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+@keyframes girar { to { transform: rotate(360deg); } }
+@keyframes onda { from { transform: scale(0.9); opacity: 0.7; } to { transform: scale(1.7); opacity: 0; } }
+
+/* ===================== A. Ojos ===================== */
+
+.rostro-ojos .latido { position: relative; }
+.rostro-ojos .ojos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 30vmin;
+  transition: transform 0.4s;
+}
+.rostro-ojos .ojo {
+  width: 17vmin;
+  height: 26vmin;
+  margin: 0 5vmin;
+  border-radius: 9vmin;
+  background: var(--verde);
+  transition: height 0.25s, transform 0.12s, background 0.4s, border-radius 0.25s;
+}
+.rostro-ojos.parpadeo .ojo { transform: scaleY(0.08); }
+.rostro-ojos .interrogacion { top: -4vmin; right: -9vmin; }
+
+.rostro-ojos .boca,
+.rostro-ojos .puntos { display: none; justify-content: center; align-items: center; height: 10vmin; margin-top: 3vmin; }
+.rostro-ojos .boca i {
+  display: block;
+  width: 2.4vmin;
+  height: 9vmin;
+  margin: 0 0.9vmin;
+  border-radius: 1.2vmin;
+  background: var(--azul);
+  transform: scaleY(0.15);
+}
+.rostro-ojos .puntos i {
+  display: block;
+  width: 2.6vmin;
+  height: 2.6vmin;
+  margin: 0 1.2vmin;
+  border-radius: 50%;
+  background: var(--ambar);
+  animation: punto 1.2s infinite;
+}
+.rostro-ojos .puntos i:nth-child(2) { animation-delay: 0.2s; }
+.rostro-ojos .puntos i:nth-child(3) { animation-delay: 0.4s; }
+
+/* Dormido: ojos cerrados que respiran, pequeños bajo el reloj. */
+body[data-estado="dormido"] .rostro-ojos .ojos { transform: scale(0.6); }
+body[data-estado="dormido"] .rostro-ojos .ojo {
+  height: 2.5vmin;
+  background: var(--verde-tenue);
+  animation: respirar 5s ease-in-out infinite;
+}
+/* Oyendo: más claros (y crecen con tu voz desde rostro.js). */
+body[data-estado="oyendo"] .rostro-ojos .ojo { background: #7ff0c2; }
+/* Pensando: miran arriba a un lado, entornados, con puntos. */
+body[data-estado="pensando"] .rostro-ojos .ojos { transform: translate(-4vmin, -3vmin); }
+body[data-estado="pensando"] .rostro-ojos .ojo { height: 17vmin; background: var(--ambar); }
+body[data-estado="pensando"] .rostro-ojos .puntos { display: flex; }
+/* Hablando: ojos relajados y boca que sigue su voz. */
+body[data-estado="hablando"] .rostro-ojos .ojo { height: 20vmin; background: var(--azul); }
+body[data-estado="hablando"] .rostro-ojos .boca { display: flex; }
+/* Pregunta: una ceja levantada (ojo izquierdo más alto) y una interrogación. */
+body[data-estado="pregunta"] .rostro-ojos .ojo { background: var(--violeta); }
+body[data-estado="pregunta"] .rostro-ojos .ojo.izq { height: 28vmin; transform: translateY(-2vmin); }
+body[data-estado="pregunta"] .rostro-ojos .ojo.der { height: 19vmin; }
+/* Error: ojos caídos, en rojo. */
+body[data-estado="error"] .rostro-ojos .ojo { height: 5vmin; background: var(--rojo); border-radius: 2.5vmin; }
+body[data-estado="error"] .rostro-ojos .ojo.izq { transform: rotate(-18deg); }
+body[data-estado="error"] .rostro-ojos .ojo.der { transform: rotate(18deg); }
+
+/* ===================== B. Orbe ===================== */
+
+.rostro-orbe .orbe { position: relative; width: 40vmin; height: 40vmin; margin: 3vmin; }
+.rostro-orbe .nucleo,
+.rostro-orbe .onda,
+.rostro-orbe .anillo { position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 50%; }
+.rostro-orbe .nucleo {
+  background: radial-gradient(circle at 38% 32%, #b6f7df, #3ddc97 45%, #13604a 100%);
+  transition: opacity 0.4s;
+}
+.rostro-orbe .onda { border: 0.6vmin solid var(--azul); opacity: 0; }
+.rostro-orbe .anillo {
+  display: none;
+  top: -3vmin; right: -3vmin; bottom: -3vmin; left: -3vmin;
+  border: 0.8vmin solid transparent;
+  border-top-color: var(--ambar);
+  border-right-color: var(--ambar);
+  animation: girar 1.1s linear infinite;
+}
+.rostro-orbe .interrogacion { top: 50%; left: 50%; margin: -8vmin 0 0 -3.5vmin; color: #fff; }
+
+body[data-estado="dormido"] .rostro-orbe .orbe { transform: scale(0.55); }
+body[data-estado="dormido"] .rostro-orbe .nucleo { animation: respirar 5s ease-in-out infinite; }
+body[data-estado="oyendo"] .rostro-orbe .nucleo {
+  background: radial-gradient(circle at 38% 32%, #d8fff0, #7ff0c2 45%, #1f8a66 100%);
+}
+body[data-estado="pensando"] .rostro-orbe .nucleo {
+  background: radial-gradient(circle at 38% 32%, #fbe6b0, #e0b54a 45%, #6b4f12 100%);
+}
+body[data-estado="pensando"] .rostro-orbe .anillo { display: block; }
+body[data-estado="hablando"] .rostro-orbe .nucleo {
+  background: radial-gradient(circle at 38% 32%, #d4f3ff, #5bc6e8 45%, #155c78 100%);
+}
+body[data-estado="hablando"] .rostro-orbe .onda { animation: onda 1.6s ease-out infinite; }
+body[data-estado="hablando"] .rostro-orbe .onda.segunda { animation-delay: 0.8s; }
+body[data-estado="pregunta"] .rostro-orbe .nucleo {
+  background: radial-gradient(circle at 38% 32%, #e6dcff, #a98cf0 45%, #43307a 100%);
+}
+body[data-estado="error"] .rostro-orbe .nucleo {
+  background: radial-gradient(circle at 38% 32%, #ffd0d0, #e05555 45%, #6b1616 100%);
+}

@@ -4,17 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <title>Nexus voz</title>
-  <link rel="stylesheet" href="/web/cara.css?v=15">
+  <link rel="stylesheet" href="/web/cara.css?v=16">
+  <link rel="stylesheet" href="/web/rostros.css?v=16">
 </head>
 <body>
   <button id="empezar">Empezar</button>
   <div id="cara" hidden>
-    <div id="ojo"></div>
+    <div id="reloj"><p id="hora"></p><p id="fecha"></p></div>
+    <div id="rostro"></div>
     <p id="estado">Conectando…</p>
     <div id="subtitulos"></div>
     <p id="datos"></p>
   </div>
   <audio id="altavoz" autoplay></audio>
-  <script src="/web/app.js?v=15"></script>
+  <script src="/web/rostro.js?v=16"></script>
+  <script src="/web/app.js?v=16"></script>
 </body>
 </html>

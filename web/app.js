@@ -3,7 +3,6 @@
 
 var pc = null;
 var canal = null;
-var ojo = document.getElementById('ojo');
 var estado = document.getElementById('estado');
 var datos = document.getElementById('datos');
 var rtt = null;
@@ -103,12 +102,14 @@ async function conectar() {
   canal.onmessage = function (ev) { mensaje(JSON.parse(ev.data)); };
 
   pc.ontrack = function (ev) {
-    document.getElementById('altavoz').srcObject = ev.streams[0] || new MediaStream([ev.track]);
+    var stream = ev.streams[0] || new MediaStream([ev.track]);
+    document.getElementById('altavoz').srcObject = stream;
+    Rostro.altavoz(stream);  // para mover la boca con su voz
   };
   pc.onconnectionstatechange = function () {
     if (este !== pc) return;
-    if (pc.connectionState === 'connected' && ojo.className === 'error') {
-      ojo.className = 'conectado';
+    if (pc.connectionState === 'connected' && Rostro.actual() === 'error') {
+      Rostro.estado('conectado');
       estado.textContent = 'Conectado';
     } else if (pc.connectionState === 'failed') {
       reconectar();
@@ -160,6 +161,7 @@ var TEXTOS = {
   oyendo: 'Oyendo…',
   pensando: 'Pensando…',
   hablando: 'Hablando · toca para callar',
+  pregunta: '¿Sí o no?',
   transcribiendo: 'Transcribiendo…'
 };
 
@@ -168,7 +170,7 @@ function mensaje(m) {
   else if (m.tipo === 'estado') {
     estado.textContent = m.estado === 'dormido' ? 'Di «' + m.frase + '»'
       : TEXTOS[m.estado] || m.estado;
-    ojo.className = 'conectado ' + m.estado;
+    Rostro.estado(m.estado);
   } else if (m.tipo === 'texto') {
     subtitulo(m);
   }
@@ -203,7 +205,7 @@ async function estadisticas() {
   datos.textContent = 'RTT ' + rtt + ' ms · jitter ' + jitter + ' ms · perdidos ' + perdidos;
 }
 
-// El ojo late con el volumen del micro.
+// La cara reacciona al volumen del micro.
 function vumetro(medios) {
   var ctx = new AudioContext();
   var analizador = ctx.createAnalyser();
@@ -214,12 +216,31 @@ function vumetro(medios) {
     analizador.getByteTimeDomainData(buf);
     var pico = 0;
     for (var i = 0; i < buf.length; i++) pico = Math.max(pico, Math.abs(buf[i] - 128));
-    ojo.style.transform = 'scale(' + (1 + pico / 128) + ')';
+    Rostro.voz(pico / 128);
     requestAnimationFrame(bucle);
   })();
 }
 
 function fallo(texto) {
-  ojo.className = 'error';
+  Rostro.estado('error');
   estado.textContent = texto;
+}
+
+// ?demo: sin conectar, pasa por todos los estados para ver la cara (?demo&cara=orbe).
+if (new URLSearchParams(location.search).has('demo')) {
+  document.getElementById('empezar').hidden = true;
+  document.getElementById('cara').hidden = false;
+  var DEMO = ['dormido', 'despierto', 'oyendo', 'pensando', 'hablando', 'pregunta', 'error'];
+  var paso = 0;
+  var cambiar = function () {
+    var e = DEMO[paso++ % DEMO.length];
+    Rostro.estado(e);
+    estado.textContent = e === 'dormido' ? 'Di «Hey Jarvis»' : (TEXTOS[e] || e);
+    datos.textContent = 'demo: ' + e;
+  };
+  setInterval(function () {  // voz simulada mientras «oye»
+    Rostro.voz(Rostro.actual() === 'oyendo' ? 0.3 + 0.3 * Math.sin(Date.now() / 150) : 0);
+  }, 50);
+  cambiar();
+  setInterval(cambiar, 3000);
 }
