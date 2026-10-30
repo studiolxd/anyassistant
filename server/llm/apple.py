@@ -14,6 +14,11 @@ from llm import INSTRUCCIONES, LLM, ahora, registrar
 
 log = logging.getLogger("llm")
 
+# Si se le da la hora en el prompt la repite en cada respuesta: va como herramienta.
+INSTRUCCIONES_APPLE = (
+    INSTRUCCIONES + "\nSi te preguntan la fecha o la hora, consúltalas con la herramienta fechaHora."
+)
+
 FUENTE = Path(__file__).with_name("apple_puente.swift")
 BINARIO = Path(__file__).resolve().parents[2] / ".build" / "fm-puente"
 
@@ -51,10 +56,15 @@ class Apple(LLM):
         self._proceso.stdin.write(json.dumps(orden).encode() + b"\n")
         await self._proceso.stdin.drain()
 
+    async def cerrar(self):
+        if self._proceso and self._proceso.returncode is None:
+            self._proceso.kill()
+            await self._proceso.wait()
+
     async def nueva(self):
         async with self._turno:
             await self._arrancar()
-            await self._enviar({"tipo": "nueva", "instrucciones": INSTRUCCIONES})
+            await self._enviar({"tipo": "nueva", "instrucciones": INSTRUCCIONES_APPLE})
             await self._leer()
 
     async def responder(self, texto: str):

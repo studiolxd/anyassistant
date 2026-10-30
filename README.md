@@ -16,7 +16,7 @@ Transporte WebRTC (Opus + cancelación de eco de Chrome) por Wi-Fi.
 ## Arrancar
 
 ```
-uv run server/main.py                    # Fase 3: asistente (Whisper + modelo de Apple)
+uv run server/main.py                    # Fase 3: asistente (Whisper + Claude)
 uv run server/main.py --modo transcribir # Fase 2: solo transcribe
 uv run server/main.py --modo loro        # Fase 1: repite lo que oye (prueba de micro y altavoz)
 ```
@@ -96,11 +96,23 @@ y `--despertar mi-motor [--palabra …]`. `server/plugins.py` es el registro com
 Lo que dices va al LLM y la respuesta aparece en pantalla según se genera.
 Cada «Hey Jarvis» empieza una conversación nueva; la recuerda hasta que se duerme.
 
-Por defecto, el **modelo de Apple** que trae macOS (Foundation Models, local, sin
-claves; macOS 26+ con Apple Intelligence). Es una API solo de Swift: el plugin
-compila `server/llm/apple_puente.swift` la primera vez en `.build/` y le habla por
-stdin/stdout. La fecha y la hora se las da como herramienta (`fechaHora`): en el
-prompt las repetía en cada respuesta.
+Hay dos plugins:
+
+- **`claude`** (por defecto): Claude a través de la CLI `claude` de Claude Code, con
+  tu sesión y tu suscripción, sin API key. Cada conversación es un proceso
+  `claude -p` en modo stream-json, sin herramientas, MCP ni CLAUDE.md, para que
+  arranque rápido. Sonnet por defecto; `--llm-modelo haiku` gasta menos cuota.
+  Primera palabra en ~0,6 s.
+- **`apple`**: el modelo que trae macOS (Foundation Models, local, sin claves;
+  macOS 26+ con Apple Intelligence). Es una API solo de Swift: el plugin compila
+  `server/llm/apple_puente.swift` la primera vez en `.build/` y le habla por
+  stdin/stdout. La hora se la da como herramienta (`fechaHora`): en el prompt la
+  repetía en cada respuesta. Más rápido (~0,5 s) pero más flojo (~3B).
+
+```
+uv run server/main.py --llm-modelo haiku   # Claude Haiku
+uv run server/main.py --llm apple          # modelo de Apple, en local
+```
 
 Otros LLM son plugins en `server/llm/`:
 
@@ -113,6 +125,7 @@ class MiLLM(LLM):
     async def nueva(self): ...           # conversación nueva
     async def responder(self, texto):    # trozos de la respuesta según llegan
         yield "Hola"
+    async def cerrar(self): ...          # opcional, al parar el servidor
 ```
 
 y `--llm mi-llm [--llm-modelo …]`.

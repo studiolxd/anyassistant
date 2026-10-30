@@ -1,6 +1,7 @@
 """Servidor: sirve la web del móvil y hace la señalización WebRTC.
 
-    uv run server/main.py                    # asistente: mlx-whisper + modelo de Apple
+    uv run server/main.py                    # asistente: mlx-whisper + Claude (CLI)
+    uv run server/main.py --llm apple        # con el modelo de Apple, en local
     uv run server/main.py --modo transcribir # solo transcribe
     uv run server/main.py --llm otro-plugin  # cualquier módulo de server/llm/
     uv run server/main.py --modo loro        # repite lo que oye (prueba de audio)
@@ -26,6 +27,7 @@ from transporte import Sesion
 WEB = Path(__file__).resolve().parent.parent / "web"
 sesiones: dict[str, Sesion] = {}
 fabrica_cerebro = Loro  # lo fija main() según --modo
+cerrar_al_salir = []  # corrutinas a esperar al parar (procesos de los plugins)
 
 
 async def offer(request: web.Request) -> web.Response:
@@ -92,6 +94,8 @@ async def sin_cache(request: web.Request, handler):
 async def al_cerrar(app: web.Application):
     for sesion in sesiones.values():
         await sesion.cerrar()
+    for cerrar in cerrar_al_salir:
+        await cerrar()
 
 
 def main():
@@ -101,7 +105,7 @@ def main():
     parser.add_argument("--modo", choices=["loro", "transcribir", "asistente"], default="asistente")
     parser.add_argument("--stt", default="mlx-whisper", help=f"plugin: {', '.join(stt.disponibles())}")
     parser.add_argument("--stt-modelo", default=None)
-    parser.add_argument("--llm", default="apple", help=f"plugin: {', '.join(llm.disponibles())}")
+    parser.add_argument("--llm", default="claude", help=f"plugin: {', '.join(llm.disponibles())}")
     parser.add_argument("--llm-modelo", default=None)
     parser.add_argument("--idioma", default="es")
     parser.add_argument(
@@ -133,6 +137,7 @@ def main():
             modelo = llm.crear(args.llm, modelo=args.llm_modelo)
             logging.info("LLM: %s (%s)", modelo.nombre, modelo.modelo)
             fabrica_cerebro = asistente.crear(motor, modelo, despertador, args.grabar)
+            cerrar_al_salir.append(modelo.cerrar)
         else:
             fabrica_cerebro = transcriptor.crear(motor, despertador, args.grabar)
     else:

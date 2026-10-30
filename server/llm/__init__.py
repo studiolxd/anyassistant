@@ -7,6 +7,7 @@ Un plugin es un módulo de este paquete con una clase registrada así:
         async def nueva(self): ...              # empieza conversación (olvida la anterior)
         async def responder(self, texto):       # async generator de trozos de texto
             yield "Hola"
+        async def cerrar(self): ...             # opcional, al parar el servidor
 """
 
 import time
@@ -27,16 +28,14 @@ INSTRUCCIONES = """Eres Jarvis, un asistente de voz que habla español de Españ
 Lo que te llega es lo que el usuario ha dicho en voz alta, transcrito
 automáticamente: puede tener errores; interprétalo con sentido común.
 Tu respuesta se leerá en voz alta: sé breve (una a tres frases), natural y
-directo. Nada de listas, markdown, emojis ni símbolos. Si no sabes algo, dilo.
-Si te preguntan la fecha o la hora, consúltalas con la herramienta fechaHora."""
+directo. Nada de listas, markdown, emojis ni símbolos. Si no sabes algo, dilo."""
 
 
 def ahora() -> str:
     """«viernes 30 de octubre de 2026, las 8 y 42 de la noche».
 
-    En forma hablada: con «20:42» el modelo pequeño se lía al pasarlo a voz
-    («las dos veinte y cuarenta dos»). Los plugins se la dan al modelo como
-    herramienta, no en el prompt, o la repite en todas las respuestas.
+    En forma hablada: con «20:42» el modelo de Apple se lía al pasarlo a voz
+    («las dos veinte y cuarenta dos»).
     """
     t = time.localtime()
     hora = t.tm_hour % 12 or 12
@@ -59,3 +58,6 @@ class LLM:
 
     def responder(self, texto: str) -> AsyncIterator[str]:
         raise NotImplementedError
+
+    async def cerrar(self):
+        """Al parar el servidor: libera procesos o conexiones."""
