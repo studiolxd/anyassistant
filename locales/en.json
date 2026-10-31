@@ -715,5 +715,285 @@
       "false": "No"
     }
   },
-  "language_native": "English"
+  "language_native": "English",
+  "groups": {
+    "plugins": "Plugins",
+    "assistant": "The assistant",
+    "memory": "Memory",
+    "voice": "Listening and speaking",
+    "skills": "Skills",
+    "screen": "The screen",
+    "security": "Privacy and security",
+    "server": "The server"
+  },
+  "options": {
+    "plugins": "which plugins are on or off, if not as they come: {\"memory\": true, \"tap-to-wake\": false}",
+    "name": "the assistant's name: its wake word, the page's title, what the LLM calls itself",
+    "language": "en, es…: what it speaks and understands (default: the Mac's)",
+    "llm": "the LLM: claude, apple, hermes…",
+    "llm_model": "the LLM's model (for Claude: sonnet, opus, haiku…)",
+    "mcp": ".mcp.json with the MCP servers (default: your data folder's)",
+    "instructions": "yours, added to the LLM's (text or a list of lines): who you are, how to talk…",
+    "detail": "how much it says: concise, neutral, detailed or one of detail_levels",
+    "detail_levels": "more levels, or other texts for these: {\"name\": \"instruction for the prompt\"}",
+    "ignore_others": "the LLM stays quiet when what it hears is clearly not for it",
+    "stt": "speech recognition: parakeet, mlx-whisper…",
+    "stt_model": "its model",
+    "tts": "its voice engine: avspeech, macos… or none",
+    "voice": "the voice (default: the language's); one, or one per language: {\"es\": \"Mónica\", \"en\": \"Samantha\"}",
+    "rate": "words per minute",
+    "volume": "its voice and sounds, 5–100 %",
+    "wake": "the wake word engine: whisper, openwakeword… or none",
+    "wake_word": "the word or model (default: its name)",
+    "threshold": "how sure the wake word must be (each engine has its own default)",
+    "vad": "voice activity detection: silero…",
+    "silence": "seconds of silence that end a sentence",
+    "follow_up": "seconds it keeps listening without its name after it last spoke or heard you",
+    "echo_guard": "seconds without listening after speaking (its own echo)",
+    "voice_interrupt": "«Jarvis, stop» while it speaks",
+    "tap_to_stop": "tapping the screen stops it talking",
+    "fillers": "«One moment, let me check» when a tool is slow",
+    "skills": "time, date, timers, alarms, reminders, sums, units and volume, without the LLM",
+    "log_transcripts": "write what it hears and says to the log (to debug); otherwise only lengths",
+    "host": "the address it listens on",
+    "port": "the port (bin/anyassistant reads it too)",
+    "mode": "assistant, transcribe (only shows what it hears) or parrot (repeats it)",
+    "record": "saves everything that arrives to a WAV (to debug)",
+    "confirm_wait": "seconds to answer «yes» to an action that changes something",
+    "confirm_valid": "seconds a «yes» stays valid",
+    "read_photo": "a full-resolution photo when asked to read",
+    "interpreter": "an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name",
+    "skin": "the screen's look: eyes, orb, minimal, bedside or yours (a device's ?skin= wins)",
+    "skin_options": "the skin's options: {\"accent\": \"#ff7a45\"}",
+    "skins_dir": "your skins (default: skins in your data folder)",
+    "video": "camera quality; auto: each device by its memory (a device's ?video= wins)",
+    "show_time": "the time while asleep",
+    "show_date": "the date while asleep",
+    "show_hint": "«Say Hey Jarvis» while asleep",
+    "show_status": "«Listening», «Thinking…» while awake",
+    "show_heard": "what you said",
+    "show_answer": "what it answers",
+    "history": "earlier sentences kept on screen",
+    "show_timers": "running timers, alarms and reminders",
+    "show_stats": "the connection's RTT, jitter and losses",
+    "clock": "12 or 24 hours (auto: the language's)",
+    "memory": "what it remembers: only when asked (explicit) or also on its own (auto)",
+    "memory_facts": "facts before the LLM compacts them",
+    "memory_conversations": "conversation summaries kept",
+    "memory_days": "days a conversation summary is kept",
+    "ring_seconds": "how long an alarm rings if nobody stops it",
+    "snooze_minutes": "«snooze» without saying how long"
+  },
+  "plugins": {
+    "admin": [
+      "Admin",
+      "The settings and the plugins for the AnyAssistant app (/admin/…), only from the Mac itself."
+    ],
+    "bonjour": [
+      "Bonjour",
+      "Announces the server on the network (_anyassistant._tcp), so the apps find it without typing an address."
+    ],
+    "brain-assistant": [
+      "Assistant",
+      "«mode»: «assistant». The voice assistant: skills, the LLM, its voice, timers ringing."
+    ],
+    "brain-parrot": [
+      "Parrot",
+      "«mode»: «parrot». Repeats what you say: to try the microphone, the speaker and the connection."
+    ],
+    "brain-transcriber": [
+      "Transcriber",
+      "«mode»: «transcribe». Listens (wake word, VAD, speech recognition) and shows what you say; the assistant listens with it too."
+    ],
+    "confirmation": [
+      "Confirmation",
+      "Actions that change something wait for your «yes» by voice, whichever LLM asks (Jarvis's tools, Claude's hook, Hermes's approvals)."
+    ],
+    "eyes": [
+      "Eyes",
+      "Sees through the device's camera when asked («what do you see?», «read this»), or when Claude decides to look."
+    ],
+    "interpreter": [
+      "Skills interpreter",
+      "When a skill is said in an unusual way («avísame dentro de un rato largo»), an LLM (Apple's local one by default) still finds it."
+    ],
+    "lab": [
+      "Skins lab",
+      "http://<mac>:8080/lab?skin=<name>: every state of a skin at once, reloading when its files change."
+    ],
+    "llm-apple": [
+      "Apple Intelligence",
+      "Apple's local model (Foundation Models), on macOS 26 with Apple Intelligence."
+    ],
+    "llm-claude": [
+      "Claude",
+      "Claude through the Claude Code CLI: your subscription, MCP servers and allowed commands."
+    ],
+    "llm-hermes": [
+      "Hermes",
+      "Hermes Agent through its API gateway, with its own tools and memory."
+    ],
+    "mcp-server": [
+      "AnyAssistant's MCP server",
+      "Jarvis's tools as the «anyassistant» MCP server at /mcp, only from the Mac itself (Claude, Hermes)."
+    ],
+    "memory": [
+      "Memory",
+      "Remembers you across conversations: what you ask it to (explicit) or also on its own when it falls asleep (auto)."
+    ],
+    "monitor": [
+      "Camera monitor",
+      "http://<mac>:8080/monitor: what the device's camera sees, to watch it from the Mac's browser."
+    ],
+    "page": [
+      "The device's page",
+      "The page the tablet or phone opens (http://<mac>:8080): its face, texts, camera and microphone, with skins anyone can make."
+    ],
+    "pairing": [
+      "Pairing",
+      "Only devices that entered a code (bin/anyassistant pair) may use Jarvis; the Mac always can."
+    ],
+    "plugin-manager": [
+      "Plugin manager",
+      "Lets Jarvis list, turn on and turn off its plugins, by voice."
+    ],
+    "skill-alarms": [
+      "Timers, alarms and reminders",
+      "«Pon un temporizador de 10 minutos», «despiértame a las 7», «recuérdame…»."
+    ],
+    "skill-arithmetic": [
+      "Sums",
+      "«¿Cuánto es 23 por 47?», percentages, powers."
+    ],
+    "skill-camera": [
+      "Camera on screen",
+      "«Activa la cámara»: the device's camera live on its screen."
+    ],
+    "skill-choose-llm": [
+      "Choose the LLM",
+      "«Usa Claude», «cambia a Hermes»."
+    ],
+    "skill-clock": [
+      "Time and date",
+      "«¿Qué hora es?», «¿qué día es hoy?»."
+    ],
+    "skill-conversion": [
+      "Unit conversions",
+      "Length, mass, volume and temperature."
+    ],
+    "skill-language": [
+      "Change language",
+      "«Habla en inglés»: saves the language and restarts in it."
+    ],
+    "skill-restart": [
+      "Reload and restart",
+      "«Recarga las herramientas», «reiníciate»."
+    ],
+    "skill-ringing": [
+      "While it rings",
+      "«Pospón», and only words meant to stop an alarm stop it."
+    ],
+    "skill-sleep": [
+      "Go to sleep",
+      "«Go to sleep», «apágate», «a dormir»: back to sleep until it hears its name."
+    ],
+    "skill-stop": [
+      "Stop",
+      "«Stop», «para», «calla»: stops what it is saying or thinking, or an alarm ringing."
+    ],
+    "skill-volume": [
+      "Volume",
+      "«Sube / baja el volumen», «volumen al 70»."
+    ],
+    "sounds": [
+      "Sounds",
+      "A sound when it wakes up and when it falls asleep (the skin's, if it has its own)."
+    ],
+    "stt-mlx-whisper": [
+      "Whisper (MLX)",
+      "OpenAI's Whisper on MLX: speech recognition, and the fallback when Parakeet drifts into another language."
+    ],
+    "stt-parakeet": [
+      "Parakeet",
+      "NVIDIA's Parakeet TDT v3 on MLX: multilingual speech recognition, fast on short sentences."
+    ],
+    "tap-to-wake": [
+      "Tap to wake",
+      "Asleep, tapping the screen wakes it up, as if you had said its name."
+    ],
+    "tools-system": [
+      "Jarvis's settings as tools",
+      "Status, name, voice, language, LLM, detail level, reload and restart, for the LLM."
+    ],
+    "tts-avspeech": [
+      "AVSpeech voice",
+      "macOS voices through AVSpeechSynthesizer, always loaded (~50 ms per sentence)."
+    ],
+    "tts-macos": [
+      "say voice",
+      "macOS voices through the say command."
+    ],
+    "vad-silero": [
+      "Silero VAD",
+      "Voice activity detection with Silero (PyTorch)."
+    ],
+    "wake-openwakeword": [
+      "Wake word (openWakeWord)",
+      "openWakeWord's trained models (hey_jarvis, alexa…)."
+    ],
+    "wake-whisper": [
+      "Wake word (Whisper)",
+      "Any word as the wake word, heard with a small Whisper."
+    ]
+  },
+  "installer": {
+    "eyes": [
+      "Let it look through the device's camera",
+      "Only when you ask («what do you see?», «read this»); nothing leaves the Mac otherwise."
+    ],
+    "memory": [
+      "Remember you across conversations",
+      "explicit: only what you ask it to remember; auto: also what it learns about you, when it falls asleep."
+    ],
+    "pairing": [
+      "Only paired devices",
+      "A device must type a code once before using it (the Mac never needs one)."
+    ],
+    "computer": [
+      "This computer",
+      ""
+    ],
+    "packages": [
+      "What the plugins need",
+      "The Python packages of the plugins that are on (bin/anyassistant plugins requirements)."
+    ],
+    "language": [
+      "Language",
+      "The one it speaks and understands (you can change it later by voice)."
+    ],
+    "name": [
+      "The assistant's name",
+      "Also its wake word: «Hey …»."
+    ],
+    "llm": [
+      "Which LLM answers",
+      "Claude needs Claude Code installed and signed in; Apple's, macOS 26 with Apple Intelligence."
+    ],
+    "bridges": [
+      "Swift bridges (Apple's model, the voice)",
+      ""
+    ],
+    "models": [
+      "Speech models (they download once)",
+      "Speech recognition, the wake word and voice detection: a few hundred MB the first time."
+    ],
+    "service": [
+      "Start AnyAssistant with the Mac",
+      "It runs in the background and comes back if it stops (launchd)."
+    ],
+    "connect": [
+      "Connect your tablet or phone",
+      ""
+    ]
+  }
 }
