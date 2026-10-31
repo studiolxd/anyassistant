@@ -18,6 +18,7 @@ from pathlib import Path
 
 import eyes
 import i18n
+import memory
 import settings
 from audio import normalize
 from brain.transcriber import Transcriber
@@ -105,6 +106,7 @@ class Assistant(Transcriber):
         self.guard = guard
         self.said = []  # words of the last thing it said, to recognize its echo
         self.saying = []  # words of what it is saying now (sentence by sentence)
+        self.transcript = []  # (who, text) of this conversation, for memory
         self.llm = llm
         self.tts = tts
         self.turn = asyncio.Lock()  # one answer at a time, in order
@@ -161,7 +163,18 @@ class Assistant(Transcriber):
 
     def _woke_up(self):
         super()._woke_up()
+        self.transcript = []
         asyncio.ensure_future(self.llm.new())
+
+    def _fell_asleep(self, by_command: bool):
+        super()._fell_asleep(by_command)
+        transcript, self.transcript = self.transcript, []
+        asyncio.ensure_future(self._remember(transcript))
+
+    async def _remember(self, transcript):
+        """While it sleeps: what to keep from the conversation, and ready for the next one."""
+        await memory.review(self.llm, transcript)
+        await self.llm.prepare()
 
     def _heard(self, text: str, timings: dict):
         if self._is_echo(text, timings):
@@ -178,6 +191,7 @@ class Assistant(Transcriber):
             asyncio.ensure_future(self._command(command))
             return
         super()._heard(text, timings)
+        self.transcript.append(("user", text))
         asyncio.ensure_future(self._answer(text))
 
     async def _command(self, command: str):
@@ -277,6 +291,7 @@ class Assistant(Transcriber):
             self.send({**message, "text": answer, "partial": False, "timings": timings})
             log.info("«%s» %s", settings.private(answer), timings)
             self.said = words(answer)
+            self.transcript.append(("assistant", answer))
             if not self.tts and self.cut != number:
                 self._state(self._idle_state())
             await self._apply_settings()

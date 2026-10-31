@@ -50,7 +50,7 @@ def server(tmp_path):
         process = subprocess.Popen(
             [sys.executable, ROOT / "server" / "main.py", "--host", "127.0.0.1", "--port", str(port), *options],
             cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONUNBUFFERED": "1", "JARVIS_SETTINGS": str(tmp_path / "settings.json"),
-                 "JARVIS_PAIRED": str(tmp_path / "paired.json")},
+                 "JARVIS_PAIRED": str(tmp_path / "paired.json"), "JARVIS_MEMORY": str(tmp_path / "memory.json")},
         )
         processes.append(process)
         url = f"http://127.0.0.1:{port}"
@@ -301,3 +301,20 @@ def test_eyes_with_claude(server, tmp_path):
     first, second = final_texts(messages, "assistant")[:2]
     assert "looking" in states(messages)
     assert "MILK" in first.upper() and "42" in second
+
+
+@pytest.mark.skipif(not shutil.which("claude"), reason="needs Claude Code signed in")
+def test_memory_with_claude(server, tmp_path):
+    """auto: what you say in one conversation is there in the next one."""
+    (tmp_path / "settings.json").write_text(json.dumps({"memory": "auto"}))
+    url = server("--mode", "assistant", "--lang", "es", "--llm", "claude", "--tts", "none")
+    say = lambda text: speech(tmp_path, text, "Mónica")  # noqa: E731
+    pcm = np.concatenate([say("Hey Jarvis"), say("Mi perro se llama Toby."), np.zeros(RATE * 6, np.int16),
+                          say("Apágate."), np.zeros(RATE * 30, np.int16),
+                          say("Hey Jarvis"), say("¿Cómo se llama mi perro?")])
+    memory_file = tmp_path / "memory.json"
+    messages, _ = asyncio.run(talk(url, pcm, timeout=40,
+                                   until=lambda m: len(final_texts(m, "assistant")) >= 3))
+    facts = json.loads(memory_file.read_text())["facts"]
+    assert any("Toby" in f for f in facts)
+    assert "Toby" in final_texts(messages, "assistant")[-1]

@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 """settings for Jarvis: what the LLM may change in settings.json, under permissions.json's policy.
 
-    "commands": {"bin/settings": "all" | "read" | ["instructions", "face", "voice", "name"]}
+    "commands": {"bin/settings": "all" | "read" | ["face", "voice", "name"]}
 
-Only these keys: never the permissions, the confirmation times, the port or the
-LLM, so it cannot lift its own safeguards. Changes go through the voice
+Only these keys: never the permissions, the confirmation times, the port, the
+LLM or your instructions, so it cannot lift its own safeguards. What it learns
+about you goes to its memory (bin/memory). Changes go through the voice
 confirmation (bin/jarvis-confirm) and the server picks them up after the answer:
-instructions and face at once, voice and name with a restart.
+the face at once, voice and name with a restart.
 """
 
 import json
@@ -18,7 +19,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ME = os.path.join(ROOT, "bin", "settings")
 PATH = os.environ.get("JARVIS_SETTINGS") or os.path.join(ROOT, "settings.json")
-KEYS = ["instructions", "face", "voice", "name"]
+KEYS = ["face", "voice", "name"]
 FACES = ["eyes", "orb"]
 
 
@@ -40,18 +41,13 @@ def load():
     try:
         with open(PATH) as f:
             return json.load(f)
-    except FileNotFoundError:
+    except (OSError, ValueError):
         return {}
 
 
 def save(data):
     with open(PATH, "w") as f:
         f.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
-
-
-def lines(data):
-    value = data.get("instructions") or []
-    return value.splitlines() if isinstance(value, str) else list(value)
 
 
 def language():
@@ -74,11 +70,6 @@ def voices():
 def help_text(allowed):
     text = f"""{ME}: your own settings. Changing them asks the user for confirmation first.
   {ME} show                       what is set now"""
-    if "instructions" in allowed:
-        text += f"""
-  {ME} remember 'text'            keeps a line in your instructions for every conversation
-                                  (what the user asks you to remember, how to talk to them…)
-  {ME} forget <number>            removes that line (numbers from «show»)"""
     if "face" in allowed:
         text += f"\n  {ME} set face eyes|orb          the face on the screen"
     if "voice" in allowed:
@@ -101,34 +92,15 @@ def main():
     if command == "help":
         print(help_text(allowed))
     elif command == "show":
-        numbered = [f"  {i}. {line}" for i, line in enumerate(lines(data), 1)]
-        print("instructions:\n" + ("\n".join(numbered) or "  (none)"))
         voice = data.get("voice")
         voice = voice.get(language()) if isinstance(voice, dict) else voice
         for key, value in (("face", data.get("face", "eyes")), ("voice", voice or "the language's"),
                            ("name", data.get("name", "Jarvis"))):
             print(f"{key}: {value}")
-    elif command in ("remember", "forget"):
-        if "instructions" not in allowed:
-            fail("changing the instructions is not allowed")
-        current = lines(data)
-        if command == "remember":
-            text = " ".join(args[1:]).strip()
-            if not text:
-                fail("what should I remember?")
-            current.append(text)
-        else:
-            try:
-                del current[int(args[1]) - 1]
-            except (IndexError, ValueError):
-                fail("give the number of a line from «show»")
-        data["instructions"] = current
-        save(data)
-        print("Saved: from the next conversation on." if command == "remember" else "Removed.")
     elif command == "set" and len(args) >= 3:
         key, value = args[1], " ".join(args[2:]).strip()
-        if key not in KEYS[1:]:
-            fail(f"«{key}» can't be changed; only {', '.join(KEYS[1:])}")
+        if key not in KEYS:
+            fail(f"«{key}» can't be changed; only {', '.join(KEYS)}")
         if key not in allowed:
             fail(f"changing «{key}» is not allowed")
         if key == "face":

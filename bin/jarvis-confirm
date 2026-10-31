@@ -2,7 +2,7 @@
 """Claude Code PreToolUse hook: actions that write need the user's «yes».
 
 Claude Code runs it before every tool, with {tool_name, tool_input} on stdin. If
-the action writes (a bin/gog or bin/settings call that isn't a read, or an MCP
+the action writes (a bin/gog, bin/settings or bin/memory call that isn't a read, or an MCP
 tool that isn't get_/list_/search_…) and the user hasn't confirmed it, it blocks it (exit code 2:
 the message reaches Claude) and records it in .build/confirm/pending.json. When
 the user says «yes», the voice server (brain/assistant.py) writes confirmed.json
@@ -56,8 +56,9 @@ def describe_command(command):
     if not parts:
         return None
     found = [p for p in parts[1:] if not p.startswith("-")]
-    if parts[0].endswith("bin/settings"):
-        return None if not found or found[0] in SETTINGS_READ else "settings " + " ".join(parts[1:])
+    for name in ("settings", "memory"):
+        if parts[0].endswith("bin/" + name):
+            return None if not found or found[0] in SETTINGS_READ else name + " " + " ".join(parts[1:])
     if not parts[0].endswith("bin/gog"):
         return None
     if found[:1] == ["help"] or "--help" in parts or "-h" in parts:

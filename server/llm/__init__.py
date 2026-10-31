@@ -7,12 +7,15 @@ A plugin is a module of this package with a class registered like this:
         async def new(self): ...                # starts a conversation (forgets the last one)
         async def answer(self, text, image=None):  # async generator of text pieces;
             yield "Hello"                       # image: JPEG from the camera, if it can see
+        async def complete(self, prompt): ...   # optional: one answer, outside the conversation
+        async def prepare(self): ...            # optional: get ready for the next conversation
         async def close(self): ...              # optional, when the server stops
 """
 
 from collections.abc import AsyncIterator
 
 import i18n
+import memory
 import settings
 from plugins import Registry
 
@@ -33,7 +36,9 @@ def instructions() -> str:
     """The system instructions, in the active language, plus the user's own (settings «instructions»)."""
     text = INSTRUCTIONS.format(language=i18n.L.name, name=settings.get("name", "Jarvis"))
     extra = settings.get("instructions")
-    return f"{text}\n\nFrom the user:\n{extra}" if extra else text
+    if extra:
+        text += f"\n\nFrom the user:\n{extra}"
+    return text + memory.instructions()
 
 
 class LLM:
@@ -48,6 +53,13 @@ class LLM:
 
     def answer(self, text: str, image: bytes | None = None) -> AsyncIterator[str]:
         raise NotImplementedError
+
+    async def complete(self, prompt: str) -> str:
+        """One answer outside the conversation (to review it for memory)."""
+        raise NotImplementedError
+
+    async def prepare(self):
+        """Gets ready for the next conversation (e.g. after the memory changed)."""
 
     async def reload(self):
         """Reads its configuration again (permissions, tools) and starts over."""

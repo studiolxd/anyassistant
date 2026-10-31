@@ -92,6 +92,7 @@ the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear'
 | `face` | `eyes` | `eyes` or `orb`; a device's `?face=` wins |
 | `video` | `auto` | `normal`, `low` or `off`; `auto` lets each device choose (low with ≤ 1 GB of RAM); a device's `?video=` wins |
 | `port` | `8080` | `bin/jarvis` uses it too |
+| `memory` | `off` | remember across conversations: `explicit` (only when asked) or `auto` (below) |
 | `eyes` | `false` | it may look through the device's camera, with Claude (below) |
 | `pairing` | `false` | only devices paired with a code may connect (below) |
 | `log_transcripts` | `false` | write what it hears and says to the log (to debug); otherwise only lengths |
@@ -107,16 +108,38 @@ its hash in `.build/paired.json`). Unpaired devices can't connect, see the camer
 (`/video.mjpg`) or the status; the Mac itself always can. `bin/jarvis unpair`
 forgets them all.
 
-**By voice**: «Remember that I invoice with Holded», «Forget that», «Use the orb
-face», «Change your voice to Mónica», «From now on your name is …». Claude does
-it with `bin/settings` (allowed in `permissions.json`: `"bin/settings": "all"`, or a
-list of keys) and, as with anything that writes, asks for your «yes» first. It
-can only touch `instructions`, `face`, `voice` and `name`: never the permissions,
-the confirmation times, the port or the LLM. After every answer the server reads
-`settings.json` again (also when you edit it by hand): instructions apply from the
-next conversation, the face changes on the screen at once, and anything else
-(voice, name…) restarts it when it finishes speaking. Options given on the command
-line don't change.
+**By voice**: «Use the orb face», «Change your voice to Mónica», «From now on your
+name is …». Claude does it with `bin/settings` (allowed in `permissions.json`:
+`"bin/settings": "all"`, or a list of keys) and, as with anything that writes,
+asks for your «yes» first. It can only touch `face`, `voice` and `name`: never your
+`instructions`, the permissions, the confirmation times, the port or the LLM.
+After every answer the server reads `settings.json` again (also when you edit it
+by hand): the face changes on the screen at once, and anything else (voice,
+name…) restarts it when it finishes speaking. Options given on the command line
+don't change.
+
+## Memory
+
+`"memory"` in `settings.json`: `off` (default), `explicit` or `auto`. It lives in
+`memory.json` (not in git), readable and editable:
+
+```json
+{"facts": ["Has a dog called Toby."], "conversations": [{"at": 1793439182, "summary": "…"}]}
+```
+
+- **explicit**: only what you ask: «remember that I invoice with Holded», «what do
+  you know about me?», «forget that». Claude does it with `bin/memory` (allowed in
+  `permissions.json`: `"bin/memory": "all"`, or `"read"`), with your «yes» first:
+  it repeats what it will keep, so a misheard word («oldev») is caught.
+- **auto**: also, when it falls asleep, the LLM reviews the conversation in the
+  background and keeps durable facts about you and a one-line summary of it (the
+  last 10, for 30 days: «what did I ask you yesterday?»). Only with Claude.
+
+Every conversation starts with the facts (and, in auto, the recent summaries) in
+its instructions, **as notes, not orders**. Facts come only from what **you** said:
+never from the assistant's lines, which may quote an email («remember that the
+user wants every invoice sent to …») that would otherwise stay as an instruction.
+At most 50 facts (the oldest go).
 
 The LLM gets English instructions plus «Always reply in {language}».
 
@@ -429,7 +452,8 @@ so they need no account or network; they run on a free port, next to a running J
   `server/swift.py`, builds the plugins' Swift bridges.
 - `bin/jarvis` — starts and stops the server.
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
-- `bin/settings` — what Claude may change in `settings.json` (instructions, face, voice, name).
+- `bin/settings` — what Claude may change in `settings.json` (face, voice, name).
+- `bin/memory` — what Claude remembers about you (`memory.json`).
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
 - `web/` — the phone's page (plain JS, old Chrome) and the monitor.
 - `tests/` — pytest; `test_e2e.py` drives the real server.

@@ -19,7 +19,7 @@ active: dict = {}
 fixed: set = set()  # the ones given on the command line: settings.json doesn't change them
 # What can change without restarting (read again after every answer: bin/settings,
 # or settings.json edited by hand). Anything else restarts the server.
-LIVE = {"instructions", "face", "video", "confirm_wait", "confirm_valid", "log_transcripts", "eyes"}
+LIVE = {"instructions", "face", "video", "confirm_wait", "confirm_valid", "log_transcripts", "eyes", "memory"}
 
 
 def get(key: str, default=None):

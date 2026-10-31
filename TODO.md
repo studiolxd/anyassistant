@@ -4,8 +4,8 @@
 
 - [ ] **Eyes, second step**: a high-resolution photo when asked to read (the video
   is 320×240 on small devices); with Hermes too if its model takes images.
-- [ ] **Memory across conversations** with Claude (Hermes already has it). For now,
-  what you ask it to remember goes to `instructions` in `settings.json` (`bin/settings`).
+- [ ] **Memory, next steps**: compact the facts with the LLM instead of dropping the
+  oldest; review with Apple's model too (now only Claude).
 - [ ] **The server as a packaged app** (the Mac first): install, start with the
   system, settings and pairing from its own window. What launchd would have done
   belongs to its installer.
@@ -21,6 +21,8 @@
 
 ## Done
 
+- [x] **Memory**: `"memory": "explicit"|"auto"`; `memory.json`, `bin/memory`, a review
+  of each conversation when it falls asleep (auto).
 - [x] **Eyes (Phase 4)**: `"eyes": true`; with Claude, by words («what do you see?»,
   «read this») or by its own decision (Read on the image of the moment).
 - [x] **Pairing** (optional: `"pairing": true`; `bin/jarvis pair|unpair`).
@@ -31,7 +33,7 @@
   Transcripts in the log only with `log_transcripts`.
 - [x] **Face**: «eyes» and «orb», chosen with `face`.
 - [x] **Languages**: English base and Spanish in `locales/`; `language` or by voice.
-- [x] **Settings**: `settings.json`, also by voice with your «yes» (`bin/settings`).
+- [x] **Settings**: `settings.json`; face, voice and name also by voice with your «yes» (`bin/settings`).
 - [x] **Automated tests**: pytest in `tests/` (`uv run pytest`; `-m e2e` for the real server).
 
 ## Postponed

@@ -166,6 +166,8 @@ def main():
     parser.add_argument("--face", choices=["eyes", "orb"], default="eyes", help="the page's face (?face= wins)")
     parser.add_argument("--video", choices=["auto", "normal", "low", "off"], default="auto",
                         help="camera quality; auto: each device by its memory (?video= wins)")
+    parser.add_argument("--memory", choices=["off", "explicit", "auto"], default="off",
+                        help="remember across conversations: only when asked (explicit) or also on its own (auto)")
     parser.add_argument("--eyes", action=argparse.BooleanOptionalAction, default=False,
                         help="it may look through the device's camera (with Claude)")
     parser.add_argument("--pairing", action=argparse.BooleanOptionalAction, default=False,

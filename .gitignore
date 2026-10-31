@@ -7,5 +7,6 @@ __pycache__/
 .mcp.json
 permissions.json
 settings.json
+memory.json
 google-client.json
 .gog/

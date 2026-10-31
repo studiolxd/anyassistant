@@ -115,6 +115,28 @@ class Claude(LLM):
         if self._permissions.tools:
             self._instructions += TOOL_INSTRUCTIONS + self._permissions.instructions
 
+    async def complete(self, prompt: str) -> str:
+        """A one-off `claude -p`: no tools, no MCP servers, nothing but the text."""
+        process = await asyncio.create_subprocess_exec(
+            "claude", "-p", "--model", self.model, "--output-format", "json",
+            "--tools", "", "--strict-mcp-config", "--setting-sources", "", "--no-session-persistence",
+            cwd=EMPTY, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        out, err = await asyncio.wait_for(process.communicate(prompt.encode()), 180)
+        if process.returncode:
+            raise RuntimeError(err.decode()[-300:])
+        return json.loads(out)["result"]
+
+    async def prepare(self):
+        """The spare process, with the current instructions (memory, settings…)."""
+        async with self._turn:
+            self._load_permissions()
+            if self._spare_for != self._arguments():
+                await self._kill(self._spare)
+                self._spare = await self._spawn()
+                self._spare_for = self._arguments()
+
     async def new(self):
         async with self._turn:
             await self._stop()

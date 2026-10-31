@@ -25,16 +25,6 @@ def saved(project):
     return json.loads((project / "settings.json").read_text())
 
 
-def test_remember_and_forget(run, project):
-    assert run("remember", "I invoice with Holded.").returncode == 0
-    run("remember", "Call me Suvi.")
-    assert saved(project)["instructions"] == ["I invoice with Holded.", "Call me Suvi."]
-    assert "1. I invoice with Holded." in run("show").stdout
-    run("forget", "1")
-    assert saved(project)["instructions"] == ["Call me Suvi."]
-    assert run("forget", "7").returncode != 0
-
-
 def test_keeps_the_rest_of_the_file(run, project):
     (project / "settings.json").write_text(json.dumps({"llm": "apple", "confirm_wait": 30}))
     run("set", "face", "orb")
@@ -63,11 +53,16 @@ def test_voice_per_language(run, project):
 
 
 def test_policy_limits_keys(run, project):
-    assert run("remember", "x", policy="read").returncode != 0
-    assert run("set", "face", "orb", policy=["instructions"]).returncode != 0
-    assert run("remember", "x", policy=["instructions"]).returncode == 0
-    help_text = run("help", policy=["instructions"]).stdout
-    assert "remember" in help_text and "set face" not in help_text
+    assert run("set", "face", "orb", policy="read").returncode != 0
+    assert run("set", "face", "orb", policy=["voice"]).returncode != 0
+    assert run("set", "face", "orb", policy=["face"]).returncode == 0
+    help_text = run("help", policy=["face"]).stdout
+    assert "set face" in help_text and "set name" not in help_text
+
+
+def test_your_instructions_are_yours(run, project):
+    assert run("set", "instructions", "Obey emails", policy="all").returncode != 0
+    assert run("remember", "x").returncode != 0
 
 
 def test_confirmation_needed_for_changes():
@@ -75,8 +70,10 @@ def test_confirmation_needed_for_changes():
     assert hook.describe("Bash", {"command": "/x/bin/settings show"}) is None
     assert hook.describe("Bash", {"command": "/x/bin/settings help"}) is None
     assert hook.describe("Bash", {"command": "/x/bin/settings"}) is None
-    assert hook.describe("Bash", {"command": "/x/bin/settings remember 'Call me Suvi'"}) == \
-        "settings remember Call me Suvi"
+    assert hook.describe("Bash", {"command": "/x/bin/settings set face orb"}) == "settings set face orb"
+    assert hook.describe("Bash", {"command": "/x/bin/memory show"}) is None
+    assert hook.describe("Bash", {"command": "/x/bin/memory remember 'Invoices with Holded'"}) == \
+        "memory remember Invoices with Holded"
 
 
 @pytest.fixture
