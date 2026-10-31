@@ -1,0 +1,6 @@
+{
+  "name": "Admin",
+  "description": "The settings and the plugins for the AnyAssistant app (/admin/…), only from the Mac itself.",
+  "kind": "feature",
+  "locked": true
+}

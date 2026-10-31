@@ -703,5 +703,17 @@
         "text": "take the laundry out"
       }
     }
-  }
+  },
+  "choices": {
+    "memory": {
+      "off": "No",
+      "explicit": "Only what I ask",
+      "auto": "Also what it learns"
+    },
+    "bool": {
+      "true": "Yes",
+      "false": "No"
+    }
+  },
+  "language_native": "English"
 }

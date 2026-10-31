@@ -72,7 +72,7 @@ class Locale:
     def _get(self, key: str):
         value = self.data
         for part in key.split("."):
-            value = value[part]
+            value = value[int(part)] if isinstance(value, list) and part.isdigit() else value[part]
         return value
 
     def __call__(self, key: str, **values) -> str:
@@ -90,6 +90,14 @@ class Locale:
     def name(self) -> str:
         """The language's name in English, for the LLM («Reply in Spanish»)."""
         return self.data["language_name"]
+
+    def text(self, key: str, default: str = "") -> str:
+        """A text if this language has it, or the default (code's English): «installer.llm.0»."""
+        try:
+            value = self._get(key)
+        except (KeyError, IndexError, TypeError):
+            return default
+        return value if isinstance(value, str) and value else default
 
     @property
     def stt_language(self) -> str:
@@ -149,6 +157,14 @@ def _calendar(locale: Locale, t) -> dict:
 
 
 L = Locale("en")
+
+
+def native_name(code: str) -> str:
+    """A language's name in itself («Español»), for choosing it."""
+    try:
+        return json.loads((LOCALES / f"{code}.json").read_text()).get("language_native", code)
+    except (OSError, ValueError):
+        return code
 
 
 def use(code: str) -> Locale:

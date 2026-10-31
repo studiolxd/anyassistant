@@ -47,8 +47,21 @@ class Step:
     when: Callable | None = None  # whether it applies now (None: always)
     always: bool = False  # shown even if its plugin is off (a question that turns it on)
 
+    @property
+    def shown_title(self) -> str:
+        """In the active language (locale «installer»: {id: [title, help]}), or the code's English."""
+        import i18n
+
+        return i18n.L.text(f"installer.{self.id}.0", self.title)
+
+    @property
+    def shown_help(self) -> str:
+        import i18n
+
+        return i18n.L.text(f"installer.{self.id}.1", self.help) if self.help else ""
+
     def describe(self) -> dict:
-        found = {"id": self.id, "title": self.title, "kind": self.kind, "help": self.help,
+        found = {"id": self.id, "title": self.shown_title, "kind": self.kind, "help": self.shown_help,
                  "plugin": self.plugin, "order": self.order}
         if self.kind == "question":
             found["choices"] = _choices(self)
@@ -86,11 +99,22 @@ class Skip(Exception):
     """A step that doesn't apply after all (its text says why)."""
 
 
+def _label(step: Step, value) -> str:
+    """How a choice is shown: Yes/No, a language's own name, or the locale's «choices.<step>.<value>»."""
+    import i18n
+
+    if isinstance(value, bool):
+        return i18n.L.text(f"choices.bool.{str(value).lower()}", "Yes" if value else "No")
+    if step.id == "language":
+        return i18n.native_name(value)
+    return i18n.L.text(f"choices.{step.id}.{value}", str(value))
+
+
 def _choices(step: Step):
     if step.choices is None:
         return None
     found = step.choices()
-    return [{"value": c, "label": str(c)} if not isinstance(c, dict) else c for c in found]
+    return [{"value": c, "label": _label(step, c)} if not isinstance(c, dict) else c for c in found]
 
 
 def steps(only: list[str] | None = None) -> list[Step]:
@@ -111,9 +135,9 @@ class Terminal:
         self.ask = ask
 
     def step(self, step, index, total):
-        print(f"\n[{index}/{total}] {step.title}")
-        if step.help:
-            print(f"      {step.help}")
+        print(f"\n[{index}/{total}] {step.shown_title}")
+        if step.shown_help:
+            print(f"      {step.shown_help}")
 
     def answer(self, step, given):
         default = given if given is not None else (step.default() if step.default else None)
@@ -236,6 +260,13 @@ def _quiet():
 
 def main(argv: list[str]) -> int:
     _quiet()
+    import i18n
+    import settings
+
+    try:  # its texts in your language (the one chosen, or the Mac's)
+        i18n.use(settings.load().get("language") or i18n.detect())
+    except ValueError:
+        pass
     as_json = "--json" in argv
     answers, only, skip, i = {}, [], set(), 0
     while i < len(argv):
