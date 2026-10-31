@@ -181,9 +181,9 @@ class Lines:
         self._emit(event="finished", failed=failed)
 
 
-def run(view, answers: dict, only: list[str] | None = None) -> list[str]:
+def run(view, answers: dict, only: list[str] | None = None, skip: set | None = None) -> list[str]:
     """Goes through the steps; the ids of those that failed."""
-    chosen = steps(only)
+    chosen = [s for s in steps(only) if s.id not in (skip or set())]
     failed = []
     for index, step in enumerate(chosen, 1):
         if step.plugin and not step.always and not kernel.wanted(step.plugin):
@@ -237,9 +237,13 @@ def _quiet():
 def main(argv: list[str]) -> int:
     _quiet()
     as_json = "--json" in argv
-    answers, only, i = {}, [], 0
+    answers, only, skip, i = {}, [], set(), 0
     while i < len(argv):
         arg = argv[i]
+        if arg == "--skip" and i + 1 < len(argv):  # a step its caller does itself (the app: starting with the Mac)
+            skip.add(argv[i + 1])
+            i += 2
+            continue
         if arg == "--set" and i + 1 < len(argv):
             key, _, value = argv[i + 1].partition("=")
             answers[key] = {"true": True, "false": False}.get(value, value)
@@ -249,8 +253,8 @@ def main(argv: list[str]) -> int:
             only.append(arg)
         i += 1
     if "--list" in argv:
-        found = [s.describe() for s in steps(only or None)]
+        found = [s.describe() for s in steps(only or None) if s.id not in skip]
         print(json.dumps(found, ensure_ascii=False, indent=None if as_json else 2))
         return 0
     view = Lines() if as_json else Terminal(ask="--defaults" not in argv and sys.stdin.isatty())
-    return 1 if run(view, answers, only or None) else 0
+    return 1 if run(view, answers, only or None, skip) else 0

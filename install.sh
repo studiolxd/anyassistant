@@ -8,6 +8,7 @@
 #   --to <folder>                  where the program goes (default ~/Applications/AnyAssistant)
 #   --data <folder> --cache <folder>   your data and what can be rebuilt
 #   --set key=value                an answer given in advance (e.g. --set llm=apple)
+#   --no-setup                     only the program and its Python (the app asks the questions)
 #   --update                       only the program, its packages, bridges and models, then
 #                                  restart (what bin/anyassistant update runs)
 #
@@ -20,8 +21,10 @@ DATA="$HOME/Library/Application Support/AnyAssistant"
 CACHE="$HOME/Library/Caches/AnyAssistant"
 PASS=""
 UPDATE=0
+SETUP=1
 while [ $# -gt 0 ]; do
   case "$1" in
+    --no-setup) SETUP=0; shift ;;
     --update) UPDATE=1; shift ;;
     --to) TO="$2"; shift 2 ;;
     --data) DATA="$2"; shift 2 ;;
@@ -35,11 +38,15 @@ say() { [ $JSON = 1 ] && printf '{"event": "install", "text": "%s"}\n' "$1" || e
 [ "$(uname)" = "Darwin" ] || { say "AnyAssistant needs a Mac for now."; exit 1; }
 
 # Its own Python, without touching the system's (and no administrator rights).
-if ! command -v uv >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/uv" ]; then
-  say "Installing uv (Python and its packages)…"
-  curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null
+# $UV: the one the app brings; otherwise the computer's, or it installs it.
+if [ -z "$UV" ]; then
+  if ! command -v uv >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/uv" ]; then
+    say "Installing uv (Python and its packages)…"
+    curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null
+  fi
+  UV="$(command -v uv || echo "$HOME/.local/bin/uv")"
 fi
-UV="$(command -v uv || echo "$HOME/.local/bin/uv")"
+export UV
 
 # The program: the committed files of this copy (a release will bring them packed).
 say "Copying the program to $TO…"
@@ -47,6 +54,7 @@ mkdir -p "$TO" "$DATA" "$CACHE"
 FRESH="$(mktemp -d)"
 if [ -d "$SOURCE/.git" ]; then
   git -C "$SOURCE" archive HEAD | tar -x -C "$FRESH"
+  git -C "$SOURCE" rev-parse --short HEAD > "$FRESH/VERSION"  # which version is installed (the app compares)
 else
   (cd "$SOURCE" && tar -cf - --exclude .venv --exclude .build --exclude install.env .) | tar -x -C "$FRESH"
 fi
@@ -65,6 +73,10 @@ say "Preparing Python…"
 (cd "$TO" && "$UV" sync --frozen --no-dev --quiet)
 
 eval "set -- $PASS"
+if [ $SETUP = 0 ]; then
+  say "Ready for its setup."
+  exit 0
+fi
 if [ $UPDATE = 1 ]; then
   say "Updating what it needs…"
   "$TO/bin/anyassistant" setup "$@" packages bridges models || exit 1

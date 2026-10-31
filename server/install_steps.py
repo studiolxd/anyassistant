@@ -40,7 +40,7 @@ def computer(progress):
 # --- The plugins' Python packages ---
 
 def _uv() -> str:
-    found = shutil.which("uv") or os.path.expanduser("~/.local/bin/uv")
+    found = os.environ.get("UV") or shutil.which("uv") or os.path.expanduser("~/.local/bin/uv")
     if not os.path.exists(found):
         raise RuntimeError("uv isn't installed (install.sh installs it)")
     return found
