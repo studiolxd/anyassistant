@@ -1,4 +1,4 @@
-"""bin/jarvis-confirm and the assistant: writing needs a spoken «yes»."""
+"""bin/anyassistant-confirm and the assistant: writing needs a spoken «yes»."""
 
 import json
 import subprocess
@@ -10,7 +10,7 @@ import pytest
 import kernel
 from conftest import ROOT, load_script
 
-hook = load_script("jarvis-confirm")
+hook = load_script("anyassistant-confirm")
 
 
 @pytest.mark.parametrize("command", [
@@ -31,7 +31,7 @@ def test_writing_is_described():
 
 def call(project, tool, tool_input):
     data = json.dumps({"tool_name": tool, "tool_input": tool_input})
-    return subprocess.run([sys.executable, ROOT / "bin" / "jarvis-confirm"], input=data,
+    return subprocess.run([sys.executable, ROOT / "bin" / "anyassistant-confirm"], input=data,
                           capture_output=True, text=True)
 
 

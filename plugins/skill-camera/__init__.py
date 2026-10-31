@@ -27,15 +27,15 @@ class Camera(Skill):
     order = 11
     local = False
 
-    def hear(self, text, jarvis):
+    def hear(self, text, assistant):
         found = command(text)
         if not found:
             return False
         on = found == "on"
         log.info("camera on the screen: %s", found)
-        jarvis.show_heard(text)
-        jarvis.send({"type": "camera", "on": on})
-        jarvis.say(i18n.L("speech.camera_on" if on else "speech.camera_off"))
+        assistant.show_heard(text)
+        assistant.send({"type": "camera", "on": on})
+        assistant.say(i18n.L("speech.camera_on" if on else "speech.camera_off"))
         return True
 
 

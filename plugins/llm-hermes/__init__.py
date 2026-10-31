@@ -75,7 +75,7 @@ class Hermes(LLM):
         return self._http
 
     async def new(self):
-        self._session = f"jarvis-{uuid.uuid4().hex[:12]}"
+        self._session = f"anyassistant-{uuid.uuid4().hex[:12]}"
 
     async def close(self):
         if self._http and not self._http.closed:

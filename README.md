@@ -1,7 +1,8 @@
-# Jarvis
+# AnyAssistant
 
 An old phone or tablet becomes the eyes, mouth and ears of a voice assistant;
-all the processing runs on the Mac. WebRTC transport (Opus + Chrome's echo
+all the processing runs on the Mac. The assistant is called Jarvis until you give
+it another name (`name`: also its wake word, «Hey …»). WebRTC transport (Opus + Chrome's echo
 cancellation) over Wi-Fi.
 
 ## Phase 0 · Preparing the phone
@@ -26,7 +27,7 @@ cancellation) over Wi-Fi.
 It copies the program to `~/Applications/AnyAssistant`, gets its own Python (uv,
 no administrator rights), keeps your data in `~/Library/Application Support/AnyAssistant`
 and what can be rebuilt in `~/Library/Caches/AnyAssistant`, and then goes through
-`bin/jarvis setup`: this computer, the plugins' packages, language, name, LLM, the
+`bin/anyassistant setup`: this computer, the plugins' packages, language, name, LLM, the
 Swift bridges, the speech models, pairing, memory, eyes, starting with the Mac
 (launchd) and the address (and code) for your tablet. Run again, it updates the
 program and keeps your data.
@@ -34,17 +35,17 @@ program and keeps your data.
 The steps come from the core (`server/install_steps.py`) and from the plugins
 (`@installer.question`, `@installer.task`, `@installer.device` for something done on
 the device), so a plugin brings its own. Any of them again later:
-`bin/jarvis setup memory`. For the app's window: `bin/jarvis setup --list --json`
-(the questions) and `bin/jarvis setup --json --set llm=apple …` (one event per line).
+`bin/anyassistant setup memory`. For the app's window: `bin/anyassistant setup --list --json`
+(the questions) and `bin/anyassistant setup --json --set llm=apple …` (one event per line).
 
 ## Running it
 
 ```
-bin/jarvis start [options]   # in the background; e.g. bin/jarvis start --llm hermes
-bin/jarvis stop
-bin/jarvis restart           # like saying «restart»: same options
-bin/jarvis status
-bin/jarvis log               # live log (.build/jarvis.log)
+bin/anyassistant start [options]   # in the background; e.g. bin/anyassistant start --llm hermes
+bin/anyassistant stop
+bin/anyassistant restart           # like saying «restart»: same options
+bin/anyassistant status
+bin/anyassistant log               # live log (.build/anyassistant.log)
 ```
 
 Or in the foreground, to see the log directly:
@@ -87,7 +88,7 @@ its name added to the others.
 ## Settings
 
 `settings.json` in the project (not in git; see `settings.example.json`) holds
-the preferences, so `bin/jarvis start` needs no options:
+the preferences, so `bin/anyassistant start` needs no options:
 
 ```json
 {
@@ -197,7 +198,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | Option | Default | |
 |---|---|---|
 | `host` | `"0.0.0.0"` | the address it listens on *(restarts)* |
-| `port` | `8080` | the port (bin/jarvis reads it too) *(restarts)* |
+| `port` | `8080` | the port (bin/anyassistant reads it too) *(restarts)* |
 | `mode` | `"assistant"` | assistant, transcribe (only shows what it hears) or parrot (repeats it) *(restarts)* |
 | `record` | — | saves everything that arrives to a WAV (to debug) *(restarts)* |
 <!-- /options -->
@@ -226,10 +227,10 @@ The page changes at once when a screen option changes.
 A wrong value (`"skin": "smiley"`) stops the server with the reason.
 
 **Pairing** (the plugin `pairing`, off by default): with `"plugins": {"pairing": true}`, a device must enter a code before using
-Jarvis. `bin/jarvis pair` shows one on the Mac (6 digits, 5 minutes, one device);
+Jarvis. `bin/anyassistant pair` shows one on the Mac (6 digits, 5 minutes, one device);
 the page asks for it and the device remembers it (a cookie; the server keeps only
 its hash in `paired.json`). Unpaired devices can't connect, see the camera
-(`/video.mjpg`) or the status; the Mac itself always can. `bin/jarvis unpair`
+(`/video.mjpg`) or the status; the Mac itself always can. `bin/anyassistant unpair`
 forgets them all.
 
 **By voice**: «Use the orb skin», «Change your voice to Mónica», «From now on your
@@ -431,7 +432,7 @@ Chosen with `skin` for every device, `?skin=bedside` on one (remembered by it;
 `?skin=default` forgets it), or by voice («ponte la skin de mesilla», «only on
 this one»).
 
-**Making one.** `bin/jarvis skin new mine --from orb` copies a skin into your
+**Making one.** `bin/anyassistant skin new mine --from orb` copies a skin into your
 folder (`skins_dir`, `skins.local/` by default: where an installed Jarvis keeps
 them will come with the installer). A skin is a folder:
 
@@ -478,7 +479,7 @@ understands). Starting and pairing aren't blocks: they always work.
   while one rings). Android 4.4's font lacks some emoji (⏱).
 
 **The lab**: `http://<mac>:8080/lab?skin=mine` shows every state at once, with a
-simulated voice and timer, and reloads when you save. **The check**: `bin/jarvis
+simulated voice and timer, and reloads when you save. **The check**: `bin/anyassistant
 skin check skins.local/mine` points out what the tablet's Chrome 81 lacks
 (`inset`, flex `gap`, `:has()`…), unknown blocks, scripts, outside resources.
 
@@ -545,8 +546,8 @@ plugins.local/skill-weather/
 What it needs goes in `plugin.json` too, for the installer:
 `"needs": {"python": ["parakeet-mlx>=0.5.3"], "system": ["darwin"], "arch": ["arm64"],
 "macos": 26, "commands": ["claude"]}`. One that doesn't fit the computer, or lacks its
-packages, stays off whatever the settings say. `bin/jarvis plugins` lists them (on,
-off, and why one can't work); `bin/jarvis plugins requirements` prints the Python
+packages, stays off whatever the settings say. `bin/anyassistant plugins` lists them (on,
+off, and why one can't work); `bin/anyassistant plugins requirements` prints the Python
 packages of those that are on.
 
 `kind`: `stt`, `wake`, `llm`, `tts`, `vad` (engines: the settings choose one),
@@ -658,7 +659,7 @@ see `permissions.example.json`):
   Claude gets Claude Code's terminal **limited to them** (anything else is denied:
   tested with `ls`, `curl` and `touch`) and, in the prompt, what `<command> help` shows.
 - `confirm` (on by default): **actions that write need your «yes» by voice**. A
-  Claude Code hook (`bin/jarvis-confirm`) stops any `bin/gog` call that isn't a
+  Claude Code hook (`bin/anyassistant-confirm`) stops any `bin/gog` call that isn't a
   read and any MCP tool that isn't `get_`/`list_`/`search_`…, and Claude asks you.
   If you say «yes» (or «sure», «go ahead»…; «yes, but…» doesn't count), the server
   authorizes **that same call**, once and for one minute; any other answer cancels
@@ -807,13 +808,13 @@ so they need no account or network; they run on a free port, next to a running J
   `server/stt/`, `wake/`, `llm/`, `tts/`, `vad/` keep only what each kind is.
 - `server/text.py`, text utilities;
   `server/swift.py`, builds the plugins' Swift bridges.
-- `bin/jarvis` — starts and stops the server.
+- `bin/anyassistant` — starts and stops the server.
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
 - `server/tools/` — Jarvis's own tools (`@tool`, next to what each does); `plugins/mcp-server` serves them as `jarvis`.
 - `server/skills/` — what a skill is (`@skill`), how things are said, and the helpers they share (`parse.py`,
   `timers.py`, `interpreter.py`).
 - `server/paths.py`, `server/options.py` — where things live, every option.
-- `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
+- `bin/anyassistant-confirm` — hook that asks for your «yes» before any action that writes.
 - `plugins/page/` — the device's page: `web/` (plain JS, old Chrome: `app.js`, connection and blocks;
   `skin.js`, applies a skin, its states and live variables; `system.css`), its texts (`locales/`, «ui»),
   `skins/` (the system's) and `skins.py` (finds, cleans and checks them).

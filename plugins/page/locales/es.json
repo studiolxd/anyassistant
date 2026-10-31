@@ -19,7 +19,7 @@
     "error": "Error",
     "monitor_waiting": "Esperando al móvil…",
     "monitor_connected": "Conectado · {frames} fotogramas recibidos",
-    "pair_prompt": "Escribe el código que muestra «bin/jarvis pair» en el Mac",
+    "pair_prompt": "Escribe el código que muestra «bin/anyassistant pair» en el Mac",
     "pair_button": "Emparejar",
     "pair_wrong": "Código incorrecto o caducado",
     "pair_needed": "Este aparato no está emparejado: recarga la página",

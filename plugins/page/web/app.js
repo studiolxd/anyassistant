@@ -89,7 +89,7 @@ loadTexts().then(function () {
   else start.hidden = false;
 });
 
-// Pairing (the plugin «pairing»): the code that «bin/jarvis pair» shows on the Mac.
+// Pairing (the plugin «pairing»): the code that «bin/anyassistant pair» shows on the Mac.
 function askForCode() {
   var form = document.getElementById('pair');
   document.getElementById('pair-prompt').textContent = text('pair_prompt');
@@ -237,7 +237,7 @@ async function connect() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sdp: pc.localDescription.sdp, type: pc.localDescription.type })
     });
-    if (response.status === 403) {  // unpaired meanwhile (bin/jarvis unpair)
+    if (response.status === 403) {  // unpaired meanwhile (bin/anyassistant unpair)
       shutDown = true;
       fail(text('pair_needed'));
       return;

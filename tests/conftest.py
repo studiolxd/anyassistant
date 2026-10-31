@@ -46,7 +46,7 @@ def load_script(name: str, root: Path = ROOT):
 @pytest.fixture
 def project(tmp_path, monkeypatch):
     """A folder of its own as the data and cache folders (for permissions and bin/ scripts,
-    which get it through $JARVIS_HOME / $JARVIS_CACHE), with a copy of bin/ for commands."""
+    which get it through $ANYASSISTANT_HOME / $ANYASSISTANT_CACHE), with a copy of bin/ for commands."""
     import paths
 
     shutil.copytree(ROOT / "bin", tmp_path / "bin", ignore=shutil.ignore_patterns("__pycache__"))
@@ -55,8 +55,8 @@ def project(tmp_path, monkeypatch):
     for name, value in (("HOME", tmp_path), ("CACHE", cache), ("PERMISSIONS", tmp_path / "permissions.json"),
                         ("CONFIRM", cache / "confirm"), ("GOG", tmp_path / ".gog"), ("MCP", tmp_path / ".mcp.json")):
         monkeypatch.setattr(paths, name, value)
-    monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
-    monkeypatch.setenv("JARVIS_CACHE", str(cache))
+    monkeypatch.setenv("ANYASSISTANT_HOME", str(tmp_path))
+    monkeypatch.setenv("ANYASSISTANT_CACHE", str(cache))
     return tmp_path
 
 

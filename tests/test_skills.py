@@ -199,7 +199,7 @@ def test_tools_without_confirmation(store, es):
     assert tools.call("set_reminder", {"text": "regar las plantas", "seconds": 600}).endswith("regar las plantas.")
     assert "un temporizador" in tools.call("list_timers", {})
     assert tools.call("cancel_timers", {"kind": "all"}) == "Cancelado."
-    hook = load_script("jarvis-confirm")
+    hook = load_script("anyassistant-confirm")
     for name in ("set_timer", "set_alarm", "set_reminder", "cancel_timers", "set_volume"):
         assert hook.describe(f"mcp__jarvis__{name}", {}) is None
 

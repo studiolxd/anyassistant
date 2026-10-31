@@ -19,8 +19,8 @@ class Stop(Skill):
     order = -2
     local = False
 
-    def hear(self, text: str, jarvis) -> bool:
+    def hear(self, text: str, assistant) -> bool:
         if not is_stop_command(text):
             return False
-        jarvis.hush()
+        assistant.hush()
         return True

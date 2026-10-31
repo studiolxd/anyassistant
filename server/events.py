@@ -1,12 +1,12 @@
 """Events: what happens, for whichever plugins care.
 
     @events.on("asleep")
-    def review(jarvis, transcript): ...        # a plugin listens (sync or async)
+    def review(assistant, transcript): ...        # a plugin listens (sync or async)
 
-    events.emit("asleep", jarvis, transcript)  # the core says it happened
+    events.emit("asleep", assistant, transcript)  # the core says it happened
 
 Only the handlers of plugins that are on are called; one failing doesn't stop the
-others. Events so far: «tap» (jarvis): the screen was tapped; «asleep» (jarvis, transcript):
+others. Events so far: «tap» (assistant): the screen was tapped; «asleep» (assistant, transcript):
 it fell asleep after a conversation (awaited with gather: memory reviews it before
 the next one is prepared).
 """

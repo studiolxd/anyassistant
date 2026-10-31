@@ -278,7 +278,7 @@ def reset():
     _unfit.clear()
 
 
-if __name__ == "__main__":  # bin/jarvis plugins [requirements [--all]]
+if __name__ == "__main__":  # bin/anyassistant plugins [requirements [--all]]
     args = sys.argv[1:]
     if args[:1] == ["requirements"]:
         print("\n".join(requirements(everything="--all" in args)))

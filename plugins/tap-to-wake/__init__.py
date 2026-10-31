@@ -7,5 +7,5 @@ import events
 
 
 @events.on("tap")
-def wake(jarvis):
-    jarvis.ear.wake_up("tap")
+def wake(assistant):
+    assistant.ear.wake_up("tap")

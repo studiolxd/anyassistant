@@ -1,9 +1,9 @@
 """Pairing (the plugin «pairing», off by default): only devices that entered a code may use Jarvis.
 
-`bin/jarvis pair` asks the server (from the Mac itself) for a 6-digit code, valid
+`bin/anyassistant pair` asks the server (from the Mac itself) for a 6-digit code, valid
 for a few minutes and a few attempts. The device that enters it gets a cookie
 that it sends from then on; the server keeps only its hash, in paired.json.
-The Mac itself never needs one. `bin/jarvis unpair` forgets every device.
+The Mac itself never needs one. `bin/anyassistant unpair` forgets every device.
 
 It brings to the web server a guard (every protected request), its two routes and
 «paired» in /config, so the page asks for the code; without the plugin, none exist.
@@ -104,7 +104,7 @@ def _config(request):
 
 @web.route("POST", "/pairing")
 async def _new_code(request):
-    """For bin/jarvis pair: only from the Mac itself."""
+    """For bin/anyassistant pair: only from the Mac itself."""
     if request.remote not in LOCAL:
         return http.json_response({}, status=403)
     if request.query.get("forget"):

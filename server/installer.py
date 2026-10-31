@@ -1,4 +1,4 @@
-"""The installer's steps: what `bin/jarvis setup` goes through, in the terminal or for
+"""The installer's steps: what `bin/anyassistant setup` goes through, in the terminal or for
 the app's window (the same steps; only how they are shown changes).
 
 The core and the plugins declare them, next to what they are about:
@@ -14,7 +14,7 @@ The core and the plugins declare them, next to what they are about:
                                                      # the installer only shows how it goes
 
 A step belongs to the plugin loading it: only those of the plugins that are wanted
-(on, or about to be) run. Any step can be done again later: `bin/jarvis setup <id>`.
+(on, or about to be) run. Any step can be done again later: `bin/anyassistant setup <id>`.
 
 How it is shown:
 - terminal (default): asks each question (Enter keeps the default) and shows progress;

@@ -47,7 +47,7 @@ def _uv() -> str:
 
 
 @task("packages", "What the plugins need", order=20,
-      help="The Python packages of the plugins that are on (bin/jarvis plugins requirements).")
+      help="The Python packages of the plugins that are on (bin/anyassistant plugins requirements).")
 def packages(progress):
     if not paths.INSTALLED:
         raise Skip("while developing, uv sync installs them all")
@@ -175,19 +175,19 @@ def _launchctl(*args, check=True):
           default=lambda: True, help="It runs in the background and comes back if it stops (launchd).")
 def service(value):
     if not paths.INSTALLED:
-        raise Skip("only for an installed copy (install.sh); while developing, bin/jarvis start")
+        raise Skip("only for an installed copy (install.sh); while developing, bin/anyassistant start")
     domain = f"gui/{os.getuid()}"
     _launchctl("bootout", f"{domain}/{LABEL}", check=False)
     if not value:
         if os.path.exists(AGENT):
             os.remove(AGENT)
-        return "off: start it with bin/jarvis start"
+        return "off: start it with bin/anyassistant start"
     paths.CACHE.mkdir(parents=True, exist_ok=True)
     os.makedirs(os.path.dirname(AGENT), exist_ok=True)
     with open(AGENT, "wb") as f:
         plistlib.dump({
             "Label": LABEL,
-            "ProgramArguments": [str(paths.BIN / "jarvis"), "run"],
+            "ProgramArguments": [str(paths.BIN / "anyassistant"), "run"],
             "RunAtLoad": True,
             "KeepAlive": {"SuccessfulExit": False},  # back if it fails; not after «stop»
             "StandardOutPath": str(paths.LOG),
@@ -216,7 +216,7 @@ def connect(progress):
     url = f"http://{_address()}:{port}"
     running = False
     if not (paths.INSTALLED and os.path.exists(AGENT)):  # not ours: whatever answers there may be another copy
-        return f"start it (bin/jarvis start) and open {url} on the device"
+        return f"start it (bin/anyassistant start) and open {url} on the device"
     for _ in range(90):
         try:
             urllib.request.urlopen(f"http://127.0.0.1:{port}/status", timeout=1)
@@ -232,9 +232,9 @@ def connect(progress):
         try:
             request = urllib.request.Request(f"http://127.0.0.1:{port}/pairing", data=b"", method="POST")
             code = __import__("json").load(urllib.request.urlopen(request, timeout=3))["code"]
-            text += f" and type the code {code} (valid 5 minutes; bin/jarvis pair for another)"
+            text += f" and type the code {code} (valid 5 minutes; bin/anyassistant pair for another)"
         except OSError:
             pass
     elif not running:
-        text += " once it is running (bin/jarvis start)"
+        text += " once it is running (bin/anyassistant start)"
     return text

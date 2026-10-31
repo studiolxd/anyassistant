@@ -115,7 +115,7 @@ def test_claude_gets_the_jarvis_server_only_if_allowed(env, project):
 
 
 def test_the_hook_leaves_jarvis_tools_to_the_server():
-    hook = load_script("jarvis-confirm")
+    hook = load_script("anyassistant-confirm")
     assert hook.describe("mcp__jarvis__get_settings", {}) is None
     assert hook.describe("mcp__jarvis__camera", {"on": True}) is None
     assert hook.describe("mcp__jarvis__set_name", {"name": "Viernes"}) is None  # the server asks itself

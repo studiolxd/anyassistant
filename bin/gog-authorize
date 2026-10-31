@@ -6,7 +6,7 @@
 # google-client.json in your data folder (the project's root while developing).
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-HOME_DIR="${JARVIS_HOME:-$ROOT}"  # your data (server/paths.py)
+HOME_DIR="${ANYASSISTANT_HOME:-$ROOT}"  # your data (server/paths.py)
 export GOG_HOME="$HOME_DIR/.gog"
 [ -n "$1" ] || { echo "Usage: $0 you@gmail.com" >&2; exit 2; }
 [ -f "$HOME_DIR/google-client.json" ] || { echo "Missing $HOME_DIR/google-client.json" >&2; exit 2; }

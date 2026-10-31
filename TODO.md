@@ -3,9 +3,9 @@
 ## Next
 
 - [ ] **AnyAssistant, the Mac app**: a menu bar app (SwiftUI, .dmg) on top of
-  `bin/jarvis setup --list/--json`: «install with what comes» or step by step,
+  `bin/anyassistant setup --list/--json`: «install with what comes» or step by step,
   settings, plugins, pairing (QR + code), log, update. Signing and notarizing.
-- [ ] **Installer, next**: `bin/jarvis update` and `uninstall`; a release tarball
+- [ ] **Installer, next**: `bin/anyassistant update` and `uninstall`; a release tarball
   (install.sh copies the git checkout for now); the voice enrolment step
   (`@installer.device`) when that plugin exists.
 
@@ -23,7 +23,10 @@
 
 ## Done
 
-- [x] **Installer (terminal)**: install.sh + `bin/jarvis setup`, steps from the core and
+- [x] **The app is AnyAssistant** (`bin/anyassistant`, `ANYASSISTANT_HOME`…); the assistant
+  is still Jarvis by default. The MCP server keeps «jarvis» (Hermes's config uses it).
+
+- [x] **Installer (terminal)**: install.sh + `bin/anyassistant setup`, steps from the core and
   the plugins, launchd; tried in a clean folder (31 Oct).
 
 - [x] **Everything is a plugin** (31 Oct): the core only finds, loads and joins them
@@ -48,7 +51,7 @@
   of each conversation when it falls asleep (auto).
 - [x] **Eyes (Phase 4)**: `"eyes": true`; with Claude, by words («what do you see?»,
   «read this») or by its own decision (Read on the image of the moment).
-- [x] **Pairing** (optional: `"pairing": true`; `bin/jarvis pair|unpair`).
+- [x] **Pairing** (optional: `"pairing": true`; `bin/anyassistant pair|unpair`).
 - [x] **Interrupt by voice**: «Jarvis, stop» or «Jarvis, and tomorrow?» while it speaks.
 - [x] **Latency**: a spare Claude process always ready (~1.5 s to the first word
   instead of 2.5–3). The model stays a setting (`llm_model`).
@@ -66,8 +69,6 @@
   after the server is a packaged app.
 - **Bilingual at once**: answer in the language each sentence is spoken in; when
   everything else works.
-- **The app's name**: a new one is coming (instead of «Jarvis»); `name` in the
-  settings already changes it everywhere.
 
 The Mac's fixed IP and publishing the Google app are up to whoever installs it
 (see the README).

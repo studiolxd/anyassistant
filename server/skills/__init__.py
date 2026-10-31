@@ -9,10 +9,10 @@ the LLM. Each is a plugin (plugins/skill-*, kind "skill") with a class like this
 
 …or, for those that need to do more than answer (switch the camera, restart…):
 
-        def hear(self, text, jarvis) -> bool:   # True if it took the sentence
-            jarvis.show_heard(text); jarvis.send({...}); jarvis.say("…")
+        def hear(self, text, assistant) -> bool:   # True if it took the sentence
+            assistant.show_heard(text); assistant.send({...}); assistant.say("…")
 
-`jarvis` is the assistant (plugins/brain-assistant): show_heard, reply, say, send,
+`assistant` is the assistant (plugins/brain-assistant): show_heard, reply, say, send,
 later, restart, stop, hush (stop only if busy), sleep, ringing, rang, llm. A skill's tools for the LLM go in its
 module with @tool (tools/). Their words are in the locale («skills», «commands»),
 so another language is another file.
@@ -43,12 +43,12 @@ class Skill:
         """What to say, if the sentence is for this skill; None otherwise."""
         return None
 
-    def hear(self, text: str, jarvis) -> bool:
+    def hear(self, text: str, assistant) -> bool:
         """Takes the sentence if it is for this skill: by default, says its answer."""
         reply = self.answer(text, tokens(text))
         if reply is None:
             return False
-        jarvis.reply(text, reply)
+        assistant.reply(text, reply)
         return True
 
 
@@ -75,9 +75,9 @@ def ordered() -> list[Skill]:
     return [s for s in _skills if kernel.enabled(s.plugin) and (enabled() or not s.local)]
 
 
-def hear(text: str, jarvis) -> bool:
+def hear(text: str, assistant) -> bool:
     """The first skill that takes the sentence handles it; False if none does (it goes to the LLM)."""
-    return any(s.hear(text, jarvis) for s in ordered())
+    return any(s.hear(text, assistant) for s in ordered())
 
 
 def quick(text: str) -> str | None:

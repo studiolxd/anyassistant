@@ -39,16 +39,16 @@ class Language(Skill):
     order = 10
     local = False
 
-    def hear(self, text, jarvis):
+    def hear(self, text, assistant):
         code = command(text)
         if not code:
             return False
-        jarvis.show_heard(text)
+        assistant.show_heard(text)
         name = i18n.L.data["languages"].get(code, code)
         if code == i18n.L.code:
-            jarvis.say(i18n.L("speech.language_same", language=name))
+            assistant.say(i18n.L("speech.language_same", language=name))
         else:
             log.info("switching to %s", code)
             settings.save(language=code)
-            jarvis.restart(i18n.L("speech.language_changing", language=name))
+            assistant.restart(i18n.L("speech.language_changing", language=name))
         return True

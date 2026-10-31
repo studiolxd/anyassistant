@@ -35,18 +35,18 @@ class Ringing(Skill):
     order = 20
     local = False
 
-    def hear(self, text, jarvis):
-        if jarvis.rang and set(words(text)) & set(i18n.L.data["skills"]["words"]["snooze"]):
-            jarvis.show_heard(text)
-            item = jarvis.rang
-            jarvis.stop()
-            jarvis.say(snooze(item, text))
+    def hear(self, text, assistant):
+        if assistant.rang and set(words(text)) & set(i18n.L.data["skills"]["words"]["snooze"]):
+            assistant.show_heard(text)
+            item = assistant.rang
+            assistant.stop()
+            assistant.say(snooze(item, text))
             return True
-        if not jarvis.ringing:
+        if not assistant.ringing:
             return False
         if stops_it(text):
-            jarvis.show_heard(text)
-            jarvis.stop()
+            assistant.show_heard(text)
+            assistant.stop()
         else:  # not a word for it: dropped
             log.info("ignored while ringing: «%s»", settings.private(text))
         return True

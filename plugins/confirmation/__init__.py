@@ -2,7 +2,7 @@
 
 - Jarvis's own tools marked needs_yes (@tool(…, needs_yes=True)): a gate in tools/
   refuses the call until you answer «yes» to exactly that call.
-- Claude Code: the hook bin/jarvis-confirm (installed by llm-claude while this is on).
+- Claude Code: the hook bin/anyassistant-confirm (installed by llm-claude while this is on).
 - Hermes: its approvals wait here for your answer (llm-hermes).
 
 The pending action and your answer live in store.py (files, so separate processes
@@ -88,8 +88,8 @@ class Answer(Skill):
     order = 0
     local = False
 
-    def hear(self, text: str, jarvis) -> bool:
+    def hear(self, text: str, assistant) -> bool:
         if answer(text):
-            jarvis.show_heard(text)  # resolved by whoever asked: not a new message
+            assistant.show_heard(text)  # resolved by whoever asked: not a new message
             return True
         return False

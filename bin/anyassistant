@@ -1,20 +1,20 @@
 #!/bin/sh
 # Starts, stops and sets up the server (with launchd once installed by install.sh).
 #
-#   bin/jarvis start [server options]   e.g. --llm hermes, --lang en, --silence 0.45
-#   bin/jarvis stop
-#   bin/jarvis restart                  (like saying «restart»: stops cleanly and comes back with the same options)
-#   bin/jarvis status
-#   bin/jarvis log                      (the live log; Ctrl+C to leave)
-#   bin/jarvis pair                     a code to pair a device (with "pairing": true)
-#   bin/jarvis unpair                   forgets every paired device
-#   bin/jarvis skin list|check <folder>|new <name> [--from orb]   the screen's skins
-#   bin/jarvis plugins [requirements [--all]]   which are on, what they lack; their Python packages
-#   bin/jarvis setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)
-#   bin/jarvis run [server options]     in the foreground (what launchd runs)
+#   bin/anyassistant start [server options]   e.g. --llm hermes, --lang en, --silence 0.45
+#   bin/anyassistant stop
+#   bin/anyassistant restart                  (like saying «restart»: stops cleanly and comes back with the same options)
+#   bin/anyassistant status
+#   bin/anyassistant log                      (the live log; Ctrl+C to leave)
+#   bin/anyassistant pair                     a code to pair a device (with "pairing": true)
+#   bin/anyassistant unpair                   forgets every paired device
+#   bin/anyassistant skin list|check <folder>|new <name> [--from orb]   the screen's skins
+#   bin/anyassistant plugins [requirements [--all]]   which are on, what they lack; their Python packages
+#   bin/anyassistant setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)
+#   bin/anyassistant run [server options]     in the foreground (what launchd runs)
 #
 # Options also come from settings.json. The PID, the port and the log go to the cache
-# folder (.build/ while developing; $JARVIS_CACHE).
+# folder (.build/ while developing; $ANYASSISTANT_CACHE).
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # An installed copy says where its data and cache are (install.sh writes it).
 if [ -f "$ROOT/install.env" ]; then
@@ -23,10 +23,10 @@ fi
 LABEL="com.anyassistant.server"
 AGENT="$HOME/Library/LaunchAgents/$LABEL.plist"
 DOMAIN="gui/$(id -u)"
-CACHE="${JARVIS_CACHE:-${JARVIS_HOME:-$ROOT}/.build}"  # as server/paths.py
-PID="$CACHE/jarvis.pid"
-LOG="$CACHE/jarvis.log"
-PORTFILE="$CACHE/jarvis.port"
+CACHE="${ANYASSISTANT_CACHE:-${ANYASSISTANT_HOME:-$ROOT}/.build}"  # as server/paths.py
+PID="$CACHE/anyassistant.pid"
+LOG="$CACHE/anyassistant.log"
+PORTFILE="$CACHE/anyassistant.port"
 
 alive() { [ -f "$PID" ] && kill -0 "$(cat "$PID")" 2>/dev/null; }
 
@@ -41,7 +41,7 @@ for i, arg in enumerate(args):
     if arg.startswith("--port="):
         print(arg.split("=", 1)[1]); sys.exit()
 try:
-    path = os.path.join(os.environ.get("JARVIS_HOME") or root, "settings.json")
+    path = os.path.join(os.environ.get("ANYASSISTANT_HOME") or root, "settings.json")
     print(json.load(open(path)).get("port", 8080))
 except (OSError, ValueError):
     print(8080)
@@ -60,17 +60,17 @@ case "$1" in
     PYTHONUNBUFFERED=1 exec "$ROOT/.venv/bin/python" server/main.py "$@"
     ;;
   setup)
-    # The installer's steps (server/installer.py): bin/jarvis setup [--defaults|--json] [--set k=v] [step…]
+    # The installer's steps (server/installer.py): bin/anyassistant setup [--defaults|--json] [--set k=v] [step…]
     shift
     cd "$ROOT" || exit 1
     exec "$ROOT/.venv/bin/python" -c 'import sys; sys.path.insert(0, "server"); import installer; sys.exit(installer.main(sys.argv[1:]))' "$@"
     ;;
   start)
     shift
-    if alive; then echo "Jarvis is already running (PID $(cat "$PID"))."; exit 0; fi
+    if alive; then echo "AnyAssistant is already running (PID $(cat "$PID"))."; exit 0; fi
     if [ -f "$AGENT" ] && [ $# -eq 0 ]; then  # installed with launchd: it starts it
       launchctl bootstrap "$DOMAIN" "$AGENT" 2>/dev/null || launchctl kickstart "$DOMAIN/$LABEL"
-      echo "Starting Jarvis (launchd)…"; exit 0
+      echo "Starting AnyAssistant (launchd)…"; exit 0
     fi
     mkdir -p "$CACHE"
     PORT=$(port_for "$@")
@@ -80,7 +80,7 @@ case "$1" in
     # The environment's python directly (not `uv run`), so the PID is the server's.
     PYTHONUNBUFFERED=1 nohup "$ROOT/.venv/bin/python" server/main.py "$@" >> "$LOG" 2>&1 &
     echo $! > "$PID"
-    printf "Starting Jarvis (PID %s)" "$(cat "$PID")"
+    printf "Starting AnyAssistant (PID %s)" "$(cat "$PID")"
     i=0
     while [ $i -lt 120 ]; do
       if curl -s -o /dev/null "http://127.0.0.1:$PORT/"; then echo " · ready at http://127.0.0.1:$PORT"; exit 0; fi
@@ -91,9 +91,9 @@ case "$1" in
     ;;
   stop)
     if [ -f "$AGENT" ]; then  # installed with launchd: so it doesn't bring it back
-      launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null && { rm -f "$PID"; echo "Jarvis stopped."; exit 0; }
+      launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null && { rm -f "$PID"; echo "AnyAssistant stopped."; exit 0; }
     fi
-    if ! alive; then echo "Jarvis isn't running."; rm -f "$PID"; exit 0; fi
+    if ! alive; then echo "AnyAssistant isn't running."; rm -f "$PID"; exit 0; fi
     P=$(cat "$PID")
     kill -TERM "$P"  # clean shutdown: sessions, Claude, voice
     i=0
@@ -104,25 +104,25 @@ case "$1" in
       kill -KILL "$P" 2>/dev/null
     fi
     rm -f "$PID"
-    echo "Jarvis stopped."
+    echo "AnyAssistant stopped."
     ;;
   restart)
-    if ! alive; then echo "Jarvis isn't running: use «$0 start»."; exit 1; fi
+    if ! alive; then echo "AnyAssistant isn't running: use «$0 start»."; exit 1; fi
     kill -HUP "$(cat "$PID")"
-    echo "Restarting Jarvis (same PID, same options)…"
+    echo "Restarting AnyAssistant (same PID, same options)…"
     ;;
   status)
     if alive; then
-      echo "Jarvis is running (PID $(cat "$PID")): $(curl -s -m 3 "http://127.0.0.1:$PORT/status" || echo 'no answer')"
+      echo "AnyAssistant is running (PID $(cat "$PID")): $(curl -s -m 3 "http://127.0.0.1:$PORT/status" || echo 'no answer')"
     else
-      echo "Jarvis isn't running."
+      echo "AnyAssistant isn't running."
     fi
     ;;
   log)
     tail -n 50 -f "$LOG"
     ;;
   pair)
-    if ! alive; then echo "Jarvis isn't running."; exit 1; fi
+    if ! alive; then echo "AnyAssistant isn't running."; exit 1; fi
     curl -s -m 3 -X POST "http://127.0.0.1:$PORT/pairing" | /usr/bin/python3 -c '
 import json, sys
 try:
@@ -141,7 +141,7 @@ print("Code: %s  (valid %d minutes; type it on the device)" % (d["code"], d["sec
     PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/plugins/page/skins.py" "$@"
     ;;
   unpair)
-    if ! alive; then echo "Jarvis isn't running."; exit 1; fi
+    if ! alive; then echo "AnyAssistant isn't running."; exit 1; fi
     curl -s -m 3 -X POST "http://127.0.0.1:$PORT/pairing?forget=1" > /dev/null && echo "Every device forgotten: they'll need a new code."
     ;;
   *)

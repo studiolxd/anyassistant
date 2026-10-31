@@ -8,7 +8,7 @@ inside the project and never prompting. With "read" (or a read-only list) it add
 --readonly and --gmail-no-send. With "all" it allows everything except managing
 gog's session (auth, login, logout…), backups, administration and self-updating.
 It refuses attempts to change these options. Actions that write also go through
-the voice confirmation (bin/jarvis-confirm).
+the voice confirmation (bin/anyassistant-confirm).
 """
 
 import json

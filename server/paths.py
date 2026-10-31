@@ -6,7 +6,7 @@
     CACHE  what can be rebuilt: confirmations, the camera's image, the log, the
            compiled bridges…
 
-$JARVIS_HOME and $JARVIS_CACHE choose them; an installed copy has them in
+$ANYASSISTANT_HOME and $ANYASSISTANT_CACHE choose them; an installed copy has them in
 APP/install.env (written by install.sh: ~/Library/Application Support/AnyAssistant
 and ~/Library/Caches/AnyAssistant). Without either, while developing, HOME is the
 project folder and CACHE its .build/, as always.
@@ -33,9 +33,9 @@ def _installed() -> dict:
 
 
 INSTALLED = INSTALL.exists()
-_place = {**_installed(), **{k: v for k, v in os.environ.items() if k in ("JARVIS_HOME", "JARVIS_CACHE") and v}}
-HOME = Path(_place.get("JARVIS_HOME") or APP)
-CACHE = Path(_place.get("JARVIS_CACHE") or HOME / ".build")
+_place = {**_installed(), **{k: v for k, v in os.environ.items() if k in ("ANYASSISTANT_HOME", "ANYASSISTANT_CACHE") and v}}
+HOME = Path(_place.get("ANYASSISTANT_HOME") or APP)
+CACHE = Path(_place.get("ANYASSISTANT_CACHE") or HOME / ".build")
 
 # Your data
 SETTINGS = HOME / "settings.json"
@@ -59,9 +59,9 @@ BIN = APP / "bin"
 # Can be rebuilt
 CONFIRM = CACHE / "confirm"
 EYES = CACHE / "eyes"
-LOG = CACHE / "jarvis.log"
+LOG = CACHE / "anyassistant.log"
 
 
 def environment() -> dict:
     """For the programs Jarvis starts (Claude, its hook, bin/gog): the same places."""
-    return {"JARVIS_HOME": str(HOME), "JARVIS_CACHE": str(CACHE)}
+    return {"ANYASSISTANT_HOME": str(HOME), "ANYASSISTANT_CACHE": str(CACHE)}

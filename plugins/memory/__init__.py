@@ -197,10 +197,10 @@ async def compact(llm):
 
 
 @events.on("asleep")
-async def after_conversation(jarvis, transcript: list[tuple[str, str]]):
+async def after_conversation(assistant, transcript: list[tuple[str, str]]):
     """While it sleeps: review the conversation (auto) and compact if there are too many facts."""
-    await review(jarvis.llm, transcript)
-    await compact(jarvis.llm)
+    await review(assistant.llm, transcript)
+    await compact(assistant.llm)
 
 
 async def review(llm, transcript: list[tuple[str, str]]):

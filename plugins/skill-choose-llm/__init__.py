@@ -30,19 +30,19 @@ class ChooseLLM(Skill):
     order = 12
     local = False
 
-    def hear(self, text, jarvis):
+    def hear(self, text, assistant):
         name = command(text)
         if not name:
             return False
-        jarvis.show_heard(text)
+        assistant.show_heard(text)
         why = llm.ready(name)
         if name == settings.get("llm"):
-            jarvis.say(i18n.L("speech.llm_same", llm=name.capitalize()))
+            assistant.say(i18n.L("speech.llm_same", llm=name.capitalize()))
         elif why:
             log.info("can't switch to %s: %s", name, why)
-            jarvis.say(i18n.L("speech.llm_unavailable", llm=name.capitalize()))
+            assistant.say(i18n.L("speech.llm_unavailable", llm=name.capitalize()))
         else:
             log.info("switching to %s", name)
             settings.save(llm=name, llm_model=None)
-            jarvis.restart(i18n.L("speech.llm_changing", llm=name.capitalize()))
+            assistant.restart(i18n.L("speech.llm_changing", llm=name.capitalize()))
         return True

@@ -28,8 +28,8 @@ class Sleep(Skill):
     order = -1  # before anything else: even an action waiting for a «yes» stays waiting
     local = False
 
-    def hear(self, text: str, jarvis) -> bool:
+    def hear(self, text: str, assistant) -> bool:
         if not is_sleep_command(text):
             return False
-        jarvis.sleep(text)
+        assistant.sleep(text)
         return True

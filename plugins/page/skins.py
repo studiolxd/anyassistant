@@ -18,8 +18,8 @@ styles them with CSS, from body[data-state] / [data-look] and live CSS variables
 attributes, nothing loaded from outside (and the page forbids it too): the page
 has the microphone and the camera.
 
-    bin/jarvis skin check <folder>     problems for the tablet's old Chrome, and more
-    bin/jarvis skin new <name> [--from orb]
+    bin/anyassistant skin check <folder>     problems for the tablet's old Chrome, and more
+    bin/anyassistant skin new <name> [--from orb]
 """
 
 import json

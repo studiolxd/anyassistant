@@ -1,5 +1,5 @@
 [project]
-name = "jarvis"
+name = "anyassistant"
 version = "0.1.0"
 description = "An old phone or tablet as the eyes, mouth and ears of a voice assistant running on the Mac"
 requires-python = ">=3.12"
@@ -11,7 +11,7 @@ dependencies = [  # the core; each plugin's own are in its plugin.json «needs»
 ]
 
 # The system plugins' packages (their plugin.json «needs», kept equal by a test): the
-# installer installs those of the plugins that are on (bin/jarvis plugins requirements).
+# installer installs those of the plugins that are on (bin/anyassistant plugins requirements).
 [project.optional-dependencies]
 eyes = ["pillow>=10"]
 stt-mlx-whisper = ["mlx-whisper>=0.4.3"]
@@ -22,7 +22,7 @@ wake-openwakeword = ["openwakeword>=0.4.0", "onnxruntime>=1.31.1"]
 [dependency-groups]
 dev = [  # while developing: every system plugin's packages too (uv run would remove them otherwise)
     "pytest>=8",
-    "jarvis[eyes,stt-mlx-whisper,stt-parakeet,vad-silero,wake-openwakeword]",
+    "anyassistant[eyes,stt-mlx-whisper,stt-parakeet,vad-silero,wake-openwakeword]",
 ]
 
 [tool.uv]

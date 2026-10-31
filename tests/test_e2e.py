@@ -53,7 +53,7 @@ def server(tmp_path):
             [sys.executable, ROOT / "server" / "main.py", "--host", "127.0.0.1", "--port", str(port), *options],
             cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
             # Its own data folder: nothing of the running Jarvis is touched.
-            env={**os.environ, "PYTHONUNBUFFERED": "1", "JARVIS_HOME": str(tmp_path)},
+            env={**os.environ, "PYTHONUNBUFFERED": "1", "ANYASSISTANT_HOME": str(tmp_path)},
         )
         processes.append(process)
         url = f"http://127.0.0.1:{port}"
@@ -188,7 +188,7 @@ def test_bad_settings_stop_it(tmp_path):
     (tmp_path / "settings.json").write_text(json.dumps({"skin": "smiley"}))
     result = subprocess.run([sys.executable, ROOT / "server" / "main.py", "--mode", "parrot"], cwd=ROOT,
                             capture_output=True, text=True, timeout=60,
-                            env={**os.environ, "JARVIS_HOME": str(tmp_path)})
+                            env={**os.environ, "ANYASSISTANT_HOME": str(tmp_path)})
     assert result.returncode != 0 and "smiley" in result.stderr
 
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Installs AnyAssistant on this Mac: the program, its own Python (uv), and then the
-# steps of bin/jarvis setup (language, name, LLM, models, starting with the Mac…).
+# steps of bin/anyassistant setup (language, name, LLM, models, starting with the Mac…).
 #
 #   ./install.sh                   asks each step (Enter keeps what comes)
 #   ./install.sh --defaults        everything as it comes, no questions
@@ -47,9 +47,9 @@ else
 fi
 [ -d "$SOURCE/native" ] && cp -R "$SOURCE/native" "$TO/"  # the Swift bridges, if already built
 cat > "$TO/install.env" <<ENV
-# Where this copy keeps your data and what can be rebuilt (server/paths.py, bin/jarvis).
-JARVIS_HOME="$DATA"
-JARVIS_CACHE="$CACHE"
+# Where this copy keeps your data and what can be rebuilt (server/paths.py, bin/anyassistant).
+ANYASSISTANT_HOME="$DATA"
+ANYASSISTANT_CACHE="$CACHE"
 ENV
 
 say "Preparing Python…"
@@ -57,4 +57,4 @@ say "Preparing Python…"
 
 say "Setting it up…"
 eval "set -- $PASS"
-exec "$TO/bin/jarvis" setup "$@"
+exec "$TO/bin/anyassistant" setup "$@"

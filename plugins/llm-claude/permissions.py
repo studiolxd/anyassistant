@@ -19,7 +19,7 @@
   `<command> help` in the prompt so it knows how to use them. Each value is the
   command's policy, read by the command itself (bin/gog: "read", "all" or a list).
   "confirm" (on by default): actions that write need the user's «yes», through
-  the bin/jarvis-confirm hook.
+  the bin/anyassistant-confirm hook.
 
 Claude starts only with the .mcp.json servers (--strict-mcp-config: no claude.ai
 connectors, no plugins) and without its own tools (Bash, Edit…) other than that
@@ -128,7 +128,7 @@ def load(root: Path | None = None, servers: Path | None = None) -> Permissions:
         hooks = cache / "claude-settings.json"
         hooks.parent.mkdir(parents=True, exist_ok=True)
         # With Jarvis's own Python, not whatever python3 the system has.
-        hook = f"{shlex.quote(sys.executable)} {shlex.quote(str(app / 'bin' / 'jarvis-confirm'))}"
+        hook = f"{shlex.quote(sys.executable)} {shlex.quote(str(app / 'bin' / 'anyassistant-confirm'))}"
         hooks.write_text(json.dumps({"hooks": {"PreToolUse": [{
             "matcher": "Bash|mcp__.*",
             "hooks": [{"type": "command", "command": hook}],

@@ -66,7 +66,7 @@ def test_confirmation_hook_on_by_default(project):
     p = load(project, mcp)
     settings = json.loads((project / ".build" / "claude-settings.json").read_text())
     hook = settings["hooks"]["PreToolUse"][0]
-    assert hook["hooks"][0]["command"].endswith("bin/jarvis-confirm")
+    assert hook["hooks"][0]["command"].endswith("bin/anyassistant-confirm")
     assert "--settings" in p.arguments
 
     setup(project, {"allowed": {"holded": "all"}, "confirm": False})

@@ -21,10 +21,10 @@ def command(text: str) -> str | None:
     return None
 
 
-async def _reload(jarvis):
+async def _reload(assistant):
     log.info("reloading tools")
-    await jarvis.llm.reload()
-    jarvis.say(i18n.L("speech.reloaded"))
+    await assistant.llm.reload()
+    assistant.say(i18n.L("speech.reloaded"))
 
 
 @skill
@@ -32,13 +32,13 @@ class Restart(Skill):
     order = 13
     local = False
 
-    def hear(self, text, jarvis):
+    def hear(self, text, assistant):
         found = command(text)
         if not found:
             return False
-        jarvis.show_heard(text)
+        assistant.show_heard(text)
         if found == "reload":
-            jarvis.later(_reload(jarvis))
+            assistant.later(_reload(assistant))
         else:
-            jarvis.restart(i18n.L("speech.restarting"))
+            assistant.restart(i18n.L("speech.restarting"))
         return True
