@@ -14,23 +14,31 @@
   --blue: #5bc6e8;
   --violet: #a98cf0;
   --red: #e05555;
+  --tone: var(--green);  /* one flat colour per state: the sphere, its ring, its waves, its answer */
 }
+body[data-look="hearing"] .layout { --tone: #7ff0c2; }
+body[data-look="thinking"] .layout { --tone: var(--amber); }
+body[data-look="looking"] .layout { --tone: #cfd8dc; }
+body[data-look="speaking"] .layout { --tone: var(--blue); }
+body[data-look="question"] .layout { --tone: var(--violet); }
+body[data-look="alarm"] .layout { --tone: #ff7a45; }
+body[data-look="error"] .layout { --tone: var(--red); }
 
-.clock { display: none; text-align: center; color: #3f7f6a; }
+.clock { display: none; text-align: center; color: #666; }
 .clock [data-part="time"] { margin: 0; font-size: 24vmin; font-weight: 200; line-height: 1; }
 .clock [data-part="date"] { margin: 1vmin 0 4vmin; font-size: 5vmin; }
 body[data-look="asleep"] .clock { display: block; }
 
 .status { font-size: 1.4em; margin: 1.2em 0 0; color: #888; }
 .stats { font-size: 0.9em; color: #555; font-family: monospace; }
-.timers { text-align: center; color: var(--amber); font-size: 5vmin; }
+.timers { margin-top: 3vmin; text-align: center; color: #bbb; font-size: 5vmin; }
 .timers p { margin: 0.2em 0; }
 
 .captions { width: 90%; min-height: 7em; margin-top: 0.6em; text-align: center; }
 .captions p { margin: 0.3em 0; font-size: 1.1em; color: #666; }
 .captions p:last-child { font-size: 1.5em; color: #fff; }
-.captions p.assistant { color: #4a8a99; }
-.captions p.assistant:last-child { color: #7cd3e8; }
+.captions p.assistant { color: var(--tone); opacity: 0.6; }
+.captions p.assistant:last-child { opacity: 1; }
 body[data-look="asleep"] .captions,
 body[data-look="asleep"] .stats { display: none; }
 
@@ -61,15 +69,7 @@ body[data-look="awake"] .pulse { transform: scale(calc(1 + var(--voice, 0) * 0.1
 
 /* ===================== The orb ===================== */
 
-/* One flat colour per state (--tone): the sphere, its spinning ring and its waves. */
-.orb { --tone: var(--green); position: relative; width: 40vmin; height: 40vmin; margin: 3vmin; }
-body[data-look="hearing"] .orb { --tone: #7ff0c2; }
-body[data-look="thinking"] .orb { --tone: var(--amber); }
-body[data-look="looking"] .orb { --tone: #cfd8dc; }
-body[data-look="speaking"] .orb { --tone: var(--blue); }
-body[data-look="question"] .orb { --tone: var(--violet); }
-body[data-look="alarm"] .orb { --tone: #ff7a45; }
-body[data-look="error"] .orb { --tone: var(--red); }
+.orb { position: relative; width: 40vmin; height: 40vmin; margin: 3vmin; }
 
 .core, .wave, .ring { position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 50%; }
 .core { background: var(--tone); transition: opacity 0.4s, background 0.4s; }
