@@ -107,12 +107,12 @@ body[data-look="asleep"] .stats { display: none; }
 }
 /* The arcs (closed ‿, happy ^) aren't borders: Safari on iPad and iPhone outlined the rest
    of a partly bordered oval. The eye stays a whole blue oval, and a cover of the
-   background's colour, a little wider, hides all of it but a crescent: below (closed) or
-   above (happy). */
+   background's colour, the same oval moved up or down, hides all of it but a crescent
+   that ends in points: below (closed) or above (happy). */
 .eye::after {
   content: "";
   position: absolute;
-  left: -6%; right: -6%;
+  left: -0.5%; right: -0.5%;
   top: 0; height: 100%;
   border-radius: 50%;
   background: var(--background);
