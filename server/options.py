@@ -126,7 +126,6 @@ OPTIONS = [
     Option("clock", "auto", "12 or 24 hours (auto: the language's)", "screen", "choice", ["auto", "12", "24"],
            live=True, screen=True),
     # Privacy and security
-    Option("pairing", False, "only devices paired with a code (bin/jarvis pair) may connect", "security", "bool"),
     Option("confirm_wait", 120, "seconds to answer «yes» to an action that changes something", "security",
            "float", live=True),
     Option("confirm_valid", 60, "seconds a «yes» stays valid", "security", "float", live=True),

@@ -42,7 +42,8 @@ class Greeter(Skill):
 def test_every_system_plugin_is_found_and_on():
     found = kernel.discover()
     assert {"llm-claude", "stt-parakeet", "skill-alarms", "vad-silero", "plugin-manager"} <= set(found)
-    assert all(kernel.enabled(p) for p in found)  # everything comes on
+    off = {p for p in found if not kernel.enabled(p)}
+    assert off == {"pairing"}  # everything comes on, but pairing (it was opt-in before plugins too)
 
 
 def test_your_plugin_works_and_can_be_turned_off(yours):

@@ -67,7 +67,7 @@ def isolated(tmp_path, monkeypatch):
     Jarvis's tools don't ask for a «yes» here (test_tools checks that they do)."""
     import eyes
     import memory
-    import pairing
+    import kernel
     import paths
     import settings
     import tools
@@ -79,7 +79,7 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(timers, "changed", lambda: None)
     monkeypatch.setattr(settings, "PATH", data / "settings.json")
     monkeypatch.setattr(memory, "PATH", data / "memory.json")
-    monkeypatch.setattr(pairing, "FILE", data / "paired.json")
+    monkeypatch.setattr(kernel.load("pairing"), "FILE", data / "paired.json")
     monkeypatch.setattr(eyes, "FRAME", data / "eyes" / "now.jpg")
     monkeypatch.setattr(paths, "CACHE", data / "cache")
     monkeypatch.setattr(paths, "CONFIRM", data / "cache" / "confirm")

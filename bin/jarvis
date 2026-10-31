@@ -93,11 +93,11 @@ case "$1" in
     if ! alive; then echo "Jarvis isn't running."; exit 1; fi
     curl -s -m 3 -X POST "http://127.0.0.1:$PORT/pairing" | /usr/bin/python3 -c '
 import json, sys
-d = json.load(sys.stdin)
-code, minutes = d["code"], d["seconds"] // 60
-print("Code: %s  (valid %d minutes; type it on the device)" % (code, minutes))
-if not d["pairing"]:
-    print("Note: pairing is off, so any device can connect anyway. Turn it on with \"pairing\": true in settings.json.")
+try:
+    d = json.load(sys.stdin)
+except ValueError:
+    sys.exit("Pairing is off (the plugin «pairing»), so any device can connect. Turn it on with \"plugins\": {\"pairing\": true} in settings.json.")
+print("Code: %s  (valid %d minutes; type it on the device)" % (d["code"], d["seconds"] // 60))
 '
     ;;
   skin)

@@ -10,10 +10,10 @@ import logging
 
 from aiohttp import web
 
-import pairing
 import tools
 
 log = logging.getLogger("mcp")
+LOCAL = {"127.0.0.1", "::1"}  # only from the Mac itself
 NAME = "jarvis"
 
 
@@ -53,7 +53,7 @@ def handle(message: dict) -> dict | None:
 
 
 async def endpoint(request: web.Request) -> web.Response:
-    if request.remote not in pairing.LOCAL:
+    if request.remote not in LOCAL:
         return web.Response(status=403)
     if request.method != "POST":
         return web.Response(status=405)  # no server-initiated stream

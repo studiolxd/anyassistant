@@ -1,0 +1,7 @@
+{
+  "name": "Pairing",
+  "description": "Only devices that entered a code (bin/jarvis pair) may use Jarvis; the Mac always can.",
+  "kind": "feature",
+  "security": true,
+  "default": false
+}

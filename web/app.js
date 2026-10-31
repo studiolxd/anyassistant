@@ -81,7 +81,7 @@ function showScreen(s) {
 
 // Loads the texts and then shows the start button (or the demo, or the pairing form).
 loadTexts().then(function () {
-  if (!settings.paired) return askForCode();
+  if (settings.paired === false) return askForCode();  // the pairing plugin's
   var start = document.getElementById('start');
   start.textContent = text('start');
   status(text('connecting'));
@@ -89,7 +89,7 @@ loadTexts().then(function () {
   else start.hidden = false;
 });
 
-// Pairing (settings «pairing»): the code that «bin/jarvis pair» shows on the Mac.
+// Pairing (the plugin «pairing»): the code that «bin/jarvis pair» shows on the Mac.
 function askForCode() {
   var form = document.getElementById('pair');
   document.getElementById('pair-prompt').textContent = text('pair_prompt');

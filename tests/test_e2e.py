@@ -271,7 +271,7 @@ def lan_address():
 
 
 def test_pairing(server, tmp_path):
-    (tmp_path / "settings.json").write_text(json.dumps({"pairing": True}))
+    (tmp_path / "settings.json").write_text(json.dumps({"plugins": {"pairing": True}}))
     local = server("--mode", "parrot", "--host", "0.0.0.0")
     remote = local.replace("127.0.0.1", lan_address())
 

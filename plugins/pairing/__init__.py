@@ -1,9 +1,12 @@
-"""Pairing (settings «pairing»): only devices that entered a code may use Jarvis.
+"""Pairing (the plugin «pairing», off by default): only devices that entered a code may use Jarvis.
 
 `bin/jarvis pair` asks the server (from the Mac itself) for a 6-digit code, valid
 for a few minutes and a few attempts. The device that enters it gets a cookie
 that it sends from then on; the server keeps only its hash, in paired.json.
 The Mac itself never needs one. `bin/jarvis unpair` forgets every device.
+
+It brings to the web server a guard (every protected request), its two routes and
+«paired» in /config, so the page asks for the code; without the plugin, none exist.
 """
 
 import hashlib
@@ -14,8 +17,10 @@ import secrets
 import time
 from pathlib import Path
 
+from aiohttp import web as http
+
 import paths
-import settings
+import web
 
 FILE = paths.PAIRED
 COOKIE = "jarvis_device"
@@ -49,8 +54,8 @@ def _devices() -> list[dict]:
 
 
 def allowed(remote: str | None, token: str | None) -> bool:
-    """Whether a request may use Jarvis: always without pairing, from the Mac, or a paired device."""
-    if not settings.get("pairing") or remote in LOCAL:
+    """Whether a request may use Jarvis: from the Mac, or a paired device."""
+    if remote in LOCAL:
         return True
     return bool(token) and any(d["hash"] == _hash(token) for d in _devices())
 
@@ -81,3 +86,39 @@ def pair(code: str, name: str) -> str | None:
 
 def unpair_all():
     FILE.unlink(missing_ok=True)
+
+
+# --- In the web server ---
+
+@web.guard
+def _guard(request):
+    if not allowed(request.remote, request.cookies.get(COOKIE)):
+        return http.json_response({"pairing": True}, status=403)
+    return None
+
+
+@web.config
+def _config(request):
+    return {"paired": allowed(request.remote, request.cookies.get(COOKIE))}
+
+
+@web.route("POST", "/pairing")
+async def _new_code(request):
+    """For bin/jarvis pair: only from the Mac itself."""
+    if request.remote not in LOCAL:
+        return http.json_response({}, status=403)
+    if request.query.get("forget"):
+        unpair_all()
+        return http.json_response({"forgotten": True})
+    return http.json_response({"code": new_code(), "seconds": CODE_LIFETIME, "pairing": True})
+
+
+@web.route("POST", "/pair")
+async def _pair(request):
+    data = await request.json()
+    token = pair(data.get("code", ""), request.headers.get("User-Agent", "?"))
+    if not token:
+        return http.json_response({"paired": False}, status=403)
+    response = http.json_response({"paired": True})
+    response.set_cookie(COOKIE, token, max_age=10 * 365 * 24 * 3600, httponly=True, samesite="Strict")
+    return response

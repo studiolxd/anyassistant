@@ -168,7 +168,6 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 
 | Option | Default | |
 |---|---|---|
-| `pairing` | `false` | only devices paired with a code (bin/jarvis pair) may connect *(restarts)* |
 | `confirm_wait` | `120` | seconds to answer «yes» to an action that changes something |
 | `confirm_valid` | `60` | seconds a «yes» stays valid |
 | `log_transcripts` | `false` | write what it hears and says to the log (to debug); otherwise only lengths |
@@ -206,10 +205,10 @@ The page changes at once when a screen option changes.
 
 A wrong value (`"skin": "smiley"`) stops the server with the reason.
 
-**Pairing**: with `"pairing": true`, a device must enter a code before using
+**Pairing** (the plugin `pairing`, off by default): with `"plugins": {"pairing": true}`, a device must enter a code before using
 Jarvis. `bin/jarvis pair` shows one on the Mac (6 digits, 5 minutes, one device);
 the page asks for it and the device remembers it (a cookie; the server keeps only
-its hash in `.build/paired.json`). Unpaired devices can't connect, see the camera
+its hash in `paired.json`). Unpaired devices can't connect, see the camera
 (`/video.mjpg`) or the status; the Mac itself always can. `bin/jarvis unpair`
 forgets them all.
 
