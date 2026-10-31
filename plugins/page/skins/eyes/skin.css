@@ -103,7 +103,9 @@ body[data-look="asleep"] .stats { display: none; }
   margin: 0 5vmin;
   border-radius: 50%;
   background: var(--eye);
-  border: 0 solid var(--eye);
+  /* Transparent: only the side a state draws is coloured (Safari drew a hairline of the
+     colour along the zero-width sides of these rotated ovals: an outline round the arcs). */
+  border: 0 solid transparent;
   /* Safari (iPad, iPhone) let the background show past a rounded border, and softened the
      edges of these rotated, moving ovals into a halo: the background stops at the border,
      and each eye is drawn as a crisp layer of its own. */
@@ -147,7 +149,7 @@ body.blink .eye.right { transform: rotate(7deg) scaleY(0.1); }
 /* Asleep: closed (‿ ‿), resting under the clock (same size, same blue). */
 body[data-look="asleep"] .pulse { animation: none; }
 body[data-look="asleep"] .lid { display: none; }  /* they would cover the date */
-body[data-look="asleep"] .eye { height: 11vmin; width: 26vmin; background: transparent; border-bottom-width: 3.5vmin; }
+body[data-look="asleep"] .eye { height: 11vmin; width: 26vmin; background: transparent; border-bottom-width: 3.5vmin; border-bottom-color: var(--eye); }
 
 /* Awake: it looks around now and then. */
 body[data-look="awake"] .eyes { animation: wander 9s ease-in-out infinite; }
@@ -171,12 +173,12 @@ body[data-look="looking"] .eye { width: 27vmin; height: 22vmin; }
 body[data-look="looking"] .eyes { animation: eyes-scan 2.4s ease-in-out infinite; }
 
 /* Speaking: happy (^ ^) and a mouth that follows its voice. */
-body[data-look="speaking"] .eye { height: 13vmin; width: 26vmin; background: transparent; border-top-width: 4vmin; }
+body[data-look="speaking"] .eye { height: 13vmin; width: 26vmin; background: transparent; border-top-width: 4vmin; border-top-color: var(--eye); }
 body[data-look="speaking"] .mouth { visibility: visible; }
 
 /* Question: one eye wide, the other a wink (^). */
 body[data-look="question"] .eye.left { width: 28vmin; height: 23vmin; }
-body[data-look="question"] .eye.right { height: 13vmin; width: 26vmin; background: transparent; border-top-width: 4vmin; }
+body[data-look="question"] .eye.right { height: 13vmin; width: 26vmin; background: transparent; border-top-width: 4vmin; border-top-color: var(--eye); }
 
 /* Ringing: wide, throbbing. */
 body[data-look="alarm"] .eye { width: 28vmin; height: 23vmin; }
