@@ -1,7 +1,7 @@
 {
   "name": "Orb",
   "author": "Jarvis",
-  "version": "6",
+  "version": "7",
   "description": "A flat sphere that breathes, beats with your voice and sends out waves when it speaks.",
   "options": {
     "accent": "#3ddc97",

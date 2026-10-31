@@ -63,19 +63,13 @@ body[data-look="error"] .light { background: #ff1744; }
 body[data-look="asleep"] .heard,
 body[data-look="asleep"] .answer { display: none; }
 
-/* Landscape (a tablet lying down, a screen): the light on the left, the words on the right
-   (the clock above them while asleep), so nothing falls off the bottom. */
+/* Landscape (a tablet lying down, a screen): the same column, with less height to spend:
+   the light higher up (the clock, smaller, still above it), the timers on one line. */
 @media (orientation: landscape) {
-  .screen {
-    display: grid;
-    grid-template-columns: 20vw 1fr;
-    grid-auto-rows: min-content;
-    align-content: center;
-    padding: 0 6vw;
-  }
-  .screen > * { grid-column: 2; }
-  .face { grid-column: 1; grid-row: 1 / span 6; align-self: center; justify-self: center; height: auto; }
-  .clock { position: static; }
-  .clock [data-part="time"] { font-size: 16vmin; }
-  .clock [data-part="date"] { margin-bottom: 4vmin; }
+  .screen { padding-top: 34vh; }
+  .clock { bottom: calc(66vh + 2vmin); }
+  .clock [data-part="time"] { font-size: 15vmin; }
+  .clock [data-part="date"] { font-size: 5vmin; }
+  .timers { display: flex; flex-wrap: wrap; }
+  .timers p { margin: 0 1.2em 0 0; }  /* no flex gap in Chrome 81 */
 }

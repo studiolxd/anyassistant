@@ -1,7 +1,7 @@
 {
   "name": "Minimal",
   "author": "Jarvis",
-  "version": "4",
+  "version": "5",
   "description": "High contrast and large text: a light that changes with each state, and words.",
   "options": {
     "text": "#ffffff",
