@@ -5,7 +5,8 @@ Receives 48 kHz PCM in 20 ms chunks and downsamples it to 16 kHz.
 - With a wake word: asleep, it only listens for the word. When it hears it, it
   enters conversation mode: transcribes sentence by sentence until it hears the
   sleep command (locale commands.sleep, e.g. «go to sleep», «apágate») or
-  `idle_timeout` seconds pass without speech, and goes back to sleep.
+  `follow_up` seconds pass without speech (since it last spoke or heard you), and
+  goes back to sleep: after that, its name again.
 - Without a wake word: always awake, transcribes everything that is speech.
 
 Sentences are delimited by the VAD in 512-sample windows (32 ms) and transcribed
@@ -36,7 +37,7 @@ SILENCE = 0.6  # seconds of silence that end a sentence (--silence)
 MINIMUM = 0.2  # minimum seconds of speech to transcribe (a «hola» is ~0.3)
 MAXIMUM = 15  # maximum seconds of a sentence
 PRE_ROLL = 0.3  # audio kept from before speech is detected (so the start isn't lost)
-IDLE_TIMEOUT = 120  # seconds without speech before going back to sleep (--idle-timeout)
+FOLLOW_UP = 20  # seconds without speech (since it spoke or heard you) before sleeping (--follow-up)
 SLEEP_SIMILARITY = 0.75  # Parakeet writes «Apparaté», «Aparate»…
 
 _thread = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stt")
@@ -72,7 +73,8 @@ def load_vad():
 class Ear:
     def __init__(
         self, stt, on_state, on_heard, wake=None, on_wake=None, on_sleep=None,
-        deaf=None, record=None, silence=SILENCE, idle_timeout=IDLE_TIMEOUT, on_interrupt=None, on_stop=None,
+        deaf=None, record=None, silence=SILENCE, follow_up=FOLLOW_UP, on_interrupt=None, on_stop=None,
+        busy=None,
     ):
         import torch
 
@@ -91,9 +93,10 @@ class Ear:
         self.silence = 0.0
         self.speech = 0.0  # seconds of speech within the sentence
         self.awake = wake is None
-        self.last_activity = 0.0  # to fall asleep after `idle_timeout`
+        self.last_activity = 0.0  # to fall asleep after `follow_up`
         self.end_of_sentence = silence  # seconds of silence that end a sentence
-        self.idle_timeout = idle_timeout
+        self.follow_up = follow_up
+        self.busy = busy or (lambda: False)  # thinking or ringing: not idle
         # While the speaker is talking it doesn't listen, or it would hear itself;
         # only for the wake word, to be interrupted («Jarvis, stop»): on_interrupt(text)
         # says whether to stop (False: it was its own voice saying its name).
@@ -183,10 +186,13 @@ class Ear:
             self._reset()
             self.last_activity = time.time()  # its own speech counts as activity too
             return
+        if self.busy():  # thinking an answer, a tool running, an alarm ringing
+            self.last_activity = time.time()
 
         if not self.speaking:
-            if self.wake and time.time() - self.last_activity > self.idle_timeout:
-                self._sleep(f"{self.idle_timeout} s without speech")
+            follow_up = settings.get("follow_up") or self.follow_up
+            if self.wake and time.time() - self.last_activity > follow_up:
+                self._sleep(f"{follow_up:g} s without speech")
                 return
             self.pre_roll.append(window)
             self.pre_roll = self.pre_roll[-int(PRE_ROLL * RATE / WINDOW):]

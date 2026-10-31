@@ -69,6 +69,7 @@ class WhisperWakeWord(WakeWord):
         self.vad = load_vad()
         self.heard_sentence = None  # the whole audio if the sentence goes on after the word
         self.last_text = ""  # the last transcription, to tell its own voice from yours
+        self.dubious = False  # the last wake-up may not have been for it
         self._reset()
         self._transcribe(np.zeros(RATE // 2, dtype=np.float32), self.model, i18n.L.stt_language)
 
@@ -170,5 +171,7 @@ class WhisperWakeWord(WakeWord):
             return False
         log.info("wake word in «%s»", settings.private(text))
         i, span = position
+        # Dubious: the name not at the start, or in a long sentence («…se llama Jarvis, y…»).
+        self.dubious = i >= 2 or len(found) > 12
         self.heard_sentence = audio if found[i + span :] else None
         return True

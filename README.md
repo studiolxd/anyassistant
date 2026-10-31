@@ -81,7 +81,7 @@ the preferences, so `bin/jarvis start` needs no options:
 Keys are the server's options with underscores instead of dashes; options on the
 command line win over it (`uv run server/main.py --help` lists them all). Besides
 the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear's
-(`silence`, `idle_timeout`, `echo_guard`):
+(`silence`, `follow_up`, `echo_guard`):
 
 | Key | Default | |
 |---|---|---|
@@ -247,8 +247,16 @@ language, that sentence is redone with Whisper turbo in the right one. The sleep
 command is matched by similarity («Apparaté» for «Apágate»).
 
 `--silence` (0.6 s by default) is the silence that ends a sentence: lower answers
-sooner but may cut you off if you pause; `--idle-timeout` (120 s) is how long it
-takes to fall asleep if you don't talk to it.
+sooner but may cut you off if you pause.
+
+**Not everything it hears is for it.** Once awake it listens without its name only
+for `follow_up` seconds (20) since it last spoke or heard you («and tomorrow?»);
+then it goes back to sleep and needs its name again. While it thinks, a tool runs
+or an alarm rings, that clock doesn't run. And with `ignore_others` (on) the LLM
+may stay quiet: if what it hears is clearly not for it («…thanks, Gabriela. Bye»,
+the TV, a phone call) it answers `<silence>` and Jarvis says nothing; those words
+don't go to its memory either. After a dubious wake-up (its name not at the
+start, or in a long sentence) the first sentence goes to the LLM with that doubt.
 
 ### STT plugins
 

@@ -26,6 +26,7 @@ from audio import alarm_tone, louder, normalize
 from brain.transcriber import volume
 from skills import interpreter, timers
 from skills.parse import duration, tokens
+from llm import SILENCE
 from llm import detail as llm_detail
 from brain.transcriber import Transcriber
 from text import words
@@ -135,7 +136,8 @@ def split(text: str) -> tuple[list[str], str]:
 class Assistant(Transcriber):
     def __init__(self, stt, wake, llm, tts, speaker, send, ear=None, guard=GUARD):
         super().__init__(stt, wake, speaker, send, ear, deaf=self._deaf, on_interrupt=self._interrupt,
-                         on_stop=self._stopped)
+                         on_stop=self._stopped, busy=lambda: self.turn.locked() or bool(self.ringing))
+        self.doubt = False  # the first sentence after a dubious wake-up
         self.ringing = None  # the timer, alarm or reminder ringing now
         self.toning_until = 0.0  # while its tone plays it still listens: a tone isn't speech
         self.rang = None  # the last one that rang, to snooze it
@@ -270,6 +272,7 @@ class Assistant(Transcriber):
         super()._woke_up()
         self.transcript = []
         self.detail = llm_detail()  # the one in this conversation's instructions
+        self.doubt = bool(getattr(self.wake, "dubious", False))
         asyncio.ensure_future(self.llm.new())
 
     def _fell_asleep(self, by_command: bool):
@@ -429,16 +432,33 @@ class Assistant(Transcriber):
             first = None
             answer = rest = ""
             # Even if cut off, the whole answer is read: the plugin has to finish it.
-            async for piece in self.llm.answer(self._with_detail(text), image=look):
+            quiet = settings.get("ignore_others", True) is not False
+            held = ""  # the start of the answer, until it is clear it isn't SILENCE
+            async for piece in self.llm.answer(self._for_llm(text), image=look):
                 if self.cut == number:
                     continue
                 first = first or time.time() - start
+                if quiet and held is not None:
+                    held += piece
+                    if SILENCE.startswith(held.strip()) or held.strip().startswith(SILENCE):
+                        continue  # maybe «<silence>»: nothing shown or said yet
+                    piece, held = held, None
                 answer += piece
                 self.send({**message, "text": answer, "partial": True})
                 if self.tts:
                     sentences, rest = split(rest + piece)
                     for sentence in sentences:
                         self.sentences.put_nowait((number, sentence))
+            if quiet and held is not None and held.strip().startswith(SILENCE):
+                log.info("not for it: no answer")
+                if self.transcript and self.transcript[-1][0] == "user":
+                    self.transcript.pop()  # someone else's words: not for its memory either
+                self._state(self._idle_state())
+                return
+            if quiet and held:  # a short answer that only looked like the start of it
+                answer += held
+                self.send({**message, "text": answer, "partial": True})
+                rest += held
             if self.tts:
                 if rest.strip():
                     self.sentences.put_nowait((number, rest.strip()))
@@ -466,6 +486,15 @@ class Assistant(Transcriber):
             await self._restart(i18n.L("speech.restarting"))
         elif "reload" in asked:
             await self.llm.reload()
+
+    def _for_llm(self, text: str) -> str:
+        """The message for the LLM: with a doubt after a dubious wake-up, and the detail level if it changed."""
+        text = self._with_detail(text)
+        if self.doubt:
+            self.doubt = False
+            text = ("(It isn't clear this was said to you: unless it is a request or a question for you, "
+                    f"answer {SILENCE}.)\n{text}")
+        return text
 
     def _with_detail(self, text: str) -> str:
         """If the detail level changed mid-conversation, the LLM hears it with this message."""

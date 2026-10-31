@@ -29,7 +29,14 @@ What you receive is what the user said out loud, transcribed automatically: it
 may contain mistakes; interpret it with common sense.
 Your answer will be read aloud: natural and direct, no lists, markdown, emojis
 or symbols. {detail} If you don't know something, say so.
-Don't assume the user's gender: use neutral forms."""
+Don't assume the user's gender: use neutral forms.{others}"""
+
+# Settings «ignore_others»: speech that isn't for it gets no answer.
+SILENCE = "<silence>"
+OTHERS = f"""
+You hear whatever is said near you. If it is clearly not meant for you (the user
+talking to someone else, a phone call, the TV, background chatter), answer exactly
+{SILENCE} and nothing else. When in doubt, answer normally."""
 
 # How much to say (settings «detail»); «detail_levels» in settings.json adds levels
 # or changes these: {"name": "the instruction added to the prompt"}.
@@ -54,7 +61,9 @@ def detail() -> str:
 
 def instructions() -> str:
     """The system instructions, in the active language, plus the user's own (settings «instructions»)."""
-    text = INSTRUCTIONS.format(language=i18n.L.name, name=settings.get("name", "Jarvis"), detail=detail())
+    others = OTHERS if settings.get("ignore_others", True) is not False else ""
+    text = INSTRUCTIONS.format(language=i18n.L.name, name=settings.get("name", "Jarvis"), detail=detail(),
+                               others=others)
     extra = settings.get("instructions")
     if extra:
         text += f"\n\nFrom the user:\n{extra}"

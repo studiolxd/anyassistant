@@ -7,5 +7,5 @@
   "face": "eyes",
   "video": "auto",
   "silence": 0.6,
-  "idle_timeout": 120
+  "follow_up": 20
 }

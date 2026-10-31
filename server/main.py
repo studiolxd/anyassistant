@@ -246,7 +246,10 @@ def main():
     parser.add_argument("--threshold", type=float, default=None, help="each wake plugin has its own default")
     parser.add_argument("--record", default=None, help="saves everything that arrives to a WAV (debugging)")
     parser.add_argument("--silence", type=float, default=0.6, help="seconds of silence that end a sentence")
-    parser.add_argument("--idle-timeout", type=float, default=120, help="seconds without speech before sleeping")
+    parser.add_argument("--follow-up", type=float, default=20,
+                        help="seconds it keeps listening without its name after it last spoke or heard you")
+    parser.add_argument("--ignore-others", action=argparse.BooleanOptionalAction, default=True,
+                        help="the LLM stays quiet when what it hears is clearly not for it")
     preferences = settings.load()
     known = {a.dest for a in parser._actions}
     for key in preferences.keys() - known:
@@ -273,7 +276,7 @@ def main():
     }
 
     global brain_factory
-    ear = {"record": args.record, "silence": args.silence, "idle_timeout": args.idle_timeout}
+    ear = {"record": args.record, "silence": args.silence, "follow_up": args.follow_up}
     if args.mode in ("transcribe", "assistant"):
         engine = stt.create(args.stt, language=i18n.L.stt_language, model=args.stt_model)
         logging.info("loading STT %s (%s)…", engine.name, engine.model)

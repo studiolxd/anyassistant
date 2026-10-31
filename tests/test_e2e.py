@@ -397,3 +397,18 @@ def test_timer_rings_and_stops(server, tmp_path):
     assert "alarm" in states(messages)
     assert alarms(messages)[-1] == {"type": "alarm", "off": True}  # stopped by «Para»
     assert "thinking" not in states(messages)  # no LLM involved
+
+
+@pytest.mark.skipif(not shutil.which("claude"), reason="needs Claude Code signed in")
+def test_not_everything_is_for_it(server, tmp_path):
+    """It answers a question, stays quiet at someone else's goodbye, and sleeps after the follow-up window."""
+    (tmp_path / "settings.json").write_text(json.dumps({"follow_up": 5}))
+    url = server("--mode", "assistant", "--lang", "es", "--llm", "claude", "--tts", "none")
+    say = lambda text: speech(tmp_path, text, "Mónica")  # noqa: E731
+    pcm = np.concatenate([say("Hey Jarvis"), say("¿Cuál es la capital de Francia?"), np.zeros(RATE * 3, np.int16),
+                          say("Venga, genial, pues me alegro de escucharte. Muchas gracias, Gabriela. Un abrazo. Chao."),
+                          np.zeros(RATE * 14, np.int16)])
+    messages, _ = asyncio.run(talk(url, pcm, until=lambda m: False, timeout=1))
+    assert final_texts(messages, "assistant") == [final_texts(messages, "assistant")[0]]  # only the question
+    assert "París" in final_texts(messages, "assistant")[0]
+    assert states(messages)[-1] == "asleep"

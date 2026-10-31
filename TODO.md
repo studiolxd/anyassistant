@@ -9,15 +9,14 @@
 
 ## Conversation quality
 
-- [ ] **Wake word**: watch false positives and negatives; maybe a name in the
-  user's language.
-- [ ] **Not every sentence is for it**: once awake it answers everything it hears,
-  even a conversation with someone else («…thanks, Gabriela. Bye.» → «I'm Jarvis,
-  not Gabriela»). Ignore what clearly isn't addressed to it, at least right after a
-  dubious wake-up.
+- [ ] **Wake word**: keep watching false positives and negatives (31 Oct: 28 wake-ups,
+  one false, fixed; no misses found). A name in the user's language comes with the
+  app's new name (`name`).
 
 ## Done
 
+- [x] **Not every sentence is for it**: a `follow_up` window (20 s) instead of 2 minutes
+  listening, and `ignore_others`: the LLM answers `<silence>` to what isn't for it.
 - [x] **Hermes with Jarvis's tools**: `jarvis` in Hermes's MCP servers; the «yes» is asked
   by the server itself, so it holds for Hermes too.
 - [x] **Skills without an LLM**: time, date, timers, alarms, reminders, sums, units and

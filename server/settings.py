@@ -4,7 +4,7 @@
      "instructions": ["I invoice with Holded."], "face": "orb", "memory": "auto"}
 
 Keys are the server's options with underscores instead of dashes (language,
-llm_model, echo_guard, idle_timeout…); options on the command line win. «voice»
+llm_model, echo_guard, follow_up…); options on the command line win. «voice»
 can be one voice or one per language. Jarvis writes it too (tools.py, «speak
 English»), and the server applies it after each answer. $JARVIS_SETTINGS points elsewhere (tests).
 """
@@ -23,7 +23,7 @@ fixed: set = set()  # the ones given on the command line: settings.json doesn't 
 SCREEN = {"show_time", "show_date", "show_hint", "show_status", "show_heard", "show_answer", "history",
           "show_stats", "clock", "show_timers"}
 LIVE = {"instructions", "face", "video", "confirm_wait", "confirm_valid", "log_transcripts", "eyes", "memory",
-        "detail", "detail_levels", "skills", "interpreter", "volume", "ring_seconds", "snooze_minutes",
+        "follow_up", "ignore_others", "detail", "detail_levels", "skills", "interpreter", "volume", "ring_seconds", "snooze_minutes",
         "beeps", "fillers", "voice_interrupt", "tap_to_stop", "read_photo", "memory_facts",
         "memory_conversations", "memory_days"} | SCREEN
 

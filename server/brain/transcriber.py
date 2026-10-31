@@ -16,7 +16,7 @@ def create(stt, wake=None, ear=None):
 
     wake is a function that creates a new WakeWord (one per session, since it
     keeps state) or None to listen without a wake word. ear holds options for
-    Ear: record, silence, idle_timeout.
+    Ear: record, silence, follow_up.
     """
 
     def brain(speaker, send):
@@ -26,7 +26,7 @@ def create(stt, wake=None, ear=None):
 
 
 class Transcriber:
-    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None, on_interrupt=None, on_stop=None):
+    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None, on_interrupt=None, on_stop=None, busy=None):
         self.send = send
         self.speaker = speaker
         self.wake = wake
@@ -40,6 +40,7 @@ class Transcriber:
             deaf=deaf,
             on_interrupt=on_interrupt,
             on_stop=on_stop,
+            busy=busy,
             **(ear or {}),
         )
 
