@@ -167,6 +167,16 @@ def models(progress):
 
 # --- Starting with the Mac ---
 
+def ours() -> bool:
+    """Whether the launchd agent (if there is one) starts this copy: another copy's is left alone."""
+    try:
+        with open(AGENT, "rb") as f:
+            program = plistlib.load(f)["ProgramArguments"][0]
+    except (OSError, KeyError, IndexError, plistlib.InvalidFileException):
+        return True  # none yet
+    return os.path.realpath(program).startswith(os.path.realpath(paths.APP) + os.sep)
+
+
 def _launchctl(*args, check=True):
     return subprocess.run(["launchctl", *args], capture_output=True, text=True, check=check)
 
@@ -176,6 +186,8 @@ def _launchctl(*args, check=True):
 def service(value):
     if not paths.INSTALLED:
         raise Skip("only for an installed copy (install.sh); while developing, bin/anyassistant start")
+    if not ours():
+        raise Skip("another copy of AnyAssistant starts with the Mac: left as it is")
     domain = f"gui/{os.getuid()}"
     _launchctl("bootout", f"{domain}/{LABEL}", check=False)
     for _ in range(30):  # bootout returns before it is fully unloaded
@@ -223,7 +235,7 @@ def connect(progress):
     port = settings.load().get("port", 8080)
     url = f"http://{_address()}:{port}"
     running = False
-    if not (paths.INSTALLED and os.path.exists(AGENT)):  # not ours: whatever answers there may be another copy
+    if not (paths.INSTALLED and os.path.exists(AGENT) and ours()):  # whatever answers may be another copy
         return f"start it (bin/anyassistant start) and open {url} on the device"
     for _ in range(90):
         try:

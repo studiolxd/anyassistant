@@ -12,6 +12,8 @@
 #   bin/anyassistant plugins [requirements [--all]]   which are on, what they lack; their Python packages
 #   bin/anyassistant setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)
 #   bin/anyassistant run [server options]     in the foreground (what launchd runs)
+#   bin/anyassistant update             installed: the new version from where it came, then restarts
+#   bin/anyassistant uninstall [--all|--keep-data]   installed: removes it (your data, if you say so)
 #
 # Options also come from settings.json. The PID, the port and the log go to the cache
 # folder (.build/ while developing; $ANYASSISTANT_CACHE).
@@ -23,6 +25,9 @@ fi
 LABEL="com.anyassistant.server"
 AGENT="$HOME/Library/LaunchAgents/$LABEL.plist"
 DOMAIN="gui/$(id -u)"
+# launchd starts this copy (and not another: the development one, a second install).
+SERVICE=0
+if [ -f "$AGENT" ] && grep -q "<string>$ROOT/bin/anyassistant</string>" "$AGENT"; then SERVICE=1; fi
 CACHE="${ANYASSISTANT_CACHE:-${ANYASSISTANT_HOME:-$ROOT}/.build}"  # as server/paths.py
 PID="$CACHE/anyassistant.pid"
 LOG="$CACHE/anyassistant.log"
@@ -59,6 +64,34 @@ case "$1" in
     cd "$ROOT" || exit 1
     PYTHONUNBUFFERED=1 exec "$ROOT/.venv/bin/python" server/main.py "$@"
     ;;
+  update)
+    # The program again from where it was installed from, its packages, bridges and models; restarts.
+    [ -f "$ROOT/install.env" ] || { echo "Only for an installed copy (in the project: git pull)."; exit 1; }
+    [ -x "$ANYASSISTANT_SOURCE/install.sh" ] || { echo "Where it was installed from isn't there: $ANYASSISTANT_SOURCE"; exit 1; }
+    exec "$ANYASSISTANT_SOURCE/install.sh" --to "$ROOT" --data "$ANYASSISTANT_HOME" --cache "$ANYASSISTANT_CACHE" --update
+    ;;
+  uninstall)
+    # The program, its cache and starting with the Mac; your data only if you say so (or --all).
+    [ -f "$ROOT/install.env" ] || { echo "Only for an installed copy."; exit 1; }
+    DATA_TOO=0
+    [ "$2" = "--all" ] && DATA_TOO=1
+    if [ "$2" != "--all" ] && [ "$2" != "--keep-data" ] && [ -t 0 ]; then
+      printf "Also delete your data (settings, memory, paired devices, your skins) in %s? [y/N] " "$ANYASSISTANT_HOME"
+      read -r answer
+      case "$answer" in y|Y|s|S|yes|sí|si) DATA_TOO=1 ;; esac
+    fi
+    if [ $SERVICE = 1 ]; then
+      launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null
+      rm -f "$AGENT"
+    elif alive; then
+      kill -TERM "$(cat "$PID")" 2>/dev/null
+    fi
+    rm -rf "$ANYASSISTANT_CACHE"
+    [ $DATA_TOO = 1 ] && rm -rf "$ANYASSISTANT_HOME"
+    echo "AnyAssistant uninstalled$([ $DATA_TOO = 1 ] || printf '; your data stays in %s' "$ANYASSISTANT_HOME")."
+    # Last, the program itself (this script is in it): from a shell that doesn't need it.
+    cd / && exec /bin/sh -c "sleep 1; rm -rf \"$ROOT\""
+    ;;
   setup)
     # The installer's steps (server/installer.py): bin/anyassistant setup [--defaults|--json] [--set k=v] [step…]
     shift
@@ -68,7 +101,7 @@ case "$1" in
   start)
     shift
     if alive; then echo "AnyAssistant is already running (PID $(cat "$PID"))."; exit 0; fi
-    if [ -f "$AGENT" ] && [ $# -eq 0 ]; then  # installed with launchd: it starts it
+    if [ $SERVICE = 1 ] && [ $# -eq 0 ]; then  # installed with launchd: it starts it
       launchctl bootstrap "$DOMAIN" "$AGENT" 2>/dev/null || launchctl kickstart "$DOMAIN/$LABEL"
       echo "Starting AnyAssistant (launchd)…"; exit 0
     fi
@@ -90,7 +123,7 @@ case "$1" in
     echo " · taking longer than usual; see $LOG"
     ;;
   stop)
-    if [ -f "$AGENT" ]; then  # installed with launchd: so it doesn't bring it back
+    if [ $SERVICE = 1 ]; then  # installed with launchd: so it doesn't bring it back
       launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null && { rm -f "$PID"; echo "AnyAssistant stopped."; exit 0; }
     fi
     if ! alive; then echo "AnyAssistant isn't running."; rm -f "$PID"; exit 0; fi
