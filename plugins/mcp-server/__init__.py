@@ -1,4 +1,4 @@
-"""Jarvis's tools (tools.py) as an MCP server, at /mcp on the server itself.
+"""Jarvis's tools (tools/) as an MCP server, at /mcp on the server itself.
 
 Streamable HTTP, the minimum Claude Code needs: JSON-RPC requests by POST,
 answered with plain JSON. Only from the Mac itself: no device on the network,
@@ -8,9 +8,10 @@ paired or not, can use it.
 import json
 import logging
 
-from aiohttp import web
+from aiohttp import web as http
 
 import tools
+import web
 
 log = logging.getLogger("mcp")
 LOCAL = {"127.0.0.1", "::1"}  # only from the Mac itself
@@ -52,16 +53,17 @@ def handle(message: dict) -> dict | None:
     return _error(id_, -32601, f"unknown method {method}")
 
 
-async def endpoint(request: web.Request) -> web.Response:
+@web.route("*", "/mcp")
+async def endpoint(request: http.Request) -> http.Response:
     if request.remote not in LOCAL:
-        return web.Response(status=403)
+        return http.Response(status=403)
     if request.method != "POST":
-        return web.Response(status=405)  # no server-initiated stream
+        return http.Response(status=405)  # no server-initiated stream
     try:
         body = await request.json()
     except json.JSONDecodeError:
-        return web.json_response(_error(None, -32700, "parse error"), status=400)
+        return http.json_response(_error(None, -32700, "parse error"), status=400)
     answers = [a for a in map(handle, body if isinstance(body, list) else [body]) if a]
     if not answers:
-        return web.Response(status=202)
-    return web.json_response(answers if isinstance(body, list) else answers[0])
+        return http.Response(status=202)
+    return http.json_response(answers if isinstance(body, list) else answers[0])

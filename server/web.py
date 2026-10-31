@@ -1,6 +1,5 @@
 """The server's web side: the page, its configuration and skins, WebRTC signaling,
-the hooks plugins use (routes, guards like pairing's, /config), the camera monitor, its MCP server, and the loop that
-rings alarms. main.py chooses the brain and runs it."""
+the hooks plugins use (routes, guards like pairing's, /config, startup tasks). main.py chooses the brain and runs it."""
 
 import asyncio
 import logging
@@ -11,13 +10,11 @@ from aiohttp import web
 
 import hub
 import i18n
-import mcp_server
 import paths
 import settings
 import skins
 from brain.parrot import Parrot
 import kernel
-from skills import timers as skill_timers
 from transport import Session
 
 WEB = paths.WEB
@@ -30,6 +27,7 @@ close_on_exit = []  # coroutines to await when stopping (plugin processes)
 ROUTES = []  # (method, path, handler, plugin)
 GUARDS = []  # (function, plugin): may refuse a request to a protected route
 CONFIG = []  # (function, plugin): more for the page's /config
+STARTUP = []  # (function, plugin): async function(app), when the server starts (a background loop…)
 
 
 def _put(hooks: list, entry: tuple, same) -> None:
@@ -57,6 +55,8 @@ guard = _hook(GUARDS)
 guard.__doc__ = "function(request) → a refusal (web.Response) or None; for every protected route."
 config = _hook(CONFIG)
 config.__doc__ = "function(request) → a dict added to /config, for the page."
+startup = _hook(STARTUP)
+startup.__doc__ = "async function(app) when the server starts; a loop it starts should check its plugin is on."
 
 
 def refused(request: web.Request) -> web.Response | None:
@@ -87,20 +87,6 @@ async def offer(request: web.Request) -> web.Response:
     return web.json_response({"sdp": answer.sdp, "type": answer.type})
 
 
-async def video_mjpeg(request: web.Request) -> web.StreamResponse:
-    """What the camera sees, to watch it from the Mac's browser."""
-    if refusal := refused(request):
-        return refusal
-    response = web.StreamResponse(headers={"Content-Type": "multipart/x-mixed-replace; boundary=frame"})
-    await response.prepare(request)
-    while True:
-        session = hub.current()
-        image = session.jpeg() if session else None
-        if image:
-            await response.write(b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + image + b"\r\n")
-        await asyncio.sleep(1 / 10)
-
-
 async def status(request: web.Request) -> web.Response:
     if refusal := refused(request):
         return refusal
@@ -115,11 +101,6 @@ async def skin_file(request: web.Request) -> web.StreamResponse:
     """A skin's stylesheet, images, fonts or sounds: only from inside its folder."""
     path = skins.asset(request.match_info["name"], request.match_info["path"])
     return web.FileResponse(path) if path else web.Response(status=404)
-
-
-async def lab(request: web.Request) -> web.Response:
-    """The skins lab: every state of a skin at once, reloading when its files change."""
-    return page("lab.html")
 
 
 async def page_config(request: web.Request) -> web.Response:
@@ -145,19 +126,16 @@ def _contributed(request: web.Request) -> dict:
     return more
 
 
-def page(name: str) -> web.Response:
-    """An HTML page declaring the active language (lang="…") and the name from the start."""
-    html = (WEB / name).read_text().replace('<html lang="en"', f'<html lang="{i18n.L.code}"', 1)
+def page(file) -> web.Response:
+    """An HTML page (index.html in web/, or a plugin's own file) declaring the active language
+    (lang="…") and the name from the start."""
+    html = (WEB / file).read_text().replace('<html lang="en"', f'<html lang="{i18n.L.code}"', 1)
     html = html.replace("<title>Jarvis", f"<title>{escape(settings.get('name', 'Jarvis'))}", 1)
     return web.Response(text=html, content_type="text/html")
 
 
 async def index(request: web.Request) -> web.Response:
     return page("index.html")
-
-
-async def monitor(request: web.Request) -> web.Response:
-    return page("monitor.html")
 
 
 @web.middleware
@@ -189,25 +167,6 @@ async def on_shutdown(app: web.Application):
             logging.warning("while closing: %r", e)
 
 
-async def ring_when_due(app: web.Application):
-    """Timers, alarms and reminders: on the device, or on the Mac if none is connected."""
-    async def loop():
-        while True:
-            try:
-                for item in skill_timers.due():
-                    session = hub.connected()
-                    alarms = kernel.module("skill-alarms")
-                    if session and hasattr(session.brain, "ring"):
-                        asyncio.ensure_future(session.brain.ring(item))
-                    elif alarms:
-                        asyncio.ensure_future(alarms.ring_on_mac(item))
-            except Exception as e:
-                logging.warning("timers: %r", e)
-            await asyncio.sleep(0.5)
-
-    app["timers"] = asyncio.ensure_future(loop())
-
-
 def _while_on(handler, plugin):
     async def guarded(request):
         if not kernel.enabled(plugin):  # turned off since: as if it weren't there
@@ -219,18 +178,15 @@ def _while_on(handler, plugin):
 def application() -> web.Application:
     app = web.Application(middlewares=[no_cache], client_max_size=20 * 1024 * 1024)  # photos
     app.router.add_get("/", index)
-    app.router.add_get("/monitor", monitor)
     app.router.add_post("/offer", offer)
-    app.router.add_get("/video.mjpg", video_mjpeg)
     app.router.add_get("/status", status)
     app.router.add_get("/config", page_config)
     app.router.add_get("/skin/{name}/{path:.+}", skin_file)
-    app.router.add_get("/lab", lab)
-    app.router.add_route("*", "/mcp", mcp_server.endpoint)
     kernel.load_all()
     for method, path, handler, plugin in ROUTES:  # the plugins' own
         app.router.add_route(method, path, _while_on(handler, plugin))
     app.router.add_static("/web/", WEB)
     app.on_shutdown.append(on_shutdown)
-    app.on_startup.append(ring_when_due)
+    for function, plugin in STARTUP:  # the plugins' background tasks (they check they're on)
+        app.on_startup.append(function)
     return app

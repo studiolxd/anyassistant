@@ -1,0 +1,5 @@
+{
+  "name": "Camera monitor",
+  "description": "http://<mac>:8080/monitor: what the device's camera sees, to watch it from the Mac's browser.",
+  "kind": "feature"
+}

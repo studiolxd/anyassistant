@@ -766,27 +766,28 @@ so they need no account or network; they run on a free port, next to a running J
 ## Layout
 
 - `server/main.py` — options, plugins and running it; `server/web.py`, HTTP (the page, `/config`, `/offer`,
-  `/mcp`, the monitor…); `server/hub.py`, the device connected now.
+  and the hooks plugins use: routes, guards, `/config`, startup tasks); `server/hub.py`, the device connected now;
+  `server/events.py`, what happens (`tap`, `asleep`), for the plugins that care.
 - `server/i18n.py` and `locales/` — languages; `server/settings.py`, `settings.json`.
 - `server/transport.py` — WebRTC session: tracks, `control` DataChannel, last frame.
 - `server/audio.py` — 48 kHz mono PCM; `Speaker` is the outgoing track.
 - `server/brain/` — `parrot.py` (Phase 1), `ear.py` (VAD + STT), `transcriber.py` (Phase 2), `assistant.py` (Phase 3).
 - `server/kernel.py`, `server/registry.py` — the core: plugins found, loaded, on or off; engines' registry.
 - `plugins/` — every plugin: engines (`stt-*`, `wake-*`, `llm-*`, `tts-*`, `vad-*`), skills (`skill-*`),
-  `tools-system`, `plugin-manager`… `server/stt/`, `wake/`, `llm/`, `tts/`, `vad/` keep only what each kind is.
-- `server/plugins.py` — shared plugin registry; `server/text.py`, text utilities;
+  `tools-system`, `plugin-manager`, and features: `pairing`, `confirmation` (the «yes»), `memory`, `eyes`,
+  `sounds`, `tap-to-wake`, `monitor` (`/monitor`), `lab` (the skins lab), `mcp-server` (`/mcp`)…
+  `server/stt/`, `wake/`, `llm/`, `tts/`, `vad/` keep only what each kind is.
+- `server/text.py`, text utilities;
   `server/swift.py`, builds the plugins' Swift bridges.
 - `bin/jarvis` — starts and stops the server.
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
-- `server/tools/`, `server/mcp_server.py` — Jarvis's own tools (`@tool`, next to what each does), as the `jarvis` MCP server.
-- `server/memory.py` — memory across conversations (`memory.json`).
+- `server/tools/` — Jarvis's own tools (`@tool`, next to what each does); `plugins/mcp-server` serves them as `jarvis`.
 - `server/skills/` — what a skill is (`@skill`), how things are said, and the helpers they share (`parse.py`,
   `timers.py`, `interpreter.py`).
 - `server/paths.py`, `server/options.py` — where things live, every option.
-- `plugins/confirmation/` — the «yes» before actions that change something (any LLM).
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
 - `web/` — the phone's page (plain JS, old Chrome): `app.js` (connection, blocks), `skin.js` (applies a
-  skin, its states and live variables), `system.css`; the monitor and the skins lab.
+  skin, its states and live variables), `system.css`.
 - `skins/` — the system's skins; `server/skins.py` finds, cleans and checks them.
 - `tests/` — pytest; `test_e2e.py` drives the real server.
 

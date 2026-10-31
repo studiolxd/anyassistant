@@ -9,7 +9,10 @@ import logging
 import time
 from pathlib import Path
 
+import hub
 import i18n
+import kernel
+import web
 import skins
 from skills import Skill, skill, spoken_duration, spoken_list, spoken_when, timers
 from skills.parse import Clock, Token, clock, day_tokens, duration, resolve, words
@@ -186,3 +189,23 @@ def list_timers() -> str:
       choices={"kind": ["timer", "alarm", "reminder", "all"]})
 def cancel_timers(kind: str = "all") -> str:
     return cancel(kind if kind in timers.KINDS else None)
+
+
+@web.startup
+async def ring_when_due(app):
+    """Timers, alarms and reminders: on the device, or on the Mac if none is connected."""
+    async def loop():
+        while True:
+            try:
+                if kernel.enabled("skill-alarms"):
+                    for item in timers.due():
+                        session = hub.connected()
+                        if session and hasattr(session.brain, "ring"):
+                            asyncio.ensure_future(session.brain.ring(item))
+                        else:
+                            asyncio.ensure_future(ring_on_mac(item))
+            except Exception as e:
+                log.warning("timers: %r", e)
+            await asyncio.sleep(0.5)
+
+    app["timers"] = asyncio.ensure_future(loop())

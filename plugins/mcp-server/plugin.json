@@ -1,0 +1,5 @@
+{
+  "name": "Jarvis's MCP server",
+  "description": "Jarvis's tools as the «jarvis» MCP server at /mcp, only from the Mac itself (Claude, Hermes).",
+  "kind": "feature"
+}
