@@ -27,6 +27,10 @@ struct AnyAssistantApp: App {
             SettingsView()
                 .frame(minWidth: 760, minHeight: 520)
         }
+        Window(T("Devices"), id: "devices") {
+            DevicesView()
+                .frame(minWidth: 560, minHeight: 360)
+        }
         Window(T("Pair a device"), id: "pair") {
             PairView(server: server)
                 .frame(width: 660, height: 380)
@@ -90,6 +94,7 @@ struct MenuView: View {
                 NSWorkspace.shared.open(URL(string: "http://127.0.0.1:\(server.port)")!)
             }
             Button(T("Pair a device…")) { open("pair") }
+            Button(T("Devices…")) { open("devices") }
             Divider()
             if server.state == .stopped {
                 Button(T("Start")) { server.start() }
