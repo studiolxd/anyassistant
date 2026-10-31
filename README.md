@@ -134,7 +134,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | Option | Default | |
 |---|---|---|
 | `skills` | `true` | time, date, timers, alarms, reminders, sums, units and volume, without the LLM |
-| `interpreter` | `"auto"` | Apple's local model for skills said in unusual ways (auto: if this Mac has it) |
+| `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it), off, or an LLM's name |
 | `ring_seconds` | `60` | how long an alarm rings if nobody stops it |
 | `snooze_minutes` | `5` | «snooze» without saying how long |
 
@@ -509,9 +509,10 @@ snoozes it (`snooze_minutes`). While it rings, only words meant to stop it count
 connected, on the Mac.
 
 **The interpreter**: what doesn't fit the usual ways of saying it («avísame dentro
-de un rato largo, como tres cuartos de hora») can go to Apple's local model, which
-turns it into data for the same skills. `"interpreter"`: `auto` (the default:
-only if this Mac has Apple's model; elsewhere nothing), `apple` or `off`. And the
+de un rato largo, como tres cuartos de hora») can go to an LLM, which turns it into
+data for the same skills. `"interpreter"`: `auto` (the default: a local model if
+there is one, Apple's on a Mac with it; elsewhere nothing), `off`, or any LLM's
+name (`apple`, `claude`…). And the
 LLM has them as tools (`set_timer`, `set_alarm`, `set_reminder`, `list_timers`,
 `cancel_timers`, `set_volume`), without asking for your «yes».
 

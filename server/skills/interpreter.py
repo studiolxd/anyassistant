@@ -1,9 +1,11 @@
-"""Apple's local model as an interpreter for skills said in an unusual way.
+"""An LLM as an interpreter for skills said in an unusual way.
 
-«Avísame dentro de un rato largo, como 40 minutos» doesn't fit quick()'s
-patterns; the local model turns it into data ({"skill": "timer", "seconds":
-2400}) that the same skills execute. Settings «interpreter»: "auto" (Apple's
-model if this Mac has it: elsewhere, nothing), "apple" (always try it) or "off".
+«Avísame dentro de un rato largo, como 40 minutos» doesn't fit the skills'
+patterns; a model turns it into data ({"skill": "timer", "seconds": 2400}) that
+the same skills execute. Settings «interpreter»: "auto" (a local model if there
+is one: Apple's on a Mac with it; elsewhere, nothing), "off", or the name of any
+LLM plugin that can answer outside a conversation (complete()): "apple",
+"claude"…
 Only for sentences that sound like a skill (skills.sounds_like_one): the rest go
 straight to the LLM.
 """
@@ -34,25 +36,35 @@ Example: «{said}» → {answer}
 Request: «{text}»"""
 
 
-def enabled() -> bool:
-    mode = settings.get("interpreter") or "auto"
-    if mode == "off" or not skills.enabled():
-        return False
+LOCAL = ["apple"]  # what «auto» tries, in order: models that run on this computer
+
+
+def chosen() -> str | None:
+    """The LLM plugin that interprets, or None."""
     import llm
 
-    return llm.ready("apple") is None
+    mode = settings.get("interpreter") or "auto"
+    if mode == "off" or not skills.enabled():
+        return None
+    candidates = LOCAL if mode == "auto" else [mode]
+    return next((name for name in candidates if name in llm.available() and llm.ready(name) is None), None)
+
+
+def enabled() -> bool:
+    return chosen() is not None
 
 
 async def interpret(text: str) -> str | None:
-    """The sentence to say, if Apple's model understood a skill in it; None otherwise."""
+    """The sentence to say, if the model understood a skill in it; None otherwise."""
     global _model
     if not enabled() or not skills.sounds_like_one(text):
         return None
     try:
-        if _model is None:
+        name = chosen()
+        if _model is None or _model.name != name:
             import llm
 
-            _model = llm.create("apple")
+            _model = llm.create(name)
         example = i18n.L.data["skills"]["interpreter_example"]
         answer = await _model.complete(PROMPT.format(
             now=time.strftime("%A %Y-%m-%d %H:%M"), said=example["said"],

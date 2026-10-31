@@ -177,6 +177,8 @@ def test_interpreter_is_configurable(store, monkeypatch):
     assert interpreter.enabled()
     settings.active["interpreter"] = "off"
     assert not interpreter.enabled()
+    settings.active["interpreter"] = "claude"  # any LLM that can answer outside a conversation
+    assert interpreter.chosen() == "claude"
 
 
 def test_interpreter_data_runs_the_skills(store, es):
