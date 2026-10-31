@@ -64,12 +64,13 @@ body[data-look="asleep"] .heard,
 body[data-look="asleep"] .answer { display: none; }
 
 /* Landscape (a tablet lying down, a screen): the same column, with less height to spend:
-   the light higher up (the clock, smaller, still above it), the timers on one line. */
+   the light higher up (the clock, smaller, still above it), the timers closer together. */
 @media (orientation: landscape) {
   .screen { padding-top: 34vh; }
   .clock { bottom: calc(66vh + 2vmin); }
   .clock [data-part="time"] { font-size: 15vmin; }
   .clock [data-part="date"] { font-size: 5vmin; }
-  .timers { display: flex; flex-wrap: wrap; }
-  .timers p { margin: 0 1.2em 0 0; }  /* no flex gap in Chrome 81 */
+  .status { margin: 2vmin 0; }
+  .timers { margin-top: 1vmin; font-size: 5.5vmin; }
+  .timers p { margin: 0; }
 }

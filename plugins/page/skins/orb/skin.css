@@ -93,10 +93,11 @@ body[data-look="speaking"] .wave { animation: wave 1.6s ease-out infinite; }
 body[data-look="speaking"] .wave.second { animation-delay: 0.8s; }
 
 /* Landscape (a tablet lying down, a screen): the same centred column, with less height
-   to spend: a smaller orb, the timers on one line, no room kept under the words. */
+   to spend: a smaller orb, the timers closer together (each on its own line), no room
+   kept under the words. */
 @media (orientation: landscape) {
-  .orb { width: 30vmin; height: 30vmin; margin: 2vmin; }
-  .timers { display: flex; flex-wrap: wrap; justify-content: center; }
-  .timers p { margin: 0 1em; }  /* no flex gap in Chrome 81 */
-  .captions { min-height: 0; width: 70%; }
+  .orb { width: 28vmin; height: 28vmin; margin: 2vmin; }
+  .timers { margin-top: 1.5vmin; font-size: 4.5vmin; }
+  .timers p { margin: 0; }
+  .captions { min-height: 0; width: 70%; margin-top: 0.3em; }
 }

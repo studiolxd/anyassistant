@@ -199,10 +199,12 @@ body[data-look="error"] .eye.right .lid { transform: rotate(16deg); }
 .dots i:nth-child(3) { animation-delay: 0.4s; }
 
 /* Landscape (a tablet lying down, a screen): the same centred column, with less height
-   to spend: the eyes higher up, the timers on one line, no room kept under the words. */
+   to spend: the eyes higher up and a little smaller, the timers closer together (each on
+   its own line), no room kept under the words. */
 @media (orientation: landscape) {
-  .layout { padding-top: 14vh; }
-  .timers { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 2vmin; }
-  .timers p { margin: 0 1em; }  /* no flex gap in Chrome 81 */
-  .captions { min-height: 0; width: 70%; }
+  .layout { padding-top: 10vh; }
+  .face { transform: scale(0.85); margin: -2vmin 0; }
+  .timers { margin-top: 1.5vmin; font-size: 4.5vmin; }
+  .timers p { margin: 0; }
+  .captions { min-height: 0; width: 70%; margin-top: 0.3em; }
 }

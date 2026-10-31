@@ -1,7 +1,7 @@
 {
   "name": "Eyes",
   "author": "Jarvis",
-  "version": "5",
+  "version": "6",
   "description": "Two blue robot eyes that change shape to say how it feels.",
   "options": {
     "accent": "#34aff7",
