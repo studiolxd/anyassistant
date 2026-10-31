@@ -2,7 +2,8 @@
 
 import pytest
 
-from brain.assistant import is_yes, split, system_command
+from brain.assistant import is_yes, split
+from skills.restart import command as system_command
 from brain.ear import is_sleep_command
 
 CASES = {
@@ -67,7 +68,7 @@ def test_stop(lang):
     ("Hide the camera", "off"), ("What camera do you have?", None), ("Turn on the lights", None),
 ])
 def test_camera_english(en, text, expected):
-    from brain.assistant import camera_command
+    from skills.camera import command as camera_command
 
     assert camera_command(text) == expected
 
@@ -77,7 +78,7 @@ def test_camera_english(en, text, expected):
     ("Apaga la cámara", "off"), ("Quita la cámara.", "off"), ("¿Qué cámara tienes?", None),
 ])
 def test_camera_spanish(es, text, expected):
-    from brain.assistant import camera_command
+    from skills.camera import command as camera_command
 
     assert camera_command(text) == expected
 
@@ -87,7 +88,7 @@ def test_camera_spanish(es, text, expected):
     ("Use cloud", "claude"), ("Use the oven timer", None), ("What does Claude think?", None),
 ])
 def test_llm_english(en, text, expected):
-    from brain.assistant import llm_command
+    from skills.choose_llm import command as llm_command
 
     assert llm_command(text) == expected
 
@@ -97,6 +98,6 @@ def test_llm_english(en, text, expected):
     ("Cambia la cara", None), ("¿Qué opina Claude?", None),
 ])
 def test_llm_spanish(es, text, expected):
-    from brain.assistant import llm_command
+    from skills.choose_llm import command as llm_command
 
     assert llm_command(text) == expected

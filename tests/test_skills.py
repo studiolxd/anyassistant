@@ -169,9 +169,11 @@ def test_skills_can_be_turned_off(store, es):
 
 
 def test_interpreter_is_configurable(store, monkeypatch):
-    monkeypatch.setattr(tools, "llm_ready", lambda name: "not on this Mac")
+    import llm
+
+    monkeypatch.setattr(llm, "ready", lambda name: "not on this Mac")
     assert not interpreter.enabled()  # auto, without Apple's model
-    monkeypatch.setattr(tools, "llm_ready", lambda name: None)
+    monkeypatch.setattr(llm, "ready", lambda name: None)
     assert interpreter.enabled()
     settings.active["interpreter"] = "off"
     assert not interpreter.enabled()
@@ -204,9 +206,8 @@ def test_spoken_durations(es):
 
 
 def test_only_meant_words_stop_the_alarm(es):
-    from brain.assistant import Assistant
+    from skills.ringing import stops_it
 
-    a = object.__new__(Assistant)
-    assert a._stops_ringing("Para") and a._stops_ringing("Apaga la alarma") and a._stops_ringing("Vale")
-    assert not a._stops_ringing("Kimbo.")  # its own tone, transcribed
-    assert not a._stops_ringing("Gracias")
+    assert stops_it("Para") and stops_it("Apaga la alarma") and stops_it("Vale")
+    assert not stops_it("Kimbo.")  # its own tone, transcribed
+    assert not stops_it("Gracias")

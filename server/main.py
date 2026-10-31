@@ -36,6 +36,7 @@ import skills
 import skins
 import stt
 import tools
+from skills import alarms
 from skills import timers as skill_timers
 import tts
 import wake
@@ -313,7 +314,7 @@ def main():
                         if session and hasattr(session.brain, "ring") and session.pc.connectionState == "connected":
                             asyncio.ensure_future(session.brain.ring(item))
                         else:
-                            asyncio.ensure_future(skills.ring_on_mac(item))
+                            asyncio.ensure_future(alarms.ring_on_mac(item))
                 except Exception as e:
                     logging.warning("timers: %r", e)
                 await asyncio.sleep(0.5)

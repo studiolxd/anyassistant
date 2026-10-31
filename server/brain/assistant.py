@@ -23,13 +23,10 @@ import skills
 import skins
 import tools
 from audio import alarm_tone, louder, normalize
-from brain.transcriber import volume
-from skills import interpreter, timers
-from skills.parse import duration, tokens
-import llm as llm_plugins
+from brain.transcriber import Transcriber, volume
 from llm import SILENCE
 from llm import detail as llm_detail
-from brain.transcriber import Transcriber
+from skills import alarms, interpreter, timers
 from text import words
 
 log = logging.getLogger("assistant")
@@ -45,68 +42,6 @@ ECHO_MAX_WORDS = 5  # an echo is a short piece of what it just said
 ECHO_WINDOW = 2.5
 
 END_OF_SENTENCE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
-
-
-def system_command(text: str) -> str | None:
-    """«Reload the tools» → "reload"; «Restart» → "restart". Only short commands."""
-    heard = words(text)
-    if not 0 < len(heard) <= 5:
-        return None
-    if any(w.startswith(tuple(i18n.L.list("commands.reload"))) for w in heard):
-        return "reload"
-    if set(heard) & set(i18n.L.list("commands.restart")):
-        return "restart"
-    return None
-
-
-def camera_command(text: str) -> str | None:
-    """«Activa la cámara» → "on"; «Turn off the camera» → "off": the camera on the screen."""
-    heard = words(text)
-    if not 0 < len(heard) <= 6 or not set(heard) & set(i18n.L.list("commands.camera")):
-        return None
-    if set(heard) & set(i18n.L.list("commands.camera_off")):  # before «on»: «turn off»
-        return "off"
-    if set(heard) & set(i18n.L.list("commands.camera_on")):
-        return "on"
-    return None
-
-
-def llm_command(text: str) -> str | None:
-    """«Use Claude», «Cambia a Hermes» → "claude", "hermes". A command, not for the LLM:
-    Apple's model has no tools, so this is the way back from it."""
-    heard = [w for w in words(text) if w not in words(settings.get("name", "Jarvis"))]
-    if not 0 < len(heard) <= 5 or heard[0] not in i18n.L.list("commands.switch"):
-        return None
-    rest = heard[1:]
-    for name, spoken in llm_plugins.spoken_names().items():
-        if any(w in spoken for w in rest) and all(w in spoken or len(w) <= 3 or w in i18n.L.list("commands.llm_words")
-                                                 for w in rest):
-            return name
-    return None
-
-
-def language_command(text: str) -> str | None:
-    """«Speak Spanish», «Háblame en inglés» → "es", "en". Understood in any language.
-
-    A verb of some locale's commands.language first, a language's name in some
-    locale's «languages» and nothing else but short linking words («to», «en»…):
-    «¿Quién habla inglés en Suiza?» or «Pasa el correo a inglés» are not commands.
-    Any language because Parakeet may well write «Speak Spanish» while in Spanish.
-    """
-    heard = [w for w in words(text) if w not in words(settings.get("name", "Jarvis"))]
-    if not 0 < len(heard) <= 6:
-        return None
-    locales = [i18n.Locale(code) for code in i18n.available()]
-    if not any(heard[0] in locale.list("commands.language") for locale in locales):
-        return None
-    for locale in locales:
-        for code, name in locale.data["languages"].items():
-            name = words(name)
-            for i in range(1, len(heard) - len(name) + 1):
-                rest = heard[1:i] + heard[i + len(name):]
-                if heard[i:i + len(name)] == name and code in i18n.available() and all(len(w) <= 3 for w in rest):
-                    return code
-    return None
 
 
 def is_yes(text: str) -> bool:
@@ -196,7 +131,7 @@ class Assistant(Transcriber):
         self.ringing = self.rang = item
         if self.ear.wake and not self.ear.awake:
             self.ear._wake_up()  # so it hears «stop» or «snooze» without its name
-        sentence = skills.ring_sentence(item)
+        sentence = alarms.ring_sentence(item)
         self.send({"type": "alarm", "label": item.get("label") or sentence})
         self._state("alarm")
         own = skins.sound(getattr(self, "skin", None) or settings.get("skin"), "alarm")  # the skin's, if it has one
@@ -226,26 +161,10 @@ class Assistant(Transcriber):
             state = "alarm"
         super()._state(state)
 
-    def _stops_ringing(self, text: str) -> bool:
-        """«Para», «apaga la alarma», «vale», «cancélalo»…: words meant to stop it."""
-        vocabulary = i18n.L.data["skills"]["words"]
-        meant = set(i18n.L.list("commands.stop")) | set(i18n.L.list("commands.yes")) | set(i18n.L.list("commands.sleep"))
-        meant |= set(vocabulary["cancel"]) | set(vocabulary["timer"]) | set(vocabulary["alarm"]) | set(vocabulary["reminder"])
-        meant |= set(i18n.L.list("commands.camera_off"))  # «apaga»
-        return bool(set(words(text)) & meant)
-
     def _stopped(self):
         """«Stop» said on its own: an alarm ringing, or an answer it is still thinking or saying."""
         if self.ringing or self.turn.locked() or self.speaker.speaking:
             self.stop()
-
-    def _snooze(self, text: str) -> str:
-        span = duration(tokens(text))
-        seconds = span.value if span else (settings.get("snooze_minutes") or 5) * 60
-        item = self.rang
-        timers.add(item["kind"], time.time() + seconds, item.get("label", ""))
-        self.stop()
-        return i18n.L("speech.snoozed", duration=skills.spoken_duration(seconds))
 
     def _interrupt(self, text: str) -> bool:
         """The wake word heard while it speaks: stop, unless it was its own voice saying its name."""
@@ -289,29 +208,8 @@ class Assistant(Transcriber):
             # It was the answer to an approval the LLM itself asked for (Hermes): not a new message.
             Transcriber._heard(self, text, timings)
             return
-        language, camera, model = language_command(text), camera_command(text), llm_command(text)
-        command = (f"language:{language}" if language else f"camera:{camera}" if camera
-                   else f"llm:{model}" if model else system_command(text))
-        if command:
-            Transcriber._heard(self, text, timings)  # shown on screen, but not sent to the LLM
-            asyncio.ensure_future(self._command(command))
-            return
-        if self.rang and set(words(text)) & set(i18n.L.data["skills"]["words"]["snooze"]):
-            Transcriber._heard(self, text, timings)
-            self._say(self._snooze(text))
-            return
-        if self.ringing:
-            if not self._stops_ringing(text):  # its own tone, transcribed («Kimbo.»): not a word for it
-                log.info("ignored while ringing: «%s»", settings.private(text))
-                return
-            Transcriber._heard(self, text, timings)
-            self.stop()
-            return
-        reply = skills.quick(text)  # time, timers, sums…: at once, without the LLM
-        if reply:
-            Transcriber._heard(self, text, timings)
-            log.info("skill: «%s»", settings.private(reply))
-            self._say(reply)
+        self._timings = timings
+        if skills.hear(text, self):  # time, timers, the camera, «speak English»…: without the LLM
             return
         super()._heard(text, timings)
         self.transcript.append(("user", text))
@@ -328,40 +226,6 @@ class Assistant(Transcriber):
                 return
         await self._answer(text)
 
-    async def _command(self, command: str):
-        if command == "reload":
-            log.info("reloading tools")
-            await self.llm.reload()
-            self._say(i18n.L("speech.reloaded"))
-        elif command.startswith("camera:"):
-            on = command == "camera:on"
-            log.info("camera on the screen: %s", "on" if on else "off")
-            self.send({"type": "camera", "on": on})
-            self._say(i18n.L("speech.camera_on" if on else "speech.camera_off"))
-        elif command.startswith("llm:"):
-            name = command.split(":")[1]
-            why = tools.llm_ready(name)
-            if name == settings.get("llm"):
-                self._say(i18n.L("speech.llm_same", llm=name.capitalize()))
-            elif why:
-                log.info("can't switch to %s: %s", name, why)
-                self._say(i18n.L("speech.llm_unavailable", llm=name.capitalize()))
-            else:
-                log.info("switching to %s", name)
-                settings.save(llm=name, llm_model=None)
-                await self._restart(i18n.L("speech.llm_changing", llm=name.capitalize()))
-        elif command.startswith("language:"):
-            code = command.split(":")[1]
-            name = i18n.L.data["languages"].get(code, code)
-            if code == i18n.L.code:
-                self._say(i18n.L("speech.language_same", language=name))
-                return
-            log.info("switching to %s", code)
-            settings.save(language=code)
-            await self._restart(i18n.L("speech.language_changing", language=name))
-        else:
-            await self._restart(i18n.L("speech.restarting"))
-
     async def _restart(self, sentence: str):
         log.info("restarting the server")
         self._say(sentence)
@@ -373,6 +237,28 @@ class Assistant(Transcriber):
                 break
             await asyncio.sleep(0.25)
         os.kill(os.getpid(), signal.SIGHUP)  # main.py treats it as «restart»
+
+    # --- What skills may do (skills/) ---
+
+    def show_heard(self, text: str):
+        """What you said, on the screen (without sending it to the LLM)."""
+        Transcriber._heard(self, text, getattr(self, "_timings", {}))
+
+    def reply(self, text: str, sentence: str):
+        """A skill's answer: what you said and what it says."""
+        self.show_heard(text)
+        log.info("skill: «%s»", settings.private(sentence))
+        self._say(sentence)
+
+    def say(self, sentence: str):
+        self._say(sentence)
+
+    def later(self, coroutine):
+        asyncio.ensure_future(coroutine)
+
+    def restart(self, sentence: str):
+        """Says it and restarts once it has said it."""
+        asyncio.ensure_future(self._restart(sentence))
 
     def _say(self, text: str):
         """A fixed system sentence: to the screen and, if there is a voice, to the speaker."""

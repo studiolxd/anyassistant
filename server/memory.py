@@ -24,6 +24,7 @@ from pathlib import Path
 import i18n
 import paths
 import settings
+from tools import ToolError, tool
 
 PATH = paths.MEMORY
 # Limits (settings memory_facts, memory_conversations, memory_days): beyond
@@ -205,3 +206,57 @@ async def review(llm, transcript: list[tuple[str, str]]):
         log.info("this LLM can't review conversations: memory only keeps what you ask")
     except Exception as e:  # memory must never break the conversation
         log.warning("couldn't review the conversation: %r", e)
+
+
+# --- As tools, for the LLM (tools/) ---
+
+def _memory_on():
+    if mode() == "off":
+        raise ToolError("memory is off («memory» in settings.json)")
+
+
+@tool("What you remember about the user (numbered) and recent conversations.")
+def get_memory() -> str:
+    _memory_on()
+    data = load()
+    text = "\n".join(f"{i}. {f}" for i, f in enumerate(data["facts"], 1)) or "(nothing yet)"
+    if data["conversations"]:
+        text += "\nRecent conversations:\n" + "\n".join(f"- {c['summary']}" for c in data["conversations"])
+    return text
+
+
+@tool("Keep a NEW fact about the user for every conversation, when the user asks you to. Short, in the third "
+      "person, as they said it. Call get_memory first: if a fact is about the same thing (their name, a pet, a "
+      "preference…), use update instead, never a second fact.", needs_yes=True)
+def remember(fact: str) -> str:
+    _memory_on()
+    data = load()
+    if fact.strip() and fact.strip() not in data["facts"]:
+        data["facts"] = (data["facts"] + [fact.strip()])[-hard_limit():]  # compacted when it sleeps
+        save(data)
+    return "Remembered."
+
+
+@tool("Change a fact you remember (its number from get_memory) when the user corrects or changes it. "
+      "Preferred over remember + forget: one step, one confirmation.", needs_yes=True)
+def update(number: int, fact: str) -> str:
+    _memory_on()
+    data = load()
+    if not 1 <= number <= len(data["facts"]):
+        raise ToolError("give the number of a fact from get_memory")
+    if not fact.strip():
+        raise ToolError("what should it say now?")
+    data["facts"][number - 1] = fact.strip()
+    save(data)
+    return "Updated."
+
+
+@tool("Forget a fact (its number from get_memory).", needs_yes=True)
+def forget(number: int) -> str:
+    _memory_on()
+    data = load()
+    if not 1 <= number <= len(data["facts"]):
+        raise ToolError("give the number of a fact from get_memory")
+    del data["facts"][number - 1]
+    save(data)
+    return "Forgotten."

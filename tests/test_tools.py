@@ -116,11 +116,13 @@ def test_the_hook_leaves_jarvis_tools_to_the_server():
 
 
 def test_remember_points_to_update():
-    assert "use update instead" in tools.TOOLS["remember"][1]
+    assert "use update instead" in tools.TOOLS["remember"].description
 
 
 def test_switching_llm(env, monkeypatch):
-    monkeypatch.setattr(tools, "llm_ready", lambda name: None if name != "hermes" else "gateway down")
+    import llm
+
+    monkeypatch.setattr(llm, "ready", lambda name: None if name != "hermes" else "gateway down")
     tools.call("set_llm", {"llm": "apple"})
     assert saved(env) == {"llm": "apple", "llm_model": None}
     tools.call("set_llm", {"llm": "claude", "model": "opus"})

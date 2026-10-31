@@ -3,7 +3,7 @@ import json
 import pytest
 
 import settings
-from brain.assistant import language_command
+from skills.language import command as language_command
 
 
 @pytest.fixture

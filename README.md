@@ -515,6 +515,25 @@ only if this Mac has Apple's model; elsewhere nothing), `apple` or `off`. And th
 LLM has them as tools (`set_timer`, `set_alarm`, `set_reminder`, `list_timers`,
 `cancel_timers`, `set_volume`), without asking for your «yes».
 
+**Adding a skill** is adding a module to `server/skills/`:
+
+```python
+from skills import Skill, skill
+from tools import tool
+
+@skill
+class Weather(Skill):
+    order = 40                              # who listens first
+    def answer(self, text, toks):           # what to say, or None if it isn't for it
+        ...
+
+@tool("Today's weather where the user is.")  # and, if useful, a tool for the LLM
+def weather(place: str = "") -> str: ...
+```
+
+Its words go in the locales («skills»). Skills that do more than answer (the
+camera, «speak English»…) implement `hear(text, jarvis)` instead.
+
 ## Phase 3 · Answers (LLM)
 
 What you say goes to the LLM and the answer appears on screen as it is generated.
@@ -710,10 +729,12 @@ so they need no account or network; they run on a free port, next to a running J
   `server/swift.py`, builds the plugins' Swift bridges.
 - `bin/jarvis` — starts and stops the server.
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
-- `server/tools.py`, `server/mcp_server.py` — Jarvis's own tools, as the `jarvis` MCP server.
+- `server/tools/`, `server/mcp_server.py` — Jarvis's own tools (`@tool`, next to what each does), as the `jarvis` MCP server.
 - `server/memory.py` — memory across conversations (`memory.json`).
-- `server/skills/` — skills without an LLM: `parse.py` (numbers, durations, clock times), `calc.py`,
-  `units.py`, `timers.py` (`timers.json`), `interpreter.py` (Apple's model).
+- `server/skills/` — skills: one module each (`clock`, `alarms`, `arithmetic`, `conversion`, `volume`,
+  `camera`, `language`, `choose_llm`, `restart`, `ringing`), registered with `@skill`; and their helpers
+  (`parse.py`, `calc.py`, `units.py`, `timers.py`, `interpreter.py`).
+- `server/paths.py`, `server/options.py`, `server/confirmation.py` — where things live, every option, the «yes».
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
 - `web/` — the phone's page (plain JS, old Chrome): `app.js` (connection, blocks), `skin.js` (applies a
   skin, its states and live variables), `system.css`; the monitor and the skins lab.

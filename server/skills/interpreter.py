@@ -16,7 +16,7 @@ import time
 import i18n
 import settings
 import skills
-from skills import parse, units
+from skills import alarms, clock, parse, units, volume
 
 log = logging.getLogger("skills")
 _model = None
@@ -38,9 +38,9 @@ def enabled() -> bool:
     mode = settings.get("interpreter") or "auto"
     if mode == "off" or not skills.enabled():
         return False
-    from tools import llm_ready
+    import llm
 
-    return llm_ready("apple") is None
+    return llm.ready("apple") is None
 
 
 async def interpret(text: str) -> str | None:
@@ -74,45 +74,38 @@ def execute(data: dict) -> str | None:
     if skill in ("alarm", "reminder"):
         if hour is not None:
             when = parse.Clock(int(hour) % 24, int(number("minute") or 0), None, int(number("day") or 0))
-            at = parse.resolve(when, waking=skill == "alarm") if number("day") is not None else _next(int(hour), when.minute)
+            at = parse.resolve(when, waking=skill == "alarm") if number("day") is not None else alarms.next_time(int(hour), when.minute)
         elif seconds:
             at = time.time() + seconds
         else:
             return None
         if skill == "alarm":
-            return skills.set_alarm(at)
+            return alarms.set_alarm(at)
         text = str(data.get("text") or "").strip()
         if {t.plain for t in parse.tokens(text)} <= parse.words("reminder"):
             text = ""  # «Avísame»: nothing to remind, just a timer
-        return skills.set_reminder(at, text) if text else skills.set_timer(at - time.time())
+        return alarms.set_reminder(at, text) if text else alarms.set_timer(at - time.time())
     if skill == "timer" and seconds:
-        return skills.set_timer(seconds, str(data.get("text") or ""))
+        return alarms.set_timer(seconds, str(data.get("text") or ""))
     if skill == "cancel":
         kind = data.get("kind")
-        return skills.cancel(kind if kind in ("timer", "alarm", "reminder") else None)
+        return alarms.cancel(kind if kind in ("timer", "alarm", "reminder") else None)
     if skill == "remaining":
-        return skills.remaining()
+        return alarms.remaining()
     if skill == "list":
-        return skills.listing()
+        return alarms.listing()
     if skill == "time":
-        return skills.say_time()
+        return clock.say_time()
     if skill == "date":
-        return skills.say_date()
+        return clock.say_date()
     if skill == "volume":
-        volume = data.get("volume")
+        level = data.get("volume")
         current = settings.get("volume") or 100
-        if volume in ("up", "down"):
-            return skills.set_volume(current + (skills.VOLUME_STEP if volume == "up" else -skills.VOLUME_STEP))
-        if isinstance(volume, (int, float)):
-            return skills.set_volume(volume)
+        if level in ("up", "down"):
+            return volume.set_volume(current + (volume.STEP if level == "up" else -volume.STEP))
+        if isinstance(level, (int, float)):
+            return volume.set_volume(level)
     return None
-
-
-def _next(hour: int, minute: int) -> float:
-    """The next time the clock shows hour:minute (24 h, as the model gives it)."""
-    now = time.localtime()
-    at = time.mktime((now.tm_year, now.tm_mon, now.tm_mday, hour, minute, 0, 0, 0, -1))
-    return at if at > time.time() else at + 86400
 
 
 def known_units() -> list[str]:

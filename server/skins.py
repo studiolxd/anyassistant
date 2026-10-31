@@ -347,6 +347,88 @@ def delete(name: str):
     shutil.rmtree(path)
 
 
+# --- As tools, for the LLM (tools/) ---
+
+def _tools():
+    from tools import ToolError, tool
+
+    def device():
+        import tools
+
+        return tools.session()
+
+    @tool("The screen's look (a skin: eyes, orb… see get_settings), for every device or only the one the user is "
+          "talking to (this_device).")
+    def set_skin(skin: str, this_device: bool = False) -> str:
+        import settings
+
+        if skin not in available():
+            raise ToolError(f"skins: {', '.join(available())}")
+        if this_device:
+            connected = device()
+            if not connected:
+                raise ToolError("no device connected")
+            connected.send({"type": "skin", "name": skin})
+            return "This device changes its skin now."
+        settings.save(skin=skin)
+        return "Saved: the skin changes when you finish answering."
+
+    @tool("Create a skin of the user's own as a copy of another (based_on: eyes, orb, minimal, bedside or one of "
+          "theirs), to customize it.")
+    def create_skin(name: str, based_on: str = DEFAULT) -> str:
+        try:
+            created = new(name, based_on)
+        except ValueError as e:
+            raise ToolError(str(e)) from None
+        return f"Created «{name}» from «{based_on}» in {created}. See it at /lab?skin={name}; set_skin to use it."
+
+    @tool("Read a skin's files (skin.json, skin.html, skin.css, locales/*.json) before changing it.")
+    def get_skin(name: str) -> str:
+        try:
+            found = files(name)
+        except ValueError as e:
+            raise ToolError(str(e)) from None
+        system = " (a system skin: copy it with create_skin to change it)" if is_system(name) else ""
+        return f"Skin «{name}»{system}:\n" + "\n\n".join(f"=== {file} ===\n{text}" for file, text in found.items())
+
+    @tool("Replace a whole file of one of the user's skins (not the system's): skin.json, skin.html, skin.css or "
+          "locales/<language>.json. HTML and CSS only, no JavaScript and nothing from outside. skin.html places "
+          "blocks Jarvis fills (data-block: face, status, heard, answer, captions, clock, time, date, timers, photo, "
+          "camera, stats); skin.css styles them by state with body[data-look] (asleep, awake, hearing, thinking, "
+          "looking, speaking, question, alarm, error), body.blink and, on the face block, the live variables "
+          "--voice, --speech, --bar-1…5 (0–1). It runs on an old Chrome (81): no inset, no flex gap, no :has(). "
+          "It answers what the check finds.")
+    def edit_skin(name: str, file: str, content: str) -> str:
+        import settings
+
+        try:
+            problems = write(name, file, content)
+        except ValueError as e:
+            raise ToolError(str(e)) from None
+        connected = device()
+        if connected and name in (settings.get("skin"), getattr(connected.brain, "skin", None)):
+            connected.send({"type": "config"})  # the one on screen: it changes now
+        if problems:
+            return "Saved, but: " + "; ".join(problems)
+        return "Saved. The check finds nothing wrong."
+
+    @tool("Delete one of the user's skins (never a system one).", needs_yes=True)
+    def delete_skin(name: str) -> str:
+        import settings
+
+        if name == settings.get("skin"):
+            raise ToolError("it is the skin in use: choose another one first (set_skin)")
+        try:
+            delete(name)
+        except ValueError as e:
+            raise ToolError(str(e)) from None
+        return "Deleted."
+
+
+if __name__ != "__main__":  # the command line below doesn't need the tools
+    _tools()
+
+
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import settings
