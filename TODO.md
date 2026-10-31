@@ -1,21 +1,16 @@
 # TODO
 
-## Before daily use
+## Next
 
-- [ ] **Pairing**: right now anyone on the Wi-Fi can connect and use Jarvis (which
-  can already send emails and delete things). A code the tablet stores the first
-  time, without which the server refuses connections.
-- [ ] **macOS service (launchd)**: start the server with the Mac and restart it if
-  it fails. For now, by hand with `bin/jarvis start|stop|restart|status|log`.
-- [ ] **Stop recording**: `--record` is no longer used by default; delete the old
-  debugging recordings.
+- [ ] **Eyes (Phase 4)**: look through the camera when asked («what do you see?», «read this»).
+- [ ] **Memory across conversations** with Claude (Hermes already has it). For now,
+  what you ask it to remember goes to `instructions` in `settings.json` (`bin/settings`).
+- [ ] **The server as a packaged app** (the Mac first): install, start with the
+  system, settings and pairing from its own window. What launchd would have done
+  belongs to its installer.
 
 ## Conversation quality
 
-- [ ] **Interrupt by voice** («Jarvis, stop») while it speaks; today only by tapping
-  the screen. Hard with the tablet's echo cancellation.
-- [ ] **Latency** (~2–3 s, mostly until Claude's first sentence): start the process
-  earlier, Haiku for short answers…
 - [ ] **Wake word**: watch false positives and negatives; maybe a name in the
   user's language.
 - [ ] **Not every sentence is for it**: once awake it answers everything it hears,
@@ -23,32 +18,27 @@
   not Gabriela»). Ignore what clearly isn't addressed to it, at least right after a
   dubious wake-up.
 
-## Features
+## Done
 
-- [ ] **Eyes (Phase 4)**: look through the camera when asked («what do you see?», «read this»).
-- [ ] **Memory across conversations** with Claude (Hermes already has it). For now,
-  what you ask it to remember goes to `instructions` in `settings.json` (`bin/settings`).
-- [x] **Face**: «eyes» (default) and «orb» (`?face=orb`), clock while asleep,
-  «question» state; `?demo` cycles through the states without connecting. Chosen
-  with `face` in `settings.json`.
-- [ ] **Native apps** (later, once we know what they should be like): Android, Android TV,
-  iOS, macOS and Windows, with the same features on all of them.
-- [x] **Languages**: English base and Spanish in `locales/`; detected from the Mac,
-  chosen in `settings.json` or by voice («speak English»).
-- [ ] **Bilingual at once**: answer in the language each sentence is spoken in.
-
-## Maintenance
-
+- [x] **Pairing** (optional: `"pairing": true`; `bin/jarvis pair|unpair`).
+- [x] **Interrupt by voice**: «Jarvis, stop» or «Jarvis, and tomorrow?» while it speaks.
+- [x] **Latency**: a spare Claude process always ready (~1.5 s to the first word
+  instead of 2.5–3). The model stays a setting (`llm_model`).
+- [x] **Recordings**: the old debugging ones deleted; `record` only on request.
+  Transcripts in the log only with `log_transcripts`.
+- [x] **Face**: «eyes» and «orb», chosen with `face`.
+- [x] **Languages**: English base and Spanish in `locales/`; `language` or by voice.
+- [x] **Settings**: `settings.json`, also by voice with your «yes» (`bin/settings`).
 - [x] **Automated tests**: pytest in `tests/` (`uv run pytest`; `-m e2e` for the real server).
-
-## To do by hand
-
-- [x] Re-authorize **Holded**.
 
 ## Postponed
 
-- **Publish the Google app** (Google Auth Platform → Audience) so the authorization
-  doesn't expire every 7 days; then `bin/gog-authorize` again. Re-authorize meanwhile.
-- **Fixed IP for the Mac**: for now, update the tablet's URL when it changes.
-- **The app's name**: a new one is coming (instead of «Jarvis»); the folder will be
-  renamed then, not to «jarvis».
+- **Native apps** (Android, Android TV, iOS, macOS, Windows, with the same features),
+  after the server is a packaged app.
+- **Bilingual at once**: answer in the language each sentence is spoken in; when
+  everything else works.
+- **The app's name**: a new one is coming (instead of «Jarvis»); `name` in the
+  settings already changes it everywhere.
+
+The Mac's fixed IP and publishing the Google app are up to whoever installs it
+(see the README).

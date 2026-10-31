@@ -92,10 +92,19 @@ the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear'
 | `face` | `eyes` | `eyes` or `orb`; a device's `?face=` wins |
 | `video` | `auto` | `normal`, `low` or `off`; `auto` lets each device choose (low with ≤ 1 GB of RAM); a device's `?video=` wins |
 | `port` | `8080` | `bin/jarvis` uses it too |
+| `pairing` | `false` | only devices paired with a code may connect (below) |
+| `log_transcripts` | `false` | write what it hears and says to the log (to debug); otherwise only lengths |
 | `confirm_wait` | `120` | seconds to answer «yes» to an action that writes |
 | `confirm_valid` | `60` | seconds a «yes» stays valid |
 
 A wrong value (`"face": "smiley"`) stops the server with the reason.
+
+**Pairing**: with `"pairing": true`, a device must enter a code before using
+Jarvis. `bin/jarvis pair` shows one on the Mac (6 digits, 5 minutes, one device);
+the page asks for it and the device remembers it (a cookie; the server keeps only
+its hash in `.build/paired.json`). Unpaired devices can't connect, see the camera
+(`/video.mjpg`) or the status; the Mac itself always can. `bin/jarvis unpair`
+forgets them all.
 
 **By voice**: «Remember that I invoice with Holded», «Forget that», «Use the orb
 face», «Change your voice to Mónica», «From now on your name is …». Claude does
@@ -226,6 +235,9 @@ language in `locales/*.json` → `commands`):
   re-authorizing an MCP server). They are also reread on every «Hey Jarvis».
 - **Restart** («restart» / «reiníciate»): restarts the whole server (e.g. after
   changing the code); the tablet reconnects by itself in a few seconds.
+- **Stop** while it speaks («Jarvis, stop» / «Jarvis, para»): while talking it only
+  listens for its name, so it can be interrupted; «Jarvis, and tomorrow?» stops it
+  and asks. Its own voice saying its name doesn't count. Tapping the screen works too.
 
 ## Phase 3 · Answers (LLM)
 
