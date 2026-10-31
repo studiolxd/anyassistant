@@ -176,7 +176,8 @@ struct SettingsView: View {
     @State private var section: String? = "plugins"
 
     var body: some View {
-        NavigationSplitView {
+        // The sections always visible: no button to fold the sidebar (there are only a few).
+        NavigationSplitView(columnVisibility: .constant(.all)) {
             List(selection: $section) {
                 Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
                 Section(T("Settings")) {
@@ -186,6 +187,7 @@ struct SettingsView: View {
                 }
             }
             .navigationSplitViewColumnWidth(200)
+            .toolbar(removing: .sidebarToggle)
         } detail: {
             VStack(spacing: 0) {
                 if admin.restartNeeded {
