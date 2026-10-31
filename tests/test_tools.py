@@ -57,6 +57,10 @@ def test_nothing_to_lift_its_safeguards():
 def test_memory(env):
     tools.call("remember", {"fact": "Has a dog called Toby."})
     assert "1. Has a dog called Toby." in tools.call("get_memory", {})
+    tools.call("update", {"number": 1, "fact": "Has a dog called Rex."})
+    assert memory.load()["facts"] == ["Has a dog called Rex."]
+    with pytest.raises(tools.ToolError):
+        tools.call("update", {"number": 5, "fact": "x"})
     tools.call("forget", {"number": 1})
     assert memory.load()["facts"] == []
     settings.active["memory"] = "off"
@@ -109,3 +113,8 @@ def test_confirmation_for_changes_but_not_for_the_camera():
     assert hook.describe("mcp__jarvis__camera", {"on": True}) is None
     assert hook.describe("mcp__jarvis__set_face", {"face": "orb"}) == 'jarvis: set_face {"face": "orb"}'
     assert hook.describe("mcp__jarvis__remember", {"fact": "x"})
+    assert hook.describe("mcp__jarvis__update", {"number": 1, "fact": "x"})
+
+
+def test_remember_points_to_update():
+    assert "use update instead" in tools.TOOLS["remember"][1]

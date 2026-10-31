@@ -83,3 +83,16 @@ def test_review_in_auto_only_and_with_something_you_said(mem):
 def test_a_broken_review_never_breaks_anything(mem):
     asyncio.run(memory.review(FakeLLM("no json here"), [("user", "Hi.")]))
     assert not mem.exists()
+
+
+def test_review_updates_before_adding(mem):
+    mem.write_text(json.dumps({"facts": ["Is called Subi.", "Has a green dog.", "Lives in Madrid."]}))
+    memory.apply_review(json.dumps({"update": [{"number": 1, "fact": "Is called Suvi, with a v."}],
+                                    "remove": [2], "add": ["Likes jazz."], "summary": "Corrected the name."}))
+    assert json.loads(mem.read_text())["facts"] == ["Is called Suvi, with a v.", "Lives in Madrid.", "Likes jazz."]
+
+
+def test_the_review_is_told_to_prefer_updating(mem):
+    prompt = memory.review_prompt([("user", "I'm Suvi, with a v.")], ["Is called Subi."])
+    assert prompt.index("- update:") < prompt.index("- remove:") < prompt.index("- add:")
+    assert "1. Is called Subi." in prompt

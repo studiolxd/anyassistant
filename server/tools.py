@@ -111,6 +111,18 @@ def remember(fact: str) -> str:
     return "Remembered."
 
 
+def update(number: int, fact: str) -> str:
+    _memory_on()
+    data = memory.load()
+    if not 1 <= number <= len(data["facts"]):
+        raise ToolError("give the number of a fact from get_memory")
+    if not fact.strip():
+        raise ToolError("what should it say now?")
+    data["facts"][number - 1] = fact.strip()
+    memory.save(data)
+    return "Updated."
+
+
 def forget(number: int) -> str:
     _memory_on()
     data = memory.load()
@@ -153,8 +165,13 @@ TOOLS = {
     "set_language": (set_language, "The language you speak and understand (a code such as en, es).",
                      _schema(language={"type": "string"})),
     "get_memory": (get_memory, "What you remember about the user (numbered) and recent conversations.", _schema()),
-    "remember": (remember, "Keep a fact about the user for every conversation, when the user asks you to. "
-                 "Short, in the third person, as they said it.", _schema(fact={"type": "string"})),
+    "remember": (remember, "Keep a NEW fact about the user for every conversation, when the user asks you to. "
+                 "Short, in the third person, as they said it. Call get_memory first: if a fact is about the "
+                 "same thing (their name, a pet, a preference…), use update instead, never a second fact.",
+                 _schema(fact={"type": "string"})),
+    "update": (update, "Change a fact you remember (its number from get_memory) when the user corrects or "
+               "changes it. Preferred over remember + forget: one step, one confirmation.",
+               _schema(number={"type": "integer"}, fact={"type": "string"})),
     "forget": (forget, "Forget a fact (its number from get_memory).", _schema(number={"type": "integer"})),
     "camera": (camera, "Show (true) or hide (false) the device's camera live on its screen.",
                _schema(on={"type": "boolean"})),
