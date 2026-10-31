@@ -102,8 +102,12 @@ def test_units_en(en):
     assert convert(tokens("how old are you")) is None
 
 
+def test_time_es(store, es):
+    assert skills.quick("¿Qué hora es?").startswith(("Son las", "Es la"))  # «Es la 1…» from 1 to 1:59
+
+
 @pytest.mark.parametrize("text, starts", [
-    ("¿Qué hora es?", "Son las"), ("¿Qué día es hoy?", "Hoy es"), ("Pon un temporizador de 10 minutos", "Temporizador de 10 minutos"),
+    ("¿Qué día es hoy?", "Hoy es"), ("Pon un temporizador de 10 minutos", "Temporizador de 10 minutos"),
     ("Avísame en 5 minutos", "Temporizador de 5 minutos"), ("Despiértame mañana a las 7", "Alarma para mañana a las 7"),
     ("Recuérdame en 20 minutos que saque la ropa", "Te lo recordaré hoy"), ("Cuánto es 23 por 47", "Son 1081"),
     ("Cuántos kilómetros son 5 millas", "5 millas son 8,05 kilómetros"), ("Pon el volumen al 70", "Volumen al 70"),
