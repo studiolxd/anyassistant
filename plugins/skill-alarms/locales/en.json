@@ -13,7 +13,9 @@
     "nothing_to_cancel": "There was nothing to cancel.",
     "timer_done": "Time's up!",
     "alarm_ring": "It's {time}.",
-    "reminder_ring": "Reminder: {text}."
+    "reminder_ring": "Reminder: {text}.",
+    "where_all": "It'll ring everywhere.",
+    "where_room": "It'll ring in {where}."
   },
   "skills": {
     "words": {
@@ -51,6 +53,31 @@
       "connectors": [
         "to",
         "that"
+      ],
+      "where_in": [
+        "in",
+        "on"
+      ],
+      "articles": [
+        "the",
+        "of"
+      ],
+      "everywhere": [
+        "all",
+        "every",
+        "each"
+      ],
+      "places": [
+        "devices",
+        "device",
+        "rooms",
+        "room",
+        "places",
+        "house",
+        "home"
+      ],
+      "everywhere_alone": [
+        "everywhere"
       ]
     }
   }

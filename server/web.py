@@ -7,6 +7,7 @@ import uuid
 
 from aiohttp import web
 
+import events
 import hub
 import i18n
 import kernel
@@ -71,12 +72,12 @@ async def offer(request: web.Request) -> web.Response:
     if refusal := refused(request):
         return refusal
     data = await request.json()
-    session = Session(uuid.uuid4().hex[:6], brain)
-    # A single phone: the new connection replaces the previous ones.
-    for old in list(hub.sessions.values()):
+    device = str(data.get("device") or "")[:64] or None  # the page's own id (several devices at once)
+    session = Session(uuid.uuid4().hex[:6], brain, device)
+    session.agent = request.headers.get("User-Agent", "")
+    for old in hub.add(session):  # the same device connecting again: its old connection goes
         await old.close()
-    hub.sessions.clear()
-    hub.sessions[session.id] = session
+    events.emit("connected", session)  # its name and room (the plugin «devices»)…
     answer = await session.answer(data["sdp"], data["type"])
     return web.json_response({"sdp": answer.sdp, "type": answer.type})
 
@@ -127,7 +128,7 @@ async def no_cache(request: web.Request, handler):
 async def on_shutdown(app: web.Application):
     # With a time limit: if something hangs while closing, the process must not stay
     # alive (and «restart» would never come back).
-    steps = [s.close() for s in hub.sessions.values()] + [close() for close in close_on_exit]
+    steps = [s.close() for s in hub.all()] + [close() for close in close_on_exit]
     for step in steps:
         try:
             await asyncio.wait_for(step, 5)

@@ -1,0 +1,5 @@
+{
+  "name": "Devices",
+  "description": "Each device's name and room (several at once): «this is the kitchen's», what's connected.",
+  "kind": "feature"
+}

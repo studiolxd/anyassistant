@@ -16,6 +16,21 @@ function setText(name, value) {
 }
 function status(value) { setText('status', value); }
 
+// This device's own id, kept: the server tells devices apart (several at once), and a device
+// that connects again replaces its old connection instead of counting as another.
+function deviceId() {
+  try {
+    var id = localStorage.getItem('device');
+    if (!id) {
+      id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      localStorage.setItem('device', id);
+    }
+    return id;
+  } catch (e) {
+    return '';
+  }
+}
+
 // This device's own skin: ?skin= (remembered; ?skin=default forgets it), or the one in the settings.
 function deviceSkin(name) {
   var asked = new URLSearchParams(location.search).get('skin');
@@ -249,7 +264,7 @@ async function connect() {
       method: 'POST',
       signal: abort.signal,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sdp: pc.localDescription.sdp, type: pc.localDescription.type })
+      body: JSON.stringify({ sdp: pc.localDescription.sdp, type: pc.localDescription.type, device: deviceId() })
     });
     if (response.status === 403) {  // unpaired meanwhile (bin/anyassistant unpair)
       shutDown = true;

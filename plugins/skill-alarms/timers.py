@@ -1,9 +1,12 @@
 """Timers, alarms and reminders: kept in timers.json (not in git), so they survive a restart.
 
-    [{"id": 3, "kind": "timer" | "alarm" | "reminder", "at": 1793…, "label": "call mom", "set": 1793…}]
+    [{"id": 3, "kind": "timer" | "alarm" | "reminder", "at": 1793…, "label": "call mom", "set": 1793…,
+      "device": "k3x…", "where": "" | "all" | "kitchen"}]
 
-The server checks them every half second (main.py) and rings the due ones on the
-connected device (plugins/brain-assistant), or on the Mac if there is none.
+«device» is the one it was set on (the page's own id); «where», where it was asked to ring
+(«… everywhere», «… in the kitchen»: a room or a device's name). The server checks them
+every half second and rings the due ones (plugins/skill-alarms: where), or on the Mac if no
+device is connected.
 """
 
 import json
@@ -29,10 +32,14 @@ def save(items: list[dict]):
     changed()
 
 
-def add(kind: str, at: float, label: str = "") -> dict:
+def add(kind: str, at: float, label: str = "", device: str | None = None, where: str = "") -> dict:
     items = load()
     item = {"id": max([i["id"] for i in items], default=0) + 1, "kind": kind, "at": at, "label": label,
             "set": time.time()}
+    if device:
+        item["device"] = device
+    if where:
+        item["where"] = where
     save(sorted(items + [item], key=lambda i: i["at"]))
     return item
 

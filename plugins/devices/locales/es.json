@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "devices": [
+      "Dispositivos",
+      "El nombre y la habitación de cada dispositivo (varios a la vez): «esta es la de la cocina», cuáles están conectados."
+    ]
+  }
+}

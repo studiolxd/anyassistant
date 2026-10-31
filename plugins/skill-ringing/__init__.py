@@ -28,7 +28,7 @@ def stops_it(text: str) -> bool:
 def snooze(item: dict, text: str) -> str:
     span = duration(tokens(text))
     seconds = span.value if span else (settings.get("snooze_minutes") or 5) * 60
-    timers.add(item["kind"], time.time() + seconds, item.get("label", ""))
+    timers.add(item["kind"], time.time() + seconds, item.get("label", ""), item.get("device"), item.get("where", ""))
     return i18n.L("speech.snoozed", duration=spoken_duration(seconds))
 
 

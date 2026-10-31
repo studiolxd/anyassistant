@@ -120,6 +120,8 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 <!-- options: made by `python server/options.py markdown`; a test checks it is current -->
 **Plugins**
 
+**Plugins**
+
 | Option | Default | |
 |---|---|---|
 | `plugins` | — | which plugins are on or off, if not as they come: {"memory": true, "tap-to-wake": false} |
@@ -178,6 +180,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name |
 | `ring_seconds` | `60` | how long an alarm rings if nobody stops it, in seconds; 0: until someone stops it (at most 30 minutes) |
 | `snooze_minutes` | `5` | «snooze» without saying how long |
+| `alarm_rings` | `"where_set"` | where timers, alarms and reminders ring: where_set (the device they were set on) or everywhere (every device) |
 | `location` | — | your city, for the weather (e.g. Valencia) |
 
 **The screen**
@@ -248,6 +251,16 @@ the page asks for it and the device remembers it (a cookie; the server keeps onl
 its hash in `paired.json`). Unpaired devices can't connect, see the camera
 (`/video.mjpg`) or the status; the Mac itself always can. `bin/anyassistant unpair`
 forgets them all.
+
+**Several devices at once** (`server/hub.py`): each one connects with its own id (the
+page keeps it), so a device that reconnects replaces its old connection. There's one
+conversation at a time (the LLM is one): the device that heard its name answers, and its
+camera and screen are the ones used; another one in a conversation goes to sleep. When
+two hear the same «Jarvis» (within 1.5 s), the one that heard it louder answers; while one
+speaks, its voice saying its name doesn't wake another. The plugin `devices` gives each a
+name (from what it is: iPad, Android tablet…) and a room, in `devices.json`: «this is the
+kitchen's» (the LLM's `set_device`), «which devices are there?» (`get_devices`);
+`GET /devices` from the Mac lists them.
 
 **By voice**: «Use the orb skin», «Change your voice to Mónica», «From now on your
 name is …», with Jarvis's own tools (below). After every answer the server reads
@@ -598,7 +611,10 @@ face in orange, and what it is («Recordatorio: llamar a mamá»). «Para», «a
 la alarma», «Jarvis, para» or a tap stop it; «pospón» («pospón 10 minutos»)
 snoozes it (`snooze_minutes`). While it rings, only words meant to stop it count
 (its own tone, transcribed, doesn't). It rings for `ring_seconds`; with no device
-connected, on the Mac.
+connected, on the Mac. With several devices it rings where it was set
+(`alarm_rings`: `where_set`), or on every one (`everywhere`); «… en todos», «… en toda
+la casa» or «… en la cocina» (a room or a device's name, from `devices`) for that one.
+If that device isn't connected, it rings on every one; stopped on one, it stops on all.
 
 **The interpreter**: what doesn't fit the usual ways of saying it («avísame dentro
 de un rato largo, como tres cuartos de hora») can go to an LLM, which turns it into

@@ -17,6 +17,7 @@ import time
 import numpy as np
 
 import events
+import hub
 import i18n
 import settings
 import skills
@@ -142,7 +143,8 @@ class Assistant(Transcriber):
     def on_connect(self):
         super().on_connect()
         self.send_timers()
-        asyncio.ensure_future(self.llm.new())
+        if not hub.awake_elsewhere(self):  # the LLM is one: not another device's conversation
+            asyncio.ensure_future(self.llm.new())
 
     def on_message(self, data: dict):
         super().on_message(data)
@@ -180,9 +182,12 @@ class Assistant(Transcriber):
             self._stop_ringing()
 
     def _stop_ringing(self):
-        self.ringing = None
+        item, self.ringing = self.ringing, None
         self.send({"type": "alarm", "off": True})
         self._state(self._idle_state())
+        for session in hub.all():  # ringing on several devices: stopped on one, it stops on all
+            if item is not None and session.brain is not self and getattr(session.brain, "ringing", None) is item:
+                session.brain._stop_ringing()
 
     def _state(self, state: str):
         # While ringing, the ear's «awake» or «listening» doesn't hide the alarm on the face.

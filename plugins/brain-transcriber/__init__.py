@@ -5,6 +5,7 @@ import logging
 import os
 
 import events
+import hub
 import i18n
 import kernel
 import settings
@@ -67,6 +68,7 @@ class Transcriber:
             deaf=deaf,
             on_interrupt=on_interrupt,
             busy=busy,
+            may_wake=lambda why: hub.claim(self, self.ear.level, why),
             **(ear or {}),
         )
 

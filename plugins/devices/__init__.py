@@ -1,0 +1,158 @@
+"""Devices (the plugin «devices»): each device that connects (several at once: hub.py) has a
+name and a room, kept in devices.json by the page's own id.
+
+- A new device gets a name from what it is (iPad, iPhone, Android, Mac…); its room, nobody
+  knows yet.
+- The LLM changes them for the device you're talking to («this is the kitchen's», «call
+  this one the bedside»), and sees which ones there are and which are connected.
+- From the Mac itself, for the Mac app: GET /devices lists them; POST /devices {"id", "name",
+  "room"} changes one, {"id", "forget": true} forgets it (it gets a new name if it comes back).
+"""
+
+import json
+import logging
+import re
+import time
+
+from aiohttp import web as http
+
+import events
+import hub
+import paths
+import tools
+import web
+from tools import ToolError, tool
+
+FILE = paths.HOME / "devices.json"
+LOCAL = {"127.0.0.1", "::1"}
+log = logging.getLogger("devices")
+
+
+def load() -> dict:
+    """{device id: {"name", "room", "agent", "seen"}}."""
+    try:
+        return json.loads(FILE.read_text())["devices"]
+    except (OSError, ValueError, KeyError):
+        return {}
+
+
+def _save(devices: dict):
+    FILE.parent.mkdir(parents=True, exist_ok=True)
+    FILE.write_text(json.dumps({"devices": devices}, indent=2, ensure_ascii=False))
+
+
+def kind(agent: str) -> str:
+    """What a browser's User-Agent says the device is."""
+    for pattern, name in ((r"iPad", "iPad"), (r"iPhone", "iPhone"), (r"Android.*Mobile", "Android phone"),
+                          (r"Android", "Android tablet"), (r"Macintosh", "Mac"), (r"Windows", "PC")):
+        if re.search(pattern, agent or ""):
+            return name
+    return "device"
+
+
+def _unique(name: str, devices: dict, own: str) -> str:
+    """«iPad», then «iPad 2»…: two devices of the same kind can be told apart."""
+    taken = {d.get("name") for i, d in devices.items() if i != own}
+    number, candidate = 1, name
+    while candidate in taken:
+        number += 1
+        candidate = f"{name} {number}"
+    return candidate
+
+
+def describe(device: str | None) -> str:
+    """«iPad (living room)», for the logs and the LLM."""
+    found = load().get(device or "", {})
+    name = found.get("name") or "a device"
+    return f"{name} ({found['room']})" if found.get("room") else name
+
+
+@events.on("connected")
+def _connected(session):
+    if not session.device:
+        return
+    devices = load()
+    found = devices.get(session.device)
+    if found is None:
+        found = devices[session.device] = {"name": _unique(kind(session.agent), devices, session.device), "room": ""}
+        log.info("new device: %s", found["name"])
+    found.update(agent=(session.agent or "")[:200], seen=time.time())
+    _save(devices)
+    log.info("[%s] is %s", session.id, describe(session.device))
+
+
+def _listing() -> list[dict]:
+    connected = {s.device for s in hub.all() if s.pc.connectionState == "connected"}
+    current = hub.current()
+    return [{"id": i, "name": d.get("name", ""), "room": d.get("room", ""), "connected": i in connected,
+             "current": bool(current and current.device == i), "seen": d.get("seen")}
+            for i, d in load().items()]
+
+
+# --- For the LLM ---
+
+@tool("The devices you speak through: name, room, whether connected, and which one you're talking through now.")
+def get_devices() -> str:
+    found = _listing()
+    if not found:
+        return "no devices yet"
+    return "; ".join(f"{d['name']}" + (f" in the {d['room']}" if d["room"] else ", room unknown")
+                     + (", connected" if d["connected"] else ", not connected")
+                     + (" (you're talking through this one)" if d["current"] else "") for d in found)
+
+
+def change(device: str, name: str | None = None, room: str | None = None, agent: str = ""):
+    """A device's name and/or room (None: as it is; a room "" clears it). ToolError if the name is taken."""
+    devices = load()
+    found = devices.setdefault(device, {"name": _unique(kind(agent), devices, device), "room": ""})
+    if name is not None and name.strip():
+        name = name.strip()[:60]
+        if any(d.get("name", "").lower() == name.lower() for i, d in devices.items() if i != device):
+            raise ToolError(f"another device is already called «{name}»")
+        found["name"] = name
+    if room is not None:
+        found["room"] = room.strip()[:60]
+    _save(devices)
+    log.info("%s is now %s", device, describe(device))
+
+
+@tool("The name and/or room of the device you're talking through now (e.g. room «kitchen», name «tablet»). "
+      "Use the user's words, in their language.")
+def set_device(name: str = "", room: str = "") -> str:
+    session = tools.session()
+    if not session or not session.device:
+        raise ToolError("no device is connected")
+    if not name.strip() and not room.strip():
+        raise ToolError("give a name or a room")
+    change(session.device, name, room or None, session.agent)
+    return f"this device is now {describe(session.device)}"
+
+
+# --- For the Mac app ---
+
+@web.route("GET", "/devices")
+async def _devices(request):
+    if request.remote not in LOCAL:
+        return http.json_response({}, status=403)
+    return http.json_response({"devices": _listing()})
+
+
+@web.route("POST", "/devices")
+async def _change(request):
+    if request.remote not in LOCAL:
+        return http.json_response({}, status=403)
+    data = await request.json()
+    device = str(data.get("id") or "")
+    if device not in load():
+        return http.json_response({"error": "no such device"}, status=404)
+    if data.get("forget"):
+        devices = load()
+        devices.pop(device, None)
+        _save(devices)
+        log.info("%s forgotten", device)
+    else:
+        try:
+            change(device, data.get("name"), data.get("room"))
+        except ToolError as e:
+            return http.json_response({"error": str(e)}, status=400)
+    return http.json_response({"devices": _listing()})

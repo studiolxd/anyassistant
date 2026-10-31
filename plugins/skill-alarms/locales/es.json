@@ -7,7 +7,8 @@
   },
   "options": {
     "ring_seconds": "cuánto suena una alarma si nadie la para, en segundos; 0: hasta que alguien la pare (como mucho 30 minutos)",
-    "snooze_minutes": "«pospón» sin decir cuánto"
+    "snooze_minutes": "«pospón» sin decir cuánto",
+    "alarm_rings": "dónde suenan temporizadores, alarmas y recordatorios: where_set (el dispositivo donde se pusieron) o everywhere (en todos)"
   },
   "speech": {
     "timer_set": "Temporizador de {duration}.",
@@ -23,7 +24,9 @@
     "nothing_to_cancel": "No había nada que cancelar.",
     "timer_done": "¡Tiempo!",
     "alarm_ring": "Son {time}.",
-    "reminder_ring": "Recordatorio: {text}."
+    "reminder_ring": "Recordatorio: {text}.",
+    "where_all": "Sonará en todos.",
+    "where_room": "Sonará en {where}."
   },
   "skills": {
     "words": {
@@ -67,7 +70,34 @@
       ],
       "connectors": [
         "que"
-      ]
+      ],
+      "where_in": [
+        "en",
+        "por"
+      ],
+      "articles": [
+        "el",
+        "la",
+        "los",
+        "las",
+        "de"
+      ],
+      "everywhere": [
+        "todos",
+        "todas",
+        "toda",
+        "todo"
+      ],
+      "places": [
+        "dispositivos",
+        "aparatos",
+        "partes",
+        "sitios",
+        "casa",
+        "habitaciones",
+        "lados"
+      ],
+      "everywhere_alone": []
     }
   }
 }

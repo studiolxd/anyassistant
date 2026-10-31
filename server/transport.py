@@ -12,14 +12,17 @@ import logging
 
 from aiortc import RTCConfiguration, RTCPeerConnection, RTCSessionDescription
 
+import hub
 from audio import Speaker, to_mono
 
 log = logging.getLogger("transport")
 
 
 class Session:
-    def __init__(self, session_id: str, brain):
+    def __init__(self, session_id: str, brain, device: str | None = None):
         self.id = session_id
+        self.device = device  # the page's own id: the same device connecting again
+        self.agent = ""  # its browser's User-Agent
         # No STUN: on the local network it is useless, and aiortc's default (a
         # Google server) made every connection take ~5 s to answer.
         self.pc = RTCPeerConnection(RTCConfiguration(iceServers=[]))
@@ -93,6 +96,7 @@ class Session:
         return buffer.getvalue()
 
     async def close(self):
+        hub.remove(self)
         for task in self._tasks:
             task.cancel()
         await self.pc.close()

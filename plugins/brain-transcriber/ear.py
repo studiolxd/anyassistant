@@ -38,6 +38,7 @@ MINIMUM = 0.2  # minimum seconds of speech to transcribe (a «hola» is ~0.3)
 MAXIMUM = 15  # maximum seconds of a sentence
 PRE_ROLL = 0.3  # audio kept from before speech is detected (so the start isn't lost)
 FOLLOW_UP = 20  # seconds without speech (since it spoke or heard you) before sleeping (--follow-up)
+LEVEL_SECONDS = 1.5  # how loud it heard its name: the loudest of the last seconds (devices compare it)
 
 _thread = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stt")
 
@@ -46,7 +47,7 @@ class Ear:
     def __init__(
         self, stt, on_state, on_heard, wake=None, on_wake=None, on_sleep=None,
         deaf=None, record=None, silence=SILENCE, follow_up=FOLLOW_UP, on_interrupt=None,
-        busy=None,
+        busy=None, may_wake=None,
     ):
         self.stt = stt
         self.wake = wake
@@ -71,6 +72,11 @@ class Ear:
         # says whether to stop (False: it was its own voice saying its name).
         self.deaf = deaf or (lambda: False)
         self.on_interrupt = on_interrupt
+        # Whether it may wake up (why None: its name, how loud it heard it in `level`): with
+        # several devices, only one answers (hub.claim).
+        self.may_wake = may_wake or (lambda why: True)
+        self.levels = []  # loudness of the last chunks
+        self.generation = 0  # a wake-up undone (drop) discards what it was still transcribing
         self.interruptible = False  # the wake word is listening while it speaks
         self.recording = None  # WAV with everything that arrives, for debugging
         if record:
@@ -92,11 +98,17 @@ class Ear:
         audio = resample_poly(pcm48.astype(np.float32) / 32768, 1, 3).astype(np.float32)
         if self.recording:
             self.recording.writeframes((np.clip(audio, -1, 1) * 32767).astype(np.int16).tobytes())
+        if len(audio):  # how loud it hears now (devices compare it: hub.claim)
+            self.levels = (self.levels + [float(np.sqrt(np.mean(audio ** 2)))])[-int(LEVEL_SECONDS * RATE / len(audio)):]
         if self.wake and (not self.awake or self.wake.continuous):
             heard = self.wake.listen(audio) and not self.deaf()
             if not self.awake:
                 if heard:
                     sentence = getattr(self.wake, "heard_sentence", None)
+                    if not self.may_wake(None):  # another device answers
+                        self.wake.heard_sentence = None
+                        self.wake.reset()
+                        return
                     self._wake_up()
                     if sentence is not None:
                         # "Hey Jarvis, what time is it?" in one go.
@@ -132,10 +144,15 @@ class Ear:
 
     def wake_up(self, why: str) -> bool:
         """Wakes it up as its name would (a tap…); False if it wasn't asleep."""
-        if not self.wake or self.awake:
+        if not self.wake or self.awake or not self.may_wake(why):
             return False
         self._wake_up(why)
         return True
+
+    @property
+    def level(self) -> float:
+        """How loud it hears (its name, you): the loudest of the last LEVEL_SECONDS."""
+        return max(self.levels, default=0.0)
 
     def _wake_up(self, why: str | None = None):
         log.info("awake (%s): conversation mode", why or self.wake.phrase)
@@ -148,6 +165,22 @@ class Ear:
     def sleep(self, reason: str):
         """Goes to sleep because it was told to («go to sleep»: the plugin skill-sleep)."""
         self._sleep(reason, by_command=True)
+
+    def sleep_for(self, reason: str):
+        """Goes to sleep as after a silence (another device woke up: the conversation is there now)."""
+        self._sleep(reason)
+
+    def drop(self, reason: str):
+        """Undoes a wake-up that wasn't for it (another device heard the same word louder):
+        asleep again without its sound, and what it was transcribing is discarded."""
+        if not self.wake or not self.awake:
+            return
+        log.info("asleep again: %s", reason)
+        self.generation += 1
+        self._reset()
+        self.awake = False
+        self.wake.reset()
+        self.on_state("asleep")
 
     def _sleep(self, reason: str, by_command: bool = False):
         if not self.wake or not self.awake:
@@ -213,7 +246,10 @@ class Ear:
     async def _transcribe(self, audio: np.ndarray):
         self.on_state("transcribing")
         start = time.time()
+        generation = self.generation
         text = await asyncio.get_running_loop().run_in_executor(_thread, self.stt.transcribe, audio)
+        if generation != self.generation:  # the wake-up was undone meanwhile: not for it
+            return
         timings = {
             "audio_s": round(len(audio) / RATE, 2),
             "stt_ms": round((time.time() - start) * 1000),
