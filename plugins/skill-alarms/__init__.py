@@ -3,8 +3,8 @@ mañana a las 7», «recuérdame en 20 minutos que saque la ropa», «¿cuánto 
 «¿qué alarmas tengo?», «cancela las alarmas». Kept in timers.py; they ring on the
 device (plugins/brain-assistant) or on the Mac.
 
-With several devices: where it was set (option «alarm_rings»: where_set), or on every one
-(everywhere); «… en todos», «… en la cocina» for one of them (a room or a device's name,
+With several devices: on every one (option «alarm_rings»: everywhere), or where it was set
+(where_set); «… en todos», «… en la cocina» for one of them (a room or a device's name,
 from the plugin «devices»). If that device isn't connected, on every one; stopped on one,
 it stops on all.
 """
@@ -33,8 +33,8 @@ log = logging.getLogger("skills")
 options.add(Option("ring_seconds", 60, "how long an alarm rings if nobody stops it, in seconds; 0: until someone "
                    "stops it (at most 30 minutes)", "skills", "int", live=True))
 options.add(Option("snooze_minutes", 5, "«snooze» without saying how long", "skills", "int", live=True))
-options.add(Option("alarm_rings", "where_set", "where timers, alarms and reminders ring: where_set (the device they "
-                   "were set on) or everywhere (every device)", "skills", "choice", ["where_set", "everywhere"],
+options.add(Option("alarm_rings", "everywhere", "where timers, alarms and reminders ring: everywhere (every device) "
+                   "or where_set (the device they were set on)", "skills", "choice", ["everywhere", "where_set"],
                    live=True))
 ALARM = Path(__file__).parent / "sounds" / "alarm.wav"  # three quick high notes
 
@@ -118,10 +118,10 @@ def _is(device: str | None, where: str) -> bool:
 
 
 def targets(item: dict) -> list:
-    """The connected devices it rings on: where it was asked, else where it was set (alarm_rings
-    where_set) or every one (everywhere); if that one isn't connected, every one."""
+    """The connected devices it rings on: where it was asked, else every one (alarm_rings everywhere)
+    or where it was set (where_set); if that one isn't connected, every one."""
     sessions = [s for s in hub.all() if s.pc.connectionState == "connected" and hasattr(s.brain, "ring")]
-    where = item.get("where") or ("all" if settings.get("alarm_rings") == "everywhere" else "")
+    where = item.get("where") or ("" if settings.get("alarm_rings", "everywhere") == "where_set" else "all")
     if where == "all":
         return sessions
     if where:

@@ -8,7 +8,7 @@
   "options": {
     "ring_seconds": "cuánto suena una alarma si nadie la para, en segundos; 0: hasta que alguien la pare (como mucho 30 minutos)",
     "snooze_minutes": "«pospón» sin decir cuánto",
-    "alarm_rings": "dónde suenan temporizadores, alarmas y recordatorios: where_set (el dispositivo donde se pusieron) o everywhere (en todos)"
+    "alarm_rings": "dónde suenan temporizadores, alarmas y recordatorios: en todos los dispositivos o donde se pusieron"
   },
   "speech": {
     "timer_set": "Temporizador de {duration}.",

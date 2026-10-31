@@ -174,16 +174,16 @@ def house(tmp_path, monkeypatch):
     return kitchen, bedroom
 
 
-def test_it_rings_where_it_was_set(house, es):
+def test_by_default_it_rings_everywhere(house, es):
+    skills.quick("Pon una alarma a las 7")
+    assert alarms.targets(timers.pending()[0]) == list(house)
+
+
+def test_where_it_was_set_by_the_option(house, es):
     kitchen, bedroom = house
+    settings.active["alarm_rings"] = "where_set"
     skills.quick("Pon una alarma a las 7")
     assert alarms.targets(timers.pending()[0]) == [bedroom]
-
-
-def test_everywhere_by_the_option(house, es):
-    settings.active["alarm_rings"] = "everywhere"
-    skills.quick("Pon un temporizador de 10 minutos")
-    assert alarms.targets(timers.pending()[0]) == list(house)
 
 
 @pytest.mark.parametrize("text, where", [
@@ -212,6 +212,7 @@ def test_everywhere_in_english(house, en):
 
 def test_if_that_device_isnt_connected_everywhere(house, es):
     kitchen, bedroom = house
+    settings.active["alarm_rings"] = "where_set"
     skills.quick("Pon una alarma a las 7")
     hub.remove(bedroom)
     assert alarms.targets(timers.pending()[0]) == [kitchen]

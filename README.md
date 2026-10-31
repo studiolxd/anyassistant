@@ -122,6 +122,8 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 
 **Plugins**
 
+**Plugins**
+
 | Option | Default | |
 |---|---|---|
 | `plugins` | — | which plugins are on or off, if not as they come: {"memory": true, "tap-to-wake": false} |
@@ -180,7 +182,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name |
 | `ring_seconds` | `60` | how long an alarm rings if nobody stops it, in seconds; 0: until someone stops it (at most 30 minutes) |
 | `snooze_minutes` | `5` | «snooze» without saying how long |
-| `alarm_rings` | `"where_set"` | where timers, alarms and reminders ring: where_set (the device they were set on) or everywhere (every device) |
+| `alarm_rings` | `"everywhere"` | where timers, alarms and reminders ring: everywhere (every device) or where_set (the device they were set on) |
 | `location` | — | your city, for the weather (e.g. Valencia) |
 
 **The screen**
@@ -614,9 +616,9 @@ face in orange, and what it is («Recordatorio: llamar a mamá»). «Para», «a
 la alarma», «Jarvis, para» or a tap stop it; «pospón» («pospón 10 minutos»)
 snoozes it (`snooze_minutes`). While it rings, only words meant to stop it count
 (its own tone, transcribed, doesn't). It rings for `ring_seconds`; with no device
-connected, on the Mac. With several devices it rings where it was set
-(`alarm_rings`: `where_set`), or on every one (`everywhere`); «… en todos», «… en toda
-la casa» or «… en la cocina» (a room or a device's name, from `devices`) for that one.
+connected, on the Mac. With several devices it rings on every one (`alarm_rings`:
+`everywhere`), or where it was set (`where_set`); «… en todos», «… en toda la casa» or
+«… en la cocina» (a room or a device's name, from `devices`) for that one.
 If that device isn't connected, it rings on every one; stopped on one, it stops on all.
 
 **The interpreter**: what doesn't fit the usual ways of saying it («avísame dentro

@@ -88,7 +88,7 @@
   `devices`): contesta el que te oyó y, si
   te oyen dos, el que lo oyó más fuerte; una conversación a la vez; cada uno con nombre y
   habitación (por voz o en la ventana «Dispositivos» de la app). Alarmas, temporizadores y
-  recordatorios suenan donde se pusieron (`alarm_rings`) o en todos, «… en la cocina» por
+  recordatorios suenan en todos (`alarm_rings`, por defecto) o donde se pusieron, «… en la cocina» por
   voz; si ese no está, en todos; se paran en cualquiera. Mensajes de una habitación a otra
   («dile a la cocina que bajo ya», `tell_device`): se dicen allí, sin tono. El LLM sabe
   por qué dispositivo y en qué habitación le hablas («aquí»).
