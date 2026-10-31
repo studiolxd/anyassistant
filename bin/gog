@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """gog for Jarvis: Google (Gmail, Calendar, Drive, Docs, Sheets…) under permissions.json's policy.
 
     "commands": {"bin/gog": "read" | "all" | ["gmail.search", "calendar.create", …]}

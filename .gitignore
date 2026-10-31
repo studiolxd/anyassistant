@@ -4,6 +4,7 @@ __pycache__/
 !skins/*/sounds/*.wav
 .DS_Store
 .build/
+native/
 # Local configuration and secrets
 .mcp.json
 permissions.json

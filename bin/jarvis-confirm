@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Claude Code PreToolUse hook: actions that write need the user's «yes».
 
 Claude Code runs it before every tool, with {tool_name, tool_input} on stdin. If
