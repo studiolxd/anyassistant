@@ -2,13 +2,8 @@
 
 ## Next
 
-- [ ] **AnyAssistant, the Mac app**: a menu bar app (SwiftUI, .dmg) on top of
-  `bin/anyassistant setup --list/--json`: «install with what comes» or step by step,
-  settings, plugins, pairing (QR + code), log, update. Signing and notarizing.
-- [ ] **macOS Local Network permission**: started by launchd (no app), the server
-  can't reach the tablet (WebRTC stays «connecting»); from a terminal it can. The
-  AnyAssistant app should start it, so it inherits the app's permission
-  (NSLocalNetworkUsageDescription), or the installer must guide the user to allow it.
+- [ ] **AnyAssistant, the Mac app, next**: its design and icon; the client role (talk to
+  it from the Mac itself; connect to another Mac's server, found with Bonjour).
 - [ ] **Installer, next**: a release tarball
   (install.sh copies the git checkout for now); the voice enrolment step
   (`@installer.device`) when that plugin exists.
@@ -84,6 +79,11 @@
   app's new name (`name`).
 
 ## Done
+
+- [x] **AnyAssistant for the Mac** (31 Oct): a menu bar app that installs (with what comes,
+  or step by step) and runs the server, pairs devices (QR + code), settings and plugins,
+  in English and Spanish; signed with Studio LXD's Developer ID and notarized
+  (`SIGN=… NOTARY=anyassistant apps/mac/build.sh`). Bonjour announces the server.
 
 - [x] **update and uninstall** (31 Oct): `bin/anyassistant update` (from where it was installed
   from; removes what a version removed) and `uninstall` (data only if you say so).
