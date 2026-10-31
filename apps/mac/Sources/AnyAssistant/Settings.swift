@@ -244,7 +244,7 @@ struct PluginsView: View {
     @ObservedObject var admin: Admin
     @State private var asking: PluginItem?
 
-    let kinds = ["feature", "skill", "brain", "llm", "stt", "tts", "wake", "vad"]
+    let kinds = ["feature", "skill", "library", "brain", "llm", "stt", "tts", "wake", "vad"]
 
     var body: some View {
         Form {
@@ -297,6 +297,7 @@ struct PluginsView: View {
         case "tts": T("Voices")
         case "wake": T("Wake word")
         case "vad": T("Voice detection")
+        case "library": T("Libraries")
         default: kind
         }
     }

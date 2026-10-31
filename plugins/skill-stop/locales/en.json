@@ -1,0 +1,12 @@
+{
+  "commands": {
+    "stop": [
+      "stop",
+      "quiet",
+      "enough",
+      "silence",
+      "shush",
+      "hush"
+    ]
+  }
+}

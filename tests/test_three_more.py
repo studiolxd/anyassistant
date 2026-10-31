@@ -7,7 +7,7 @@ import pytest
 import kernel
 import llm
 import settings
-from skills.parse import tokens
+from skills.tokens import tokens
 
 
 # --- Plan B ---

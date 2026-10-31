@@ -1,0 +1,223 @@
+{
+  "skills": {
+    "numbers": {
+      "cero": 0,
+      "un": 1,
+      "uno": 1,
+      "una": 1,
+      "dos": 2,
+      "tres": 3,
+      "cuatro": 4,
+      "cinco": 5,
+      "seis": 6,
+      "siete": 7,
+      "ocho": 8,
+      "nueve": 9,
+      "diez": 10,
+      "once": 11,
+      "doce": 12,
+      "trece": 13,
+      "catorce": 14,
+      "quince": 15,
+      "dieciseis": 16,
+      "diecisiete": 17,
+      "dieciocho": 18,
+      "diecinueve": 19,
+      "veinte": 20,
+      "veintiuno": 21,
+      "veintiun": 21,
+      "veintiuna": 21,
+      "veintidos": 22,
+      "veintitres": 23,
+      "veinticuatro": 24,
+      "veinticinco": 25,
+      "veintiseis": 26,
+      "veintisiete": 27,
+      "veintiocho": 28,
+      "veintinueve": 29,
+      "treinta": 30,
+      "cuarenta": 40,
+      "cincuenta": 50,
+      "sesenta": 60,
+      "setenta": 70,
+      "ochenta": 80,
+      "noventa": 90,
+      "cien": 100,
+      "ciento": 100,
+      "doscientos": 200,
+      "doscientas": 200,
+      "trescientos": 300,
+      "trescientas": 300,
+      "cuatrocientos": 400,
+      "quinientos": 500,
+      "quinientas": 500,
+      "seiscientos": 600,
+      "setecientos": 700,
+      "ochocientos": 800,
+      "novecientos": 900
+    },
+    "multipliers": {
+      "mil": 1000,
+      "millon": 1000000,
+      "millones": 1000000
+    },
+    "joiners": [
+      "y"
+    ],
+    "decimal": [
+      "coma",
+      "punto"
+    ],
+    "fractions": {
+      "media": 0.5,
+      "medio": 0.5,
+      "cuarto": 0.25,
+      "cuartos": 0.25
+    },
+    "durations": {
+      "second": [
+        "segundo",
+        "segundos",
+        "seg"
+      ],
+      "minute": [
+        "minuto",
+        "minutos",
+        "min"
+      ],
+      "hour": [
+        "hora",
+        "horas"
+      ]
+    },
+    "words": {
+      "timer": [
+        "temporizador",
+        "temporizadores",
+        "cuenta"
+      ],
+      "alarm": [
+        "alarma",
+        "alarmas",
+        "despiertame",
+        "despertador"
+      ],
+      "reminder": [
+        "recuerdame",
+        "recordatorio",
+        "recordatorios",
+        "recuerdes",
+        "avisame",
+        "avisa"
+      ],
+      "time": [
+        "hora"
+      ],
+      "date": [
+        "dia",
+        "fecha",
+        "estamos"
+      ],
+      "at": [
+        "a",
+        "las",
+        "la",
+        "para"
+      ],
+      "today": [
+        "hoy",
+        "esta"
+      ],
+      "tomorrow": [
+        "manana"
+      ],
+      "math": [
+        "cuanto",
+        "cuantos",
+        "calcula",
+        "calculame",
+        "es",
+        "son"
+      ],
+      "snooze": [
+        "pospon",
+        "posponer",
+        "pospone",
+        "aplaza",
+        "aplazar"
+      ],
+      "fillers": [
+        "el",
+        "la",
+        "los",
+        "las",
+        "un",
+        "una",
+        "me",
+        "por",
+        "favor",
+        "pon",
+        "ponme",
+        "programa",
+        "de",
+        "que",
+        "mi"
+      ]
+    },
+    "clock": {
+      "half": [
+        "media"
+      ],
+      "quarter": [
+        "cuarto"
+      ],
+      "past": [
+        "y"
+      ],
+      "to": [
+        "menos"
+      ],
+      "oclock": [
+        "punto",
+        "en"
+      ],
+      "am": [
+        "madrugada"
+      ],
+      "pm": [
+        "tarde",
+        "noche"
+      ],
+      "morning": [
+        "manana"
+      ],
+      "noon": [
+        "mediodia"
+      ],
+      "midnight": [
+        "medianoche"
+      ]
+    },
+    "duration_names": {
+      "hour": [
+        "hora",
+        "horas"
+      ],
+      "minute": [
+        "minuto",
+        "minutos"
+      ],
+      "second": [
+        "segundo",
+        "segundos"
+      ]
+    }
+  },
+  "speech": {
+    "list_and": " y ",
+    "duration_and": " y ",
+    "when_today": "hoy a {time}",
+    "when_tomorrow": "mañana a {time}",
+    "when_day": "el {date} a {time}"
+  }
+}

@@ -17,7 +17,8 @@ import unicodedata
 
 import i18n
 import paths
-from skills import Skill, skill, spoken_list
+from skills import Skill, skill
+from plugins.skills_language import spoken_list
 from tools import ToolError, tool
 
 PATH = paths.HOME / "lists.json"

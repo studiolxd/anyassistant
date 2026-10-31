@@ -2,7 +2,7 @@
 
 import i18n
 from skills import Skill, skill
-from skills import spoken_number as spoken
+from plugins.skills_language import spoken_number as spoken
 
 from .calc import calculate
 

@@ -568,7 +568,7 @@ packages, stays off whatever the settings say. `bin/anyassistant plugins` lists 
 off, and why one can't work); `bin/anyassistant plugins requirements` prints the Python
 packages of those that are on.
 
-`kind`: `stt`, `wake`, `llm`, `tts`, `vad` (engines: the settings choose one),
+`kind`: `brain`, `stt`, `wake`, `llm`, `tts`, `vad` (engines: the settings choose one), `library` (code and words other plugins use, declared in their `requires`),
 `skill` or `feature`. Plugins import each other as `plugins.<id with underscores>`
 (`from plugins.stt_mlx_whisper import transcribe_mlx`). Loading must be cheap:
 heavy libraries only inside its classes.
@@ -829,8 +829,11 @@ so they need no account or network; they run on a free port, next to a running J
 - `bin/anyassistant` — starts and stops the server.
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
 - `server/tools/` — Jarvis's own tools (`@tool`, next to what each does); `plugins/mcp-server` serves them as `jarvis`.
-- `server/skills/` — what a skill is (`@skill`), how things are said, and the helpers they share (`parse.py`,
-  `timers.py`, `interpreter.py`).
+- `server/skills/` — what a skill is (`@skill`) and how a sentence reaches it (`tokens.py`).
+  What skills share (numbers, durations, times and days, how lists are said, with their
+  words in each language) is the library plugin `skills-language`; skills declare it in
+  `requires`. The core's `locales/` keep only what the core itself says: each language's
+  name, voice and calendar, and its own options and installer steps.
 - `server/paths.py`, `server/options.py` — where things live, every option.
 - `bin/anyassistant-confirm` — hook that asks for your «yes» before any action that writes.
 - `plugins/page/` — the device's page: `web/` (plain JS, old Chrome: `app.js`, connection and blocks;

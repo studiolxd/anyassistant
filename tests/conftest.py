@@ -68,8 +68,7 @@ def isolated(tmp_path, monkeypatch):
     import kernel
     import paths
     import settings
-    import tools
-    from skills import timers
+    from plugins.skill_alarms import timers
 
     data = tmp_path / "jarvis"
     data.mkdir()

@@ -1,6 +1,15 @@
 {
   "speech": {
     "connection_cut": "Sorry, I lost the connection to Claude.",
-    "no_login": "I'm not signed in to Claude: run slash login in Claude Code."
+    "no_login": "I'm not signed in to Claude: run slash login in Claude Code.",
+    "wait": [
+      "One moment, let me check.",
+      "Let me look.",
+      "Just a second.",
+      "Checking.",
+      "Give me a moment.",
+      "Let me see."
+    ],
+    "llm_failed": "Sorry, I couldn't answer."
   }
 }

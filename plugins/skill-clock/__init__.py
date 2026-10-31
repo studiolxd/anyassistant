@@ -4,7 +4,7 @@ import time
 
 import i18n
 from skills import Skill, skill
-from skills.parse import words
+from plugins.skills_language.parse import words
 
 
 def say_time() -> str:

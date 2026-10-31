@@ -6,7 +6,8 @@
     ]
   },
   "speech": {
-    "reloaded": "Listo, he recargado las herramientas."
+    "reloaded": "Listo, he recargado las herramientas.",
+    "restarting": "Me reinicio. Vuelvo en unos segundos."
   },
   "commands": {
     "reload": [

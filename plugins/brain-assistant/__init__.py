@@ -30,7 +30,6 @@ from plugins.brain_transcriber import Transcriber, listening, volume
 from llm import SILENCE
 from llm import detail as llm_detail
 import kernel
-from skills import timers
 from text import words
 
 log = logging.getLogger("assistant")
@@ -152,7 +151,8 @@ class Assistant(Transcriber):
             self.stop()
 
     def send_timers(self):
-        self.send({"type": "timers", "items": timers.pending()})
+        alarms = kernel.module("skill-alarms")  # its timers, alarms and reminders, if it is there
+        self.send({"type": "timers", "items": alarms.timers.pending() if alarms else []})
 
     async def ring(self, item: dict):
         """A timer, alarm or reminder is due: it rings until stopped (or ring_seconds), saying what it is."""
@@ -396,7 +396,7 @@ class Assistant(Transcriber):
             self.send({"type": "config"})  # the page reads /config again
         asked, tools.requested = set(tools.requested), set()  # by its own tools, during the answer
         if changed - settings.LIVE or "restart" in asked:
-            await self._restart(i18n.L("speech.restarting"))
+            await self._restart(i18n.L.text("speech.restarting", "Restarting."))
         elif "reload" in asked:
             await self.llm.reload()
 

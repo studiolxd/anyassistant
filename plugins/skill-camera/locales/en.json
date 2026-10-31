@@ -15,6 +15,14 @@
       "activate",
       "start",
       "enable"
+    ],
+    "camera_off": [
+      "off",
+      "hide",
+      "close",
+      "stop",
+      "deactivate",
+      "disable"
     ]
   }
 }

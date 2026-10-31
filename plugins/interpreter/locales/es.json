@@ -7,5 +7,15 @@
   },
   "options": {
     "interpreter": "un LLM para skills dichas de forma rara: auto (uno local si lo hay: el de Apple) o el nombre de un LLM"
+  },
+  "skills": {
+    "interpreter_example": {
+      "said": "recuérdame dentro de un rato, unos 40 minutos, que saque la ropa",
+      "answer": {
+        "skill": "reminder",
+        "seconds": 2400,
+        "text": "saque la ropa"
+      }
+    }
   }
 }

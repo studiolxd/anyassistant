@@ -6,6 +6,7 @@
     ]
   },
   "speech": {
-    "guardrail": "Prefiero no responder a eso."
+    "guardrail": "Prefiero no responder a eso.",
+    "llm_failed": "Perdona, no he podido responder."
   }
 }

@@ -1,7 +1,6 @@
 """Jarvis's own tools over MCP: what they change, what they refuse, and the protocol."""
 
 import json
-import time
 
 import pytest
 

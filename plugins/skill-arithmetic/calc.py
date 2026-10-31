@@ -6,8 +6,8 @@ eval, no expressions: anything else goes to the LLM.
 
 import math
 
-from skills import spoken_number as spoken  # noqa: F401 — «1081», «3,5»
-from skills.parse import Token, number, vocabulary, words
+from plugins.skills_language import spoken_number as spoken  # noqa: F401 — «1081», «3,5»
+from plugins.skills_language.parse import Token, number, vocabulary, words
 
 SQUARED = {"cuadrado": 2, "squared": 2, "cubo": 3, "cubed": 3}
 

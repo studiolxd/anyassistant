@@ -1,0 +1,6 @@
+{
+  "name": "Skills' language",
+  "description": "The words skills share: numbers, durations, times and days, how lists are said. A library the skills need.",
+  "kind": "library",
+  "locked": true
+}

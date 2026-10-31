@@ -3,7 +3,7 @@
 import i18n
 import settings
 from skills import Skill, skill
-from skills.parse import number, words
+from plugins.skills_language.parse import number, words
 from tools import tool
 
 STEP = 20

@@ -1,5 +1,15 @@
 {
   "speech": {
-    "hermes_down": "I can't reach Hermes: is its gateway running?"
+    "hermes_down": "I can't reach Hermes: is its gateway running?",
+    "wait": [
+      "One moment, let me check.",
+      "Let me look.",
+      "Just a second.",
+      "Checking.",
+      "Give me a moment.",
+      "Let me see."
+    ],
+    "llm_failed": "Sorry, I couldn't answer.",
+    "hermes_approval": "Hermes wants to do this: {action}. Shall I go ahead?"
   }
 }

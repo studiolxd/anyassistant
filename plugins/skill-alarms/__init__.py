@@ -15,8 +15,11 @@ import kernel
 import options
 import web
 import audio
-from skills import Skill, skill, spoken_duration, spoken_list, spoken_when, timers
-from skills.parse import Clock, Token, clock, day_tokens, duration, resolve, words
+from skills import Skill, skill
+from plugins.skills_language import spoken_duration, spoken_list, spoken_when
+from plugins.skills_language.parse import Clock, Token, clock, day_tokens, duration, resolve, words
+
+from . import timers
 from options import Option
 from tools import ToolError, tool
 

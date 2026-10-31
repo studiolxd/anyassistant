@@ -25,6 +25,18 @@
       "abrir",
       "pon",
       "ensename"
+    ],
+    "camera_off": [
+      "apaga",
+      "apagar",
+      "quita",
+      "quitar",
+      "cierra",
+      "cerrar",
+      "oculta",
+      "ocultar",
+      "desactiva",
+      "desactivar"
     ]
   }
 }

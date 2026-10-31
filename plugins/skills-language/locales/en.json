@@ -1,0 +1,199 @@
+{
+  "skills": {
+    "numbers": {
+      "zero": 0,
+      "a": 1,
+      "an": 1,
+      "one": 1,
+      "two": 2,
+      "three": 3,
+      "four": 4,
+      "five": 5,
+      "six": 6,
+      "seven": 7,
+      "eight": 8,
+      "nine": 9,
+      "ten": 10,
+      "eleven": 11,
+      "twelve": 12,
+      "thirteen": 13,
+      "fourteen": 14,
+      "fifteen": 15,
+      "sixteen": 16,
+      "seventeen": 17,
+      "eighteen": 18,
+      "nineteen": 19,
+      "twenty": 20,
+      "thirty": 30,
+      "forty": 40,
+      "fifty": 50,
+      "sixty": 60,
+      "seventy": 70,
+      "eighty": 80,
+      "ninety": 90,
+      "hundred": 100
+    },
+    "multipliers": {
+      "thousand": 1000,
+      "million": 1000000
+    },
+    "joiners": [
+      "and"
+    ],
+    "decimal": [
+      "point"
+    ],
+    "fractions": {
+      "half": 0.5,
+      "quarter": 0.25,
+      "quarters": 0.25
+    },
+    "durations": {
+      "second": [
+        "second",
+        "seconds",
+        "sec",
+        "secs"
+      ],
+      "minute": [
+        "minute",
+        "minutes",
+        "min",
+        "mins"
+      ],
+      "hour": [
+        "hour",
+        "hours",
+        "hr",
+        "hrs"
+      ]
+    },
+    "words": {
+      "timer": [
+        "timer",
+        "timers",
+        "countdown"
+      ],
+      "alarm": [
+        "alarm",
+        "alarms",
+        "wake"
+      ],
+      "reminder": [
+        "remind",
+        "reminder",
+        "reminders",
+        "notify",
+        "alert"
+      ],
+      "time": [
+        "time"
+      ],
+      "date": [
+        "date",
+        "day",
+        "today"
+      ],
+      "at": [
+        "at",
+        "for"
+      ],
+      "today": [
+        "today",
+        "tonight"
+      ],
+      "tomorrow": [
+        "tomorrow"
+      ],
+      "math": [
+        "whats",
+        "what",
+        "calculate",
+        "how",
+        "much",
+        "is",
+        "compute",
+        "s"
+      ],
+      "snooze": [
+        "snooze"
+      ],
+      "fillers": [
+        "the",
+        "a",
+        "an",
+        "me",
+        "please",
+        "set",
+        "start",
+        "put",
+        "for",
+        "of",
+        "my",
+        "to",
+        "that",
+        "is"
+      ]
+    },
+    "clock": {
+      "half": [
+        "half"
+      ],
+      "quarter": [
+        "quarter"
+      ],
+      "past": [
+        "past",
+        "after"
+      ],
+      "to": [
+        "to",
+        "before"
+      ],
+      "oclock": [
+        "oclock",
+        "o",
+        "clock"
+      ],
+      "am": [
+        "am",
+        "morning"
+      ],
+      "pm": [
+        "pm",
+        "afternoon",
+        "evening",
+        "night",
+        "tonight"
+      ],
+      "noon": [
+        "noon",
+        "midday"
+      ],
+      "midnight": [
+        "midnight"
+      ]
+    },
+    "duration_names": {
+      "hour": [
+        "hour",
+        "hours"
+      ],
+      "minute": [
+        "minute",
+        "minutes"
+      ],
+      "second": [
+        "second",
+        "seconds"
+      ]
+    }
+  },
+  "speech": {
+    "list_and": " and ",
+    "duration_and": " and ",
+    "when_today": "today at {time}",
+    "when_tomorrow": "tomorrow at {time}",
+    "when_day": "on {date} at {time}"
+  }
+}

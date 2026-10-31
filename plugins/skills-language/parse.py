@@ -7,27 +7,12 @@ such as «llamar a mamá») and a plain version (lowercase, no accents) to compa
 
 import re
 import time
-import unicodedata
 from dataclasses import dataclass
 
 import i18n
 
 
-@dataclass
-class Token:
-    word: str  # as said: «mamá»
-    plain: str  # to compare: «mama»
-
-
-def plain(text: str) -> str:
-    text = unicodedata.normalize("NFKD", text.lower())
-    return "".join(c for c in text if not unicodedata.combining(c))
-
-
-def tokens(text: str) -> list[Token]:
-    """Words, numbers (with decimals: «3,5», «3.5») and «%»."""
-    found = re.finditer(r"\d+(?:[.,]\d+)?|%|[^\W\d_]+", text)
-    return [Token(m.group(), plain(m.group()).replace(",", ".")) for m in found]
+from skills.tokens import Token, plain, tokens  # noqa: F401 — the core's, here too
 
 
 def vocabulary() -> dict:

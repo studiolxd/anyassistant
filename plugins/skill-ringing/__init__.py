@@ -7,8 +7,10 @@ import time
 
 import i18n
 import settings
-from skills import Skill, skill, spoken_duration, timers
-from skills.parse import duration, tokens
+from plugins.skill_alarms import timers
+from plugins.skills_language import spoken_duration
+from skills import Skill, skill
+from plugins.skills_language.parse import duration, tokens
 from text import words
 
 log = logging.getLogger("skills")

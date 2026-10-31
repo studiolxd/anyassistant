@@ -44,7 +44,7 @@ from pathlib import Path
 import paths
 
 log = logging.getLogger("kernel")
-KINDS = ("brain", "stt", "wake", "llm", "tts", "vad", "skill", "feature")
+KINDS = ("brain", "stt", "wake", "llm", "tts", "vad", "skill", "feature", "library")
 
 
 @dataclass

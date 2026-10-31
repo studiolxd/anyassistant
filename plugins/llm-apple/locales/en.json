@@ -1,5 +1,6 @@
 {
   "speech": {
-    "guardrail": "I'd rather not answer that."
+    "guardrail": "I'd rather not answer that.",
+    "llm_failed": "Sorry, I couldn't answer."
   }
 }

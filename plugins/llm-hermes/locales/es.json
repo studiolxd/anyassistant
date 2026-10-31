@@ -6,6 +6,16 @@
     ]
   },
   "speech": {
-    "hermes_down": "No puedo hablar con Hermes: ¿está en marcha su gateway?"
+    "hermes_down": "No puedo hablar con Hermes: ¿está en marcha su gateway?",
+    "wait": [
+      "Un momento, lo miro.",
+      "Déjame ver.",
+      "Un segundo.",
+      "Lo compruebo.",
+      "Dame un momento.",
+      "Voy a mirarlo."
+    ],
+    "llm_failed": "Perdona, no he podido responder.",
+    "hermes_approval": "Hermes quiere hacer esto: {action}. ¿Lo hago?"
   }
 }

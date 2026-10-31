@@ -1,5 +1,8 @@
 {
   "name": "Lists and notes",
   "description": "«Añade leche a la lista de la compra», «¿qué hay en la lista?», «toma nota de que…»: without the LLM.",
-  "kind": "skill"
+  "kind": "skill",
+  "requires": [
+    "skills-language"
+  ]
 }

@@ -4,5 +4,14 @@
       "Parakeet",
       "Parakeet TDT v3 de NVIDIA en MLX: reconocimiento de voz multilingüe, rápido con frases cortas."
     ]
+  },
+  "stt": {
+    "letters": "áéíóúüñ",
+    "fallback_hallucinations": [
+      "gracias",
+      "muchas gracias",
+      "gracias por ver",
+      "subtitulos realizados por la comunidad de amara org"
+    ]
   }
 }

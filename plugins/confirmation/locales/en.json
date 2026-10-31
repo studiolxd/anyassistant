@@ -7,6 +7,18 @@
       "cancel",
       "stop",
       "dont"
+    ],
+    "yes": [
+      "yes",
+      "yeah",
+      "yep",
+      "sure",
+      "ok",
+      "okay",
+      "confirm",
+      "confirmed",
+      "correct",
+      "absolutely"
     ]
   }
 }

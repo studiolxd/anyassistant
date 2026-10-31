@@ -21,8 +21,8 @@ import options
 import settings
 import skills
 from options import Option
-from skills import parse
-from skills.parse import tokens, vocabulary, words
+from plugins.skills_language import parse
+from plugins.skills_language.parse import tokens, vocabulary, words
 
 log = logging.getLogger("skills")
 _model = None

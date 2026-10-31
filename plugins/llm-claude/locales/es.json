@@ -7,6 +7,15 @@
   },
   "speech": {
     "connection_cut": "Perdona, se me ha cortado la conexión con Claude.",
-    "no_login": "No tengo sesión en Claude: hay que ejecutar barra login en Claude Code."
+    "no_login": "No tengo sesión en Claude: hay que ejecutar barra login en Claude Code.",
+    "wait": [
+      "Un momento, lo miro.",
+      "Déjame ver.",
+      "Un segundo.",
+      "Lo compruebo.",
+      "Dame un momento.",
+      "Voy a mirarlo."
+    ],
+    "llm_failed": "Perdona, no he podido responder."
   }
 }

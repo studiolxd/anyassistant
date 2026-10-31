@@ -1,5 +1,9 @@
 {
   "commands": {
-    "not_sleep": []
+    "not_sleep": [],
+    "sleep": [
+      "sleep",
+      "goodnight"
+    ]
   }
 }

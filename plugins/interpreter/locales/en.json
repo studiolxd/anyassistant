@@ -1,0 +1,12 @@
+{
+  "skills": {
+    "interpreter_example": {
+      "said": "remind me in a bit, like 40 minutes, to take the laundry out",
+      "answer": {
+        "skill": "reminder",
+        "seconds": 2400,
+        "text": "take the laundry out"
+      }
+    }
+  }
+}

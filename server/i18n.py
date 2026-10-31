@@ -84,7 +84,11 @@ class Locale:
         return text.format(**values)
 
     def list(self, key: str) -> list[str]:
-        return list(self._get(key))
+        """A list of words; empty if no plugin brings it (one that reads another's words: «stop»)."""
+        try:
+            return list(self._get(key))
+        except (KeyError, IndexError, TypeError):
+            return []
 
     @property
     def name(self) -> str:

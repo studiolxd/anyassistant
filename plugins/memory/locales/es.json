@@ -23,5 +23,29 @@
       "explicit": "Solo lo que le pida",
       "auto": "También lo que aprenda"
     }
+  },
+  "memory_example": {
+    "known": [
+      "Se llama Ana.",
+      "Vive en Madrid."
+    ],
+    "said": "Llámame Anna, con dos enes. Ahora vivo en Sevilla y tengo una gata que se llama Mía.",
+    "answer": {
+      "update": [
+        {
+          "number": 1,
+          "fact": "Se llama Anna, con dos enes."
+        },
+        {
+          "number": 2,
+          "fact": "Vive en Sevilla."
+        }
+      ],
+      "remove": [],
+      "add": [
+        "Tiene una gata que se llama Mía."
+      ],
+      "summary": "Corrigió su nombre, se mudó a Sevilla y habló de su gata."
+    }
   }
 }

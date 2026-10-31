@@ -5,5 +5,29 @@
       "explicit": "Only what I ask",
       "auto": "Also what it learns"
     }
+  },
+  "memory_example": {
+    "known": [
+      "Is called Ana.",
+      "Lives in Madrid."
+    ],
+    "said": "Call me Anna, with two n's. I live in Seville now and I have a cat called Mia.",
+    "answer": {
+      "update": [
+        {
+          "number": 1,
+          "fact": "Is called Anna, with two n's."
+        },
+        {
+          "number": 2,
+          "fact": "Lives in Seville."
+        }
+      ],
+      "remove": [],
+      "add": [
+        "Has a cat called Mia."
+      ],
+      "summary": "Corrected their name, moved to Seville and mentioned their cat."
+    }
   }
 }

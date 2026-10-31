@@ -1,6 +1,7 @@
 {
   "speech": {
-    "reloaded": "Done, I've reloaded the tools."
+    "reloaded": "Done, I've reloaded the tools.",
+    "restarting": "Restarting. I'll be back in a few seconds."
   },
   "commands": {
     "reload": [

@@ -4,5 +4,18 @@
       "Parar",
       "«Para», «calla»: deja de hablar o de pensar, o para una alarma."
     ]
+  },
+  "commands": {
+    "stop": [
+      "para",
+      "parate",
+      "calla",
+      "callate",
+      "basta",
+      "silencio",
+      "espera",
+      "chitón",
+      "chiton"
+    ]
   }
 }

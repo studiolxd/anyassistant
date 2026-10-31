@@ -1,5 +1,8 @@
 {
   "name": "Unit conversions",
   "description": "Length, mass, volume and temperature.",
-  "kind": "skill"
+  "kind": "skill",
+  "requires": [
+    "skills-language"
+  ]
 }

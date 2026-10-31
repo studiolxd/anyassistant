@@ -1,9 +1,7 @@
 """Not every sentence is for it: a short follow-up window, and the LLM may stay quiet."""
 
 import asyncio
-import time
 
-import pytest
 
 import llm
 import settings

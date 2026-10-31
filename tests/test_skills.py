@@ -11,12 +11,13 @@ import settings
 import skills
 import tools
 from conftest import load_script
-from skills import timers
+from plugins.skill_alarms import timers
+import plugins.skills_language as language
 
 interpreter = kernel.load("interpreter")
 from plugins.skill_arithmetic.calc import calculate
-from skills import spoken_number as spoken
-from skills.parse import Clock, clock, duration, resolve, tokens
+from plugins.skills_language import spoken_number as spoken
+from plugins.skills_language.parse import Clock, clock, duration, resolve, tokens
 from plugins.skill_conversion.units import convert
 
 
@@ -205,10 +206,10 @@ def test_tools_without_confirmation(store, es):
 
 
 def test_spoken_durations(es):
-    assert skills.spoken_duration(90) == "1 minuto y 30 segundos"
-    assert skills.spoken_duration(3720) == "1 hora y 2 minutos"
+    assert language.spoken_duration(90) == "1 minuto y 30 segundos"
+    assert language.spoken_duration(3720) == "1 hora y 2 minutos"
     i18n.use("en")
-    assert skills.spoken_duration(7205) == "2 hours"
+    assert language.spoken_duration(7205) == "2 hours"
 
 
 def test_only_meant_words_stop_the_alarm(es):

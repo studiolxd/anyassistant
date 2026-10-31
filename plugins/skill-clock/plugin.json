@@ -1,5 +1,8 @@
 {
   "name": "Time and date",
   "description": "«¿Qué hora es?», «¿qué día es hoy?».",
-  "kind": "skill"
+  "kind": "skill",
+  "requires": [
+    "skills-language"
+  ]
 }
