@@ -1,9 +1,9 @@
 """Jarvis's own tools, for the LLM to manage itself (served over MCP by mcp_server.py).
 
 Only what it may touch: face, voice, name, language, memory, the camera on the
-screen, reloading its tools and restarting. Never the permissions, the
-confirmation times, the port, the LLM or your instructions, so it cannot lift
-its own safeguards. Tools that change something go through your «yes» like any
+screen, which LLM it uses (among the installed ones), reloading its tools and
+restarting. Never the permissions, the confirmation times, the port or your
+instructions, so it cannot lift its own safeguards. Tools that change something go through your «yes» like any
 other (bin/jarvis-confirm), except showing the camera, which only changes the
 screen.
 
@@ -13,8 +13,11 @@ restarting also wait for the answer to end: doing it in the middle would cut
 off the LLM while it is still using the tool.
 """
 
+import platform
 import re
+import shutil
 import subprocess
+import urllib.request
 
 import i18n
 import memory
@@ -88,6 +91,56 @@ def set_language(language: str) -> str:
     return "Saved: it restarts in that language when you finish answering."
 
 
+# How each LLM is said aloud (and how speech recognition tends to write it).
+LLM_NAMES = {"claude": ["claude", "claud", "clod", "cloud"], "apple": ["apple", "apel", "manzana"],
+             "hermes": ["hermes"]}
+
+
+def llm_ready(name: str) -> str | None:
+    """None if the LLM can be used on this Mac; otherwise why not."""
+    if name == "claude":
+        return None if shutil.which("claude") else "Claude Code isn't installed"
+    if name == "apple":
+        major = int((platform.mac_ver()[0] or "0").split(".")[0])
+        return None if major >= 26 else "it needs macOS 26 with Apple Intelligence"
+    if name == "hermes":
+        from llm.hermes import URL
+
+        try:
+            urllib.request.urlopen(URL + "/health", timeout=1)
+            return None
+        except OSError:
+            return "Hermes's gateway isn't running"
+    return None
+
+
+def get_llms() -> str:
+    import llm
+
+    lines = []
+    for name in llm.available():
+        why = llm_ready(name)
+        current = name == settings.get("llm")
+        model = settings.get("llm_model") or "its default model"
+        lines.append(f"{name}: " + ("in use, " + model + "; " if current else "")
+                     + ("available" if why is None else f"not available ({why})"))
+    return "\n".join(lines)
+
+
+def set_llm(llm: str, model: str = "") -> str:
+    import llm as plugins
+
+    if llm not in plugins.available():
+        raise ToolError(f"installed LLMs: {', '.join(plugins.available())}")
+    why = llm_ready(llm)
+    if why:
+        raise ToolError(f"{llm} can't be used: {why}")
+    if model and not re.fullmatch(r"[\w.\-\[\]:]+", model):
+        raise ToolError("that isn't a model name")
+    settings.save(llm=llm, llm_model=model or None)
+    return f"Saved: it restarts with {llm} when you finish answering."
+
+
 def _memory_on():
     if memory.mode() == "off":
         raise ToolError("memory is off («memory» in settings.json)")
@@ -106,7 +159,7 @@ def remember(fact: str) -> str:
     _memory_on()
     data = memory.load()
     if fact.strip() and fact.strip() not in data["facts"]:
-        data["facts"] = (data["facts"] + [fact.strip()])[-memory.MAX_FACTS:]
+        data["facts"] = (data["facts"] + [fact.strip()])[-memory.HARD_LIMIT:]  # compacted when it sleeps
         memory.save(data)
     return "Remembered."
 
@@ -175,6 +228,12 @@ TOOLS = {
     "forget": (forget, "Forget a fact (its number from get_memory).", _schema(number={"type": "integer"})),
     "camera": (camera, "Show (true) or hide (false) the device's camera live on its screen.",
                _schema(on={"type": "boolean"})),
+    "get_llms": (get_llms, "The LLMs Jarvis can use, which one is in use and whether each is available.", _schema()),
+    "set_llm": (set_llm, "Switch to another LLM (claude, apple, hermes), optionally with a model (for Claude: "
+                "sonnet, opus, haiku…; empty for the default). Apple's can't use tools: to come back, the user "
+                "says «use Claude».", {"type": "object", "properties": {"llm": {"type": "string"},
+                                                                      "model": {"type": "string"}},
+                                       "required": ["llm"]}),
     "reload_tools": (reload_tools, "Read the MCP servers and permissions again (after the user authorized one).", _schema()),
     "restart": (restart, "Restart the whole server.", _schema()),
 }

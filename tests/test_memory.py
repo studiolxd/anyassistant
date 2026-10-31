@@ -53,12 +53,6 @@ def test_apply_review(mem):
     assert data["conversations"][0]["summary"] == "Moved house."
 
 
-def test_facts_are_capped(mem, monkeypatch):
-    monkeypatch.setattr(memory, "MAX_FACTS", 3)
-    memory.apply_review(json.dumps({"add": ["a", "b", "c", "d"], "remove": [], "summary": ""}))
-    assert json.loads(mem.read_text())["facts"] == ["b", "c", "d"]
-
-
 class FakeLLM:
     def __init__(self, answer):
         self.answer, self.prompts = answer, []
@@ -96,3 +90,32 @@ def test_the_review_is_told_to_prefer_updating(mem):
     prompt = memory.review_prompt([("user", "I'm Suvi, with a v.")], ["Is called Subi."])
     assert prompt.index("- update:") < prompt.index("- remove:") < prompt.index("- add:")
     assert "1. Is called Subi." in prompt
+
+
+def test_too_many_facts_are_compacted_by_the_llm(mem, monkeypatch):
+    monkeypatch.setattr(memory, "MAX_FACTS", 3)
+    mem.write_text(json.dumps({"facts": ["Has a dog.", "The dog is called Toby.", "Lives in Madrid.", "Likes jazz."]}))
+    llm = FakeLLM('["Has a dog called Toby.", "Lives in Madrid.", "Likes jazz."]')
+    asyncio.run(memory.compact(llm))
+    assert json.loads(mem.read_text())["facts"] == ["Has a dog called Toby.", "Lives in Madrid.", "Likes jazz."]
+    assert "at most 35" in llm.prompts[0]
+
+
+def test_if_it_cant_compact_the_oldest_go(mem, monkeypatch):
+    monkeypatch.setattr(memory, "MAX_FACTS", 2)
+    mem.write_text(json.dumps({"facts": ["a", "b", "c"]}))
+    asyncio.run(memory.compact(FakeLLM("I'd rather not.")))
+    assert json.loads(mem.read_text())["facts"] == ["b", "c"]
+
+
+def test_no_compaction_below_the_limit(mem):
+    mem.write_text(json.dumps({"facts": ["a"]}))
+    llm = FakeLLM("[]")
+    asyncio.run(memory.compact(llm))
+    assert not llm.prompts
+
+
+def test_small_models_get_the_end_of_the_conversation(mem):
+    transcript = [("user", "x" * 100), ("user", "the last thing I said")]
+    prompt = memory.review_prompt(transcript, [], limit=40)
+    assert "the last thing I said" in prompt and "x" * 100 not in prompt

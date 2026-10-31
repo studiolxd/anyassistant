@@ -34,7 +34,10 @@
     "language_changing": "Vale, cambio a {language}. Vuelvo en unos segundos.",
     "language_same": "Ya estoy hablando en {language}.",
     "camera_on": "Cámara activada.",
-    "camera_off": "Cámara apagada."
+    "camera_off": "Cámara apagada.",
+    "llm_changing": "Vale, cambio a {llm}. Vuelvo en unos segundos.",
+    "llm_same": "Ya estoy usando {llm}.",
+    "llm_unavailable": "{llm} no está disponible en este Mac."
   },
   "commands": {
     "sleep": [
@@ -107,6 +110,18 @@
       "reinicia",
       "reiniciar",
       "reinicio"
+    ],
+    "switch": [
+      "usa",
+      "cambia",
+      "cambiate",
+      "pasa",
+      "pasate"
+    ],
+    "llm_words": [
+      "modelo",
+      "llm",
+      "favor"
     ],
     "language": [
       "habla",
@@ -227,5 +242,29 @@
     "pair_wrong": "Código incorrecto o caducado",
     "pair_needed": "Este aparato no está emparejado: recarga la página",
     "looking": "Mirando…"
+  },
+  "memory_example": {
+    "known": [
+      "Se llama Ana.",
+      "Vive en Madrid."
+    ],
+    "said": "Llámame Anna, con dos enes. Ahora vivo en Sevilla y tengo una gata que se llama Mía.",
+    "answer": {
+      "update": [
+        {
+          "number": 1,
+          "fact": "Se llama Anna, con dos enes."
+        },
+        {
+          "number": 2,
+          "fact": "Vive en Sevilla."
+        }
+      ],
+      "remove": [],
+      "add": [
+        "Tiene una gata que se llama Mía."
+      ],
+      "summary": "Corrigió su nombre, se mudó a Sevilla y habló de su gata."
+    }
   }
 }

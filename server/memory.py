@@ -25,7 +25,9 @@ import i18n
 import settings
 
 PATH = Path(os.environ.get("JARVIS_MEMORY") or Path(__file__).resolve().parent.parent / "memory.json")
-MAX_FACTS = 50
+MAX_FACTS = 50  # beyond this, the LLM compacts them (COMPACT_TO); the oldest go only if it can't
+COMPACT_TO = 35
+HARD_LIMIT = 2 * MAX_FACTS  # never more in the instructions, even before compacting
 MAX_CONVERSATIONS = 10
 CONVERSATION_DAYS = 30
 log = logging.getLogger("memory")
@@ -49,17 +51,30 @@ In this order of preference:
 - update: a known fact the user changed or corrected («I'm called Suvi, with a v»
   for «Is called Subi»): its number and the new text. Never add a second fact
   about the same thing (name, pet, place, preference…) and never remove + add it.
-- remove: numbers of known facts that are no longer true and have no replacement.
+- remove: numbers of known facts that are no longer true and have no replacement
+  (never for a fact the user corrected or changed: that is an update).
 - add: only new durable facts about the user (preferences, people, places, work, tools,
   routines), short, in {language}. Not one-off requests, not what was looked up,
   not the date, time or weather. Nothing already known.
 - summary: what the conversation was about, in one short line in {language}.
+
+Facts are always in the third person, about the user, in {language}. For example,
+with known facts {example_known} and the user saying «{example_said}», the answer is:
+{example_answer}
 
 Known facts:
 {facts}
 
 Conversation:
 {transcript}"""
+
+COMPACT = """These are the facts a voice assistant remembers about its user. They are too
+many: rewrite them as at most {target} facts, in {language}. Merge duplicates and
+related ones («Has a dog.» + «The dog is called Toby.» → «Has a dog called Toby.»),
+keep everything specific and durable (names, dates, preferences), and drop only
+what is obsolete or trivial. Return only a JSON list of strings, nothing else.
+
+{facts}"""
 
 
 def mode() -> str:
@@ -92,10 +107,17 @@ def instructions() -> str:
     return INSTRUCTIONS.format(facts=facts, conversations=conversations)
 
 
-def review_prompt(transcript: list[tuple[str, str]], facts: list[str]) -> str:
+def review_prompt(transcript: list[tuple[str, str]], facts: list[str], limit: int = 40000) -> str:
+    """The review's prompt; with a small model (limit, in characters), only the end of the conversation."""
     lines = "\n".join(f"{'USER' if who == 'user' else 'ASSISTANT'}: {text}" for who, text in transcript)
+    lines = lines[-limit:]
     known = "\n".join(f"{i}. {f}" for i, f in enumerate(facts, 1)) or "(none)"
-    return REVIEW.format(language=i18n.L.name, facts=known, transcript=lines)
+    example = i18n.L.data["memory_example"]  # in the language: a small model copies it
+    return REVIEW.format(
+        language=i18n.L.name, facts=known, transcript=lines,
+        example_known=" and ".join(f"«{i}. {f}»" for i, f in enumerate(example["known"], 1)),
+        example_said=example["said"], example_answer=json.dumps(example["answer"], ensure_ascii=False),
+    )
 
 
 def apply_review(answer: str) -> dict:
@@ -116,11 +138,45 @@ def apply_review(answer: str) -> dict:
     remove = {int(n) for n in review.get("remove", []) if str(n).isdigit()}
     data["facts"] = [f for i, f in enumerate(data["facts"], 1) if i not in remove]
     added = [f.strip() for f in review.get("add", []) if isinstance(f, str) and f.strip() and f.strip() not in data["facts"]]
-    data["facts"] = (data["facts"] + added)[-MAX_FACTS:]
+    data["facts"] = (data["facts"] + added)[-HARD_LIMIT:]
     if review.get("summary"):
         data["conversations"] = (data["conversations"] + [{"at": time.time(), "summary": review["summary"]}])[-MAX_CONVERSATIONS:]
     save(data)
     return {"updated": updated, "added": len(added), "removed": len(remove)}
+
+
+def apply_compaction(answer: str):
+    """The LLM's compacted list replaces the facts, if it is a sensible one."""
+    match = re.search(r"\[.*\]", answer, re.S)
+    facts = json.loads(match.group()) if match else None
+    if not (isinstance(facts, list) and 0 < len(facts) <= MAX_FACTS and all(isinstance(f, str) for f in facts)):
+        raise ValueError(f"not a usable list: {answer[:200]!r}")
+    data = load()
+    before = len(data["facts"])
+    data["facts"] = [f.strip() for f in facts if f.strip()]
+    save(data)
+    log.info("memory compacted: %d facts → %d", before, len(data["facts"]))
+
+
+async def compact(llm):
+    """Too many facts: the LLM merges and shortens them; if it can't, the oldest go."""
+    facts = load()["facts"]
+    if mode() == "off" or len(facts) <= MAX_FACTS:
+        return
+    try:
+        numbered = "\n".join(f"- {f}" for f in facts)
+        apply_compaction(await llm.complete(COMPACT.format(target=COMPACT_TO, language=i18n.L.name, facts=numbered)))
+    except Exception as e:  # NotImplementedError too: then, the oldest go
+        log.warning("couldn't compact the memory (%r): keeping the newest %d facts", e, MAX_FACTS)
+        data = load()
+        data["facts"] = data["facts"][-MAX_FACTS:]
+        save(data)
+
+
+async def after_conversation(llm, transcript: list[tuple[str, str]]):
+    """While it sleeps: review the conversation (auto) and compact if there are too many facts."""
+    await review(llm, transcript)
+    await compact(llm)
 
 
 async def review(llm, transcript: list[tuple[str, str]]):
@@ -128,7 +184,8 @@ async def review(llm, transcript: list[tuple[str, str]]):
     if mode() != "auto" or not any(who == "user" for who, _ in transcript):
         return
     try:
-        answer = await llm.complete(review_prompt(transcript, load()["facts"]))
+        prompt = review_prompt(transcript, load()["facts"], getattr(llm, "context_chars", 40000))
+        answer = await llm.complete(prompt)
         changes = apply_review(answer)
         log.info("conversation reviewed: %d facts updated, %d added, %d removed",
                  changes["updated"], changes["added"], changes["removed"])

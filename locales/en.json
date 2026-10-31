@@ -34,7 +34,10 @@
     "language_changing": "Okay, switching to {language}. I'll be back in a few seconds.",
     "language_same": "I'm already speaking {language}.",
     "camera_on": "Camera on.",
-    "camera_off": "Camera off."
+    "camera_off": "Camera off.",
+    "llm_changing": "Okay, switching to {llm}. I'll be back in a few seconds.",
+    "llm_same": "I'm already using {llm}.",
+    "llm_unavailable": "{llm} isn't available on this Mac."
   },
   "commands": {
     "sleep": [
@@ -85,6 +88,16 @@
     "restart": [
       "restart",
       "reboot"
+    ],
+    "switch": [
+      "use",
+      "switch",
+      "change"
+    ],
+    "llm_words": [
+      "model",
+      "llm",
+      "please"
     ],
     "language": [
       "speak",
@@ -179,5 +192,29 @@
     "pair_wrong": "Wrong or expired code",
     "pair_needed": "This device isn't paired: reload the page",
     "looking": "Looking…"
+  },
+  "memory_example": {
+    "known": [
+      "Is called Ana.",
+      "Lives in Madrid."
+    ],
+    "said": "Call me Anna, with two n's. I live in Seville now and I have a cat called Mia.",
+    "answer": {
+      "update": [
+        {
+          "number": 1,
+          "fact": "Is called Anna, with two n's."
+        },
+        {
+          "number": 2,
+          "fact": "Lives in Seville."
+        }
+      ],
+      "remove": [],
+      "add": [
+        "Has a cat called Mia."
+      ],
+      "summary": "Corrected their name, moved to Seville and mentioned their cat."
+    }
   }
 }

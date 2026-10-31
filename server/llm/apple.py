@@ -56,6 +56,30 @@ class Apple(LLM):
             await self._send({"type": "new", "instructions": instructions() + DATE_TIME_TOOL})
             await self._read()
 
+    # Its context is ~4,000 tokens: the memory review only gets the end of a long conversation.
+    context_chars = 6000
+
+    async def complete(self, prompt: str) -> str:
+        """One answer outside the conversation, in a session of its own (the next «new» replaces it)."""
+        async with self._turn:
+            await self._start()
+            await self._send({"type": "new", "instructions": "Do exactly what is asked. Answer only with what is asked."})
+            await self._read()
+            await self._send({"type": "ask", "text": prompt, "now": i18n.L.now_spoken()})
+            text = ""
+            while True:
+                message = await self._read()
+                if "delta" in message:
+                    text += message["delta"]
+                elif "error" in message:
+                    raise RuntimeError(message["error"])
+                else:
+                    return text
+
+    async def prepare(self):
+        """After a review, its session is the review's: a new conversation for the next one."""
+        await self.new()
+
     async def answer(self, text: str, image: bytes | None = None):  # it can't see: no image
         async with self._turn:
             await self._start()

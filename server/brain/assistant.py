@@ -67,6 +67,20 @@ def camera_command(text: str) -> str | None:
     return None
 
 
+def llm_command(text: str) -> str | None:
+    """«Use Claude», «Cambia a Hermes» → "claude", "hermes". A command, not for the LLM:
+    Apple's model has no tools, so this is the way back from it."""
+    heard = [w for w in words(text) if w not in words(settings.get("name", "Jarvis"))]
+    if not 0 < len(heard) <= 5 or heard[0] not in i18n.L.list("commands.switch"):
+        return None
+    rest = heard[1:]
+    for name, spoken in tools.LLM_NAMES.items():
+        if any(w in spoken for w in rest) and all(w in spoken or len(w) <= 3 or w in i18n.L.list("commands.llm_words")
+                                                 for w in rest):
+            return name
+    return None
+
+
 def language_command(text: str) -> str | None:
     """«Speak Spanish», «Háblame en inglés» → "es", "en". Understood in any language.
 
@@ -186,7 +200,7 @@ class Assistant(Transcriber):
 
     async def _remember(self, transcript):
         """While it sleeps: what to keep from the conversation, and ready for the next one."""
-        await memory.review(self.llm, transcript)
+        await memory.after_conversation(self.llm, transcript)
         await self.llm.prepare()
 
     def _heard(self, text: str, timings: dict):
@@ -197,9 +211,9 @@ class Assistant(Transcriber):
             # It was the answer to an approval the LLM itself asked for (Hermes): not a new message.
             Transcriber._heard(self, text, timings)
             return
-        language = language_command(text)
-        camera = camera_command(text)
-        command = f"language:{language}" if language else f"camera:{camera}" if camera else system_command(text)
+        language, camera, model = language_command(text), camera_command(text), llm_command(text)
+        command = (f"language:{language}" if language else f"camera:{camera}" if camera
+                   else f"llm:{model}" if model else system_command(text))
         if command:
             Transcriber._heard(self, text, timings)  # shown on screen, but not sent to the LLM
             asyncio.ensure_future(self._command(command))
@@ -218,6 +232,18 @@ class Assistant(Transcriber):
             log.info("camera on the screen: %s", "on" if on else "off")
             self.send({"type": "camera", "on": on})
             self._say(i18n.L("speech.camera_on" if on else "speech.camera_off"))
+        elif command.startswith("llm:"):
+            name = command.split(":")[1]
+            why = tools.llm_ready(name)
+            if name == settings.get("llm"):
+                self._say(i18n.L("speech.llm_same", llm=name.capitalize()))
+            elif why:
+                log.info("can't switch to %s: %s", name, why)
+                self._say(i18n.L("speech.llm_unavailable", llm=name.capitalize()))
+            else:
+                log.info("switching to %s", name)
+                settings.save(llm=name, llm_model=None)
+                await self._restart(i18n.L("speech.llm_changing", llm=name.capitalize()))
         elif command.startswith("language:"):
             code = command.split(":")[1]
             name = i18n.L.data["languages"].get(code, code)

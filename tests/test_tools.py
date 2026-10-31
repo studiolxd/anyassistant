@@ -51,7 +51,7 @@ def test_refusals(env, name, arguments):
 
 
 def test_nothing_to_lift_its_safeguards():
-    assert not {n for n in tools.TOOLS if any(w in n for w in ("permission", "confirm", "llm", "port", "instruction"))}
+    assert not {n for n in tools.TOOLS if any(w in n for w in ("permission", "confirm", "port", "instruction"))}
 
 
 def test_memory(env):
@@ -118,3 +118,21 @@ def test_confirmation_for_changes_but_not_for_the_camera():
 
 def test_remember_points_to_update():
     assert "use update instead" in tools.TOOLS["remember"][1]
+
+
+def test_switching_llm(env, monkeypatch):
+    monkeypatch.setattr(tools, "llm_ready", lambda name: None if name != "hermes" else "gateway down")
+    tools.call("set_llm", {"llm": "apple"})
+    assert saved(env) == {"llm": "apple", "llm_model": None}
+    tools.call("set_llm", {"llm": "claude", "model": "opus"})
+    assert saved(env)["llm_model"] == "opus"
+    for bad in ({"llm": "gpt"}, {"llm": "hermes"}, {"llm": "claude", "model": "rm -rf /"}):
+        with pytest.raises(tools.ToolError):
+            tools.call("set_llm", bad)
+    assert "hermes: not available (gateway down)" in tools.call("get_llms", {})
+
+
+def test_llm_switch_needs_your_yes():
+    hook = load_script("jarvis-confirm")
+    assert hook.describe("mcp__jarvis__get_llms", {}) is None
+    assert hook.describe("mcp__jarvis__set_llm", {"llm": "hermes"})

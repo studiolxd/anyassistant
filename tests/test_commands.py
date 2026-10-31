@@ -80,3 +80,23 @@ def test_camera_spanish(es, text, expected):
     from brain.assistant import camera_command
 
     assert camera_command(text) == expected
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("Use Claude", "claude"), ("Switch to Hermes.", "hermes"), ("Jarvis, use the Apple model", "apple"),
+    ("Use cloud", "claude"), ("Use the oven timer", None), ("What does Claude think?", None),
+])
+def test_llm_english(en, text, expected):
+    from brain.assistant import llm_command
+
+    assert llm_command(text) == expected
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("Usa Claude", "claude"), ("Cambia a Hermes", "hermes"), ("Pásate al modelo de Apple", "apple"),
+    ("Cambia la cara", None), ("¿Qué opina Claude?", None),
+])
+def test_llm_spanish(es, text, expected):
+    from brain.assistant import llm_command
+
+    assert llm_command(text) == expected

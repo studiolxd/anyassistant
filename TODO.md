@@ -4,8 +4,6 @@
 
 - [ ] **Eyes, second step**: a high-resolution photo when asked to read (the video
   is 320×240 on small devices); with Hermes too if its model takes images.
-- [ ] **Memory, next steps**: compact the facts with the LLM instead of dropping the
-  oldest; review with Apple's model too (now only Claude).
 - [ ] **The server as a packaged app** (the Mac first): install, start with the
   system, settings and pairing from its own window. What launchd would have done
   belongs to its installer.
@@ -23,6 +21,9 @@
 
 ## Done
 
+- [x] **Memory, more**: compacted by the LLM beyond 50 facts; reviewed by Apple's model
+  too (it misses some new facts; Claude doesn't); corrections update the fact.
+- [x] **Choosing the LLM**: `get_llms`/`set_llm` and «use Claude» / «cambia a Hermes».
 - [x] **Memory**: `"memory": "explicit"|"auto"`; `memory.json`, a review
   of each conversation when it falls asleep (auto).
 - [x] **Eyes (Phase 4)**: `"eyes": true`; with Claude, by words («what do you see?»,

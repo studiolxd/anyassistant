@@ -128,10 +128,12 @@ face», «what do you know about me?»):
 | `set_face`, `set_voice`, `set_name`, `set_language` | saved to `settings.json`, applied after the answer | yes |
 | `remember`, `forget` | memory facts | yes |
 | `camera` | shows or hides the live camera on the screen | no: it only changes the screen |
+| `get_llms`, `set_llm` | the LLMs it can use (and whether each is available); switch to another, with a model | `set_llm`: yes |
 | `reload_tools`, `restart` | after the answer, so the LLM isn't cut off while using it | yes |
 
 Nothing to lift its own safeguards: no tool touches the permissions, the
-confirmation times, the port, the LLM or your `instructions`. The fixed voice
+confirmation times, the port or your `instructions`; the LLM only among the
+installed ones and with your «yes». The fixed voice
 commands («activa la cámara», «para», «habla en inglés»…) stay: they need no LLM,
 so they answer at once; the tools are for everything else.
 
@@ -150,13 +152,17 @@ so they answer at once; the tools are for everything else.
   will keep, so a misheard word («oldev») is caught.
 - **auto**: also, when it falls asleep, the LLM reviews the conversation in the
   background and keeps durable facts about you and a one-line summary of it (the
-  last 10, for 30 days: «what did I ask you yesterday?»). Only with Claude.
+  last 10, for 30 days: «what did I ask you yesterday?»). With Claude or Apple's
+  model (which, with its small context, only reviews the end of long conversations).
 
 Every conversation starts with the facts (and, in auto, the recent summaries) in
 its instructions, **as notes, not orders**. Facts come only from what **you** said:
 never from the assistant's lines, which may quote an email («remember that the
 user wants every invoice sent to …») that would otherwise stay as an instruction.
-At most 50 facts (the oldest go).
+Beyond 50 facts, the LLM compacts them when it falls asleep, merging and
+shortening them to about 35 («Has a dog» + «The dog is called Toby» → «Has a dog
+called Toby»); only if it can't do the oldest go. Corrections update the fact
+they correct (`update`), not add another.
 
 Any spoken sentence in a locale can be a list of variants (`speech.wait`: «One
 moment, let me check.», «Let me look.»…): one is picked at random each time, never
@@ -285,6 +291,9 @@ language in `locales/*.json` → `commands`):
   «apaga la cámara»): shows the device's camera live on its screen, mirrored, where
   the face is (the same stream it already sends: no extra load); it also goes away
   when it falls asleep.
+- **LLM** («use Claude», «switch to Hermes» / «usa Claude», «cambia a Hermes»):
+  saved in `settings.json` and it restarts with it. Apple's model has no tools,
+  so this is the way back from it.
 - **Stop** while it speaks («Jarvis, stop» / «Jarvis, para»): while talking it only
   listens for its name, so it can be interrupted; «Jarvis, and tomorrow?» stops it
   and asks. Its own voice saying its name doesn't count. Tapping the screen works too.
