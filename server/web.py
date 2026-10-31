@@ -4,13 +4,11 @@ the hooks plugins use (routes, guards like pairing's, /config, startup tasks). m
 import asyncio
 import logging
 import uuid
-from html import escape
 
 from aiohttp import web
 
 import hub
 import i18n
-import settings
 import kernel
 from transport import Session
 
@@ -103,9 +101,8 @@ def contributed(request: web.Request) -> dict:
 
 
 def page(file) -> web.Response:
-    """A plugin's HTML page (a Path), declaring the active language (lang="…") and the name from the start."""
+    """A plugin's HTML page (a Path), declaring the active language (lang="…") from the start."""
     html = file.read_text().replace('<html lang="en"', f'<html lang="{i18n.L.code}"', 1)
-    html = html.replace("<title>Jarvis", f"<title>{escape(settings.get('name', 'Jarvis'))}", 1)
     return web.Response(text=html, content_type="text/html")
 
 

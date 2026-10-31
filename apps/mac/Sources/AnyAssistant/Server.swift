@@ -174,9 +174,11 @@ final class Server: ObservableObject {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Whether the app brings a newer program than the installed one («<commits>-<hash>»: never older).
     func outdated() async -> Bool {
+        func number(_ version: String?) -> Int { Int(version?.split(separator: "-").first ?? "") ?? 0 }
         guard let mine = version(bundled) else { return false }
-        return mine != version(program)
+        return number(mine) > number(version(program))
     }
 
     func update() async {

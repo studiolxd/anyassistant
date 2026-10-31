@@ -9,7 +9,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 OUT="$HERE/build"
 APP="$OUT/AnyAssistant.app"
-VERSION="$(git -C "$ROOT" rev-parse --short HEAD)"
+VERSION="$(git -C "$ROOT" rev-list --count HEAD)-$(git -C "$ROOT" rev-parse --short HEAD)"  # as install.sh
 
 echo "Building the app…"
 (cd "$HERE" && swift build -c release --quiet)

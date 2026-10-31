@@ -174,7 +174,7 @@ def test_page_and_settings(server, tmp_path):
                                                         "show_time": False, "history": 0}))
     url = server("--mode", "parrot", "--lang", "es")
     html = urllib.request.urlopen(url + "/").read().decode()
-    assert 'id="screen"' in html and '<html lang="es"' in html and "<title>Viernes</title>" in html
+    assert 'id="screen"' in html and '<html lang="es"' in html and "<title>AnyAssistant</title>" in html
     assert '<html lang="es"' in urllib.request.urlopen(url + "/monitor").read().decode()
     config = json.load(urllib.request.urlopen(url + "/config"))
     assert config["lang"] == "es" and config["ui"]["start"]

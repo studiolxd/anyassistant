@@ -54,7 +54,8 @@ mkdir -p "$TO" "$DATA" "$CACHE"
 FRESH="$(mktemp -d)"
 if [ -d "$SOURCE/.git" ]; then
   git -C "$SOURCE" archive HEAD | tar -x -C "$FRESH"
-  git -C "$SOURCE" rev-parse --short HEAD > "$FRESH/VERSION"  # which version is installed (the app compares)
+  # Which version is installed, «<commits>-<hash>»: the app updates only to a newer one.
+  echo "$(git -C "$SOURCE" rev-list --count HEAD)-$(git -C "$SOURCE" rev-parse --short HEAD)" > "$FRESH/VERSION"
 else
   (cd "$SOURCE" && tar -cf - --exclude .venv --exclude .build --exclude install.env .) | tar -x -C "$FRESH"
 fi

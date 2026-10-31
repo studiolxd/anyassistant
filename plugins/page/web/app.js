@@ -49,7 +49,6 @@ function loadTexts() {
     for (key in data.skin.ui) T[key] = data.skin.ui[key];  // the skin may say it its way
     settings = data;
     document.documentElement.lang = data.lang;
-    document.title = data.name;
     Skin.language(data.lang);
     if (Skin.apply(data.skin)) redraw();
     showScreen(data.screen || {});
