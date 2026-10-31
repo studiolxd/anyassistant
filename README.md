@@ -259,6 +259,10 @@ language in `locales/*.json` → `commands`):
   re-authorizing an MCP server). They are also reread on every «Hey Jarvis».
 - **Restart** («restart» / «reiníciate»): restarts the whole server (e.g. after
   changing the code); the tablet reconnects by itself in a few seconds.
+- **Camera** («turn on the camera» / «activa la cámara», «turn off the camera» /
+  «apaga la cámara»): shows the device's camera live on its screen, mirrored, where
+  the face is (the same stream it already sends: no extra load); it also goes away
+  when it falls asleep.
 - **Stop** while it speaks («Jarvis, stop» / «Jarvis, para»): while talking it only
   listens for its name, so it can be interrupted; «Jarvis, and tomorrow?» stops it
   and asks. Its own voice saying its name doesn't count. Tapping the screen works too.
