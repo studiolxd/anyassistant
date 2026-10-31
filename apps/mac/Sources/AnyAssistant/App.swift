@@ -285,7 +285,7 @@ struct PairView: View {
                 .pickerStyle(.segmented).labelsHidden()
             }
             if httpsPort != nil && step == 0 {
-                Text(T("Once per device: open this and install the certificate (on Android: name it, as a CA certificate).")).foregroundStyle(.secondary)
+                Text(T("Once per device: open this to download the certificate. If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»).")).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 let authority = "\(server.url)/https/ca.crt"
                 Text(authority).font(.callout.monospaced()).textSelection(.enabled)

@@ -6,7 +6,9 @@ secure one (microphone, camera) in any browser, without Chrome's flag.
   .local name, its addresses on the network and localhost. When an address changes,
   the certificate is made again (the authority stays: devices keep trusting it).
 - Each device installs the authority once: http://<mac>:8080/https/ca.crt (the Mac app
-  shows its QR). Then https://anyassistant.local:8443 (or the address) is secure.
+  shows its QR). On old Androids, opening it from Chrome often fails («it can't be
+  read»): it is in Downloads, and Settings → Security → Install from storage takes it.
+  Then https://anyassistant.local:8443 (or the address) is secure.
 - It serves the same server over HTTPS on «https_port», besides HTTP (which keeps working).
 """
 
