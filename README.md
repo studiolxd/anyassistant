@@ -158,6 +158,11 @@ never from the assistant's lines, which may quote an email («remember that the
 user wants every invoice sent to …») that would otherwise stay as an instruction.
 At most 50 facts (the oldest go).
 
+Any spoken sentence in a locale can be a list of variants (`speech.wait`: «One
+moment, let me check.», «Let me look.»…): one is picked at random each time, never
+the same twice in a row. The filler is only said when a tool takes more than
+~1.2 s; its own tools and actions waiting for your «yes» answer at once.
+
 The LLM gets English instructions plus «Always reply in {language}».
 
 ## Phase 1 · Parrot

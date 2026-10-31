@@ -1,6 +1,7 @@
 """The Claude plugin keeps a spare process ready, and drops it when it is out of date."""
 
 import asyncio
+import json
 
 import pytest
 
@@ -49,3 +50,52 @@ def test_a_stale_spare_is_dropped(model):
     asyncio.run(model._start())
     assert spawned[1].returncode == 0  # the old spare, closed
     assert model._process.n == 2 and model._spare.n == 3
+
+
+class Stdout:
+    """Claude's stream-json output, each line after its delay."""
+
+    def __init__(self, lines):
+        self.lines = list(lines)
+
+    async def readline(self):
+        if not self.lines:
+            return b""
+        delay, event = self.lines.pop(0)
+        await asyncio.sleep(delay)
+        return (json.dumps(event) + "\n").encode()
+
+
+def tool_use(name):
+    return {"type": "stream_event", "event": {"content_block": {"type": "tool_use", "name": name}}}
+
+
+def text(t):
+    return {"type": "stream_event", "event": {"delta": {"type": "text_delta", "text": t}}}
+
+
+TOOL_RESULT = {"type": "user", "message": {"content": [{"type": "tool_result"}]}}
+END = {"type": "result"}
+
+
+def answer(monkeypatch, lines):
+    monkeypatch.setattr(claude, "FILLER_AFTER", 0.2)
+    model = object.__new__(claude.Claude)
+    model._turn, model.on_tool = asyncio.Lock(), lambda name: None
+    stdin = type("Stdin", (), {"write": lambda self, b: None, "drain": lambda self: asyncio.sleep(0)})()
+    model._process = type("Process", (), {"returncode": None, "stdin": stdin, "stdout": Stdout(lines)})()
+
+    async def collect():
+        return [piece async for piece in model.answer("hi")]
+    return "".join(asyncio.run(collect()))
+
+
+def test_a_slow_tool_gets_a_filler(monkeypatch, es):
+    said = answer(monkeypatch, [(0, tool_use("mcp__holded__list_invoices")), (0.5, TOOL_RESULT), (0, text("Tienes 3.")), (0, END)])
+    assert any(said.startswith(w) for w in es.list("speech.wait")) and said.endswith("Tienes 3.")
+
+
+def test_a_quick_tool_or_a_confirmation_does_not(monkeypatch, es):
+    said = answer(monkeypatch, [(0, tool_use("mcp__jarvis__set_face")), (0.05, TOOL_RESULT),
+                                (0.4, text("¿Cambio la cara?")), (0, END)])
+    assert said == "¿Cambio la cara?"

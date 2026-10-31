@@ -7,11 +7,16 @@ there is a locale for it.
 
 Modules read the active locale at call time (`i18n.L("speech.wait")`), never at
 import time, so it can be chosen after they are loaded.
+
+A sentence can also be a list of variants («One moment, let me check.», «Let me
+look.»…): each time one is picked at random, never the same twice in a row. To
+add or change them, edit the locale; each language has its own.
 """
 
 import json
 import logging
 import os
+import random
 import re
 import subprocess
 import time
@@ -53,6 +58,7 @@ class Locale:
             data = _merge(data, json.loads((LOCALES / f"{code}.json").read_text()))
         self.code = code
         self.data = data
+        self._last = {}  # key → the variant said last time
 
     def _get(self, key: str):
         value = self.data
@@ -61,8 +67,12 @@ class Locale:
         return value
 
     def __call__(self, key: str, **values) -> str:
-        """A text, filled in: L("speech.hermes_approval", action="…")."""
-        return self._get(key).format(**values)
+        """A text, filled in: L("speech.hermes_approval", action="…"); a random variant if it is a list."""
+        text = self._get(key)
+        if isinstance(text, list):
+            choices = [t for t in text if t != self._last.get(key)] or text
+            text = self._last[key] = random.choice(choices)
+        return text.format(**values)
 
     def list(self, key: str) -> list[str]:
         return list(self._get(key))

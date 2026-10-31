@@ -9,8 +9,20 @@
   },
   "speech": {
     "warm_up": "Hello.",
-    "wait": "One moment, let me check.",
-    "goodbye": "See you soon",
+    "wait": [
+      "One moment, let me check.",
+      "Let me look.",
+      "Just a second.",
+      "Checking.",
+      "Give me a moment.",
+      "Let me see."
+    ],
+    "goodbye": [
+      "See you soon",
+      "Bye for now",
+      "Talk to you later",
+      "Until next time"
+    ],
     "reloaded": "Done, I've reloaded the tools.",
     "restarting": "Restarting. I'll be back in a few seconds.",
     "llm_failed": "Sorry, I couldn't answer.",

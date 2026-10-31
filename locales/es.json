@@ -9,8 +9,20 @@
   },
   "speech": {
     "warm_up": "Hola.",
-    "wait": "Un momento, lo miro.",
-    "goodbye": "Hasta la próxima",
+    "wait": [
+      "Un momento, lo miro.",
+      "Déjame ver.",
+      "Un segundo.",
+      "Lo compruebo.",
+      "Dame un momento.",
+      "Voy a mirarlo."
+    ],
+    "goodbye": [
+      "Hasta la próxima",
+      "Hasta luego",
+      "Nos vemos",
+      "Aquí estaré"
+    ],
     "reloaded": "Listo, he recargado las herramientas.",
     "restarting": "Me reinicio. Vuelvo en unos segundos.",
     "llm_failed": "Perdona, no he podido responder.",

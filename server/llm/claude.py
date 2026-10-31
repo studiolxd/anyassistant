@@ -11,6 +11,7 @@ import asyncio
 import base64
 import json
 import logging
+import time
 from pathlib import Path
 
 import i18n
@@ -33,6 +34,8 @@ If a tool says it isn't authorized or that a sign-in is needed, explain how to
 fix it in Jarvis's project (not on claude.ai): Holded and other MCP servers, with
 «claude» in the project folder and /mcp; Google, with bin/gog-authorize. After
 that, telling you to reload the tools is enough."""
+
+FILLER_AFTER = 1.2  # seconds a tool may take before a filler is said
 
 ROOT = Path(__file__).resolve().parents[2]
 # An empty folder as cwd: that way it loads no project's CLAUDE.md.
@@ -161,8 +164,20 @@ class Claude(LLM):
             self._process.stdin.write(json.dumps(message).encode() + b"\n")
             await self._process.stdin.drain()
             said = False
+            # A tool started before any text: if it takes a while, a filler («Let me
+            # look.») so there is no silence; if it ends at once (its own tools, or one
+            # waiting for your «yes»), nothing.
+            filler_at = None
+            reading = None
             while True:
-                line = await self._process.stdout.readline()
+                reading = reading or asyncio.ensure_future(self._process.stdout.readline())
+                wait = None if filler_at is None else max(filler_at - time.time(), 0)
+                done, _ = await asyncio.wait({reading}, timeout=wait)
+                if not done:
+                    filler_at, said = None, True
+                    yield i18n.L("speech.wait") + " "
+                    continue
+                line, reading = reading.result(), None
                 if not line:  # the process died: the next message starts another
                     yield i18n.L("speech.connection_cut")
                     return
@@ -171,7 +186,7 @@ class Claude(LLM):
                     delta = event["event"].get("delta", {})
                     block = event["event"].get("content_block", {})
                     if delta.get("type") == "text_delta":
-                        said = True
+                        said, filler_at = True, None
                         yield delta["text"]
                     elif block.get("type") == "text" and said:
                         # New text after a tool: without the space it stuck to the
@@ -181,10 +196,10 @@ class Claude(LLM):
                         log.info("tool: %s", block.get("name"))
                         self.on_tool(block.get("name"))
                         if not said:
-                            # So there is no silence while the tool runs (asking for it
-                            # in the prompt isn't enough: it almost never does it).
-                            said = True
-                            yield i18n.L("speech.wait") + " "
+                            # Asking for it in the prompt isn't enough: it almost never does it.
+                            filler_at = time.time() + FILLER_AFTER
+                elif event.get("type") == "user":  # a tool's result: it finished
+                    filler_at = None
                 elif event.get("type") == "result":
                     if event.get("is_error"):
                         error = str(event.get("result", ""))

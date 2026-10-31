@@ -87,3 +87,10 @@ def test_spoken_time_english(en):
 ])
 def test_spoken_time_spanish(es, hour, minute, expected):
     assert expected in i18n._spoken_now(i18n.L, moment(hour, minute))
+
+
+def test_variants_are_picked_at_random_without_repeating(es):
+    said = [i18n.L("speech.wait") for _ in range(30)]
+    assert len(set(said)) > 2
+    assert all(a != b for a, b in zip(said, said[1:]))
+    assert all(s in i18n.L.list("speech.wait") for s in said)
