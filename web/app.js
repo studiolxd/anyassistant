@@ -28,14 +28,34 @@ function loadTexts() {
   });
 }
 
-// Loads the texts and then shows the start button (or the demo).
+// Loads the texts and then shows the start button (or the demo, or the pairing form).
 loadTexts().then(function () {
+  if (!settings.paired) return askForCode();
   var start = document.getElementById('start');
   start.textContent = text('start');
   statusLine.textContent = text('connecting');
   if (new URLSearchParams(location.search).has('demo')) demo();
   else start.hidden = false;
 });
+
+// Pairing (settings «pairing»): the code that «bin/jarvis pair» shows on the Mac.
+function askForCode() {
+  var form = document.getElementById('pair');
+  document.getElementById('pair-prompt').textContent = text('pair_prompt');
+  document.getElementById('pair-button').textContent = text('pair_button');
+  form.hidden = false;
+  form.onsubmit = function (ev) {
+    ev.preventDefault();
+    fetch('/pair', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: document.getElementById('pair-code').value })
+    }).then(function (r) {
+      if (r.ok) location.reload();
+      else document.getElementById('pair-error').textContent = text('pair_wrong');
+    });
+  };
+}
 
 document.getElementById('start').onclick = function () {
   this.hidden = true;
@@ -165,6 +185,11 @@ async function connect() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sdp: pc.localDescription.sdp, type: pc.localDescription.type })
     });
+    if (response.status === 403) {  // unpaired meanwhile (bin/jarvis unpair)
+      shutDown = true;
+      fail(text('pair_needed'));
+      return;
+    }
     await pc.setRemoteDescription(await response.json());
   } catch (e) {
     if (current === pc) reconnect();

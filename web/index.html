@@ -6,11 +6,17 @@
   <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <title>Jarvis</title>
-  <link rel="stylesheet" href="/web/page.css?v=17">
-  <link rel="stylesheet" href="/web/faces.css?v=17">
+  <link rel="stylesheet" href="/web/page.css?v=18">
+  <link rel="stylesheet" href="/web/faces.css?v=18">
 </head>
 <body>
   <button id="start" hidden></button>
+  <form id="pair" hidden>
+    <p id="pair-prompt"></p>
+    <input id="pair-code" inputmode="numeric" autocomplete="off" maxlength="6">
+    <button id="pair-button"></button>
+    <p id="pair-error"></p>
+  </form>
   <div id="screen" hidden>
     <div id="clock"><p id="time"></p><p id="date"></p></div>
     <div id="face"></div>
@@ -19,7 +25,7 @@
     <p id="stats"></p>
   </div>
   <audio id="speaker" autoplay></audio>
-  <script src="/web/face.js?v=17"></script>
-  <script src="/web/app.js?v=17"></script>
+  <script src="/web/face.js?v=18"></script>
+  <script src="/web/app.js?v=18"></script>
 </body>
 </html>

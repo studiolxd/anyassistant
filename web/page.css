@@ -31,6 +31,38 @@ html, body {
   border-radius: 12px;
 }
 
+/* Pairing: the code from «bin/jarvis pair». */
+#pair {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  margin: auto;
+  width: 80%;
+  height: 50%;
+  text-align: center;
+  font-size: 1.4em;
+}
+#pair input {
+  width: 6.5em;
+  font-size: 2em;
+  text-align: center;
+  letter-spacing: 0.2em;
+  background: #111;
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 8px;
+}
+#pair button {
+  display: block;
+  margin: 1em auto 0;
+  padding: 0.4em 1.5em;
+  font-size: 1.2em;
+  background: #222;
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 12px;
+}
+#pair-error { color: #d66; }
+
 #screen {
   height: 100%;
   display: flex;

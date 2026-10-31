@@ -129,6 +129,10 @@
     "repeating": "Repeating",
     "error": "Error",
     "monitor_waiting": "Waiting for the phone…",
-    "monitor_connected": "Connected · {frames} frames received"
+    "monitor_connected": "Connected · {frames} frames received",
+    "pair_prompt": "Type the code that «bin/jarvis pair» shows on the Mac",
+    "pair_button": "Pair",
+    "pair_wrong": "Wrong or expired code",
+    "pair_needed": "This device isn't paired: reload the page"
   }
 }

@@ -12,6 +12,7 @@ import socket
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 import wave
 
@@ -47,7 +48,8 @@ def server(tmp_path):
         log = open(tmp_path / "server.log", "w")
         process = subprocess.Popen(
             [sys.executable, ROOT / "server" / "main.py", "--host", "127.0.0.1", "--port", str(port), *options],
-            cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONUNBUFFERED": "1", "JARVIS_SETTINGS": str(tmp_path / "settings.json")},
+            cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONUNBUFFERED": "1", "JARVIS_SETTINGS": str(tmp_path / "settings.json"),
+                 "JARVIS_PAIRED": str(tmp_path / "paired.json")},
         )
         processes.append(process)
         url = f"http://127.0.0.1:{port}"
@@ -218,3 +220,45 @@ def test_interrupt_by_voice(server, tmp_path):
     assert "interrupted by voice" in log.read_text()
     seen = states(messages)
     assert "speaking" in seen and seen[-1] == "awake"
+
+
+def lan_address():
+    """The Mac's address on the network: requests from it don't count as the Mac itself."""
+    for interface in ("en0", "en1"):
+        address = subprocess.run(["ipconfig", "getifaddr", interface], capture_output=True, text=True).stdout.strip()
+        if address:
+            return address
+    pytest.skip("no network address")
+
+
+def test_pairing(server, tmp_path):
+    (tmp_path / "settings.json").write_text(json.dumps({"pairing": True}))
+    local = server("--mode", "parrot", "--host", "0.0.0.0")
+    remote = local.replace("127.0.0.1", lan_address())
+
+    def request(url, body=None, cookie=None):
+        req = urllib.request.Request(url, data=json.dumps(body).encode() if body is not None else None,
+                                     headers={"Content-Type": "application/json", **({"Cookie": cookie} if cookie else {})})
+        try:
+            response = urllib.request.urlopen(req, timeout=5)
+            return response.status, response
+        except urllib.error.HTTPError as e:
+            return e.code, e
+
+    assert json.load(urllib.request.urlopen(remote + "/config"))["paired"] is False
+    assert request(remote + "/status")[0] == 403
+    assert request(remote + "/video.mjpg")[0] == 403
+    assert request(remote + "/offer", {"sdp": "", "type": "offer"})[0] == 403
+    assert request(remote + "/pairing", {})[0] == 403  # codes only from the Mac
+    assert request(local + "/status")[0] == 200  # the Mac itself, always
+
+    code = json.load(request(local + "/pairing", {})[1])["code"]
+    assert request(remote + "/pair", {"code": "000000" if code != "000000" else "111111"})[0] == 403
+    status, response = request(remote + "/pair", {"code": code})
+    assert status == 200
+    cookie = response.headers["Set-Cookie"].split(";")[0]
+    assert request(remote + "/status", cookie=cookie)[0] == 200
+    assert request(remote + "/pair", {"code": code})[0] == 403  # one device per code
+
+    request(local + "/pairing?forget=1", {})
+    assert request(remote + "/status", cookie=cookie)[0] == 403

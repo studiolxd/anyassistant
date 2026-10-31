@@ -25,6 +25,7 @@ from aiohttp import web
 
 import i18n
 import llm
+import pairing
 import settings
 import stt
 import tts
@@ -40,7 +41,17 @@ close_on_exit = []  # coroutines to await when stopping (plugin processes)
 restart = False  # SIGHUP («restart» by voice): stop cleanly and start again
 
 
+def is_allowed(request: web.Request) -> bool:
+    return pairing.allowed(request.remote, request.cookies.get(pairing.COOKIE))
+
+
+def not_paired() -> web.Response:
+    return web.json_response({"pairing": True}, status=403)
+
+
 async def offer(request: web.Request) -> web.Response:
+    if not is_allowed(request):
+        return not_paired()
     data = await request.json()
     session = Session(uuid.uuid4().hex[:6], brain_factory)
     # A single phone: the new connection replaces the previous ones.
@@ -58,6 +69,8 @@ def current_session() -> Session | None:
 
 async def video_mjpeg(request: web.Request) -> web.StreamResponse:
     """What the camera sees, to watch it from the Mac's browser."""
+    if not is_allowed(request):
+        return not_paired()
     response = web.StreamResponse(headers={"Content-Type": "multipart/x-mixed-replace; boundary=frame"})
     await response.prepare(request)
     while True:
@@ -69,6 +82,8 @@ async def video_mjpeg(request: web.Request) -> web.StreamResponse:
 
 
 async def status(request: web.Request) -> web.Response:
+    if not is_allowed(request):
+        return not_paired()
     session = current_session()
     return web.json_response({
         "connected": bool(session and session.pc.connectionState == "connected"),
@@ -81,7 +96,29 @@ async def config(request: web.Request) -> web.Response:
     return web.json_response({
         "lang": i18n.L.code, "ui": i18n.L.data["ui"],
         "name": settings.get("name"), "face": settings.get("face"), "video": settings.get("video"),
+        "paired": is_allowed(request),
     })
+
+
+async def new_pairing_code(request: web.Request) -> web.Response:
+    """For bin/jarvis pair: only from the Mac itself."""
+    if request.remote not in pairing.LOCAL:
+        return web.json_response({}, status=403)
+    if request.query.get("forget"):
+        pairing.unpair_all()
+        return web.json_response({"forgotten": True})
+    return web.json_response({"code": pairing.new_code(), "seconds": pairing.CODE_LIFETIME,
+                              "pairing": bool(settings.get("pairing"))})
+
+
+async def pair(request: web.Request) -> web.Response:
+    data = await request.json()
+    token = pairing.pair(data.get("code", ""), request.headers.get("User-Agent", "?"))
+    if not token:
+        return web.json_response({"paired": False}, status=403)
+    response = web.json_response({"paired": True})
+    response.set_cookie(pairing.COOKIE, token, max_age=10 * 365 * 24 * 3600, httponly=True, samesite="Strict")
+    return response
 
 
 def page(name: str) -> web.Response:
@@ -128,6 +165,8 @@ def main():
     parser.add_argument("--face", choices=["eyes", "orb"], default="eyes", help="the page's face (?face= wins)")
     parser.add_argument("--video", choices=["auto", "normal", "low", "off"], default="auto",
                         help="camera quality; auto: each device by its memory (?video= wins)")
+    parser.add_argument("--pairing", action=argparse.BooleanOptionalAction, default=False,
+                        help="only devices paired with a code (bin/jarvis pair) may connect")
     parser.add_argument("--log-transcripts", action=argparse.BooleanOptionalAction, default=False,
                         help="write what it hears and says to the log (to debug); off: only lengths")
     parser.add_argument("--confirm-wait", type=float, default=120, help="seconds to answer «yes» to an action")
@@ -214,6 +253,8 @@ def main():
     app.router.add_get("/video.mjpg", video_mjpeg)
     app.router.add_get("/status", status)
     app.router.add_get("/config", config)
+    app.router.add_post("/pairing", new_pairing_code)
+    app.router.add_post("/pair", pair)
     app.router.add_static("/web/", WEB)
     app.on_shutdown.append(on_shutdown)
 
