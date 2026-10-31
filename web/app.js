@@ -215,6 +215,7 @@ function showState(state, wakePhrase) {
   statusLine.textContent = state === 'asleep' ? text('asleep', { wake: wakePhrase || 'Hey Jarvis' }) : text(state);
   Face.state(state);
   photoFollows(state);
+  if (state === 'asleep' && !camera.hidden) showCamera(false);
 }
 
 function message(m) {
@@ -223,6 +224,22 @@ function message(m) {
   else if (m.type === 'text') caption(m);
   else if (m.type === 'config') loadTexts();  // the settings changed
   else if (m.type === 'look') showPhoto(m.at);
+  else if (m.type === 'camera') showCamera(m.on);
+}
+
+// «Turn on the camera»: what this device's camera sees, live, like a mirror (the same
+// stream it already sends, so no extra load); «turn off the camera» hides it.
+// Also hidden when it goes to sleep.
+var camera = document.getElementById('camera');
+function showCamera(on) {
+  var video = media && media.getVideoTracks().length;
+  if (on && video) {
+    camera.srcObject = media;
+    camera.hidden = false;
+  } else {
+    camera.hidden = true;
+    camera.srcObject = null;
+  }
 }
 
 // What it looks at through the camera, with a scanning sweep while it thinks about it;

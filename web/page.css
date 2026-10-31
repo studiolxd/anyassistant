@@ -87,6 +87,21 @@ html, body {
 #captions p.assistant { color: #4a8a99; font-style: italic; }
 #captions p.assistant:last-child { color: #7cd3e8; }
 
+/* «Turn on the camera»: the live view, mirrored, where the photo goes. */
+#camera {
+  position: absolute;
+  top: 8%; left: 0; right: 0;
+  margin: 0 auto;
+  width: 80vmin;
+  height: 60vmin;
+  object-fit: cover;
+  transform: scaleX(-1);
+  border: 2px solid #5bc6e8;
+  border-radius: 10px;
+  background: #000;
+}
+#camera[hidden] { display: none; }
+
 /* The photo it looks at, over the face, with a scanning sweep (transforms only: Chrome 81). */
 #photo {
   position: absolute;

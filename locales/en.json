@@ -20,13 +20,16 @@
     "hermes_down": "I can't reach Hermes: is its gateway running?",
     "hermes_approval": "Hermes wants to do this: {action}. Shall I go ahead?",
     "language_changing": "Okay, switching to {language}. I'll be back in a few seconds.",
-    "language_same": "I'm already speaking {language}."
+    "language_same": "I'm already speaking {language}.",
+    "camera_on": "Camera on.",
+    "camera_off": "Camera off."
   },
   "commands": {
     "sleep": [
       "sleep",
       "goodnight"
     ],
+    "not_sleep": [],
     "stop": [
       "stop",
       "quiet",
@@ -43,6 +46,26 @@
       "watch",
       "showing",
       "show"
+    ],
+    "camera": [
+      "camera",
+      "cam"
+    ],
+    "camera_on": [
+      "on",
+      "show",
+      "open",
+      "activate",
+      "start",
+      "enable"
+    ],
+    "camera_off": [
+      "off",
+      "hide",
+      "close",
+      "stop",
+      "deactivate",
+      "disable"
     ],
     "reload": [
       "reload"

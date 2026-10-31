@@ -54,6 +54,18 @@ def system_command(text: str) -> str | None:
     return None
 
 
+def camera_command(text: str) -> str | None:
+    """«Activa la cámara» → "on"; «Turn off the camera» → "off": the camera on the screen."""
+    heard = words(text)
+    if not 0 < len(heard) <= 6 or not set(heard) & set(i18n.L.list("commands.camera")):
+        return None
+    if set(heard) & set(i18n.L.list("commands.camera_off")):  # before «on»: «turn off»
+        return "off"
+    if set(heard) & set(i18n.L.list("commands.camera_on")):
+        return "on"
+    return None
+
+
 def language_command(text: str) -> str | None:
     """«Speak Spanish», «Háblame en inglés» → "es", "en". Understood in any language.
 
@@ -185,7 +197,8 @@ class Assistant(Transcriber):
             Transcriber._heard(self, text, timings)
             return
         language = language_command(text)
-        command = f"language:{language}" if language else system_command(text)
+        camera = camera_command(text)
+        command = f"language:{language}" if language else f"camera:{camera}" if camera else system_command(text)
         if command:
             Transcriber._heard(self, text, timings)  # shown on screen, but not sent to the LLM
             asyncio.ensure_future(self._command(command))
@@ -199,6 +212,11 @@ class Assistant(Transcriber):
             log.info("reloading tools")
             await self.llm.reload()
             self._say(i18n.L("speech.reloaded"))
+        elif command.startswith("camera:"):
+            on = command == "camera:on"
+            log.info("camera on the screen: %s", "on" if on else "off")
+            self.send({"type": "camera", "on": on})
+            self._say(i18n.L("speech.camera_on" if on else "speech.camera_off"))
         elif command.startswith("language:"):
             code = command.split(":")[1]
             name = i18n.L.data["languages"].get(code, code)

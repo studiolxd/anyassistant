@@ -20,12 +20,20 @@
     "hermes_down": "No puedo hablar con Hermes: ¿está en marcha su gateway?",
     "hermes_approval": "Hermes quiere hacer esto: {action}. ¿Lo hago?",
     "language_changing": "Vale, cambio a {language}. Vuelvo en unos segundos.",
-    "language_same": "Ya estoy hablando en {language}."
+    "language_same": "Ya estoy hablando en {language}.",
+    "camera_on": "Cámara activada.",
+    "camera_off": "Cámara apagada."
   },
   "commands": {
     "sleep": [
       "apagate",
       "duermete"
+    ],
+    "not_sleep": [
+      "apaga",
+      "apagar",
+      "apague",
+      "apagas"
     ],
     "stop": [
       "para",
@@ -50,6 +58,34 @@
       "leeme",
       "enseno",
       "muestro"
+    ],
+    "camera": [
+      "camara"
+    ],
+    "camera_on": [
+      "activa",
+      "activar",
+      "enciende",
+      "encender",
+      "muestra",
+      "muestrame",
+      "mostrar",
+      "abre",
+      "abrir",
+      "pon",
+      "ensename"
+    ],
+    "camera_off": [
+      "apaga",
+      "apagar",
+      "quita",
+      "quitar",
+      "cierra",
+      "cerrar",
+      "oculta",
+      "ocultar",
+      "desactiva",
+      "desactivar"
     ],
     "reload": [
       "recarg"

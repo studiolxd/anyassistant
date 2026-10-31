@@ -318,3 +318,13 @@ def test_memory_with_claude(server, tmp_path):
     facts = json.loads(memory_file.read_text())["facts"]
     assert any("Toby" in f for f in facts)
     assert "Toby" in final_texts(messages, "assistant")[-1]
+
+
+def test_camera_on_the_screen_by_voice(server, tmp_path):
+    url = server("--mode", "assistant", "--lang", "es", "--wake", "none", "--llm", "apple")
+    pcm = np.concatenate([speech(tmp_path, "Activa la cámara.", "Mónica"), np.zeros(RATE * 3, np.int16),
+                          speech(tmp_path, "Apaga la cámara.", "Mónica")])  # after it says «Cámara activada»
+    cameras = lambda m: [x["on"] for x in m if x.get("type") == "camera"]  # noqa: E731
+    messages, _ = asyncio.run(talk(url, pcm, until=lambda m: len(cameras(m)) >= 2, timeout=20))
+    assert cameras(messages) == [True, False]
+    assert "asleep" not in states(messages)  # «apaga» is not «apágate»

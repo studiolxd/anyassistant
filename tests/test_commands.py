@@ -16,7 +16,7 @@ CASES = {
     },
     "es": {
         "sleep": ["Apágate", "Apparaté.", "Duérmete, Jarvis"],
-        "not_sleep": ["¿Cómo se apaga el horno de la cocina nueva?"],
+        "not_sleep": ["¿Cómo se apaga el horno de la cocina nueva?", "Apaga la cámara", "Apaga la luz"],
         "reload": ["Recarga las herramientas", "Recargar"],
         "restart": ["Reiníciate", "Reinicia el servidor"],
         "yes": ["Sí", "Vale, hazlo", "Adelante."],
@@ -60,3 +60,23 @@ def test_stop(lang):
     stop, other = {"en": ("Stop!", "Stop the music in the kitchen"), "es": ("¡Para!", "Para qué sirve esto")}[lang.code]
     assert is_stop_command(stop)
     assert not is_stop_command(other)
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("Turn on the camera", "on"), ("Show the camera", "on"), ("Turn off the camera.", "off"),
+    ("Hide the camera", "off"), ("What camera do you have?", None), ("Turn on the lights", None),
+])
+def test_camera_english(en, text, expected):
+    from brain.assistant import camera_command
+
+    assert camera_command(text) == expected
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("Activa la cámara", "on"), ("Jarvis, enciende la cámara", "on"), ("Muéstrame la cámara", "on"),
+    ("Apaga la cámara", "off"), ("Quita la cámara.", "off"), ("¿Qué cámara tienes?", None),
+])
+def test_camera_spanish(es, text, expected):
+    from brain.assistant import camera_command
+
+    assert camera_command(text) == expected

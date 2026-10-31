@@ -48,6 +48,7 @@ def is_sleep_command(text: str) -> bool:
     return len(found) <= 4 and any(
         SequenceMatcher(None, w, command).ratio() >= SLEEP_SIMILARITY
         for w in found
+        if w not in i18n.L.list("commands.not_sleep")  # «apaga (la cámara)» is not «apágate»
         for command in i18n.L.list("commands.sleep")
     )
 
