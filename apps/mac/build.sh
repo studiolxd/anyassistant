@@ -2,11 +2,19 @@
 # Builds AnyAssistant.app and AnyAssistant.dmg (apps/mac/build/): the menu bar app, with
 # the program (the committed version, its Swift bridges already built) and uv inside.
 #
-#   apps/mac/build.sh            signed for this Mac only (ad hoc)
-#   SIGN="Developer ID Application: Name (TEAMID)" NOTARY=anyassistant apps/mac/build.sh
-#                                to share it: signed with your Developer ID and notarized by Apple
-#                                (NOTARY: a profile made once with `xcrun notarytool store-credentials`)
+#   apps/mac/build.sh            while developing: signed with the Developer ID if this Mac has
+#                                one (the same app for macOS each time: its Local Network permission
+#                                stays), not notarized (not needed for a build opened on this Mac)
+#   apps/mac/build.sh --release  to share it: signed and notarized by Apple (a few minutes)
+#   SIGN="…" NOTARY=…            another identity, or another notarytool profile
+#                                (made once with `xcrun notarytool store-credentials anyassistant`)
 set -e
+RELEASE=0; [ "$1" = "--release" ] && RELEASE=1
+if [ -z "$SIGN" ]; then  # the Developer ID of this Mac, if there is one; else ad hoc
+  SIGN="$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -1)"
+fi
+[ $RELEASE = 1 ] && NOTARY="${NOTARY:-anyassistant}" || NOTARY=""
+[ $RELEASE = 1 ] && [ -z "$SIGN" ] && { echo "A release needs a Developer ID Application certificate."; exit 1; }
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 OUT="$HERE/build"
