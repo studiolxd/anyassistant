@@ -78,3 +78,6 @@
 "Name" = "Name";
 "Value" = "Value";
 "Add" = "Add";
+"name" = "name";
+"value" = "value";
+"Remove" = "Remove";

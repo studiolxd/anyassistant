@@ -242,6 +242,7 @@ struct OptionRow: View {
     let admin: Admin
     @FocusState private var editing: Bool
     @State private var saved = ""  // what was last saved: not saved again for nothing
+    @State private var pending: Task<Void, Never>?  // a save a moment after you stop typing
 
     /// Its help, as a title («La hora mientras duerme»); its name goes below.
     var label: String { option.help.prefix(1).uppercased() + option.help.dropFirst() }
@@ -264,13 +265,13 @@ struct OptionRow: View {
                     .font(.body).frame(minHeight: 110)
                     .focused($editing)
                     .onChange(of: editing) { _, now in if !now { save() } }
+                    .onChange(of: option.text) { _, _ in saveSoon() }  // no button: it saves itself
                     .overlay(alignment: .topLeading) {
                         if option.text.isEmpty {
                             Text(option.placeholder).foregroundStyle(.tertiary).padding(.top, 1).padding(.leading, 5)
                                 .allowsHitTesting(false)
                         }
                     }
-                Button(T("Save")) { Task { await admin.save(option) } }
             default:
                 if option.isDict {
                     DictEditor(option: option, label: label, admin: admin)
@@ -291,9 +292,19 @@ struct OptionRow: View {
 extension OptionRow {
     /// Saves the field if it changed since it was loaded or last saved.
     func save() {
+        pending?.cancel()
         guard option.text != saved else { return }
         saved = option.text
         Task { await admin.save(option) }
+    }
+
+    /// Saves it a second after the last keystroke.
+    func saveSoon() {
+        pending?.cancel()
+        pending = Task {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            if !Task.isCancelled { save() }
+        }
     }
 }
 
@@ -302,26 +313,51 @@ struct DictEditor: View {
     @ObservedObject var option: OptionItem
     let label: String
     let admin: Admin
+    @State private var pending: Task<Void, Never>?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(label)
             if option.pairs.isEmpty {
                 Text(option.placeholder).foregroundStyle(.tertiary)
-            }
-            ForEach($option.pairs) { $pair in
-                HStack(alignment: .top) {
-                    TextField(T("Name"), text: $pair.key).frame(width: 140)
-                    TextField(T("Value"), text: $pair.value, axis: .vertical)
-                    Button { option.pairs.removeAll { $0.id == pair.id } } label: { Image(systemName: "minus.circle") }
-                        .buttonStyle(.borderless)
+            } else {
+                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 6) {
+                    GridRow {
+                        Text(T("Name")).font(.caption).foregroundStyle(.secondary)
+                        Text(T("Value")).font(.caption).foregroundStyle(.secondary)
+                        Color.clear.frame(width: 16, height: 1)
+                    }
+                    ForEach($option.pairs) { $pair in
+                        GridRow(alignment: .top) {
+                            TextField("", text: $pair.key, prompt: Text(T("name")))
+                                .textFieldStyle(.roundedBorder).labelsHidden().frame(width: 150)
+                            TextField("", text: $pair.value, prompt: Text(T("value")), axis: .vertical)
+                                .textFieldStyle(.roundedBorder).labelsHidden().lineLimit(1...4)
+                            Button {
+                                option.pairs.removeAll { $0.id == pair.id }
+                            } label: {
+                                Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.borderless).help(T("Remove"))
+                        }
+                    }
                 }
             }
-            HStack {
-                Button { option.pairs.append(Pair(key: "", value: "")) } label: { Label(T("Add"), systemImage: "plus") }
-                Spacer()
-                Button(T("Save")) { Task { await admin.save(option) } }
+            Button {
+                option.pairs.append(Pair(key: "", value: ""))
+            } label: {
+                Label(T("Add"), systemImage: "plus.circle")
             }
+            .buttonStyle(.borderless)
+        }
+        .onChange(of: option.pairs) { _, _ in saveSoon() }  // no button: it saves itself
+    }
+
+    func saveSoon() {
+        pending?.cancel()
+        pending = Task {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            if !Task.isCancelled { await admin.save(option) }
         }
     }
 }
