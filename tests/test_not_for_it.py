@@ -111,8 +111,7 @@ def test_follow_up_window(monkeypatch):
     ear.deaf, ear.pre_roll = (lambda: False), []
     busy = [False]
     ear.busy = lambda: busy[0]
-    ear.vad = lambda window, rate: type("P", (), {"item": lambda self: 0.0})()
-    ear._torch = type("T", (), {"from_numpy": staticmethod(lambda w: w)})
+    ear.vad = type("Silence", (), {"probability": lambda self, window: 0.0, "reset": lambda self: None})()
     ear._sleep = lambda reason: slept.append(reason)
     clock.now += 15
     ear._window(None)

@@ -53,12 +53,9 @@ def similarity(candidate: str, key: str) -> float:
 class WhisperWakeWord(WakeWord):
     def __init__(self, word=None, threshold=SIMILARITY, model="mlx-community/whisper-base-mlx"):
         super().__init__(word or settings.get("name", "Jarvis").lower(), threshold)
-        import torch
-
-        from brain.ear import load_vad
+        import vad
         from stt.mlx_whisper import transcribe_mlx
 
-        self._torch = torch
         self._transcribe = transcribe_mlx
         self.model = model
         self.keys = words(self.word)
@@ -66,7 +63,7 @@ class WhisperWakeWord(WakeWord):
         # Without a prompt, whisper-base writes «Geri Yarvis», «gellarby»…; with the
         # exact phrase as the prompt it skips it (it thinks it was already said).
         self.prompt = i18n.L("wake.whisper_prompt", name=self.word.title())
-        self.vad = load_vad()
+        self.vad = vad.create()
         self.heard_sentence = None  # the whole audio if the sentence goes on after the word
         self.last_text = ""  # the last transcription, to tell its own voice from yours
         self.dubious = False  # the last wake-up may not have been for it
@@ -79,7 +76,7 @@ class WhisperWakeWord(WakeWord):
         self.chunks = []
         self.speaking = False
         self.silence = 0.0
-        self.vad.reset_states()
+        self.vad.reset()
 
     def reset(self):
         self._reset()
@@ -93,7 +90,7 @@ class WhisperWakeWord(WakeWord):
         return heard
 
     def _window(self, window: np.ndarray) -> bool:
-        probability = self.vad(self._torch.from_numpy(window), RATE).item()
+        probability = self.vad.probability(window)
         if not self.speaking:
             self.pre_roll = (self.pre_roll + [window])[-int(PRE_ROLL * RATE / WINDOW):]
             if probability >= THRESHOLD_ON:

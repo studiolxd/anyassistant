@@ -121,6 +121,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `wake` | `"whisper"` | the wake word engine: whisper, openwakeword… or none *(restarts)* |
 | `wake_word` | — | the word or model (default: its name) *(restarts)* |
 | `threshold` | — | how sure the wake word must be (each engine has its own default) *(restarts)* |
+| `vad` | `"silero"` | voice activity detection: silero… *(restarts)* |
 | `silence` | `0.6` | seconds of silence that end a sentence *(restarts)* |
 | `follow_up` | `20` | seconds it keeps listening without its name after it last spoke or heard you |
 | `echo_guard` | `1.2` | seconds without listening after speaking (its own echo) *(restarts)* |
@@ -726,7 +727,7 @@ so they need no account or network; they run on a free port, next to a running J
 - `server/transport.py` — WebRTC session: tracks, `control` DataChannel, last frame.
 - `server/audio.py` — 48 kHz mono PCM; `Speaker` is the outgoing track.
 - `server/brain/` — `parrot.py` (Phase 1), `ear.py` (VAD + STT), `transcriber.py` (Phase 2), `assistant.py` (Phase 3).
-- `server/stt/`, `server/wake/`, `server/llm/`, `server/tts/` — plugins; `llm/permissions.py`, which MCP servers and commands Claude may use.
+- `server/stt/`, `server/wake/`, `server/llm/`, `server/tts/`, `server/vad/` — plugins; `llm/permissions.py`, which MCP servers and commands Claude may use.
 - `server/plugins.py` — shared plugin registry; `server/text.py`, text utilities;
   `server/swift.py`, builds the plugins' Swift bridges.
 - `bin/jarvis` — starts and stops the server.

@@ -9,7 +9,7 @@ Receives 48 kHz PCM in 20 ms chunks and downsamples it to 16 kHz.
   goes back to sleep: after that, its name again.
 - Without a wake word: always awake, transcribes everything that is speech.
 
-Sentences are delimited by the VAD in 512-sample windows (32 ms) and transcribed
+Sentences are delimited by the VAD plugin (vad/) in 512-sample windows (32 ms) and transcribed
 in a separate thread; the result goes to on_heard(text, timings).
 """
 
@@ -24,6 +24,7 @@ import numpy as np
 from scipy.signal import resample_poly
 
 import i18n
+import vad
 import settings
 from stt import RATE
 from text import words
@@ -60,32 +61,19 @@ def is_stop_command(text: str) -> bool:
     return 0 < len(found) <= 2 and bool(set(found) & set(i18n.L.list("commands.stop")))
 
 
-def load_vad():
-    import torch
-    from silero_vad import load_silero_vad
-
-    # One thread is enough for 32 ms windows; with every core it competes with the
-    # WebRTC loop and, with the Mac busy, Chrome considered the connection lost.
-    torch.set_num_threads(1)
-    return load_silero_vad()
-
-
 class Ear:
     def __init__(
         self, stt, on_state, on_heard, wake=None, on_wake=None, on_sleep=None,
         deaf=None, record=None, silence=SILENCE, follow_up=FOLLOW_UP, on_interrupt=None, on_stop=None,
         busy=None,
     ):
-        import torch
-
-        self._torch = torch
         self.stt = stt
         self.wake = wake
         self.on_state = on_state
         self.on_heard = on_heard
         self.on_wake = on_wake or (lambda: None)
         self.on_sleep = on_sleep or (lambda by_command: None)
-        self.vad = load_vad()
+        self.vad = vad.create()
         self.pending = np.zeros(0, dtype=np.float32)
         self.pre_roll = []
         self.sentence = []
@@ -181,7 +169,7 @@ class Ear:
         self.on_state("asleep")
 
     def _window(self, window: np.ndarray):
-        probability = self.vad(self._torch.from_numpy(window), RATE).item()
+        probability = self.vad.probability(window)
         if self.deaf():
             self._reset()
             self.last_activity = time.time()  # its own speech counts as activity too
@@ -229,7 +217,7 @@ class Ear:
         self.pending = np.zeros(0, dtype=np.float32)
         self.silence = 0.0
         self.speech = 0.0
-        self.vad.reset_states()
+        self.vad.reset()
 
     async def _transcribe(self, audio: np.ndarray):
         self.on_state("transcribing")

@@ -7,6 +7,7 @@ import pytest
 import llm
 import stt
 import tts
+import vad
 import wake
 
 
@@ -15,13 +16,14 @@ import wake
     (wake, {"whisper", "openwakeword"}),
     (llm, {"claude", "apple", "hermes"}),
     (tts, {"avspeech", "macos"}),
+    (vad, {"silero"}),
 ])
 def test_plugins_are_registered(registry, expected):
     assert expected <= set(registry.available())
 
 
 def test_listing_does_not_import_models():
-    for registry in (stt, wake, llm, tts):
+    for registry in (stt, wake, llm, tts, vad):
         registry.available()
     assert not {"mlx_whisper", "parakeet_mlx", "openwakeword", "torch"} & sys.modules.keys()
 

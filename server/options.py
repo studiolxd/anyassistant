@@ -87,6 +87,7 @@ OPTIONS = [
            lambda: _plugins("wake")() + ["none"]),
     Option("wake_word", None, "the word or model (default: its name)", "voice"),
     Option("threshold", None, "how sure the wake word must be (each engine has its own default)", "voice", "float"),
+    Option("vad", "silero", "voice activity detection: silero…", "voice", "choice", _plugins("vad")),
     Option("silence", 0.6, "seconds of silence that end a sentence", "voice", "float"),
     Option("follow_up", 20, "seconds it keeps listening without its name after it last spoke or heard you",
            "voice", "float", live=True),
