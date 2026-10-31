@@ -43,7 +43,7 @@
     "video": "calidad de la cámara; auto: cada dispositivo según su memoria",
     "show_time": "la hora mientras duerme",
     "show_date": "la fecha mientras duerme",
-    "show_hint": "«Di Hey Jarvis» mientras duerme",
+    "show_hint": "«Di “Ey, {name}”» mientras duerme",
     "show_status": "«Te escucho», «Pensando…» mientras está despierto",
     "show_heard": "lo que has dicho",
     "show_answer": "lo que responde",

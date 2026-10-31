@@ -41,6 +41,11 @@ def _json(value):
         return str(value)
 
 
+def _named(text: str) -> str:
+    """A help that names the assistant («Say “Hey, {name}”») says its name: «Hey, Eva»."""
+    return text.replace("{name}", settings.get("name") or "Jarvis")
+
+
 def _value(option):
     """What settings.json says (or the default): what the field shows."""
     return _json(settings.load().get(option.name, option.default))
@@ -67,7 +72,7 @@ async def _settings(request):
     groups = [{"id": g, "title": i18n.L.text(f"groups.{g}", title)} for g, title in options.GROUPS.items()
               if g != "plugins"]
     found = [{"name": o.name, "group": o.group, "kind": o.kind, "live": o.live,
-              "help": i18n.L.text(f"options.{o.name}", o.help), "default": _value_default(o),
+              "help": _named(i18n.L.text(f"options.{o.name}", o.help)), "default": _value_default(o),
               "value": _value(o), "current": _current(o), "choices": _choices(o),
               "empty": i18n.L.text(f"options_empty.{o.name}", o.empty) if o.empty else ""}
              for o in options.OPTIONS if o.group != "plugins"]

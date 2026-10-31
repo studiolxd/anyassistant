@@ -190,7 +190,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `video` | `"auto"` | camera quality; auto: each device by its memory (a device's ?video= wins) |
 | `show_time` | `true` | the time while asleep |
 | `show_date` | `true` | the date while asleep |
-| `show_hint` | `true` | «Say Hey Jarvis» while asleep |
+| `show_hint` | `true` | «Say “Hey, Jarvis”» while asleep |
 | `show_status` | `true` | «Listening», «Thinking…» while awake |
 | `show_heard` | `true` | what you said |
 | `show_answer` | `true` | what it answers |

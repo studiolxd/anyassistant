@@ -33,7 +33,7 @@ for option in (
            "choice", ["auto", "normal", "low", "off"], live=True),
     Option("show_time", True, "the time while asleep", "screen", "bool", live=True, screen=True),
     Option("show_date", True, "the date while asleep", "screen", "bool", live=True, screen=True),
-    Option("show_hint", True, "«Say Hey Jarvis» while asleep", "screen", "bool", live=True, screen=True),
+    Option("show_hint", True, "«Say “Hey, {name}”» while asleep", "screen", "bool", live=True, screen=True),
     Option("show_status", True, "«Listening», «Thinking…» while awake", "screen", "bool", live=True, screen=True),
     Option("show_heard", True, "what you said", "screen", "bool", live=True, screen=True),
     Option("show_answer", True, "what it answers", "screen", "bool", live=True, screen=True),

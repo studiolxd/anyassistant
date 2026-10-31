@@ -78,7 +78,7 @@ def language(value):
 
 
 @question("name", "The assistant's name", order=11, default=lambda: settings.load().get("name") or "Jarvis",
-          help="Also its wake word: «Hey …».")
+          help="Also its wake word: «Hey, …».")
 def name(value):
     settings.save(name=str(value).strip() or "Jarvis")
 

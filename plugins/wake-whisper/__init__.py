@@ -59,7 +59,10 @@ class WhisperWakeWord(WakeWord):
         self._transcribe = transcribe_mlx
         self.model = model
         self.keys = words(self.word)
-        self.phrase = f"Hey {self.word.title()}" if len(self.keys) == 1 else self.word.capitalize()
+        # How it is said, to show it: «Hey, Eva», «Ey, Eva» (locale wake.phrase; only shown: the
+        # word that wakes it is the name, said however you like).
+        self.phrase = (i18n.L.text("wake.phrase", "Hey, {name}").format(name=self.word.title())
+                       if len(self.keys) == 1 else self.word.capitalize())
         # Without a prompt, whisper-base writes «Geri Yarvis», «gellarby»…; with the
         # exact phrase as the prompt it skips it (it thinks it was already said).
         self.prompt = i18n.L("wake.whisper_prompt", name=self.word.title())

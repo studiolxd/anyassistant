@@ -184,7 +184,8 @@ def markdown() -> str:
             if o.group == group:
                 default = "—" if o.default is None else f"`{json.dumps(o.default)}`"
                 live = "" if o.live else " *(restarts)*"
-                lines.append(f"| `{o.name}` | {default} | {o.help}{live} |")
+                shown = o.help.replace("{name}", "Jarvis")  # a help that names it: the default name here
+                lines.append(f"| `{o.name}` | {default} | {shown}{live} |")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 

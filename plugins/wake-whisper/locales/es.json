@@ -6,6 +6,7 @@
     ]
   },
   "wake": {
-    "whisper_prompt": "El asistente se llama {name}."
+    "whisper_prompt": "El asistente se llama {name}.",
+    "phrase": "Ey, {name}"
   }
 }

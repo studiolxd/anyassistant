@@ -1,5 +1,6 @@
 {
   "wake": {
-    "whisper_prompt": "The assistant's name is {name}."
+    "whisper_prompt": "The assistant's name is {name}.",
+    "phrase": "Hey, {name}"
   }
 }
