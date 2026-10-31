@@ -1,7 +1,7 @@
 .venv/
 __pycache__/
 *.wav
-!skins/*/sounds/*.wav
+!plugins/page/skins/*/sounds/*.wav
 !plugins/*/sounds/*.wav
 .DS_Store
 .build/

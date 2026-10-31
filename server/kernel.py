@@ -50,6 +50,11 @@ class Plugin:
         return bool(self.manifest.get("security"))
 
     @property
+    def locked(self) -> bool:
+        """Not turned off by voice (security ones, and what Jarvis can't work without: the page)."""
+        return self.security or bool(self.manifest.get("locked"))
+
+    @property
     def requires(self) -> list[str]:
         return list(self.manifest.get("requires", []))
 

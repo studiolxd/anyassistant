@@ -7,12 +7,14 @@ id, your folder) to have other sounds everywhere.
 
 from pathlib import Path
 
-import skins
+import audio
+import kernel
 
 HERE = Path(__file__).parent / "sounds"
 
 
 def sound(kind: str, skin: str | None):
     """«wake» or «sleep» as 48 kHz PCM: the skin's, or this plugin's."""
-    own = skins.sound(skin, kind) if skin else None
-    return own if own is not None else skins.wav(HERE / f"{kind}.wav")
+    page = kernel.module("page")
+    own = page.skins.sound(skin, kind) if page and skin else None
+    return own if own is not None else audio.wav(HERE / f"{kind}.wav")

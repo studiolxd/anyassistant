@@ -1,5 +1,6 @@
 {
   "name": "Skins lab",
   "description": "http://<mac>:8080/lab?skin=<name>: every state of a skin at once, reloading when its files change.",
-  "kind": "feature"
+  "kind": "feature",
+  "requires": ["page"]
 }

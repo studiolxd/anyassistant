@@ -102,7 +102,7 @@ print("Code: %s  (valid %d minutes; type it on the device)" % (d["code"], d["sec
     ;;
   skin)
     shift
-    exec "$ROOT/.venv/bin/python" "$ROOT/server/skins.py" "$@"
+    PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/plugins/page/skins.py" "$@"
     ;;
   unpair)
     if ! alive; then echo "Jarvis isn't running."; exit 1; fi

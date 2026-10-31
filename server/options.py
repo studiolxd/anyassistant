@@ -40,10 +40,6 @@ def _languages():
     return i18n.available()
 
 
-def _skins():
-    import skins
-    return list(skins.available())
-
 
 def _detail_levels():
     import llm
@@ -94,23 +90,6 @@ OPTIONS = [
     Option("skills", True, "time, date, timers, alarms, reminders, sums, units and volume, without the LLM",
            "skills", "bool", live=True),
     # The screen
-    Option("skin", "eyes", "the screen's look: eyes, orb, minimal, bedside or yours (a device's ?skin= wins)",
-           "screen", "choice", _skins, live=True),
-    Option("skin_options", None, 'the skin\'s options: {"accent": "#ff7a45"}', "screen", "json", live=True),
-    Option("skins_dir", None, "your skins (default: skins in your data folder)", "screen"),
-    Option("video", "auto", "camera quality; auto: each device by its memory (a device's ?video= wins)", "screen",
-           "choice", ["auto", "normal", "low", "off"], live=True),
-    Option("show_time", True, "the time while asleep", "screen", "bool", live=True, screen=True),
-    Option("show_date", True, "the date while asleep", "screen", "bool", live=True, screen=True),
-    Option("show_hint", True, "«Say Hey Jarvis» while asleep", "screen", "bool", live=True, screen=True),
-    Option("show_status", True, "«Listening», «Thinking…» while awake", "screen", "bool", live=True, screen=True),
-    Option("show_heard", True, "what you said", "screen", "bool", live=True, screen=True),
-    Option("show_answer", True, "what it answers", "screen", "bool", live=True, screen=True),
-    Option("history", 2, "earlier sentences kept on screen", "screen", "int", live=True, screen=True),
-    Option("show_timers", True, "running timers, alarms and reminders", "screen", "bool", live=True, screen=True),
-    Option("show_stats", False, "the connection's RTT, jitter and losses", "screen", "bool", live=True, screen=True),
-    Option("clock", "auto", "12 or 24 hours (auto: the language's)", "screen", "choice", ["auto", "12", "24"],
-           live=True, screen=True),
     # Privacy and security
     Option("log_transcripts", False, "write what it hears and says to the log (to debug); otherwise only lengths",
            "security", "bool", live=True),
@@ -141,7 +120,10 @@ GROUPS = {"plugins": "Plugins", "assistant": "The assistant", "memory": "Memory"
 
 
 def parser() -> argparse.ArgumentParser:
-    """The command line: one --option per option (--no-option to turn a bool off)."""
+    """The command line: one --option per option (--no-option to turn a bool off), the plugins' too."""
+    import kernel
+
+    kernel.load_all()  # they add their options when they load
     made = argparse.ArgumentParser(description="Jarvis's server. Options also come from settings.json.")
     for o in OPTIONS:
         flag = o.flag or "--" + o.name.replace("_", "-")

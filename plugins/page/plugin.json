@@ -1,0 +1,6 @@
+{
+  "name": "The device's page",
+  "description": "The page the tablet or phone opens (http://<mac>:8080): its face, texts, camera and microphone, with skins anyone can make.",
+  "kind": "feature",
+  "locked": true
+}

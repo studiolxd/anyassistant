@@ -12,10 +12,8 @@ It brings to the web server a guard (every protected request), its two routes an
 import hashlib
 import json
 import logging
-import os
 import secrets
 import time
-from pathlib import Path
 
 from aiohttp import web as http
 

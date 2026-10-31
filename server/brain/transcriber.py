@@ -4,7 +4,6 @@ import events
 import i18n
 import kernel
 import settings
-import skins
 from audio import louder
 
 
@@ -51,7 +50,8 @@ class Transcriber:
         self.send({"type": "text", "text": text, "timings": timings})
 
     def on_message(self, data: dict):
-        if data.get("type") == "skin" and data.get("name") in skins.available():
+        page = kernel.module("page")
+        if data.get("type") == "skin" and page and data.get("name") in page.skins.available():
             self.skin = data["name"]  # this device's skin: its sounds
         elif data.get("type") == "tap":
             events.emit("tap", self)  # the screen was tapped (tap-to-wake…)

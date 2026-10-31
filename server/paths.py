@@ -34,9 +34,7 @@ PLUGINS = APP / "plugins"
 USER_PLUGINS = HOME / ("plugins.local" if HOME == APP else "plugins")
 
 # The program
-WEB = APP / "web"
 LOCALES = APP / "locales"
-SYSTEM_SKINS = APP / "skins"
 BIN = APP / "bin"
 
 # Can be rebuilt

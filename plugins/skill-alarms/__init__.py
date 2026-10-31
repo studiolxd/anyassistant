@@ -14,7 +14,7 @@ import i18n
 import kernel
 import options
 import web
-import skins
+import audio
 from skills import Skill, skill, spoken_duration, spoken_list, spoken_when, timers
 from skills.parse import Clock, Token, clock, day_tokens, duration, resolve, words
 from options import Option
@@ -28,8 +28,9 @@ ALARM = Path(__file__).parent / "sounds" / "alarm.wav"  # three quick high notes
 
 def alarm_sound(skin: str | None):
     """What rings, as 48 kHz PCM: the skin's alarm.wav, or this plugin's."""
-    own = skins.sound(skin, "alarm") if skin else None
-    return own if own is not None else skins.wav(ALARM)
+    page = kernel.module("page")
+    own = page.skins.sound(skin, "alarm") if page and skin else None
+    return own if own is not None else audio.wav(ALARM)
 
 
 def set_timer(seconds: float, label: str = "") -> str:

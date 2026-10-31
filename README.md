@@ -395,7 +395,7 @@ and `--wake my-engine [--wake-word …]`. `server/plugins.py` is the shared regi
 ## Skins
 
 The screen's look is a **skin**: HTML and CSS anyone can make, **without
-JavaScript**. Four come with Jarvis (`skins/`):
+JavaScript**. Four come with Jarvis (`plugins/page/skins/`):
 
 - **`eyes`** (default): two blinking eyes; closed and breathing while asleep,
   brighter and slightly bigger with your voice, looking to one side with dots while
@@ -786,9 +786,9 @@ so they need no account or network; they run on a free port, next to a running J
   `timers.py`, `interpreter.py`).
 - `server/paths.py`, `server/options.py` — where things live, every option.
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
-- `web/` — the phone's page (plain JS, old Chrome): `app.js` (connection, blocks), `skin.js` (applies a
-  skin, its states and live variables), `system.css`.
-- `skins/` — the system's skins; `server/skins.py` finds, cleans and checks them.
+- `plugins/page/` — the device's page: `web/` (plain JS, old Chrome: `app.js`, connection and blocks;
+  `skin.js`, applies a skin, its states and live variables; `system.css`), its texts (`locales/`, «ui»),
+  `skins/` (the system's) and `skins.py` (finds, cleans and checks them).
 - `tests/` — pytest; `test_e2e.py` drives the real server.
 
 See `TODO.md` for what's next.

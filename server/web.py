@@ -10,14 +10,11 @@ from aiohttp import web
 
 import hub
 import i18n
-import paths
 import settings
-import skins
 from brain.parrot import Parrot
 import kernel
 from transport import Session
 
-WEB = paths.WEB
 brain = Parrot  # what each connection talks to; main.py chooses it (--mode)
 close_on_exit = []  # coroutines to await when stopping (plugin processes)
 
@@ -97,28 +94,8 @@ async def status(request: web.Request) -> web.Response:
     })
 
 
-async def skin_file(request: web.Request) -> web.StreamResponse:
-    """A skin's stylesheet, images, fonts or sounds: only from inside its folder."""
-    path = skins.asset(request.match_info["name"], request.match_info["path"])
-    return web.FileResponse(path) if path else web.Response(status=404)
-
-
-async def page_config(request: web.Request) -> web.Response:
-    """What the page needs: its texts in the active language (locale «ui»), the settings and the skin
-    (?skin=: this device's own)."""
-    chosen = request.query.get("skin", "")
-    return web.json_response({
-        "lang": i18n.L.code, "ui": i18n.L.data["ui"],
-        "name": settings.get("name"), "video": settings.get("video"),
-        "skin": skins.for_page(chosen if chosen in skins.available() else settings.get("skin"), i18n.L.code),
-        "skins": [{"name": name, "title": skins.manifest(name).get("name", name),
-                   "description": skins.manifest(name).get("description", "")} for name in skins.available()],
-        "screen": {key: settings.get(key) for key in settings.SCREEN},
-        **_contributed(request),
-    })
-
-
-def _contributed(request: web.Request) -> dict:
+def contributed(request: web.Request) -> dict:
+    """What the plugins add to the page's /config (@web.config)."""
     more = {}
     for function, plugin in CONFIG:
         if kernel.enabled(plugin):
@@ -127,15 +104,10 @@ def _contributed(request: web.Request) -> dict:
 
 
 def page(file) -> web.Response:
-    """An HTML page (index.html in web/, or a plugin's own file) declaring the active language
-    (lang="…") and the name from the start."""
-    html = (WEB / file).read_text().replace('<html lang="en"', f'<html lang="{i18n.L.code}"', 1)
+    """A plugin's HTML page (a Path), declaring the active language (lang="…") and the name from the start."""
+    html = file.read_text().replace('<html lang="en"', f'<html lang="{i18n.L.code}"', 1)
     html = html.replace("<title>Jarvis", f"<title>{escape(settings.get('name', 'Jarvis'))}", 1)
     return web.Response(text=html, content_type="text/html")
-
-
-async def index(request: web.Request) -> web.Response:
-    return page("index.html")
 
 
 @web.middleware
@@ -177,15 +149,11 @@ def _while_on(handler, plugin):
 
 def application() -> web.Application:
     app = web.Application(middlewares=[no_cache], client_max_size=20 * 1024 * 1024)  # photos
-    app.router.add_get("/", index)
     app.router.add_post("/offer", offer)
     app.router.add_get("/status", status)
-    app.router.add_get("/config", page_config)
-    app.router.add_get("/skin/{name}/{path:.+}", skin_file)
     kernel.load_all()
     for method, path, handler, plugin in ROUTES:  # the plugins' own
         app.router.add_route(method, path, _while_on(handler, plugin))
-    app.router.add_static("/web/", WEB)
     app.on_shutdown.append(on_shutdown)
     for function, plugin in STARTUP:  # the plugins' background tasks (they check they're on)
         app.on_startup.append(function)

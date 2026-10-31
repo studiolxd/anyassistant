@@ -7,6 +7,8 @@
 import asyncio
 import fractions
 import time
+import wave
+from pathlib import Path
 
 import numpy as np
 from aiortc import MediaStreamTrack
@@ -78,3 +80,41 @@ def normalize(pcm: np.ndarray, peak: float = 0.95) -> np.ndarray:
     if not maximum:
         return pcm
     return np.clip(pcm.astype(np.float32) * (peak * 32767 / maximum), -32768, 32767).astype(np.int16)
+
+
+# --- WAV files (sounds of skins and plugins) ---
+
+_sounds: dict[tuple[str, float], np.ndarray | None] = {}
+
+
+def wav(file: Path) -> np.ndarray | None:
+    """A 16-bit WAV as 48 kHz mono PCM (kept while the file doesn't change), or None."""
+    if not file.exists():
+        return None
+    key = (str(file), file.stat().st_mtime)
+    if key not in _sounds:
+        _sounds[key] = _read_wav(file)
+    return _sounds[key]
+
+
+def _read_wav(file: Path) -> np.ndarray | None:
+    try:
+        with wave.open(str(file)) as w:
+            if w.getsampwidth() != 2:
+                return None
+            pcm = np.frombuffer(w.readframes(w.getnframes()), np.int16)
+            if w.getnchannels() == 2:
+                pcm = pcm.reshape(-1, 2).mean(axis=1).astype(np.int16)
+            rate = w.getframerate()
+        if rate != 48000:
+            from scipy.signal import resample_poly
+            from math import gcd
+
+            g = gcd(48000, rate)
+            pcm = resample_poly(pcm.astype(np.float32), 48000 // g, rate // g).astype(np.int16)
+        return pcm[: 48000 * 10]  # at most 10 s
+    except (OSError, wave.Error, EOFError):
+        return None
+
+
+# --- Checking a skin ---

@@ -41,9 +41,8 @@ def get_status() -> str:
 @tool("Your name, skin (and the ones there are), detail level, voice and language.")
 def get_settings() -> str:
     import llm
-    import skins
-
-    return (f"name: {settings.get('name')}; skin: {settings.get('skin')} (skins: {', '.join(skins.available())}); "
+    
+    return (f"name: {settings.get('name')}; skin: {settings.get('skin')} (skins: {', '.join(page.skins.available()) if (page := kernel.module('page')) else '-'}); "
             f"detail: {settings.get('detail') or 'neutral'} (levels: {', '.join(llm.detail_levels())}); "
             f"voice: {settings.get('voice') or 'the language default'}; language: {i18n.L.code} "
             f"(available: {', '.join(i18n.available())})")

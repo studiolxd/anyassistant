@@ -261,37 +261,6 @@
       "30": "y media"
     }
   },
-  "ui": {
-    "start": "Empezar",
-    "connecting": "Conectando…",
-    "connected": "Conectado",
-    "connection_lost": "Conexión perdida, reintentando…",
-    "other_tab": "Abierta en otra pestaña",
-    "no_media": "Sin micro/cámara: {error}. ¿Activaste el flag de Chrome?",
-    "asleep": "Di «{wake}»",
-    "awake": "Te escucho",
-    "listening": "Te escucho",
-    "hearing": "Oyendo…",
-    "transcribing": "Transcribiendo…",
-    "thinking": "Pensando…",
-    "speaking": "Hablando… Tócame para callarme",
-    "question": "¿Sí o no?",
-    "recording": "Grabando…",
-    "repeating": "Repitiendo",
-    "error": "Error",
-    "monitor_waiting": "Esperando al móvil…",
-    "monitor_connected": "Conectado · {frames} fotogramas recibidos",
-    "pair_prompt": "Escribe el código que muestra «bin/jarvis pair» en el Mac",
-    "pair_button": "Emparejar",
-    "pair_wrong": "Código incorrecto o caducado",
-    "pair_needed": "Este aparato no está emparejado: recarga la página",
-    "looking": "Mirando…",
-    "alarm": "{label}",
-    "demo_alarm": "Llamar a mamá",
-    "demo_reminder": "Sacar la ropa",
-    "demo_heard": "¿Qué hora es?",
-    "demo_answer": "Son las 8 y 42 de la noche."
-  },
   "memory_example": {
     "known": [
       "Se llama Ana.",

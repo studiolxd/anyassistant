@@ -11,30 +11,30 @@ A skin is a folder:
       sounds/          optional: wake.wav, sleep.wav, alarm.wav
       preview.png      optional
 
-System skins live in skins/; yours in «skins_dir» (paths.SKINS by default:
+System skins live in plugins/page/skins/; yours in «skins_dir» (paths.SKINS by default:
 skins.local/ while developing, not in git). Jarvis fills the blocks; the skin
 styles them with CSS, from body[data-state] / [data-look] and live CSS variables
 (--voice, --speech, --bar-1…5). The skin's HTML is cleaned: no scripts, no on…
 attributes, nothing loaded from outside (and the page forbids it too): the page
 has the microphone and the camera.
 
-    python server/skins.py check <folder>     problems for the tablet's old Chrome, and more
-    python server/skins.py new <name> [--from orb]
+    bin/jarvis skin check <folder>     problems for the tablet's old Chrome, and more
+    bin/jarvis skin new <name> [--from orb]
 """
 
 import json
 import re
 import shutil
 import sys
-import wave
 from html.parser import HTMLParser
 from pathlib import Path
 
 import numpy as np
 
+import audio
 import paths
 
-SYSTEM = paths.SYSTEM_SKINS
+SYSTEM = Path(__file__).parent / "skins"  # the system's
 DEFAULT = "eyes"
 BLOCKS = {"face", "status", "captions", "heard", "answer", "clock", "time", "date", "timers", "photo",
           "camera", "stats"}
@@ -191,49 +191,14 @@ def asset(name: str, path: str) -> Path | None:
 
 # --- Its sounds ---
 
-_sounds: dict[tuple[str, float], np.ndarray | None] = {}
-
-
 def sound(name: str, kind: str) -> np.ndarray | None:
     """The skin's sound (wake, sleep, alarm) as 48 kHz mono PCM, or None (the plugins' then)."""
     path = folder(name)
     file = path / "sounds" / f"{kind}.wav" if path else None
     if not file or not file.exists():
         return None
-    return wav(file)
+    return audio.wav(file)
 
-
-def wav(file: Path) -> np.ndarray | None:
-    """A 16-bit WAV as 48 kHz mono PCM (kept while the file doesn't change), or None."""
-    if not file.exists():
-        return None
-    key = (str(file), file.stat().st_mtime)
-    if key not in _sounds:
-        _sounds[key] = _read_wav(file)
-    return _sounds[key]
-
-
-def _read_wav(file: Path) -> np.ndarray | None:
-    try:
-        with wave.open(str(file)) as w:
-            if w.getsampwidth() != 2:
-                return None
-            pcm = np.frombuffer(w.readframes(w.getnframes()), np.int16)
-            if w.getnchannels() == 2:
-                pcm = pcm.reshape(-1, 2).mean(axis=1).astype(np.int16)
-            rate = w.getframerate()
-        if rate != 48000:
-            from scipy.signal import resample_poly
-            from math import gcd
-
-            g = gcd(48000, rate)
-            pcm = resample_poly(pcm.astype(np.float32), 48000 // g, rate // g).astype(np.int16)
-        return pcm[: 48000 * 10]  # at most 10 s
-    except (OSError, wave.Error, EOFError):
-        return None
-
-
-# --- Checking a skin ---
 
 OLD_CHROME = [  # the tablet's Chrome 81 doesn't have these
     (r"(^|[;{\s])inset\s*:", "«inset»: use top/right/bottom/left"),
@@ -282,7 +247,7 @@ def check(path: Path) -> list[str]:
             problems.append(f"locales/{code_file.name} isn't valid JSON")
     for kind in SOUNDS:
         file = path / "sounds" / f"{kind}.wav"
-        if file.exists() and _read_wav(file) is None:
+        if file.exists() and audio.wav(file) is None:
             problems.append(f"sounds/{kind}.wav: it must be a 16-bit WAV")
     return problems
 

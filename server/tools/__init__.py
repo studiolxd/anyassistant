@@ -93,6 +93,3 @@ def call(name: str, arguments: dict) -> str:
     except TypeError as e:
         raise ToolError(f"wrong arguments: {e}") from None
 
-
-# The core's modules that declare tools (the plugins' load with them, in available()).
-import skins  # noqa: E402,F401

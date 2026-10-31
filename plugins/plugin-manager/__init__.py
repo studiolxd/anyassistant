@@ -33,8 +33,9 @@ def _set(plugin_id: str, on: bool) -> str:
     found = kernel.plugin(plugin_id)
     if not found:
         raise ToolError(f"no plugin «{plugin_id}» (list_plugins)")
-    if not on and (found.security or found.id == "plugin-manager"):
-        raise ToolError(f"«{plugin_id}» is a security plugin: it can only be turned off in settings.json, by hand")
+    if not on and (found.locked or found.id == "plugin-manager"):
+        why = "a security plugin" if found.security else "needed to talk to Jarvis"
+        raise ToolError(f"«{plugin_id}» is {why}: it can only be turned off in settings.json, by hand")
     if not on and _in_use(found):
         raise ToolError(f"«{plugin_id}» is the {found.kind} in use: choose another one first")
     chosen = dict(settings.load().get("plugins") or {})

@@ -22,7 +22,7 @@ fixed: set = set()  # the ones given on the command line: settings.json doesn't 
 # What the page shows (sent to it in /config; it reads it again when one changes), and
 # what can change without restarting (read again after every answer: its own tools,
 # or settings.json edited by hand); anything else restarts the server. From options.py.
-from options import LIVE, SCREEN  # noqa: E402
+from options import LIVE, SCREEN  # noqa: E402,F401
 
 
 def get(key: str, default=None):
