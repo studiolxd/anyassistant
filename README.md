@@ -157,6 +157,8 @@ skin», «what do you know about me?»):
 |---|---|---|
 | `get_status`, `get_settings`, `get_memory` | device and camera, language, LLM, eyes, memory; name, skin, voice; what it remembers | no |
 | `set_skin` | the screen's look, for every device or only this one | no: it only changes the look |
+| `create_skin`, `get_skin`, `edit_skin` | a skin of your own as a copy of another, read its files, rewrite one (it answers what the check finds; the skin on screen changes at once) | no |
+| `delete_skin` | delete one of yours | yes |
 | `set_voice`, `set_name`, `set_language` | saved to `settings.json`, applied after the answer | yes |
 | `remember`, `forget` | memory facts | yes |
 | `camera` | shows or hides the live camera on the screen | no: it only changes the screen |
@@ -378,6 +380,12 @@ understands). Starting and pairing aren't blocks: they always work.
 simulated voice and timer, and reloads when you save. **The check**: `bin/jarvis
 skin check skins.local/mine` points out what the tablet's Chrome 81 lacks
 (`inset`, flex `gap`, `:has()`…), unknown blocks, scripts, outside resources.
+
+**By voice**: «crea una skin a partir del orbe y que piense en lila» — Jarvis copies
+it into your folder, reads it and changes what you asked (`create_skin`,
+`get_skin`, `edit_skin`), then you choose it. Only your skins: the system's ones
+can be copied, never changed or deleted; it writes `skin.json`, `skin.html`,
+`skin.css` and `locales/*.json` (sounds and images you add by hand).
 
 **What a skin can't do**: run JavaScript, react to events (`onclick`…) or load
 anything from outside: the page has the microphone and the camera. Its HTML is

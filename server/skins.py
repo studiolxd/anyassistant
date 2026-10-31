@@ -296,6 +296,56 @@ def new(name: str, source: str = DEFAULT) -> Path:
     return target
 
 
+# --- Yours, by voice (tools.py): create, read, edit, delete; never the system's ---
+
+EDITABLE = re.compile(r"skin\.(json|html|css)|locales/[a-z]{2}\.json")
+MAX_FILE = 100_000
+
+
+def is_system(name: str) -> bool:
+    path = folder(name)
+    return bool(path) and path.parent.resolve() == SYSTEM.resolve()
+
+
+def files(name: str) -> dict[str, str]:
+    """The skin's text files, to read or change them."""
+    path = folder(name)
+    if not path:
+        raise ValueError(f"no skin «{name}»")
+    found = {f: (path / f).read_text() for f in ("skin.json", "skin.html", "skin.css") if (path / f).exists()}
+    for locale in sorted((path / "locales").glob("*.json")) if (path / "locales").is_dir() else []:
+        found[f"locales/{locale.name}"] = locale.read_text()
+    return found
+
+
+def write(name: str, file: str, content: str) -> list[str]:
+    """Replaces a text file of one of your skins; returns what the check says about it."""
+    path = folder(name)
+    if not path:
+        raise ValueError(f"no skin «{name}»")
+    if is_system(name):
+        raise ValueError(f"«{name}» is a system skin: make your own copy first (create_skin)")
+    if not EDITABLE.fullmatch(file):
+        raise ValueError("files: skin.json, skin.html, skin.css or locales/<language>.json")
+    if len(content.encode()) > MAX_FILE:
+        raise ValueError("too big: at most 100 KB per file")
+    if file.endswith(".json"):
+        json.loads(content)  # ValueError if it isn't JSON
+    target = path / file
+    target.parent.mkdir(exist_ok=True)
+    target.write_text(content)
+    return check(path)
+
+
+def delete(name: str):
+    path = folder(name)
+    if not path:
+        raise ValueError(f"no skin «{name}»")
+    if is_system(name):
+        raise ValueError(f"«{name}» is a system skin: it can't be deleted")
+    shutil.rmtree(path)
+
+
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import settings

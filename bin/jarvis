@@ -101,7 +101,7 @@ if not d["pairing"]:
     ;;
   skin)
     shift
-    cd "$ROOT/server" && exec "$ROOT/.venv/bin/python" skins.py "$@"
+    exec "$ROOT/.venv/bin/python" "$ROOT/server/skins.py" "$@"
     ;;
   unpair)
     if ! alive; then echo "Jarvis isn't running."; exit 1; fi

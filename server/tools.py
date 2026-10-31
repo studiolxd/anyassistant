@@ -34,7 +34,7 @@ requested: set[str] = set()  # «reload», «restart»: for when the answer ends
 # Tools that change something need the user's «yes», asked by the server itself, so
 # it holds for any LLM using them (Claude, Hermes…): the same files as
 # bin/jarvis-confirm, so the «yes» works the same (brain/assistant.py writes it).
-NEEDS_YES = {"set_voice", "set_name", "set_language", "remember", "update", "forget",
+NEEDS_YES = {"delete_skin", "set_voice", "set_name", "set_language", "remember", "update", "forget",
              "reload_tools", "restart", "set_llm", "add_detail_level", "remove_detail_level"}
 CONFIRM = Path(__file__).resolve().parent.parent / ".build" / "confirm"
 ASK = ("This action changes data and needs the user's confirmation. Don't assume it: ask them in one "
@@ -266,6 +266,56 @@ def set_volume(percent: int) -> str:
     return skills.set_volume(percent)
 
 
+# Skins of your own: create (a copy to start from), read, edit and delete; never the system's.
+
+def create_skin(name: str, based_on: str = "eyes") -> str:
+    import skins
+
+    try:
+        created = skins.new(name, based_on)
+    except ValueError as e:
+        raise ToolError(str(e)) from None
+    return f"Created «{name}» from «{based_on}» in {created}. See it at /lab?skin={name}; set_skin to use it."
+
+
+def get_skin(name: str) -> str:
+    import skins
+
+    try:
+        found = skins.files(name)
+    except ValueError as e:
+        raise ToolError(str(e)) from None
+    system = " (a system skin: copy it with create_skin to change it)" if skins.is_system(name) else ""
+    return f"Skin «{name}»{system}:\n" + "\n\n".join(f"=== {file} ===\n{text}" for file, text in found.items())
+
+
+def edit_skin(name: str, file: str, content: str) -> str:
+    import skins
+
+    try:
+        problems = skins.write(name, file, content)
+    except ValueError as e:
+        raise ToolError(str(e)) from None
+    device = session()
+    if device and name in (settings.get("skin"), getattr(device.brain, "skin", None)):
+        device.send({"type": "config"})  # the one on screen: it changes now
+    if problems:
+        return "Saved, but: " + "; ".join(problems)
+    return "Saved. The check finds nothing wrong."
+
+
+def delete_skin(name: str) -> str:
+    import skins
+
+    if name == settings.get("skin"):
+        raise ToolError("it is the skin in use: choose another one first (set_skin)")
+    try:
+        skins.delete(name)
+    except ValueError as e:
+        raise ToolError(str(e)) from None
+    return "Deleted."
+
+
 def _memory_on():
     if memory.mode() == "off":
         raise ToolError("memory is off («memory» in settings.json)")
@@ -384,6 +434,21 @@ TOOLS = {
                       {"type": "object", "properties": {"kind": {"type": "string",
                                                                  "enum": ["timer", "alarm", "reminder", "all"]}}}),
     "set_volume": (set_volume, "Its voice's volume, 5–100 %.", _schema(percent={"type": "integer"})),
+    "create_skin": (create_skin, "Create a skin of the user's own as a copy of another (based_on: eyes, orb, "
+                    "minimal, bedside or one of theirs), to customize it.",
+                    {"type": "object", "properties": {"name": {"type": "string"}, "based_on": {"type": "string"}},
+                     "required": ["name"]}),
+    "get_skin": (get_skin, "Read a skin's files (skin.json, skin.html, skin.css, locales/*.json) before changing it.",
+                 _schema(name={"type": "string"})),
+    "edit_skin": (edit_skin, "Replace a whole file of one of the user's skins (not the system's): skin.json, "
+                  "skin.html, skin.css or locales/<language>.json. HTML and CSS only, no JavaScript and nothing "
+                  "from outside. skin.html places blocks Jarvis fills (data-block: face, status, heard, answer, "
+                  "captions, clock, time, date, timers, photo, camera, stats); skin.css styles them by state with "
+                  "body[data-look] (asleep, awake, hearing, thinking, looking, speaking, question, alarm, error), "
+                  "body.blink and, on the face block, the live variables --voice, --speech, --bar-1…5 (0–1). "
+                  "It runs on an old Chrome (81): no inset, no flex gap, no :has(). It answers what the check finds.",
+                  _schema(name={"type": "string"}, file={"type": "string"}, content={"type": "string"})),
+    "delete_skin": (delete_skin, "Delete one of the user's skins (never a system one).", _schema(name={"type": "string"})),
     "get_llms": (get_llms, "The LLMs Jarvis can use, which one is in use and whether each is available.", _schema()),
     "set_llm": (set_llm, "Switch to another LLM (claude, apple, hermes), optionally with a model (for Claude: "
                 "sonnet, opus, haiku…; empty for the default). Apple's can't use tools: to come back, the user "

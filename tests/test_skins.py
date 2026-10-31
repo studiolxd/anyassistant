@@ -113,3 +113,42 @@ def test_the_page_forbids_outside_resources_and_scripts():
     response = asyncio.run(main.no_cache(request, handler))
     policy = response.headers["Content-Security-Policy"]
     assert "script-src 'self'" in policy and "default-src 'self'" in policy
+
+
+def test_jarvis_makes_a_skin_of_your_own(mine, monkeypatch):
+    import tools
+
+    assert "Created" in tools.call("create_skin", {"name": "lamp", "based_on": "orb"})
+    assert "=== skin.css ===" in tools.call("get_skin", {"name": "lamp"})
+    css = "body[data-look=\"thinking\"] .core { background: #ff00ff; }"
+    assert tools.call("edit_skin", {"name": "lamp", "file": "skin.css", "content": css}).startswith("Saved.")
+    assert (mine.parent / "lamp" / "skin.css").read_text() == css
+    answer = tools.call("edit_skin", {"name": "lamp", "file": "skin.css", "content": ".a { inset: 0; }"})
+    assert "inset" in answer  # the check, for it to fix
+    tools.call("edit_skin", {"name": "lamp", "file": "locales/es.json", "content": '{"ui": {"thinking": "Mmm"}}'})
+    assert skins.for_page("lamp", "es")["ui"] == {"thinking": "Mmm"}
+    tools.call("delete_skin", {"name": "lamp"})
+    assert "lamp" not in skins.available()
+
+
+@pytest.mark.parametrize("arguments", [
+    {"name": "eyes", "file": "skin.css", "content": "x"},  # a system skin
+    {"name": "mine", "file": "../evil.css", "content": "x"},
+    {"name": "mine", "file": "sounds/wake.wav", "content": "x"},
+    {"name": "mine", "file": "skin.json", "content": "not json"},
+    {"name": "mine", "file": "skin.css", "content": "x" * 200_000},
+    {"name": "nope", "file": "skin.css", "content": "x"},
+])
+def test_what_it_cant_edit(mine, arguments):
+    import tools
+
+    with pytest.raises(tools.ToolError):
+        tools.call("edit_skin", arguments)
+
+
+def test_system_skins_cant_be_deleted_and_yours_need_a_yes(mine):
+    import tools
+
+    with pytest.raises(tools.ToolError):
+        tools.call("delete_skin", {"name": "eyes"})
+    assert "delete_skin" in tools.NEEDS_YES and "edit_skin" not in tools.NEEDS_YES
