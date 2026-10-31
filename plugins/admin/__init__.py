@@ -48,7 +48,10 @@ def _value(option):
 
 def _current(option):
     """What the server uses now: for an empty one, what it chose (the language's voice: «Mónica»)."""
-    return _json(settings.get(option.name, option.default))
+    value = settings.get(option.name, option.default)
+    if option.name == "voice" and not value:
+        value = i18n.L.tts_voice
+    return _json(value)
 
 
 def _choices(option):
