@@ -219,6 +219,7 @@ class Assistant(Transcriber):
 
     def _woke_up(self):
         super()._woke_up()
+        self.told_where = ""  # a new conversation: where it is goes with its first message
         self.transcript = []
         self.detail = llm_detail()  # the one in this conversation's instructions
         self.doubt = bool(getattr(self.wake, "dubious", False))
@@ -406,13 +407,24 @@ class Assistant(Transcriber):
             await self.llm.reload()
 
     def _for_llm(self, text: str) -> str:
-        """The message for the LLM: with a doubt after a dubious wake-up, and the detail level if it changed."""
-        text = self._with_detail(text)
+        """The message for the LLM: with a doubt after a dubious wake-up, the detail level if it changed,
+        and where you're talking from (the plugin «devices») when the conversation starts or it changes."""
+        text = self._with_where(self._with_detail(text))
         if self.doubt:
             self.doubt = False
             text = ("(It isn't clear this was said to you: unless it is a request or a question for you, "
                     f"answer {SILENCE}.)\n{text}")
         return text
+
+    def _with_where(self, text: str) -> str:
+        """«(You're talking through the device «iPad», in the room «dormitorio».)»: so «here» means
+        something («la luz de aquí»), and a message to another device can say where it comes from."""
+        devices = kernel.module("devices")
+        where = devices.through(hub.of(self)) if devices else ""
+        if not where or where == getattr(self, "told_where", ""):
+            return text
+        self.told_where = where
+        return f"(The user is talking to you through {where}; «here» means there.)\n{text}"
 
     def _with_detail(self, text: str) -> str:
         """If the detail level changed mid-conversation, the LLM hears it with this message."""

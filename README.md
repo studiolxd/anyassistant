@@ -261,6 +261,8 @@ speaks, its voice saying its name doesn't wake another. The plugin `devices` giv
 name (from what it is: iPad, Android tablet…) and a room, in `devices.json`: «this is the
 kitchen's» (the LLM's `set_device`), «which devices are there?» (`get_devices`), «dile a la
 cocina que bajo ya» (`tell_device`: said aloud there and shown on its screen, nothing more);
+and the LLM hears, with the first message of each conversation, which device and room it
+is («here» means there);
 `GET /devices` from the Mac lists them.
 
 **By voice**: «Use the orb skin», «Change your voice to Mónica», «From now on your

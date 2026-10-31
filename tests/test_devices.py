@@ -256,3 +256,19 @@ def test_a_message_to_another_device_is_only_said_there(house, monkeypatch):
     assert said["a"][-1] == "A cenar" and "b" not in said  # every other one, not the one you talk to
     with pytest.raises(devices.ToolError):
         devices.tell_device("garaje", "Hola")
+
+
+def test_the_llm_knows_where_you_are_talking_from(house, monkeypatch):
+    from plugins.brain_assistant import Assistant
+
+    kitchen, bedroom = house
+    assistant = Assistant.__new__(Assistant)  # only what the message for the LLM uses
+    assistant.doubt, assistant.detail = False, None
+    monkeypatch.setattr(Assistant, "_with_detail", lambda self, text: text)
+    bedroom.brain = assistant
+    first = assistant._for_llm("enciende la luz de aquí")
+    assert first.startswith("(The user is talking to you through the device «iPad», in the room «dormitorio»")
+    assert first.endswith("enciende la luz de aquí")
+    assert assistant._for_llm("y la de la mesilla") == "y la de la mesilla"  # said once per conversation
+    devices.change("b1", room="habitación de invitados")
+    assert "«habitación de invitados»" in assistant._for_llm("¿y ahora?")  # it changed: said again

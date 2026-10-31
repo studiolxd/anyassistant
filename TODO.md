@@ -15,9 +15,6 @@
 
 ## Varios dispositivos, lo siguiente
 
-- [ ] **Saber desde dónde le hablas**: el LLM no sabe por qué dispositivo ni en qué
-  habitación está la conversación. Con eso, «aquí» tiene sentido («enciende la luz de
-  aquí», «¿qué temporizadores hay aquí?») y los mensajes dicen solos desde dónde vienen.
 - [ ] **Una conversación por dispositivo**: hoy, una a la vez (el LLM es uno: un proceso
   de Claude); si hablan dos personas en dos habitaciones, la segunda corta la primera.
   Un LLM por conversación, con su coste.
@@ -54,8 +51,16 @@
 
 ## Casa y multimedia
 
-- [ ] **Home Assistant / HomeKit**: luces, persianas, climatización (lo primero que se
-  le pide a un asistente de voz en casa).
+- [ ] **Home Assistant** (cuando lo tengas instalado; HomeKit, no): luces, persianas,
+  climatización (lo primero que se le pide a un asistente de voz en casa). El plan:
+  1. Para el LLM, el MCP de Home Assistant (lo conectas tú a los LLM, como Holded):
+     ya entiende sus áreas y lo expuesto a Assist. Las áreas son nuestras habitaciones,
+     y el LLM ya sabe desde cuál le hablas. Falta la regla de confirmación: luces,
+     persianas y clima sin «sí»; cerraduras, garaje y alarma con él (el hook ve los
+     argumentos).
+  2. Órdenes rápidas sin LLM, con su API («enciende la luz», «sube la persiana», «pon
+     la calefacción a 21»): en menos de un segundo, y aunque falle Claude.
+  3. Avisos de Home Assistant («la lavadora ha terminado») dichos donde estés.
 - [ ] **Música, radio, podcasts**: solo reproduce su voz y sus sonidos; controlar
   Spotify o Apple Music en el Mac.
 
@@ -85,7 +90,8 @@
   habitación (por voz o en la ventana «Dispositivos» de la app). Alarmas, temporizadores y
   recordatorios suenan donde se pusieron (`alarm_rings`) o en todos, «… en la cocina» por
   voz; si ese no está, en todos; se paran en cualquiera. Mensajes de una habitación a otra
-  («dile a la cocina que bajo ya», `tell_device`): se dicen allí, sin tono.
+  («dile a la cocina que bajo ya», `tell_device`): se dicen allí, sin tono. El LLM sabe
+  por qué dispositivo y en qué habitación le hablas («aquí»).
 - [x] **HTTPS en local** (`https`): una autoridad propia que cada dispositivo instala una
   vez (`/https/ca.crt`, el QR de la app); la página en https://anyassistant.local, sin
   puerto (443) y sin el flag de Chrome; http://anyassistant.local (80) lleva a ella, y la

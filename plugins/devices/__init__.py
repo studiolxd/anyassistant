@@ -102,6 +102,17 @@ def connected(where: str, but=None) -> list:
     return found if where.strip().lower() == "all" else [s for s in found if matches(s.device, where)]
 
 
+def through(session) -> str:
+    """For the LLM, where the conversation is: «the device «iPad», in the room «dormitorio»»."""
+    if not session or not session.device:
+        return ""
+    found = load().get(session.device, {})
+    if not found:
+        return ""
+    room = f"in the room «{found['room']}»" if found.get("room") else "its room unknown"
+    return f"the device «{found.get('name') or 'a device'}», {room}"
+
+
 def _listing() -> list[dict]:
     connected = {s.device for s in hub.all() if s.pc.connectionState == "connected"}
     current = hub.current()
