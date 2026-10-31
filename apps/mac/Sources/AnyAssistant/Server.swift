@@ -80,6 +80,7 @@ final class Server: ObservableObject {
         env["ANYASSISTANT_CACHE"] = cache.path
         env["UV"] = uv.path
         env["PYTHONUNBUFFERED"] = "1"
+        env["ANYASSISTANT_APP"] = "1"  # the server follows the app: if it goes, so does the server
         return env
     }
 
@@ -95,8 +96,19 @@ final class Server: ObservableObject {
         }
     }
 
+    /// A server left from before (another way of starting it, an app that was killed): stopped first.
+    private func stopLeftover() {
+        guard let raw = try? String(contentsOf: cache.appending(path: "anyassistant.pid"), encoding: .utf8),
+              let pid = pid_t(raw.trimmingCharacters(in: .whitespacesAndNewlines)), pid > 1,
+              kill(pid, 0) == 0 else { return }
+        kill(pid, SIGTERM)
+        for _ in 0..<30 where kill(pid, 0) == 0 { usleep(250_000) }
+        if kill(pid, 0) == 0 { kill(pid, SIGKILL) }
+    }
+
     func start() {
         guard process == nil, installed else { return }
+        stopLeftover()
         try? FileManager.default.createDirectory(at: cache, withIntermediateDirectories: true)
         if !FileManager.default.fileExists(atPath: log.path) {
             FileManager.default.createFile(atPath: log.path, contents: nil)

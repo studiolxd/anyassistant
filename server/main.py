@@ -69,6 +69,23 @@ def main():
 
     app.on_startup.append(listen_for_sighup)
 
+    async def follow_the_app(app):
+        """Started by the AnyAssistant app: if the app goes (quit, killed), so does the server. An
+        orphan would keep the port without the app's Local Network permission: no device could talk."""
+        if not os.environ.get("ANYASSISTANT_APP"):
+            return
+        parent = os.getppid()
+
+        async def watch():
+            while os.getppid() == parent:
+                await asyncio.sleep(2)
+            logging.info("the app is gone: stopping")
+            os.kill(os.getpid(), signal.SIGTERM)
+
+        app["follow_the_app"] = asyncio.ensure_future(watch())
+
+    app.on_startup.append(follow_the_app)
+
     # Short shutdown_timeout: the camera monitor (/video.mjpg) never ends by itself.
     aiohttp_web.run_app(app, host=args.host, port=args.port, shutdown_timeout=3)
     if restart:
