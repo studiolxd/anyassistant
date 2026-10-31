@@ -1,7 +1,11 @@
 {
   "language": "es",
+  "name": "Jarvis",
+  "instructions": ["I'm …; I work at ….", "I invoice with Holded."],
   "llm": "claude",
   "voice": {"es": "Mónica", "en": "Samantha"},
+  "face": "eyes",
+  "video": "auto",
   "silence": 0.6,
   "idle_timeout": 120
 }

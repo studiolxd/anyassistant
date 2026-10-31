@@ -18,6 +18,7 @@ import os
 import signal
 import sys
 import uuid
+from html import escape
 from pathlib import Path
 
 from aiohttp import web
@@ -75,14 +76,18 @@ async def status(request: web.Request) -> web.Response:
     })
 
 
-async def texts(request: web.Request) -> web.Response:
-    """The page's texts in the active language (locale «ui»)."""
-    return web.json_response({"lang": i18n.L.code, "ui": i18n.L.data["ui"]})
+async def config(request: web.Request) -> web.Response:
+    """What the page needs: its texts in the active language (locale «ui») and the settings."""
+    return web.json_response({
+        "lang": i18n.L.code, "ui": i18n.L.data["ui"],
+        "name": settings.get("name"), "face": settings.get("face"), "video": settings.get("video"),
+    })
 
 
 def page(name: str) -> web.Response:
-    """An HTML page declaring the active language (lang="…") from the start."""
+    """An HTML page declaring the active language (lang="…") and the name from the start."""
     html = (WEB / name).read_text().replace('<html lang="en"', f'<html lang="{i18n.L.code}"', 1)
+    html = html.replace("<title>Jarvis", f"<title>{escape(settings.get('name', 'Jarvis'))}", 1)
     return web.Response(text=html, content_type="text/html")
 
 
@@ -118,6 +123,13 @@ async def on_shutdown(app: web.Application):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--name", default="Jarvis", help="the assistant's name: wake word, page, LLM")
+    parser.add_argument("--instructions", default=None, help="more instructions for the LLM (who you are, how to talk…)")
+    parser.add_argument("--face", choices=["eyes", "orb"], default="eyes", help="the page's face (?face= wins)")
+    parser.add_argument("--video", choices=["auto", "normal", "low", "off"], default="auto",
+                        help="camera quality; auto: each device by its memory (?video= wins)")
+    parser.add_argument("--confirm-wait", type=float, default=120, help="seconds to answer «yes» to an action")
+    parser.add_argument("--confirm-valid", type=float, default=60, help="seconds a «yes» stays valid")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--lang", dest="language", default=None, help=f"language: {', '.join(i18n.available())} (default: settings.json or the Mac's)")
@@ -143,11 +155,17 @@ def main():
         print(f"settings.json: unknown key «{key}» (ignored)", file=sys.stderr)
     parser.set_defaults(**{k: v for k, v in preferences.items() if k in known})
     args = parser.parse_args()
+    for action in parser._actions:  # argparse doesn't check defaults, which come from settings.json
+        if action.choices and getattr(args, action.dest) not in action.choices:
+            parser.error(f"{action.dest}: «{getattr(args, action.dest)}» is not one of {', '.join(action.choices)}")
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     logging.getLogger("aioice").setLevel(logging.WARNING)
     i18n.use(args.language or i18n.detect())  # before the plugins: they take its language and voice
     args.voice = settings.voice_for(args.voice, i18n.L.code)
+    if isinstance(args.instructions, list):  # in settings.json, a list of lines reads better
+        args.instructions = "\n".join(args.instructions)
+    settings.active = vars(args)
 
     global brain_factory
     ear = {"record": args.record, "silence": args.silence, "idle_timeout": args.idle_timeout}
@@ -188,7 +206,7 @@ def main():
     app.router.add_post("/offer", offer)
     app.router.add_get("/video.mjpg", video_mjpeg)
     app.router.add_get("/status", status)
-    app.router.add_get("/i18n", texts)
+    app.router.add_get("/config", config)
     app.router.add_static("/web/", WEB)
     app.on_shutdown.append(on_shutdown)
 

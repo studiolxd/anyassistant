@@ -1,6 +1,7 @@
 """Preferences: settings.json in the project, so nothing has to be typed when starting.
 
-    {"language": "es", "llm": "claude", "voice": {"es": "Mónica", "en": "Daniel"}, "silence": 0.5}
+    {"language": "es", "name": "Jarvis", "llm": "claude", "voice": {"es": "Mónica", "en": "Daniel"},
+     "instructions": ["I invoice with Holded."], "face": "orb"}
 
 Keys are the server's options with underscores instead of dashes (language,
 llm_model, echo_guard, idle_timeout…); options on the command line win. «voice»
@@ -12,6 +13,14 @@ import json
 import logging
 import os
 from pathlib import Path
+
+# The options in effect (command line > settings.json > defaults), set by main.py.
+active: dict = {}
+
+
+def get(key: str, default=None):
+    return active.get(key, default)
+
 
 PATH = Path(os.environ.get("JARVIS_SETTINGS") or Path(__file__).resolve().parent.parent / "settings.json")
 log = logging.getLogger("settings")

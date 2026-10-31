@@ -7,19 +7,41 @@
 #   bin/jarvis status
 #   bin/jarvis log                      (the live log; Ctrl+C to leave)
 #
-# The PID goes to .build/jarvis.pid and the log to .build/jarvis.log.
+# Options also come from settings.json. The PID goes to .build/jarvis.pid, the port
+# to .build/jarvis.port and the log to .build/jarvis.log.
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PID="$ROOT/.build/jarvis.pid"
 LOG="$ROOT/.build/jarvis.log"
-PORT=8080
+PORTFILE="$ROOT/.build/jarvis.port"
 
 alive() { [ -f "$PID" ] && kill -0 "$(cat "$PID")" 2>/dev/null; }
+
+# The port it will listen on: --port, else settings.json's, else 8080.
+port_for() {
+  /usr/bin/python3 - "$ROOT" "$@" <<'PY'
+import json, os, sys
+root, args = sys.argv[1], sys.argv[2:]
+for i, arg in enumerate(args):
+    if arg == "--port" and i + 1 < len(args):
+        print(args[i + 1]); sys.exit()
+    if arg.startswith("--port="):
+        print(arg.split("=", 1)[1]); sys.exit()
+try:
+    path = os.environ.get("JARVIS_SETTINGS") or os.path.join(root, "settings.json")
+    print(json.load(open(path)).get("port", 8080))
+except (OSError, ValueError):
+    print(8080)
+PY
+}
+PORT=$(cat "$PORTFILE" 2>/dev/null || echo 8080)
 
 case "$1" in
   start)
     shift
     if alive; then echo "Jarvis is already running (PID $(cat "$PID"))."; exit 0; fi
     mkdir -p "$ROOT/.build"
+    PORT=$(port_for "$@")
+    echo "$PORT" > "$PORTFILE"
     cd "$ROOT" || exit 1
     uv sync --quiet || exit 1
     # The environment's python directly (not `uv run`), so the PID is the server's.

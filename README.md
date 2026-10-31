@@ -68,12 +68,34 @@ its name added to the others.
 the preferences, so `bin/jarvis start` needs no options:
 
 ```json
-{"language": "es", "llm": "claude", "voice": {"es": "Mónica", "en": "Samantha"}, "silence": 0.6}
+{
+  "language": "es",
+  "name": "Jarvis",
+  "instructions": ["I'm a freelance designer.", "I invoice with Holded."],
+  "voice": {"es": "Mónica", "en": "Samantha"},
+  "face": "eyes",
+  "video": "auto"
+}
 ```
 
-Keys are the server's options with underscores instead of dashes (`llm_model`,
-`echo_guard`, `idle_timeout`…); `voice` can be one voice or one per language.
-Options on the command line win over it.
+Keys are the server's options with underscores instead of dashes; options on the
+command line win over it (`uv run server/main.py --help` lists them all). Besides
+the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear's
+(`silence`, `idle_timeout`, `echo_guard`):
+
+| Key | Default | |
+|---|---|---|
+| `language` | the Mac's | `en`, `es`… (also by voice) |
+| `name` | `Jarvis` | the assistant's name: wake word («Hey …»), page title, the LLM's instructions |
+| `instructions` | — | text (or a list of lines) added to the LLM's instructions: who you are, your tools, how to talk |
+| `voice` | the language's | one voice or one per language: `{"es": "Mónica", "en": "Samantha"}` |
+| `face` | `eyes` | `eyes` or `orb`; a device's `?face=` wins |
+| `video` | `auto` | `normal`, `low` or `off`; `auto` lets each device choose (low with ≤ 1 GB of RAM); a device's `?video=` wins |
+| `port` | `8080` | `bin/jarvis` uses it too |
+| `confirm_wait` | `120` | seconds to answer «yes» to an action that writes |
+| `confirm_valid` | `60` | seconds a «yes» stays valid |
+
+A wrong value (`"face": "smiley"`) stops the server with the reason.
 
 The LLM gets English instructions plus «Always reply in {language}».
 
@@ -166,7 +188,8 @@ and `--wake my-engine [--wake-word …]`. `server/plugins.py` is the shared regi
 
 ## Face
 
-Two, chosen in the tablet's address:
+Two, chosen with `face` in `settings.json` or, on one device, in its address
+(which wins):
 
 - **`?face=eyes`** (default): two blinking eyes; closed and breathing while asleep,
   brighter and slightly bigger with your voice, looking to one side with dots while
@@ -178,7 +201,8 @@ Two, chosen in the tablet's address:
 Asleep, the screen shows the time and date in large type. `?demo` (or
 `?demo&face=orb`) cycles through every state without connecting, to look at them.
 It is all CSS and transforms (`web/faces.css`, `web/face.js`), so it runs smoothly
-on the tablet. `?video=normal|low|off` sets the camera's quality.
+on the tablet. The camera's quality: `video` in `settings.json`, or
+`?video=normal|low|off` on one device.
 
 ## System voice commands
 
@@ -356,7 +380,7 @@ so they need no account or network; they run on a free port, next to a running J
 
 ## Layout
 
-- `server/main.py` — HTTP, signaling (`/offer`), texts (`/i18n`), monitor (`/video.mjpg`, `/status`).
+- `server/main.py` — HTTP, signaling (`/offer`), texts and settings for the page (`/config`), monitor (`/video.mjpg`, `/status`).
 - `server/i18n.py` and `locales/` — languages; `server/settings.py`, `settings.json`.
 - `server/transport.py` — WebRTC session: tracks, `control` DataChannel, last frame.
 - `server/audio.py` — 48 kHz mono PCM; `Speaker` is the outgoing track.

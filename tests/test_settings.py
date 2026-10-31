@@ -63,3 +63,23 @@ def test_language_command(lang, text, code):
 ])
 def test_not_a_language_command(lang, text):
     assert language_command(text) is None
+
+
+@pytest.fixture
+def active(monkeypatch):
+    monkeypatch.setattr(settings, "active", {})
+    return settings.active
+
+
+def test_instructions_with_name_and_your_own(en, active):
+    from llm import instructions
+
+    assert instructions().startswith("You are Jarvis,")
+    active.update(name="Friday", instructions="I invoice with Holded.")
+    text = instructions()
+    assert text.startswith("You are Friday,") and text.endswith("I invoice with Holded.")
+
+
+def test_another_name_in_a_language_command(en, active):
+    active["name"] = "Friday"
+    assert language_command("Friday, speak Spanish") == "es"

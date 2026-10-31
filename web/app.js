@@ -1,6 +1,6 @@
 // The phone's client: microphone and camera to the Mac, the Mac's audio to the speaker.
 // Plain JS without a bundler, for old Chrome versions (81 on Android 4.4).
-// The texts come from the server (/i18n) in the active language.
+// The texts (in the active language) and the settings come from the server (/config).
 
 var pc = null;
 var channel = null;
@@ -8,6 +8,7 @@ var statusLine = document.getElementById('status');
 var stats = document.getElementById('stats');
 var rtt = null;
 var T = {};  // texts of the active language (locale «ui»)
+var settings = {};  // name, face, video
 
 function text(key, values) {
   var s = T[key] || key;
@@ -15,12 +16,15 @@ function text(key, values) {
   return s;
 }
 
-// The texts of the server's language; again after reconnecting, in case it changed («speak English»).
+// Texts and settings; again after reconnecting, in case they changed («speak English», a restart).
 function loadTexts() {
-  return fetch('/i18n').then(function (r) { return r.json(); }).then(function (data) {
+  return fetch('/config').then(function (r) { return r.json(); }).then(function (data) {
     T = data.ui;
+    settings = data;
     document.documentElement.lang = data.lang;
+    document.title = data.name;
     Face.language(data.lang);
+    Face.kind(data.face);
   });
 }
 
@@ -63,16 +67,18 @@ function keepAwake() {
   });
 }
 
-// ?video=normal|low|off; by default, low on devices with ≤ 1 GB of RAM.
+// Camera constraints for each quality.
 var VIDEO = {
   normal: { facingMode: 'user', width: 640, height: 480, frameRate: 15 },
   low: { facingMode: 'user', width: 320, height: 240, frameRate: 10 },
   off: false
 };
 
+// ?video= on this device, else the settings' video, else «auto»: low with ≤ 1 GB of RAM.
 function videoQuality() {
   var asked = new URLSearchParams(location.search).get('video');
   if (asked in VIDEO) return asked;
+  if (settings.video in VIDEO) return settings.video;
   return (navigator.deviceMemory || 2) <= 1 ? 'low' : 'normal';
 }
 

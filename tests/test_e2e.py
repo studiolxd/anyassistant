@@ -133,13 +133,23 @@ def final_texts(messages, author=None):
             if m.get("type") == "text" and not m.get("partial") and m.get("author") == author]
 
 
-def test_page_and_texts(server):
+def test_page_and_settings(server, tmp_path):
+    (tmp_path / "settings.json").write_text(json.dumps({"name": "Viernes", "face": "orb", "video": "low"}))
     url = server("--mode", "parrot", "--lang", "es")
     html = urllib.request.urlopen(url + "/").read().decode()
-    assert 'id="face"' in html and '<html lang="es"' in html
+    assert 'id="face"' in html and '<html lang="es"' in html and "<title>Viernes</title>" in html
     assert '<html lang="es"' in urllib.request.urlopen(url + "/monitor").read().decode()
-    texts = json.load(urllib.request.urlopen(url + "/i18n"))
-    assert texts["lang"] == "es" and texts["ui"]["start"]
+    config = json.load(urllib.request.urlopen(url + "/config"))
+    assert config["lang"] == "es" and config["ui"]["start"]
+    assert (config["name"], config["face"], config["video"]) == ("Viernes", "orb", "low")
+
+
+def test_bad_settings_stop_it(tmp_path):
+    (tmp_path / "settings.json").write_text(json.dumps({"face": "smiley"}))
+    result = subprocess.run([sys.executable, ROOT / "server" / "main.py", "--mode", "parrot"], cwd=ROOT,
+                            capture_output=True, text=True, timeout=60,
+                            env={**os.environ, "JARVIS_SETTINGS": str(tmp_path / "settings.json")})
+    assert result.returncode != 0 and "smiley" in result.stderr
 
 
 def test_parrot_repeats(server, tmp_path):
@@ -189,7 +199,7 @@ def test_switch_language_by_voice(server, tmp_path):
     # It restarts by itself, in Spanish despite --lang en.
     for _ in range(120):
         try:
-            if json.load(urllib.request.urlopen(url + "/i18n", timeout=1))["lang"] == "es":
+            if json.load(urllib.request.urlopen(url + "/config", timeout=1))["lang"] == "es":
                 return
         except OSError:
             pass

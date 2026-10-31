@@ -13,6 +13,7 @@ A plugin is a module of this package with a class registered like this:
 from collections.abc import AsyncIterator
 
 import i18n
+import settings
 from plugins import Registry
 
 _registry = Registry(__name__, __path__, "LLM")
@@ -20,7 +21,7 @@ register = _registry.register
 create = _registry.create
 available = _registry.available
 
-INSTRUCTIONS = """You are Jarvis, a voice assistant. Always reply in {language}.
+INSTRUCTIONS = """You are {name}, a voice assistant. Always reply in {language}.
 What you receive is what the user said out loud, transcribed automatically: it
 may contain mistakes; interpret it with common sense.
 Your answer will be read aloud: be brief (one to three sentences), natural and
@@ -29,8 +30,10 @@ Don't assume the user's gender: use neutral forms."""
 
 
 def instructions() -> str:
-    """The system instructions, in the active language."""
-    return INSTRUCTIONS.format(language=i18n.L.name)
+    """The system instructions, in the active language, plus the user's own (settings «instructions»)."""
+    text = INSTRUCTIONS.format(language=i18n.L.name, name=settings.get("name", "Jarvis"))
+    extra = settings.get("instructions")
+    return f"{text}\n\nFrom the user:\n{extra}" if extra else text
 
 
 class LLM:

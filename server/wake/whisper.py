@@ -14,6 +14,7 @@ from difflib import SequenceMatcher
 import numpy as np
 
 import i18n
+import settings
 from text import words
 from wake import RATE, WakeWord, register
 
@@ -51,7 +52,7 @@ def similarity(candidate: str, key: str) -> float:
 @register("whisper")
 class WhisperWakeWord(WakeWord):
     def __init__(self, word=None, threshold=SIMILARITY, model="mlx-community/whisper-base-mlx"):
-        super().__init__(word or "jarvis", threshold)
+        super().__init__(word or settings.get("name", "Jarvis").lower(), threshold)
         import torch
 
         from brain.ear import load_vad
@@ -61,7 +62,7 @@ class WhisperWakeWord(WakeWord):
         self._transcribe = transcribe_mlx
         self.model = model
         self.keys = words(self.word)
-        self.phrase = "Hey Jarvis" if self.keys == ["jarvis"] else self.word.capitalize()
+        self.phrase = f"Hey {self.word.title()}" if len(self.keys) == 1 else self.word.capitalize()
         # Without a prompt, whisper-base writes «Geri Yarvis», «gellarby»…; with the
         # exact phrase as the prompt it skips it (it thinks it was already said).
         self.prompt = i18n.L("wake.whisper_prompt", name=self.word.title())

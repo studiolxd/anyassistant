@@ -20,6 +20,7 @@ import uuid
 from pathlib import Path
 
 import i18n
+import settings
 from llm import LLM, instructions, register
 
 log = logging.getLogger("llm")
@@ -28,7 +29,6 @@ URL = os.environ.get("HERMES_API_URL", "http://127.0.0.1:8642")
 ENV = Path.home() / ".hermes" / ".env"
 # Same files as Claude's confirmation (bin/jarvis-confirm, brain/assistant.py).
 CONFIRM = Path(__file__).resolve().parents[2] / ".build" / "confirm"
-DEADLINE = 120  # seconds to answer an approval; then it is denied
 
 
 def api_key() -> str:
@@ -133,7 +133,7 @@ class Hermes(LLM):
 
     async def _await_answer(self, run_id: str):
         pending, confirmed = CONFIRM / "pending.json", CONFIRM / "confirmed.json"
-        deadline = time.time() + DEADLINE
+        deadline = time.time() + settings.get("confirm_wait", 120)  # then it is denied
         choice = "deny"
         while time.time() < deadline:
             await asyncio.sleep(0.2)

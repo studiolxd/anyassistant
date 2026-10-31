@@ -24,8 +24,8 @@
 - [ ] **Eyes (Phase 4)**: look through the camera when asked («what do you see?», «read this»).
 - [ ] **Memory across conversations** with Claude (Hermes already has it).
 - [x] **Face**: «eyes» (default) and «orb» (`?face=orb`), clock while asleep,
-  «question» state; `?demo` cycles through the states without connecting. One
-  still has to be chosen.
+  «question» state; `?demo` cycles through the states without connecting. Chosen
+  with `face` in `settings.json`.
 - [ ] **Native apps** (later, once we know what they should be like): Android, Android TV,
   iOS, macOS and Windows, with the same features on all of them.
 - [x] **Languages**: English base and Spanish in `locales/`; detected from the Mac,

@@ -16,8 +16,8 @@
   <p id="status"></p>
   <img src="/video.mjpg" alt="Phone camera">
   <script>
-    // What the phone's camera sees, from the Mac. Texts from /i18n, like the phone's page.
-    fetch('/i18n').then(function (r) { return r.json(); }).then(function (data) {
+    // What the phone's camera sees, from the Mac. Texts from /config, like the phone's page.
+    fetch('/config').then(function (r) { return r.json(); }).then(function (data) {
       document.documentElement.lang = data.lang;
       setInterval(async function () {
         var s = await (await fetch('/status')).json();

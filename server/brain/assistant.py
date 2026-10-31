@@ -35,7 +35,7 @@ ECHO_MAX_WORDS = 5  # an echo is a short piece of what it just said
 ECHO_WINDOW = 2.5
 
 # Confirming actions that write: bin/jarvis-confirm records the pending one; if the
-# user says «yes», this authorizes that same action for one minute.
+# user says «yes», this authorizes that same action for a while (--confirm-wait, --confirm-valid).
 CONFIRM = Path(__file__).resolve().parents[2] / ".build" / "confirm"
 END_OF_SENTENCE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
 
@@ -60,7 +60,7 @@ def language_command(text: str) -> str | None:
     «¿Quién habla inglés en Suiza?» or «Pasa el correo a inglés» are not commands.
     Any language because Parakeet may well write «Speak Spanish» while in Spanish.
     """
-    heard = [w for w in words(text) if w != "jarvis"]
+    heard = [w for w in words(text) if w not in words(settings.get("name", "Jarvis"))]
     if not 0 < len(heard) <= 6:
         return None
     locales = [i18n.Locale(code) for code in i18n.available()]
@@ -116,7 +116,7 @@ class Assistant(Transcriber):
         """The resting state, or «question» if an action awaits your «yes» (the face shows it)."""
         try:
             pending = json.loads((CONFIRM / "pending.json").read_text())
-            if time.time() - pending.get("at", 0) < 120:
+            if time.time() - pending.get("at", 0) < settings.get("confirm_wait", 120):
                 return "question"
         except (OSError, ValueError):
             pass
@@ -217,12 +217,12 @@ class Assistant(Transcriber):
             pending = json.loads(pending_json.read_text())
         except (OSError, ValueError):
             return False
-        if time.time() - pending.get("at", 0) > 120:
+        if time.time() - pending.get("at", 0) > settings.get("confirm_wait", 120):
             pending_json.unlink(missing_ok=True)
             return False
         if is_yes(text):
             (CONFIRM / "confirmed.json").write_text(
-                json.dumps({"signature": pending["signature"], "until": time.time() + 60})
+                json.dumps({"signature": pending["signature"], "until": time.time() + settings.get("confirm_valid", 60)})
             )
             log.info("confirmed: %s", pending.get("action"))
         else:

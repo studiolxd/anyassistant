@@ -1,4 +1,4 @@
-// Jarvis's face: «eyes» (default) or «orb», with ?face=eyes|orb.
+// The assistant's face: «eyes» or «orb», from the settings (face) or ?face=eyes|orb, which wins.
 // The server's state goes to body[data-state] and the CSS (faces.css) does the rest.
 // The microphone's volume and its own voice's move .pulse and the mouth from here:
 // transforms only, so it runs smoothly on the tablet (Chrome 81).
@@ -25,12 +25,20 @@ var Face = (function () {
       '</div></div>'
   };
 
-  var kind = new URLSearchParams(location.search).get('face') === 'orb' ? 'orb' : 'eyes';
+  var asked = new URLSearchParams(location.search).get('face');
+  var kind, pulse, bars;
   var root = document.getElementById('face');
-  root.className = 'face-' + kind;
-  root.innerHTML = TEMPLATES[kind];
-  var pulse = root.querySelector('.pulse');
-  var bars = root.querySelectorAll('.mouth i');
+
+  function setKind(k) {
+    k = asked in TEMPLATES ? asked : k in TEMPLATES ? k : 'eyes';
+    if (k === kind) return;
+    kind = k;
+    root.className = 'face-' + kind;
+    root.innerHTML = TEMPLATES[kind];
+    pulse = root.querySelector('.pulse');
+    bars = root.querySelectorAll('.mouth i');
+  }
+  setKind('eyes');
   var look = '';
   var current = '';
 
@@ -123,6 +131,7 @@ var Face = (function () {
     voice: setVoice,
     speaker: speaker,
     current: function () { return current; },
+    kind: setKind,
     language: function (code) { lang = code; clock(); }
   };
 })();
