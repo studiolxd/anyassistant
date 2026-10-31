@@ -6,9 +6,10 @@ import time
 import pytest
 
 import kernel
-import memory
 import mcp_server
 import settings
+
+memory = kernel.load("memory")
 import tools
 from conftest import load_script
 from plugins.llm_claude.permissions import load

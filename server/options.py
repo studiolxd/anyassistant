@@ -52,7 +52,7 @@ def _detail_levels():
 
 OPTIONS = [
     # The plugins
-    Option("plugins", None, 'which plugins are on or off, if not as they come: {"memory": false, "eyes": true}',
+    Option("plugins", None, 'which plugins are on or off, if not as they come: {"memory": true, "tap-to-wake": false}',
            "plugins", "json", live=True),
     # The assistant
     Option("name", "Jarvis", "the assistant's name: its wake word, the page's title, what the LLM calls itself", "assistant"),
@@ -71,12 +71,6 @@ OPTIONS = [
            "bool", live=True),
     Option("eyes", False, "it may look through the device's camera (Claude, Hermes)", "assistant", "bool", live=True),
     Option("read_photo", True, "a full-resolution photo when asked to read", "assistant", "bool", live=True),
-    # Memory
-    Option("memory", "off", "remember across conversations: only when asked (explicit) or also on its own (auto)",
-           "memory", "choice", ["off", "explicit", "auto"], live=True),
-    Option("memory_facts", 50, "facts before the LLM compacts them", "memory", "int", live=True),
-    Option("memory_conversations", 10, "conversation summaries kept", "memory", "int", live=True),
-    Option("memory_days", 30, "days a conversation summary is kept", "memory", "int", live=True),
     # Listening and speaking
     Option("stt", "parakeet", "speech recognition: parakeet, mlx-whisper…", "voice", "choice", _plugins("stt")),
     Option("stt_model", None, "its model", "voice"),

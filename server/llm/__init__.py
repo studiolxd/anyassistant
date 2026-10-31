@@ -18,7 +18,7 @@ A plugin is a module of this package with a class registered like this:
 from collections.abc import AsyncIterator
 
 import i18n
-import memory
+import kernel
 import settings
 from registry import Registry
 
@@ -81,7 +81,17 @@ def instructions() -> str:
     extra = settings.get("instructions")
     if extra:
         text += f"\n\nFrom the user:\n{extra}"
-    return text + memory.instructions()
+    return text + "".join(function() for function, plugin in CONTEXT if kernel.enabled(plugin))
+
+
+CONTEXT = []  # (function, plugin): more for the instructions (memory…)
+
+
+def context(function):
+    """function() → text added to the LLM's instructions, while its plugin is on."""
+    plugin = kernel.current()
+    CONTEXT[:] = [c for c in CONTEXT if (c[0].__qualname__, c[1]) != (function.__qualname__, plugin)] + [(function, plugin)]
+    return function
 
 
 class LLM:

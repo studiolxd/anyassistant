@@ -6,7 +6,9 @@
     events.emit("asleep", jarvis, transcript)  # the core says it happened
 
 Only the handlers of plugins that are on are called; one failing doesn't stop the
-others. Events so far: «tap» (jarvis): the screen was tapped.
+others. Events so far: «tap» (jarvis): the screen was tapped; «asleep» (jarvis, transcript):
+it fell asleep after a conversation (awaited with gather: memory reviews it before
+the next one is prepared).
 """
 
 import asyncio
@@ -39,5 +41,19 @@ def emit(name: str, *args, **kwargs):
             result = function(*args, **kwargs)
             if inspect.isawaitable(result):
                 asyncio.ensure_future(result)
+        except Exception as e:
+            log.warning("%s (%s): %r", name, plugin, e)
+
+
+async def gather(name: str, *args, **kwargs):
+    """Like emit, but waits for every handler (sync or async) to finish."""
+    kernel.load_all()
+    for function, plugin in list(_handlers.get(name, [])):
+        if not kernel.enabled(plugin):
+            continue
+        try:
+            result = function(*args, **kwargs)
+            if inspect.isawaitable(result):
+                await result
         except Exception as e:
             log.warning("%s (%s): %r", name, plugin, e)

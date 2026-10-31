@@ -1,32 +1,42 @@
-"""Memory across conversations (settings «memory»: off, explicit or auto; off by default).
+"""Memory across conversations: the plugin «memory» (off by default) and settings
+«memory»: explicit or auto.
 
-memory.json in the project (not in git), readable and editable:
+memory.json in your data folder, readable and editable:
 
     {"facts": ["Invoices with Holded.", …], "conversations": [{"at": 1793…, "summary": "…"}, …]}
 
 - explicit: only what you ask it to remember («remember that…»), through its own
-  tools (tools.py) and with your «yes».
+  tools (below) and with your «yes».
 - auto: also, when it falls asleep, the LLM reviews the conversation and keeps
   durable facts about you (only from what *you* said: never from emails or other
   tool results, which could carry instructions) and a one-line summary of it.
 
 Each conversation starts with the facts and the recent summaries in its
-instructions, as notes, not as orders.
+instructions, as notes, not as orders (@llm.context); the review runs on the core's
+«asleep» event.
 """
 
 import json
 import logging
-import os
 import re
 import time
-from pathlib import Path
 
+import events
 import i18n
+import llm
+import options
 import paths
 import settings
+from options import Option
 from tools import ToolError, tool
 
 PATH = paths.MEMORY
+
+options.add(Option("memory", "explicit", "what it remembers: only when asked (explicit) or also on its own (auto)",
+                   "memory", "choice", ["explicit", "auto"], live=True))
+options.add(Option("memory_facts", 50, "facts before the LLM compacts them", "memory", "int", live=True))
+options.add(Option("memory_conversations", 10, "conversation summaries kept", "memory", "int", live=True))
+options.add(Option("memory_days", 30, "days a conversation summary is kept", "memory", "int", live=True))
 # Limits (settings memory_facts, memory_conversations, memory_days): beyond
 # max_facts() the LLM compacts the facts to ~70 %; the oldest go only if it can't.
 
@@ -85,7 +95,7 @@ what is obsolete or trivial. Return only a JSON list of strings, nothing else.
 
 
 def mode() -> str:
-    return settings.get("memory") or "off"
+    return "auto" if settings.get("memory") == "auto" else "explicit"
 
 
 def load() -> dict:
@@ -100,10 +110,9 @@ def save(data: dict):
     PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
 
 
+@llm.context
 def instructions() -> str:
-    """The notes for the LLM's instructions (empty with memory off)."""
-    if mode() == "off":
-        return ""
+    """The notes for the LLM's instructions."""
     data = load()
     facts = "\n".join(f"- {f}" for f in data["facts"]) or "- (none yet)"
     days = settings.get("memory_days") or 30
@@ -186,10 +195,11 @@ async def compact(llm):
         save(data)
 
 
-async def after_conversation(llm, transcript: list[tuple[str, str]]):
+@events.on("asleep")
+async def after_conversation(jarvis, transcript: list[tuple[str, str]]):
     """While it sleeps: review the conversation (auto) and compact if there are too many facts."""
-    await review(llm, transcript)
-    await compact(llm)
+    await review(jarvis.llm, transcript)
+    await compact(jarvis.llm)
 
 
 async def review(llm, transcript: list[tuple[str, str]]):
@@ -210,14 +220,8 @@ async def review(llm, transcript: list[tuple[str, str]]):
 
 # --- As tools, for the LLM (tools/) ---
 
-def _memory_on():
-    if mode() == "off":
-        raise ToolError("memory is off («memory» in settings.json)")
-
-
 @tool("What you remember about the user (numbered) and recent conversations.")
 def get_memory() -> str:
-    _memory_on()
     data = load()
     text = "\n".join(f"{i}. {f}" for i, f in enumerate(data["facts"], 1)) or "(nothing yet)"
     if data["conversations"]:
@@ -229,7 +233,6 @@ def get_memory() -> str:
       "person, as they said it. Call get_memory first: if a fact is about the same thing (their name, a pet, a "
       "preference…), use update instead, never a second fact.", needs_yes=True)
 def remember(fact: str) -> str:
-    _memory_on()
     data = load()
     if fact.strip() and fact.strip() not in data["facts"]:
         data["facts"] = (data["facts"] + [fact.strip()])[-hard_limit():]  # compacted when it sleeps
@@ -240,7 +243,6 @@ def remember(fact: str) -> str:
 @tool("Change a fact you remember (its number from get_memory) when the user corrects or changes it. "
       "Preferred over remember + forget: one step, one confirmation.", needs_yes=True)
 def update(number: int, fact: str) -> str:
-    _memory_on()
     data = load()
     if not 1 <= number <= len(data["facts"]):
         raise ToolError("give the number of a fact from get_memory")
@@ -253,7 +255,6 @@ def update(number: int, fact: str) -> str:
 
 @tool("Forget a fact (its number from get_memory).", needs_yes=True)
 def forget(number: int) -> str:
-    _memory_on()
     data = load()
     if not 1 <= number <= len(data["facts"]):
         raise ToolError("give the number of a fact from get_memory")

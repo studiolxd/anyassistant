@@ -16,9 +16,9 @@ import time
 
 import numpy as np
 
+import events
 import eyes
 import i18n
-import memory
 import settings
 import skills
 import tools
@@ -192,7 +192,7 @@ class Assistant(Transcriber):
 
     async def _remember(self, transcript):
         """While it sleeps: what to keep from the conversation, and ready for the next one."""
-        await memory.after_conversation(self.llm, transcript)
+        await events.gather("asleep", self, transcript)  # memory…
         await self.llm.prepare()
 
     def _heard(self, text: str, timings: dict):

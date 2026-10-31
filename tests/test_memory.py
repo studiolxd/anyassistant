@@ -6,8 +6,10 @@ import time
 
 import pytest
 
-import memory
+import kernel
 import settings
+
+memory = kernel.load("memory")
 
 
 @pytest.fixture

@@ -95,5 +95,4 @@ def call(name: str, arguments: dict) -> str:
 
 
 # The core's modules that declare tools (the plugins' load with them, in available()).
-import memory  # noqa: E402,F401
 import skins  # noqa: E402,F401

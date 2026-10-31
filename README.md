@@ -87,7 +87,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 
 | Option | Default | |
 |---|---|---|
-| `plugins` | — | which plugins are on or off, if not as they come: {"memory": false, "eyes": true} |
+| `plugins` | — | which plugins are on or off, if not as they come: {"memory": true, "tap-to-wake": false} |
 
 **The assistant**
 
@@ -262,7 +262,8 @@ so they answer at once; the tools are for everything else.
 
 ## Memory
 
-`"memory"` in `settings.json`: `off` (default), `explicit` or `auto`. It lives in
+The plugin `memory`, off by default: `"plugins": {"memory": true}`, and `"memory"`
+in `settings.json`: `explicit` (default) or `auto`. It lives in
 `memory.json` (not in git), readable and editable:
 
 ```json

@@ -11,7 +11,7 @@ import re
 import subprocess
 
 import i18n
-import memory
+import kernel
 import settings
 import tools
 from tools import ToolError, tool
@@ -35,7 +35,7 @@ def get_status() -> str:
     camera = bool(device and device.frames)
     return (f"device connected: {'yes' if device else 'no'}; camera: {'yes' if camera else 'no'}; "
             f"language: {i18n.L.code}; LLM: {settings.get('llm')} ({settings.get('llm_model') or 'default'}); "
-            f"eyes: {'on' if settings.get('eyes') else 'off'}; memory: {memory.mode()}")
+            f"eyes: {'on' if settings.get('eyes') else 'off'}; memory: {memory.mode() if (memory := kernel.module('memory')) else 'off'}")
 
 
 @tool("Your name, skin (and the ones there are), detail level, voice and language.")

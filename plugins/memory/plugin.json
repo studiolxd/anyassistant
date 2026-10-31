@@ -1,0 +1,6 @@
+{
+  "name": "Memory",
+  "description": "Remembers you across conversations: what you ask it to (explicit) or also on its own when it falls asleep (auto).",
+  "kind": "feature",
+  "default": false
+}
