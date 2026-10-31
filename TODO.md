@@ -31,7 +31,7 @@
 
 ## Maintenance
 
-- [ ] **Automated tests** in the repository (today they are loose scripts).
+- [x] **Automated tests**: pytest in `tests/` (`uv run pytest`; `-m e2e` for the real server).
 
 ## To do by hand
 

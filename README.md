@@ -327,6 +327,16 @@ uv run server/main.py --tts macos               # with `say`
 uv run server/main.py --tts none                # text only
 ```
 
+## Tests
+
+```sh
+uv run pytest            # fast ones (~1 s): languages, voice commands, permissions, gog, confirmation, echo
+uv run pytest -m e2e     # end to end (~1–2 min): starts the real server and talks to it over WebRTC
+```
+
+The end-to-end tests make their voices with `say` and use Apple's local model,
+so they need no account or network; they run on a free port, next to a running Jarvis.
+
 ## Layout
 
 - `server/main.py` — HTTP, signaling (`/offer`), texts (`/i18n`), monitor (`/video.mjpg`, `/status`).
@@ -341,5 +351,6 @@ uv run server/main.py --tts none                # text only
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
 - `web/` — the phone's page (plain JS, old Chrome) and the monitor.
+- `tests/` — pytest; `test_e2e.py` drives the real server.
 
 See `TODO.md` for what's next.

@@ -35,6 +35,8 @@ def wrong_language(text: str) -> bool:
     letters = re.escape(i18n.L("stt.letters"))
     if re.search(rf"[^\W\d_a-z{letters}]", text.lower()):
         return True  # letters the language doesn't have («ř», «ø»…)
+    if i18n.L.stt_language == "en":
+        return False
     found = words(text)
     return bool(found) and sum(w in ENGLISH for w in found) / len(found) >= 0.3
 

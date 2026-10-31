@@ -15,3 +15,12 @@ dependencies = [
     "scipy>=1.18.1",
     "silero-vad>=6.2.3",
 ]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["server"]
+markers = ["e2e: end-to-end with the real server and models (slow; run with -m e2e)"]
+addopts = "-m 'not e2e'"
