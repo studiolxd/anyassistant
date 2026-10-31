@@ -122,15 +122,26 @@ struct DeviceRow: View {
                     .buttonStyle(.borderless).foregroundStyle(.red)
                     .help(T("It is forgotten here; if it connects again it is a new device."))
             }
-            HStack(spacing: 12) {
-                TextField(T("Name"), text: $name).focused($editing)
-                TextField(T("Room"), text: $room, prompt: Text(T("unknown"))).focused($editing)
+            HStack(alignment: .top, spacing: 16) {
+                field(T("Name"), text: $name, empty: "")
+                field(T("Room"), text: $room, empty: T("Not set yet"))
             }
             .onSubmit { save() }
             .onChange(of: editing) { _, now in if !now { save() } }  // leaving a field saves it
         }
         .onAppear { name = item.name; room = item.room }
         .onChange(of: item) { _, new in if !editing { name = new.name; room = new.room } }
+    }
+
+    /// A field with its title above it (in a form, macOS puts the title on the left and the
+    /// field without a border: the title read as if it were the value).
+    func field(_ title: String, text: Binding<String>, empty: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            TextField(title, text: text, prompt: Text(empty))
+                .labelsHidden().textFieldStyle(.roundedBorder).focused($editing)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     var state: String {
