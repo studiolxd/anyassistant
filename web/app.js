@@ -316,7 +316,7 @@ function videoFrame(track, send) {
 // Running timers, alarms and reminders, with a countdown (settings show_timers).
 var alarmLabel = '';
 var timerItems = [];
-var ICONS = { timer: '⏱', alarm: '⏰', reminder: '🔔' };
+var ICONS = { timer: '⌛', alarm: '⏰', reminder: '🔔' };  // ⏱ isn't in Android 4.4's font
 function showTimers(items) {
   timerItems = items || [];
   drawTimers();
