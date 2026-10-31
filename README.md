@@ -32,6 +32,13 @@ Swift bridges, the speech models, pairing, memory, eyes, starting with the Mac
 (launchd) and the address (and code) for your tablet. Run again, it updates the
 program and keeps your data.
 
+```sh
+~/Applications/AnyAssistant/bin/anyassistant update      # the new version from where it was
+                                                          # installed from; packages, models; restarts
+~/Applications/AnyAssistant/bin/anyassistant uninstall   # asks whether your data goes too
+                                                          # (--all, --keep-data)
+```
+
 The steps come from the core (`server/install_steps.py`) and from the plugins
 (`@installer.question`, `@installer.task`, `@installer.device` for something done on
 the device), so a plugin brings its own. Any of them again later:

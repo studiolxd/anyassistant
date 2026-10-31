@@ -9,7 +9,7 @@
   can't reach the tablet (WebRTC stays «connecting»); from a terminal it can. The
   AnyAssistant app should start it, so it inherits the app's permission
   (NSLocalNetworkUsageDescription), or the installer must guide the user to allow it.
-- [ ] **Installer, next**: `bin/anyassistant update` and `uninstall`; a release tarball
+- [ ] **Installer, next**: a release tarball
   (install.sh copies the git checkout for now); the voice enrolment step
   (`@installer.device`) when that plugin exists.
 - [ ] **Swift bridges on macOS 27**: `LanguageModelSession.GenerationError` is deprecated
@@ -84,6 +84,9 @@
   app's new name (`name`).
 
 ## Done
+
+- [x] **update and uninstall** (31 Oct): `bin/anyassistant update` (from where it was installed
+  from; removes what a version removed) and `uninstall` (data only if you say so).
 
 - [x] **The app is AnyAssistant** (`bin/anyassistant`, `ANYASSISTANT_HOME`…, the MCP
   server `anyassistant`, in Hermes's config too); the assistant is still Jarvis by default.
