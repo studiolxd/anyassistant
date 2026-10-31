@@ -15,6 +15,11 @@ function views(name) {
     var iframe = document.createElement('iframe');
     iframe.src = '/?demo=' + state + '&skin=' + encodeURIComponent(name);
     frame.appendChild(iframe);
+    // A cover over the view (the page inside would take the tap): it opens it full screen.
+    var cover = document.createElement('div');
+    cover.className = 'cover';
+    cover.onclick = function () { open(STATES.indexOf(state)); };
+    frame.appendChild(cover);
     var caption = document.createElement('figcaption');
     caption.textContent = state;
     figure.appendChild(frame);
@@ -58,3 +63,30 @@ setInterval(function () {
     setTimeout(function () { note.textContent = ''; }, 3000);
   });
 }, 1500);
+
+// One state full screen, as on the device (this screen's own size and orientation):
+// ✕ or Esc goes back to all of them; ‹ › or the arrows go through the states.
+var full = document.getElementById('full');
+var current = 0;
+
+function open(index) {
+  current = (index + STATES.length) % STATES.length;
+  document.getElementById('full-view').src = '/?demo=' + STATES[current] + '&skin=' + encodeURIComponent(select.value);
+  document.getElementById('full-state').textContent = STATES[current];
+  full.hidden = false;
+}
+
+function close() {
+  full.hidden = true;
+  document.getElementById('full-view').src = 'about:blank';
+}
+
+document.getElementById('full-close').onclick = close;
+document.getElementById('full-previous').onclick = function () { open(current - 1); };
+document.getElementById('full-next').onclick = function () { open(current + 1); };
+document.addEventListener('keydown', function (ev) {
+  if (full.hidden) return;
+  if (ev.key === 'Escape') close();
+  else if (ev.key === 'ArrowLeft') open(current - 1);
+  else if (ev.key === 'ArrowRight') open(current + 1);
+});
