@@ -35,3 +35,12 @@ def test_long_sentences_are_not():
 def test_late_repetitions_are_your_answer():
     a = assistant("delete only the two promotional ones", ago=ECHO_WINDOW + 3)
     assert not a._is_echo("Only the two promotional ones", TIMINGS)
+
+
+def test_its_own_name_is_not_an_interruption(monkeypatch):
+    a = assistant("")
+    a.saying = "por cierto yo soy jarvis no gabriela".split()
+    stopped = []
+    monkeypatch.setattr(Assistant, "stop", lambda self: stopped.append(True))
+    assert not a._interrupt("Yo soy Jarvis.")
+    assert a._interrupt("Jarvis, para.") and stopped

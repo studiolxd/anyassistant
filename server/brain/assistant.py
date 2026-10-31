@@ -100,9 +100,10 @@ def split(text: str) -> tuple[list[str], str]:
 
 class Assistant(Transcriber):
     def __init__(self, stt, wake, llm, tts, speaker, send, ear=None, guard=GUARD):
-        super().__init__(stt, wake, speaker, send, ear, deaf=self._deaf)
+        super().__init__(stt, wake, speaker, send, ear, deaf=self._deaf, on_interrupt=self._interrupt)
         self.guard = guard
         self.said = []  # words of the last thing it said, to recognize its echo
+        self.saying = []  # words of what it is saying now (sentence by sentence)
         self.llm = llm
         self.tts = tts
         self.turn = asyncio.Lock()  # one answer at a time, in order
@@ -142,6 +143,15 @@ class Assistant(Transcriber):
         if data.get("type") == "tap" and (self.turn.locked() or self.speaker.speaking):
             self.stop()
 
+    def _interrupt(self, text: str) -> bool:
+        """The wake word heard while it speaks: stop, unless it was its own voice saying its name."""
+        heard = words(text)
+        if heard and sum(w in self.saying for w in heard) / len(heard) >= 0.6:
+            log.info("its own voice, not an interruption: «%s»", settings.private(text))
+            return False
+        self.stop()
+        return True
+
     def stop(self):
         log.info("stopped")
         self.cut = self.number
@@ -154,7 +164,7 @@ class Assistant(Transcriber):
 
     def _heard(self, text: str, timings: dict):
         if self._is_echo(text, timings):
-            log.info("echo dropped: «%s»", text)
+            log.info("echo dropped: «%s»", settings.private(text))
             return
         if self._confirm(text):
             # It was the answer to an approval the LLM itself asked for (Hermes): not a new message.
@@ -226,9 +236,9 @@ class Assistant(Transcriber):
             (CONFIRM / "confirmed.json").write_text(
                 json.dumps({"signature": pending["signature"], "until": time.time() + settings.get("confirm_valid", 60)})
             )
-            log.info("confirmed: %s", pending.get("action"))
+            log.info("confirmed: %s", settings.private(pending.get("action", "")))
         else:
-            log.info("not confirmed («%s»): %s", text, pending.get("action"))
+            log.info("not confirmed («%s»): %s", settings.private(text), settings.private(pending.get("action", "")))
         pending_json.unlink(missing_ok=True)
         return bool(pending.get("consume"))
 
@@ -238,6 +248,7 @@ class Assistant(Transcriber):
             number = self.number
             message = {"type": "text", "author": "assistant", "id": number}
             self._state("thinking")
+            self.saying = []
             start = time.time()
             first = None
             answer = rest = ""
@@ -261,7 +272,7 @@ class Assistant(Transcriber):
                 "llm_ms": round((time.time() - start) * 1000),
             }
             self.send({**message, "text": answer, "partial": False, "timings": timings})
-            log.info("«%s» %s", answer, timings)
+            log.info("«%s» %s", settings.private(answer), timings)
             self.said = words(answer)
             if not self.tts and self.cut != number:
                 self._state(self._idle_state())
@@ -295,5 +306,6 @@ class Assistant(Transcriber):
                 continue
             if not self.speaker.speaking:
                 self._state("speaking")
+            self.saying += words(sentence)
             self.speaker.play(normalize(pcm))
-            log.info("voice «%s» (%d ms)", sentence, (time.time() - start) * 1000)
+            log.info("voice «%s» (%d ms)", settings.private(sentence), (time.time() - start) * 1000)

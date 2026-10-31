@@ -15,6 +15,7 @@ import re
 import numpy as np
 
 import i18n
+import settings
 from stt import GPU, Transcriber, register
 from text import words
 
@@ -65,9 +66,10 @@ class Parakeet(Transcriber):
         if self.language != "en" and wrong_language(text):
             corrected = self._fallback(audio)
             if " ".join(words(corrected)) in i18n.L.list("stt.fallback_hallucinations"):
-                log.info("parakeet: «%s»; Whisper made it up («%s»): dropped", text, corrected)
+                log.info("parakeet: «%s»; Whisper made it up («%s»): dropped", settings.private(text), settings.private(corrected))
                 return ""
-            log.info("parakeet drifted to another language («%s»); with Whisper: «%s»", text, corrected)
+            log.info("parakeet drifted to another language («%s»); with Whisper: «%s»",
+                     settings.private(text), settings.private(corrected))
             return corrected
         return text
 

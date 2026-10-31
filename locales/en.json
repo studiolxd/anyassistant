@@ -27,6 +27,14 @@
       "sleep",
       "goodnight"
     ],
+    "stop": [
+      "stop",
+      "quiet",
+      "enough",
+      "silence",
+      "shush",
+      "hush"
+    ],
     "reload": [
       "reload"
     ],

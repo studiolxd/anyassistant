@@ -23,6 +23,7 @@ import numpy as np
 from scipy.signal import resample_poly
 
 import i18n
+import settings
 from stt import RATE
 from text import words
 
@@ -51,6 +52,12 @@ def is_sleep_command(text: str) -> bool:
     )
 
 
+def is_stop_command(text: str) -> bool:
+    """«Stop», «Quiet!», «Para»: only to stop it talking, nothing to answer."""
+    found = words(text)
+    return 0 < len(found) <= 2 and bool(set(found) & set(i18n.L.list("commands.stop")))
+
+
 def load_vad():
     import torch
     from silero_vad import load_silero_vad
@@ -64,7 +71,7 @@ def load_vad():
 class Ear:
     def __init__(
         self, stt, on_state, on_heard, wake=None, on_wake=None, on_sleep=None,
-        deaf=None, record=None, silence=SILENCE, idle_timeout=IDLE_TIMEOUT,
+        deaf=None, record=None, silence=SILENCE, idle_timeout=IDLE_TIMEOUT, on_interrupt=None,
     ):
         import torch
 
@@ -86,8 +93,12 @@ class Ear:
         self.last_activity = 0.0  # to fall asleep after `idle_timeout`
         self.end_of_sentence = silence  # seconds of silence that end a sentence
         self.idle_timeout = idle_timeout
-        # While the speaker is talking it doesn't listen, or it would hear itself.
+        # While the speaker is talking it doesn't listen, or it would hear itself;
+        # only for the wake word, to be interrupted («Jarvis, stop»): on_interrupt(text)
+        # says whether to stop (False: it was its own voice saying its name).
         self.deaf = deaf or (lambda: False)
+        self.on_interrupt = on_interrupt
+        self.interruptible = False  # the wake word is listening while it speaks
         self.recording = None  # WAV with everything that arrives, for debugging
         if record:
             # One file per session: reconnecting doesn't overwrite it.
@@ -119,10 +130,32 @@ class Ear:
                         self.wake.heard_sentence = None
                         asyncio.ensure_future(self._transcribe(sentence))
                 return
+        elif self.wake and self.awake and self.on_interrupt:
+            if self.deaf():
+                self.interruptible = True
+                if self.wake.listen(audio):
+                    self._interrupted()
+                return
+            if self.interruptible:  # it finished speaking: what the word half heard is forgotten
+                self.interruptible = False
+                self.wake.reset()
         self.pending = np.concatenate([self.pending, audio])
         while len(self.pending) >= WINDOW:
             window, self.pending = self.pending[:WINDOW], self.pending[WINDOW:]
             self._window(window)
+
+    def _interrupted(self):
+        sentence = getattr(self.wake, "heard_sentence", None)
+        self.wake.heard_sentence = None
+        if not self.on_interrupt(getattr(self.wake, "last_text", "")):
+            return
+        log.info("interrupted by voice")
+        self.interruptible = False
+        self.wake.reset()
+        self._reset()
+        self.last_activity = time.time()
+        if sentence is not None:  # «Jarvis, and tomorrow?»: a new question
+            asyncio.ensure_future(self._transcribe(sentence))
 
     def _wake_up(self):
         log.info("awake (%s): conversation mode", self.wake.phrase)
@@ -204,13 +237,16 @@ class Ear:
             if not text:  # only the wake word was said
                 self.on_state(self.idle_state)
                 return
-        if text and is_sleep_command(text):
-            self._sleep(f"«{text}»", by_command=True)
-            return
-        if not text or any(h in text.lower() for h in i18n.L.list("stt.hallucinations")):
-            log.info("dropped: %r %s", text, timings)
+        if text and is_stop_command(text):  # «(Jarvis,) stop»: it already stopped
             self.on_state(self.idle_state)
             return
-        log.info("«%s» %s", text, timings)
+        if text and is_sleep_command(text):
+            self._sleep(f"«{settings.private(text)}»", by_command=True)
+            return
+        if not text or any(h in text.lower() for h in i18n.L.list("stt.hallucinations")):
+            log.info("dropped: «%s» %s", settings.private(text), timings)
+            self.on_state(self.idle_state)
+            return
+        log.info("«%s» %s", settings.private(text), timings)
         self.on_heard(text, timings)
         self.on_state(self.idle_state)

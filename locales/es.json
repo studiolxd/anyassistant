@@ -27,6 +27,17 @@
       "apagate",
       "duermete"
     ],
+    "stop": [
+      "para",
+      "parate",
+      "calla",
+      "callate",
+      "basta",
+      "silencio",
+      "espera",
+      "chitón",
+      "chiton"
+    ],
     "reload": [
       "recarg"
     ],

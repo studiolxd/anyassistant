@@ -20,7 +20,7 @@ def create(stt, wake=None, ear=None):
 
 
 class Transcriber:
-    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None):
+    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None, on_interrupt=None):
         self.send = send
         self.speaker = speaker
         self.wake = wake
@@ -32,6 +32,7 @@ class Transcriber:
             on_wake=self._woke_up,
             on_sleep=self._fell_asleep,
             deaf=deaf,
+            on_interrupt=on_interrupt,
             **(ear or {}),
         )
 

@@ -205,3 +205,16 @@ def test_switch_language_by_voice(server, tmp_path):
             pass
         time.sleep(1)
     pytest.fail("it didn't come back in Spanish")
+
+
+def test_interrupt_by_voice(server, tmp_path):
+    """«Jarvis, stop» in the middle of a long answer: it stops talking."""
+    url = server("--mode", "assistant", "--lang", "en", "--llm", "apple")
+    pcm = np.concatenate([speech(tmp_path, "Hey Jarvis", "Samantha"),
+                          speech(tmp_path, "Tell me a story about a dragon.", "Samantha"),
+                          speech(tmp_path, "Jarvis, stop.", "Samantha")])  # right as it starts answering
+    log = tmp_path / "server.log"
+    messages, _ = asyncio.run(talk(url, pcm, until=lambda m: "interrupted by voice" in log.read_text(), timeout=20))
+    assert "interrupted by voice" in log.read_text()
+    seen = states(messages)
+    assert "speaking" in seen and seen[-1] == "awake"

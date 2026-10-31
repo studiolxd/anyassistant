@@ -128,6 +128,8 @@ def main():
     parser.add_argument("--face", choices=["eyes", "orb"], default="eyes", help="the page's face (?face= wins)")
     parser.add_argument("--video", choices=["auto", "normal", "low", "off"], default="auto",
                         help="camera quality; auto: each device by its memory (?video= wins)")
+    parser.add_argument("--log-transcripts", action=argparse.BooleanOptionalAction, default=False,
+                        help="write what it hears and says to the log (to debug); off: only lengths")
     parser.add_argument("--confirm-wait", type=float, default=120, help="seconds to answer «yes» to an action")
     parser.add_argument("--confirm-valid", type=float, default=60, help="seconds a «yes» stays valid")
     parser.add_argument("--host", default="0.0.0.0")

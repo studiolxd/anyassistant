@@ -123,7 +123,7 @@ class Hermes(LLM):
         """Records the approval as pending, waits for your «yes» in the background, returns the question."""
         run_id = data.get("run_id", "")
         action = data.get("description") or data.get("reason") or data.get("command") or "?"
-        log.info("Hermes asks for approval (%s): %s", run_id, action)
+        log.info("Hermes asks for approval (%s): %s", run_id, settings.private(action))
         CONFIRM.mkdir(parents=True, exist_ok=True)
         # «consume»: the «yes» or «no» is for Hermes, not a new message to it.
         (CONFIRM / "pending.json").write_text(json.dumps(

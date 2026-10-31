@@ -19,7 +19,7 @@ active: dict = {}
 fixed: set = set()  # the ones given on the command line: settings.json doesn't change them
 # What can change without restarting (read again after every answer: bin/settings,
 # or settings.json edited by hand). Anything else restarts the server.
-LIVE = {"instructions", "face", "video", "confirm_wait", "confirm_valid"}
+LIVE = {"instructions", "face", "video", "confirm_wait", "confirm_valid", "log_transcripts"}
 
 
 def get(key: str, default=None):
@@ -43,6 +43,11 @@ def load() -> dict:
 def save(**changes):
     """Changes some keys and keeps the rest (and the file's order)."""
     PATH.write_text(json.dumps({**load(), **changes}, ensure_ascii=False, indent=2) + "\n")
+
+
+def private(text: str) -> str:
+    """What was heard or said, for the log: only with log_transcripts; otherwise its length."""
+    return text if active.get("log_transcripts") else f"[{len(text)} characters]"
 
 
 def effective(key: str, value, language: str):

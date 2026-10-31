@@ -83,3 +83,9 @@ def test_instructions_with_name_and_your_own(en, active):
 def test_another_name_in_a_language_command(en, active):
     active["name"] = "Friday"
     assert language_command("Friday, speak Spanish") == "es"
+
+
+def test_transcripts_stay_out_of_the_log_unless_asked(active):
+    assert settings.private("my bank password is 1234") == "[24 characters]"
+    active["log_transcripts"] = True
+    assert settings.private("hello") == "hello"

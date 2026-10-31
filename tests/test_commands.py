@@ -52,3 +52,11 @@ def test_split_into_sentences():
     assert split("One! Two? Three…\nFour") == (["One!", "Two?", "Three…"], "Four")
     assert split("No end yet") == ([], "No end yet")
     assert split("Version 2.5 is out") == ([], "Version 2.5 is out")
+
+
+def test_stop(lang):
+    from brain.ear import is_stop_command
+
+    stop, other = {"en": ("Stop!", "Stop the music in the kitchen"), "es": ("¡Para!", "Para qué sirve esto")}[lang.code]
+    assert is_stop_command(stop)
+    assert not is_stop_command(other)

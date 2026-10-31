@@ -68,6 +68,7 @@ class WhisperWakeWord(WakeWord):
         self.prompt = i18n.L("wake.whisper_prompt", name=self.word.title())
         self.vad = load_vad()
         self.heard_sentence = None  # the whole audio if the sentence goes on after the word
+        self.last_text = ""  # the last transcription, to tell its own voice from yours
         self._reset()
         self._transcribe(np.zeros(RATE // 2, dtype=np.float32), self.model, i18n.L.stt_language)
 
@@ -157,16 +158,17 @@ class WhisperWakeWord(WakeWord):
 
     def _search(self, audio: np.ndarray) -> bool:
         text = self._transcribe(audio, self.model, i18n.L.stt_language, self.prompt)
+        self.last_text = text
         if self.is_prompt(text):
-            log.debug("whisper gave back its prompt (noise?): «%s»", text)
+            log.debug("whisper gave back its prompt (noise?): «%s»", settings.private(text))
             return False
         found = words(text)
         position = self._position(found)
         if position is None:
             if text:
-                log.info("no wake word: «%s»", text)
+                log.info("no wake word: «%s»", settings.private(text))
             return False
-        log.info("wake word in «%s»", text)
+        log.info("wake word in «%s»", settings.private(text))
         i, span = position
         self.heard_sentence = audio if found[i + span :] else None
         return True
