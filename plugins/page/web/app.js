@@ -195,6 +195,14 @@ async function connect() {
   if (pc) pc.close();
   pc = new RTCPeerConnection({ iceServers: [] });
   var current = pc;
+  // A watchdog: an attempt that hangs (the server restarting right then, a request that
+  // never answers) would otherwise never be retried, while the screen says «retrying».
+  setTimeout(function () {
+    if (current === pc && pc.connectionState !== 'connected' && !shutDown) {
+      retry = null;
+      reconnect();
+    }
+  }, 25000);
   media.getAudioTracks().forEach(function (t) { pc.addTrack(t, media); });
   media.getVideoTracks().forEach(function (t) {
     pc.addTransceiver(t, { direction: 'sendonly', streams: [media] });
