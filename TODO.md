@@ -18,6 +18,10 @@
   earlier, Haiku for short answers…
 - [ ] **Wake word**: watch false positives and negatives; maybe a name in the
   user's language.
+- [ ] **Not every sentence is for it**: once awake it answers everything it hears,
+  even a conversation with someone else («…thanks, Gabriela. Bye.» → «I'm Jarvis,
+  not Gabriela»). Ignore what clearly isn't addressed to it, at least right after a
+  dubious wake-up.
 
 ## Features
 
