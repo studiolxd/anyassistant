@@ -18,6 +18,8 @@ import time
 from aiohttp import web as http
 
 import paths
+import settings
+import installer
 import web
 
 FILE = paths.PAIRED
@@ -120,3 +122,12 @@ async def _pair(request):
     response = http.json_response({"paired": True})
     response.set_cookie(COOKIE, token, max_age=10 * 365 * 24 * 3600, httponly=True, samesite="Strict")
     return response
+
+
+# --- In the installer ---
+
+@installer.question("pairing", "Only paired devices", order=60, choices=lambda: [True, False],
+                    default=lambda: bool((settings.load().get("plugins") or {}).get("pairing", True)), always=True,
+                    help="A device must type a code once before using it (the Mac never needs one).")
+def _install(value):
+    settings.save(plugins={**(settings.load().get("plugins") or {}), "pairing": bool(value)})

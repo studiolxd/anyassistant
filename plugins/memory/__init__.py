@@ -24,6 +24,7 @@ import time
 import events
 import i18n
 import llm
+import installer
 import options
 import paths
 import settings
@@ -261,3 +262,20 @@ def forget(number: int) -> str:
     del data["facts"][number - 1]
     save(data)
     return "Forgotten."
+
+
+# --- In the installer ---
+
+def _current():
+    if not (settings.load().get("plugins") or {}).get("memory"):
+        return "off"
+    return settings.load().get("memory") or "explicit"
+
+
+@installer.question("memory", "Remember you across conversations", order=61,
+                    choices=lambda: ["off", "explicit", "auto"], default=_current, always=True,
+                    help="explicit: only what you ask it to remember; auto: also what it learns about you, "
+                         "when it falls asleep.")
+def _install(value):
+    plugins = {**(settings.load().get("plugins") or {}), "memory": value != "off"}
+    settings.save(plugins=plugins, **({"memory": value} if value != "off" else {}))

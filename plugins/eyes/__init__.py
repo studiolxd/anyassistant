@@ -24,10 +24,12 @@ import logging
 from aiohttp import web as http
 
 import hub
+import installer
 import i18n
 import kernel
 import options
 import paths
+import settings
 import web
 from options import Option
 from text import words
@@ -142,3 +144,12 @@ async def _photo(request):
         return refusal
     photo_arrived(int(request.query.get("id", 0)), await request.read(), request.query.get("how", "?"))
     return http.Response(status=204)
+
+
+# --- In the installer ---
+
+@installer.question("eyes", "Let it look through the device's camera", order=62, choices=lambda: [False, True],
+                    default=lambda: bool((settings.load().get("plugins") or {}).get("eyes")), always=True,
+                    help="Only when you ask («what do you see?», «read this»); nothing leaves the Mac otherwise.")
+def _install(value):
+    settings.save(plugins={**(settings.load().get("plugins") or {}), "eyes": bool(value)})
