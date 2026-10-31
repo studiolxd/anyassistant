@@ -99,5 +99,11 @@
       ],
       "everywhere_alone": []
     }
+  },
+  "choices": {
+    "alarm_rings": {
+      "where_set": "Donde se pusieron",
+      "everywhere": "En todos los dispositivos"
+    }
   }
 }

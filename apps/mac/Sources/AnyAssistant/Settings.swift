@@ -16,6 +16,7 @@ final class OptionItem: ObservableObject, Identifiable {
     let help: String
     let live: Bool
     let choices: [String]?
+    let labels: [String: String]  // how each choice is shown, in the active language
     let placeholder: String  // what an empty one uses: «Mónica · la del idioma»
     @Published var text: String  // what the field shows
     @Published var flag: Bool
@@ -32,6 +33,7 @@ final class OptionItem: ObservableObject, Identifiable {
         help = raw["help"] as? String ?? ""
         live = raw["live"] as? Bool ?? false
         choices = (raw["choices"] as? [Any])?.map { "\($0)" }
+        labels = raw["labels"] as? [String: String] ?? [:]
         let value = raw["value"]
         flag = value as? Bool ?? false
         if let dict = value as? [String: Any] {
@@ -256,7 +258,7 @@ struct OptionRow: View {
             case "choice" where option.choices != nil:
                 Picker(label, selection: $option.text) {
                     if option.text.isEmpty { Text(option.placeholder).tag("") }
-                    ForEach(option.choices!, id: \.self) { Text($0).tag($0) }
+                    ForEach(option.choices!, id: \.self) { Text(option.labels[$0] ?? $0).tag($0) }
                 }
                 .onChange(of: option.text) { _, _ in Task { await admin.save(option) } }
             case "longtext":

@@ -80,5 +80,11 @@
         "everywhere"
       ]
     }
+  },
+  "choices": {
+    "alarm_rings": {
+      "where_set": "Where they were set",
+      "everywhere": "On every device"
+    }
   }
 }

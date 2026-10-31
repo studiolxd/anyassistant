@@ -139,6 +139,41 @@
     "bool": {
       "true": "Sí",
       "false": "No"
+    },
+    "detail": {
+      "concise": "Breve",
+      "neutral": "Normal",
+      "detailed": "Detallado"
+    },
+    "tts": {
+      "none": "Ninguna (solo texto)"
+    },
+    "wake": {
+      "none": "Ninguna (siempre escucha)"
+    },
+    "mode": {
+      "assistant": "Asistente",
+      "parrot": "Loro (repite lo que oye)",
+      "transcribe": "Solo transcribir"
+    },
+    "interpreter": {
+      "auto": "Automático",
+      "off": "Ninguno"
+    },
+    "video": {
+      "auto": "Automático",
+      "normal": "Normal",
+      "low": "Baja",
+      "off": "Sin vídeo"
+    },
+    "clock": {
+      "auto": "Automático (el del idioma)",
+      "12": "12 horas",
+      "24": "24 horas"
+    },
+    "llm_fallback": {
+      "auto": "Automático",
+      "none": "Ninguno"
     }
   },
   "language_native": "Español",

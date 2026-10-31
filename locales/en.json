@@ -43,6 +43,41 @@
     "bool": {
       "true": "Yes",
       "false": "No"
+    },
+    "detail": {
+      "concise": "Concise",
+      "neutral": "Neutral",
+      "detailed": "Detailed"
+    },
+    "tts": {
+      "none": "None (text only)"
+    },
+    "wake": {
+      "none": "None (always listening)"
+    },
+    "mode": {
+      "assistant": "Assistant",
+      "parrot": "Parrot (repeats what it hears)",
+      "transcribe": "Transcribe only"
+    },
+    "interpreter": {
+      "auto": "Automatic",
+      "off": "None"
+    },
+    "video": {
+      "auto": "Automatic",
+      "normal": "Normal",
+      "low": "Low",
+      "off": "No video"
+    },
+    "clock": {
+      "auto": "Automatic (the language's)",
+      "12": "12 hours",
+      "24": "24 hours"
+    },
+    "llm_fallback": {
+      "auto": "Automatic",
+      "none": "None"
     }
   },
   "language_native": "English",

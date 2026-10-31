@@ -66,6 +66,17 @@ def _choices(option):
         return None
 
 
+def _labels(option) -> dict | None:
+    """How each choice is shown, in the active language (locale «choices.<option>.<value>»);
+    one without a text, as it is."""
+    found = _choices(option)
+    if found is None:
+        return None
+    if option.name == "language":
+        return {str(c): i18n.native_name(c) for c in found}  # «English», «Español»
+    return {str(c): i18n.L.text(f"choices.{option.name}.{c}", str(c)) for c in found}
+
+
 @web.route("GET", "/admin/settings")
 @_local
 async def _settings(request):
@@ -73,7 +84,7 @@ async def _settings(request):
               if g != "plugins"]
     found = [{"name": o.name, "group": o.group, "kind": o.kind, "live": o.live,
               "help": _named(i18n.L.text(f"options.{o.name}", o.help)), "default": _value_default(o),
-              "value": _value(o), "current": _current(o), "choices": _choices(o),
+              "value": _value(o), "current": _current(o), "choices": _choices(o), "labels": _labels(o),
               "empty": i18n.L.text(f"options_empty.{o.name}", o.empty) if o.empty else ""}
              for o in options.OPTIONS if o.group != "plugins"]
     return http.json_response({"groups": groups, "options": found})
