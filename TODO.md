@@ -12,14 +12,72 @@
 - [ ] **Installer, next**: `bin/anyassistant update` and `uninstall`; a release tarball
   (install.sh copies the git checkout for now); the voice enrolment step
   (`@installer.device`) when that plugin exists.
-
-
 - [ ] **Swift bridges on macOS 27**: `LanguageModelSession.GenerationError` is deprecated
   (apple_bridge.swift); AVSpeech's synthesizer warns about the main actor.
 - [ ] **A flaky end-to-end test**: once, the wake word heard nothing in 35 s with the
   synthetic voice (test_memory_with_claude); passed when repeated.
 
+- [ ] **An always-on mode**: it never falls asleep (no wake word needed), for when you
+  don't want to switch it off between sentences.
+- [ ] **HTTPS served locally?** (a local certificate the device trusts): would remove
+  Chrome's flag; less urgent with the native apps.
+
+## Apps and devices
+
+- [ ] **The app finds a local server**: AnyAssistant on the network (Bonjour/mDNS), no IP
+  to type.
+- [ ] **More than one device** (hub.py: «one at a time»): the device that heard you
+  answers; an alarm rings where it was set, or everywhere; talking room to room
+  («dile a la cocina que bajo ya»).
+
+## Skins
+
+- [ ] **A better skin check**: today `skin check` tests for the old tablet's Chrome 81
+  in particular. Check against the browsers/devices we support (a target list,
+  e.g. «Chrome ≥ 81, Android WebView ≥ …»), or drop it.
+- [ ] **The lab as the official skin preview** (a plugin, or part of the page): see and
+  edit skins, not only preview them. Its design comes later.
+
+## Who is speaking
+
+- [ ] **Speaker identification** (a voice print, e.g. ECAPA embeddings): the «yes»
+  that confirms writing actions (an email, Holded with gog on "all") may come from
+  anyone, a guest, a child or the TV; ignore_others helps, but the LLM decides, it
+  isn't a barrier. Require a known voice for those «yes». Memory too: «facts only
+  from what the user says», but which user? In a house of several, everyone's facts
+  mix. Enrolment: the installer's step done on the device (`@installer.device`).
+
+## Taking the initiative
+
+- [ ] **Proactive**: it only reacts (but alarms and reminders). With Calendar and Gmail:
+  «you have a meeting in 10 minutes», a summary when you wake up, an important
+  email. Needs a scheduler that checks those sources and a polite way to interrupt:
+  not if there are people talking, not at night.
+
+## Home and media
+
+- [ ] **Home Assistant / HomeKit**: lights, blinds, climate (the first thing asked of a
+  home voice assistant).
+- [ ] **Music, radio, podcasts**: it only plays its voice and sounds; control Spotify or
+  Apple Music on the Mac.
+
+## Local skills
+
+- [ ] **Lists and notes** (shopping, tasks, quick notes): very much voice, shouldn't go
+  through the LLM.
+- [ ] **«¿Qué tiempo hace?»**: today it depends on the LLM having a tool for it.
+
+## Robustness
+
+- [ ] **A plan B when the LLM fails** (network down, usage limit): switch to Apple or
+  Hermes and say «now I answer with the local model». (Not found in the code; to
+  confirm.)
+
 ## Conversation quality
+
+- [ ] **Interrupting it without its name**: while it speaks it doesn't listen (echo), so
+  only «Jarvis, stop» or a tap work. Needs better echo cancellation than the
+  tablet's; what would most make it feel like a conversation, and the hardest.
 
 - [ ] **Wake word**: keep watching false positives and negatives (31 Oct: 28 wake-ups,
   one false, fixed; no misses found). A name in the user's language comes with the
@@ -27,8 +85,8 @@
 
 ## Done
 
-- [x] **The app is AnyAssistant** (`bin/anyassistant`, `ANYASSISTANT_HOME`…); the assistant
-  is still Jarvis by default. The MCP server keeps «jarvis» (Hermes's config uses it).
+- [x] **The app is AnyAssistant** (`bin/anyassistant`, `ANYASSISTANT_HOME`…, the MCP
+  server `anyassistant`, in Hermes's config too); the assistant is still Jarvis by default.
 
 - [x] **Installer (terminal)**: install.sh + `bin/anyassistant setup`, steps from the core and
   the plugins, launchd; tried in a clean folder (31 Oct).
