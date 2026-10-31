@@ -65,3 +65,7 @@
 "Wake word" = "Palabra de activación";
 "Voice detection" = "Detección de voz";
 "Libraries" = "Bibliotecas";
+"1. The certificate" = "1. El certificado";
+"2. The page" = "2. La página";
+"Once per device: open this and install the certificate (on Android: name it, as a CA certificate)." = "Una vez por dispositivo: abre esto e instala el certificado (en Android: ponle un nombre, como certificado de CA).";
+"Done: the page" = "Hecho: la página";

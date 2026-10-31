@@ -230,6 +230,15 @@ final class Server: ObservableObject {
         }
     }
 
+    /// The HTTPS port if the plugin «https» is on (nil: plain HTTP).
+    func httpsPort() async -> Int? {
+        guard let (raw, response) = try? await URLSession.shared.data(
+                from: URL(string: "http://127.0.0.1:\(port)/https/info")!),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let info = try? JSONSerialization.jsonObject(with: raw) as? [String: Any] else { return nil }
+        return info["port"] as? Int
+    }
+
     /// A pairing code, if the plugin «pairing» is on (nil: devices need none).
     func pairingCode() async -> String? {
         var request = URLRequest(url: URL(string: "http://127.0.0.1:\(port)/pairing")!)

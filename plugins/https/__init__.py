@@ -53,9 +53,21 @@ def addresses() -> list[str]:
     return sorted(found)
 
 
+def local_name() -> str:
+    """The Mac's Bonjour name (System Settings → Sharing: «MacBook-Air-de-Suvi.local»)."""
+    import subprocess
+
+    try:
+        found = subprocess.run(["scutil", "--get", "LocalHostName"], capture_output=True, text=True, timeout=3)
+        if found.returncode == 0 and found.stdout.strip():
+            return found.stdout.strip() + ".local"
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return socket.gethostname().split(".")[0] + ".local"
+
+
 def names() -> list[str]:
-    host = socket.gethostname().split(".")[0]
-    return sorted({NAME, f"{host}.local", "localhost"})
+    return sorted({NAME, local_name(), "localhost"})
 
 
 def _authority():

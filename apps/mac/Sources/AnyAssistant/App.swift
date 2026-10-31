@@ -266,12 +266,37 @@ struct PairView: View {
     @ObservedObject var server: Server
     @State private var code: String?
     @State private var asked = false
+    @State private var httpsPort: Int?  // the plugin «https»: the page with its own certificate
+    @State private var step = 0  // with HTTPS: 0 install the authority, 1 open the page
+
+    /// Where the device goes: HTTPS (once the authority is installed) or plain HTTP.
+    var address: String {
+        if let httpsPort { return "https://\(server.address):\(httpsPort)" }
+        return server.url
+    }
 
     var body: some View {
         VStack(spacing: 14) {
+            if httpsPort != nil {
+                Picker("", selection: $step) {
+                    Text(T("1. The certificate")).tag(0)
+                    Text(T("2. The page")).tag(1)
+                }
+                .pickerStyle(.segmented).labelsHidden()
+            }
+            if httpsPort != nil && step == 0 {
+                Text(T("Once per device: open this and install the certificate (on Android: name it, as a CA certificate).")).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                let authority = "\(server.url)/https/ca.crt"
+                Text(authority).font(.callout.monospaced()).textSelection(.enabled)
+                if let image = qr(authority) {
+                    Image(nsImage: image).interpolation(.none).resizable().frame(width: 200, height: 200)
+                }
+                Button(T("Done: the page")) { step = 1 }
+            } else {
             Text(T("On the tablet or phone, open")).foregroundStyle(.secondary)
-            Text(server.url).font(.title2.monospaced()).textSelection(.enabled)
-            if let image = qr(server.url) {
+            Text(address).font(.title2.monospaced()).textSelection(.enabled)
+            if let image = qr(address) {
                 Image(nsImage: image).interpolation(.none).resizable().frame(width: 200, height: 200)
             }
             if let code {
@@ -284,9 +309,13 @@ struct PairView: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Button(T("Another code")) { Task { await ask() } }
+            }
         }
         .padding(24)
-        .task { await ask() }
+        .task {
+            await ask()
+            httpsPort = await server.httpsPort()
+        }
     }
 
     func ask() async {
