@@ -284,7 +284,7 @@ function showState(state, wakePhrase) {
   if (state === 'alarm') {
     status(text('alarm', { label: alarmLabel }));
   } else if (state === 'asleep') {
-    status(screen.show_hint === false ? '' : text('asleep', { wake: lastWake || 'Hey Jarvis' }));
+    status(screen.show_hint === false ? '' : text('asleep', { wake: lastWake || (settings.wake_phrase || 'Hey Jarvis') }));
   } else {
     status(screen.show_status === false && state !== 'error' ? '' : text(state));
   }
@@ -490,7 +490,7 @@ function demo() {
   var next = function () {
     var state = DEMO_STATES.indexOf(fixed) >= 0 ? fixed : DEMO_STATES[step++ % DEMO_STATES.length];
     alarmLabel = text('demo_alarm');
-    showState(state, 'Hey Jarvis');
+    showState(state, (settings.wake_phrase || 'Hey Jarvis'));
     if (state === 'looking') showPhoto(Date.now());  // the last photo, if there is one
     setText('stats', 'demo: ' + state);
   };

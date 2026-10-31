@@ -78,5 +78,7 @@ async def _config(request):
         "skins": [{"name": name, "title": skins.manifest(name).get("name", name),
                    "description": skins.manifest(name).get("description", "")} for name in skins.available()],
         "screen": {key: settings.get(key) for key in options.SCREEN},
+        # How it is woken, as the screen says it («Ey, Eva»): for the demo and the lab, before a brain says it.
+        "wake_phrase": i18n.L.text("wake.phrase", "Hey, {name}").format(name=(settings.get("name") or "Jarvis").title()),
         **web.contributed(request),
     })
