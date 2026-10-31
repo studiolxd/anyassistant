@@ -34,6 +34,20 @@ body[data-look="asleep"] .clock { display: block; }
 .stats { font-size: 0.9em; color: #555; font-family: monospace; }
 .timers { margin-top: 3vmin; text-align: center; color: #fff; font-size: 5vmin; }
 .timers p { margin: 0.2em 0; }
+/* An outline icon per kind (images/), in the text's colour. */
+.timers p::before {
+  content: "";
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.35em;
+  vertical-align: -0.1em;
+  background: currentColor;
+  -webkit-mask: no-repeat center / contain;
+}
+.timers p.timer::before { -webkit-mask-image: url(images/timer.svg); }
+.timers p.alarm::before { -webkit-mask-image: url(images/alarm.svg); }
+.timers p.reminder::before { -webkit-mask-image: url(images/reminder.svg); }
 
 .captions { width: 90%; min-height: 7em; margin-top: 0.6em; text-align: center; }
 /* What you say: white (older lines, fainter). */

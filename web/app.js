@@ -480,7 +480,10 @@ function demo() {
     if (state === 'looking') showPhoto(Date.now());  // the last photo, if there is one
     setText('stats', 'demo: ' + state);
   };
-  showTimers([{ kind: 'timer', at: Date.now() / 1000 + 299, label: '' }]);
+  var now = Date.now() / 1000;
+  showTimers([{ kind: 'timer', at: now + 299, label: '' },
+              { kind: 'alarm', at: now + 8 * 3600, label: '' },
+              { kind: 'reminder', at: now + 3 * 3600, label: text('demo_reminder') }]);
   caption({ text: text('demo_heard') });
   caption({ text: text('demo_answer'), author: 'assistant', id: 'demo' });
   setInterval(function () {  // a simulated voice: yours while «hearing»
