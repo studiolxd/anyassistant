@@ -12,13 +12,17 @@ from pathlib import Path
 import hub
 import i18n
 import kernel
+import options
 import web
 import skins
 from skills import Skill, skill, spoken_duration, spoken_list, spoken_when, timers
 from skills.parse import Clock, Token, clock, day_tokens, duration, resolve, words
+from options import Option
 from tools import ToolError, tool
 
 log = logging.getLogger("skills")
+options.add(Option("ring_seconds", 60, "how long an alarm rings if nobody stops it", "skills", "int", live=True))
+options.add(Option("snooze_minutes", 5, "«snooze» without saying how long", "skills", "int", live=True))
 ALARM = Path(__file__).parent / "sounds" / "alarm.wav"  # three quick high notes
 
 

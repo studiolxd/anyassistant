@@ -26,7 +26,7 @@ from brain.transcriber import Transcriber, volume
 from llm import SILENCE
 from llm import detail as llm_detail
 import kernel
-from skills import interpreter, timers
+from skills import timers
 from text import words
 
 log = logging.getLogger("assistant")
@@ -207,7 +207,8 @@ class Assistant(Transcriber):
 
     async def _interpret_or_answer(self, text: str):
         """Apple's model may still find a skill in it («avísame dentro de un rato largo…»); else, the LLM."""
-        if interpreter.enabled() and skills.sounds_like_one(text):
+        interpreter = kernel.module("interpreter")
+        if interpreter and interpreter.enabled() and interpreter.sounds_like_one(text):
             self._state("thinking")
             reply = await interpreter.interpret(text)
             if reply:

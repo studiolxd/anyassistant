@@ -93,11 +93,6 @@ OPTIONS = [
     # Skills
     Option("skills", True, "time, date, timers, alarms, reminders, sums, units and volume, without the LLM",
            "skills", "bool", live=True),
-    Option("interpreter", "auto", "an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on "
-           "a Mac with it), off, or an LLM's name", "skills", "choice", lambda: ["auto", "off"] + _plugins("llm")(),
-           live=True),
-    Option("ring_seconds", 60, "how long an alarm rings if nobody stops it", "skills", "int", live=True),
-    Option("snooze_minutes", 5, "«snooze» without saying how long", "skills", "int", live=True),
     # The screen
     Option("skin", "eyes", "the screen's look: eyes, orb, minimal, bedside or yours (a device's ?skin= wins)",
            "screen", "choice", _skins, live=True),

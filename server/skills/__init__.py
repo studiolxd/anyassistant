@@ -18,8 +18,8 @@ module with @tool (tools/). Their words are in the locale («skills», «command
 so another language is another file.
 
 The local ones (time, timers, sums, units, volume) can be turned off with
-settings «skills»; when one is said in an unusual way, interpreter.py may still
-find it with Apple's local model.
+settings «skills»; when one is said in an unusual way, the plugin «interpreter»
+may still find it with Apple's local model.
 """
 
 import logging
@@ -28,7 +28,7 @@ import time
 import i18n
 import kernel
 import settings
-from skills.parse import Token, tokens, vocabulary, words
+from skills.parse import Token, tokens, vocabulary
 
 log = logging.getLogger("skills")
 _skills: list["Skill"] = []
@@ -88,15 +88,6 @@ def quick(text: str) -> str | None:
         if reply is not None:
             return reply
     return None
-
-
-def sounds_like_one(text: str) -> bool:
-    """Whether a sentence no skill took may still be one (worth asking the interpreter)."""
-    said = {t.plain for t in tokens(text)}
-    v = vocabulary()
-    hints = set().union(*(words(k) for k in ("timer", "alarm", "reminder", "volume", "snooze")))
-    hints |= {w for names in v["durations"].values() for w in names}
-    return bool(said & hints)
 
 
 # --- How things are said (for every skill) ---

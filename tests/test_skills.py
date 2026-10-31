@@ -6,11 +6,14 @@ import time
 import pytest
 
 import i18n
+import kernel
 import settings
 import skills
 import tools
 from conftest import load_script
-from skills import interpreter, timers
+from skills import timers
+
+interpreter = kernel.load("interpreter")
 from plugins.skill_arithmetic.calc import calculate
 from skills import spoken_number as spoken
 from skills.parse import Clock, clock, duration, resolve, tokens

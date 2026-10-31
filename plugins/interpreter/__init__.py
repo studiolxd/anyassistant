@@ -2,11 +2,11 @@
 
 «Avísame dentro de un rato largo, como 40 minutos» doesn't fit the skills'
 patterns; a model turns it into data ({"skill": "timer", "seconds": 2400}) that
-the same skills execute. Settings «interpreter»: "auto" (a local model if there
-is one: Apple's on a Mac with it; elsewhere, nothing), "off", or the name of any
-LLM plugin that can answer outside a conversation (complete()): "apple",
-"claude"…
-Only for sentences that sound like a skill (skills.sounds_like_one): the rest go
+the same skills execute. The plugin «interpreter» (turn it off to never ask), and
+settings «interpreter»: "auto" (a local model if there is one: Apple's on a Mac
+with it; elsewhere, nothing) or the name of any LLM plugin that can answer outside
+a conversation (complete()): "apple", "claude"…
+Only for sentences that sound like a skill (sounds_like_one): the rest go
 straight to the LLM.
 """
 
@@ -16,10 +16,13 @@ import re
 import time
 
 import i18n
-import settings
 import kernel
+import options
+import settings
 import skills
+from options import Option
 from skills import parse
+from skills.parse import tokens, vocabulary, words
 
 log = logging.getLogger("skills")
 _model = None
@@ -40,12 +43,32 @@ Request: «{text}»"""
 LOCAL = ["apple"]  # what «auto» tries, in order: models that run on this computer
 
 
+def _llms():
+    import llm
+
+    return list(llm.available())
+
+
+options.add(Option("interpreter", "auto", "an LLM for skills said in unusual ways: auto (a local one if there is: "
+                   "Apple's on a Mac with it) or an LLM's name", "skills", "choice",
+                   lambda: ["auto", "off"] + _llms(), live=True))
+
+
+def sounds_like_one(text: str) -> bool:
+    """Whether a sentence no skill took may still be one (worth asking the interpreter)."""
+    said = {t.plain for t in tokens(text)}
+    v = vocabulary()
+    hints = set().union(*(words(k) for k in ("timer", "alarm", "reminder", "volume", "snooze")))
+    hints |= {w for names in v["durations"].values() for w in names}
+    return bool(said & hints)
+
+
 def chosen() -> str | None:
     """The LLM plugin that interprets, or None."""
     import llm
 
     mode = settings.get("interpreter") or "auto"
-    if mode == "off" or not skills.enabled():
+    if mode == "off" or not skills.enabled() or not kernel.enabled("interpreter"):
         return None
     candidates = LOCAL if mode == "auto" else [mode]
     return next((name for name in candidates if name in llm.available() and llm.ready(name) is None), None)

@@ -1,0 +1,5 @@
+{
+  "name": "Skills interpreter",
+  "description": "When a skill is said in an unusual way («avísame dentro de un rato largo»), an LLM (Apple's local one by default) still finds it.",
+  "kind": "feature"
+}
