@@ -1,0 +1,12 @@
+body { margin: 0; background: #111; color: #ccc; font-family: sans-serif; }
+header { padding: 12px 16px; display: flex; align-items: center; border-bottom: 1px solid #333; }
+header > * { margin-right: 16px; }
+select { font-size: 15px; padding: 4px; }
+#about { color: #888; }
+#reloaded { color: #3ddc97; }
+main { display: flex; flex-wrap: wrap; padding: 8px; }
+figure { margin: 8px; }
+figcaption { text-align: center; font-family: monospace; color: #888; margin-top: 4px; }
+/* A tablet in portrait (800×1280) at a quarter of its size. */
+.frame { width: 200px; height: 320px; overflow: hidden; border: 1px solid #333; border-radius: 6px; }
+iframe { width: 800px; height: 1280px; border: 0; transform: scale(0.25); transform-origin: 0 0; }

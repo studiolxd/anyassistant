@@ -286,7 +286,10 @@
     "pair_wrong": "Código incorrecto o caducado",
     "pair_needed": "Este aparato no está emparejado: recarga la página",
     "looking": "Mirando…",
-    "alarm": "⏰ {label}"
+    "alarm": "⏰ {label}",
+    "demo_alarm": "Llamar a mamá",
+    "demo_heard": "¿Qué hora es?",
+    "demo_answer": "Son las 8 y 42 de la noche."
   },
   "memory_example": {
     "known": [

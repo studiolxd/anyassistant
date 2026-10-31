@@ -6,8 +6,9 @@
   <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <title>Jarvis</title>
-  <link rel="stylesheet" href="/web/page.css?v=26">
-  <link rel="stylesheet" href="/web/faces.css?v=26">
+  <link rel="stylesheet" href="/web/system.css?v=28">
+  <!-- The skin's (skins/<name>/skin.css), set by skin.js. -->
+  <link rel="stylesheet" id="skin-css">
 </head>
 <body>
   <button id="start" hidden></button>
@@ -17,18 +18,10 @@
     <button id="pair-button"></button>
     <p id="pair-error"></p>
   </form>
-  <div id="screen" hidden>
-    <div id="clock"><p id="time"></p><p id="date"></p></div>
-    <div id="face"></div>
-    <video id="camera" autoplay muted playsinline hidden></video>
-    <div id="photo" hidden><img alt=""><div class="scan"></div></div>
-    <p id="status"></p>
-    <div id="timers"></div>
-    <div id="captions"></div>
-    <p id="stats"></p>
-  </div>
+  <!-- The skin's skin.html goes here. -->
+  <div id="screen" hidden></div>
   <audio id="speaker" autoplay></audio>
-  <script src="/web/face.js?v=26"></script>
-  <script src="/web/app.js?v=26"></script>
+  <script src="/web/skin.js?v=28"></script>
+  <script src="/web/app.js?v=28"></script>
 </body>
 </html>

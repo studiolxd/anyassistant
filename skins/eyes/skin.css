@@ -1,0 +1,113 @@
+/* Layout: everything centered in a column; the clock only while asleep.
+   Chrome 81 on the tablet: no `inset`, no flex `gap`, no :has(). */
+
+.layout {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  --green: var(--accent);
+  --green-dim: #1d4f3c;
+  --amber: #e0b54a;
+  --blue: #5bc6e8;
+  --violet: #a98cf0;
+  --red: #e05555;
+}
+
+.clock { display: none; text-align: center; color: #3f7f6a; }
+.clock [data-part="time"] { margin: 0; font-size: 24vmin; font-weight: 200; line-height: 1; }
+.clock [data-part="date"] { margin: 1vmin 0 4vmin; font-size: 5vmin; }
+body[data-look="asleep"] .clock { display: block; }
+
+.status { font-size: 1.4em; margin: 1.2em 0 0; color: #888; }
+.stats { font-size: 0.9em; color: #555; font-family: monospace; }
+.timers { text-align: center; color: var(--amber); font-size: 5vmin; }
+.timers p { margin: 0.2em 0; }
+
+.captions { width: 90%; min-height: 7em; margin-top: 0.6em; text-align: center; }
+.captions p { margin: 0.3em 0; font-size: 1.1em; color: #666; }
+.captions p:last-child { font-size: 1.5em; color: #fff; }
+.captions p.assistant { color: #4a8a99; font-style: italic; }
+.captions p.assistant:last-child { color: #7cd3e8; }
+body[data-look="asleep"] .captions,
+body[data-look="asleep"] .stats { display: none; }
+
+/* The camera and the photo it looks at: over the face. */
+.window {
+  position: absolute;
+  top: 8%; left: 0; right: 0;
+  margin: 0 auto;
+  width: 80vmin;
+  height: 60vmin;
+  border-radius: 10px;
+}
+
+.face { position: relative; display: flex; flex-direction: column; align-items: center; }
+.question-mark { display: none; position: absolute; font-size: 12vmin; font-weight: bold; color: var(--violet); }
+body[data-look="question"] .question-mark { display: block; }
+
+@keyframes breathe { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.8; } }
+@keyframes dot { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes wave { from { transform: scale(0.9); opacity: 0.7; } to { transform: scale(1.7); opacity: 0; } }
+@keyframes ring { 50% { transform: scale(0.85); opacity: 0.6; } }
+
+/* Your voice makes it grow while it listens (--voice, 0–1, from Jarvis). */
+.pulse { transition: transform 0.1s; }
+body[data-look="hearing"] .pulse,
+body[data-look="awake"] .pulse { transform: scale(calc(1 + var(--voice, 0) * 0.18)); }
+
+/* ===================== The eyes ===================== */
+
+.pulse { position: relative; }
+.eyes { display: flex; justify-content: center; align-items: center; height: 30vmin; transition: transform 0.4s; }
+.eye {
+  width: 17vmin;
+  height: 26vmin;
+  margin: 0 5vmin;
+  border-radius: 9vmin;
+  background: var(--green);
+  transition: height 0.25s, transform 0.12s, background 0.4s, border-radius 0.25s;
+}
+body.blink .eye { transform: scaleY(0.08); }
+.face .question-mark { top: -4vmin; right: -9vmin; }
+
+.mouth,
+.dots { display: none; justify-content: center; align-items: center; height: 10vmin; margin-top: 3vmin; }
+/* The mouth follows its voice: --bar-1…5 (0–1, from Jarvis). */
+.mouth i { display: block; width: 2.4vmin; height: 9vmin; margin: 0 0.9vmin; border-radius: 1.2vmin; background: var(--blue); }
+.mouth i:nth-child(1) { transform: scaleY(var(--bar-1, 0.15)); }
+.mouth i:nth-child(2) { transform: scaleY(var(--bar-2, 0.15)); }
+.mouth i:nth-child(3) { transform: scaleY(var(--bar-3, 0.15)); }
+.mouth i:nth-child(4) { transform: scaleY(var(--bar-4, 0.15)); }
+.mouth i:nth-child(5) { transform: scaleY(var(--bar-5, 0.15)); }
+.dots i { display: block; width: 2.6vmin; height: 2.6vmin; margin: 0 1.2vmin; border-radius: 50%; background: var(--amber); animation: dot 1.2s infinite; }
+.dots i:nth-child(2) { animation-delay: 0.2s; }
+.dots i:nth-child(3) { animation-delay: 0.4s; }
+
+/* Asleep: closed eyes that breathe, small under the clock. */
+body[data-look="asleep"] .eyes { transform: scale(0.6); }
+body[data-look="asleep"] .eye { height: 2.5vmin; background: var(--green-dim); animation: breathe 5s ease-in-out infinite; }
+/* Hearing: brighter (and growing with your voice). */
+body[data-look="hearing"] .eye { background: #7ff0c2; }
+/* Thinking: looking up to one side, narrowed, with dots. */
+body[data-look="thinking"] .eyes { transform: translate(-4vmin, -3vmin); }
+body[data-look="thinking"] .eye { height: 17vmin; background: var(--amber); }
+body[data-look="thinking"] .dots { display: flex; }
+/* Looking through the camera: wide open, straight ahead. */
+body[data-look="looking"] .eye { height: 30vmin; width: 15vmin; background: #fff; }
+/* Ringing: wide, orange and blinking fast. */
+body[data-look="alarm"] .eye { height: 30vmin; background: #ff7a45; animation: ring 0.6s ease-in-out infinite; }
+/* Speaking: relaxed eyes and a mouth that follows its voice. */
+body[data-look="speaking"] .eye { height: 20vmin; background: var(--blue); }
+body[data-look="speaking"] .mouth { display: flex; }
+/* Question: a raised eyebrow (taller left eye) and a question mark. */
+body[data-look="question"] .eye { background: var(--violet); }
+body[data-look="question"] .eye.left { height: 28vmin; transform: translateY(-2vmin); }
+body[data-look="question"] .eye.right { height: 19vmin; }
+/* Error: drooping eyes, in red. */
+body[data-look="error"] .eye { height: 5vmin; background: var(--red); border-radius: 2.5vmin; }
+body[data-look="error"] .eye.left { transform: rotate(-18deg); }
+body[data-look="error"] .eye.right { transform: rotate(18deg); }

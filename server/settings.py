@@ -1,7 +1,7 @@
 """Preferences: settings.json in the project, so nothing has to be typed when starting.
 
     {"language": "es", "name": "Jarvis", "llm": "claude", "voice": {"es": "Mónica", "en": "Daniel"},
-     "instructions": ["I invoice with Holded."], "face": "orb", "memory": "auto"}
+     "instructions": ["I invoice with Holded."], "skin": "orb", "memory": "auto"}
 
 Keys are the server's options with underscores instead of dashes (language,
 llm_model, echo_guard, follow_up…); options on the command line win. «voice»
@@ -22,7 +22,7 @@ fixed: set = set()  # the ones given on the command line: settings.json doesn't 
 # What the page shows (sent to it in /config; it reads it again when one changes).
 SCREEN = {"show_time", "show_date", "show_hint", "show_status", "show_heard", "show_answer", "history",
           "show_stats", "clock", "show_timers"}
-LIVE = {"instructions", "face", "video", "confirm_wait", "confirm_valid", "log_transcripts", "eyes", "memory",
+LIVE = {"instructions", "skin", "skin_options", "video", "confirm_wait", "confirm_valid", "log_transcripts", "eyes", "memory",
         "follow_up", "ignore_others", "detail", "detail_levels", "skills", "interpreter", "volume", "ring_seconds", "snooze_minutes",
         "beeps", "fillers", "voice_interrupt", "tap_to_stop", "read_photo", "memory_facts",
         "memory_conversations", "memory_days"} | SCREEN

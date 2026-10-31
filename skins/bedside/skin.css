@@ -1,0 +1,37 @@
+/* Bedside: nearly black. Asleep, only the time, dim; awake, a warm ember and its answer. */
+
+.screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  color: var(--glow);
+}
+.time { margin: 0; font-size: 26vmin; font-weight: 200; opacity: 0.35; }
+.night { margin: 0; font-size: 4vmin; opacity: 0.25; }
+body:not([data-look="asleep"]) .night { display: none; }
+body:not([data-look="asleep"]) .time { font-size: 8vmin; opacity: 0.3; }
+
+.face { margin: 6vmin 0 3vmin; }
+.ember {
+  width: 10vmin;
+  height: 10vmin;
+  border-radius: 50%;
+  background: var(--glow);
+  opacity: 0.6;
+  transform: scale(calc(1 + var(--voice, 0) * 0.4 + var(--speech, 0) * 0.4));
+}
+body[data-look="asleep"] .ember { opacity: 0; }
+body[data-look="thinking"] .ember { animation: glow 1.4s ease-in-out infinite; }
+body[data-look="alarm"] .ember { opacity: 1; animation: glow 0.7s ease-in-out infinite; }
+body[data-look="error"] .ember { background: #7f1d1d; }
+@keyframes glow { 50% { opacity: 0.25; } }
+
+.status { margin: 0; font-size: 4vmin; opacity: 0.5; }
+body[data-look="asleep"] .status { opacity: 0.2; }
+.answer { width: 80%; text-align: center; font-size: 5vmin; opacity: 0.7; }
+.timers { font-size: 5vmin; opacity: 0.6; }
+.timers p { margin: 0; }
+body[data-look="asleep"] .answer { display: none; }

@@ -31,6 +31,7 @@ import mcp_server
 import pairing
 import settings
 import skills
+import skins
 import stt
 import tools
 from skills import timers as skill_timers
@@ -112,11 +113,27 @@ async def photo(request: web.Request) -> web.Response:
     return web.Response(status=204)
 
 
+async def skin_file(request: web.Request) -> web.StreamResponse:
+    """A skin's stylesheet, images, fonts or sounds: only from inside its folder."""
+    path = skins.asset(request.match_info["name"], request.match_info["path"])
+    return web.FileResponse(path) if path else web.Response(status=404)
+
+
+async def lab(request: web.Request) -> web.Response:
+    """The skins lab: every state of a skin at once, reloading when its files change."""
+    return page("lab.html")
+
+
 async def config(request: web.Request) -> web.Response:
-    """What the page needs: its texts in the active language (locale «ui») and the settings."""
+    """What the page needs: its texts in the active language (locale «ui»), the settings and the skin
+    (?skin=: this device's own)."""
+    chosen = request.query.get("skin", "")
     return web.json_response({
         "lang": i18n.L.code, "ui": i18n.L.data["ui"],
-        "name": settings.get("name"), "face": settings.get("face"), "video": settings.get("video"),
+        "name": settings.get("name"), "video": settings.get("video"),
+        "skin": skins.for_page(chosen if chosen in skins.available() else settings.get("skin"), i18n.L.code),
+        "skins": [{"name": name, "title": skins.manifest(name).get("name", name),
+                   "description": skins.manifest(name).get("description", "")} for name in skins.available()],
         "screen": {key: settings.get(key) for key in settings.SCREEN},
         "paired": is_allowed(request),
     })
@@ -165,6 +182,13 @@ async def no_cache(request: web.Request, handler):
     # dead connection instead of opening a new one.
     response = await handler(request)
     response.headers["Cache-Control"] = "no-store"
+    if request.path in ("/", "/lab"):
+        # Skins are someone else's HTML and CSS on a page with the microphone and the camera:
+        # nothing from outside, and no scripts but Jarvis's own.
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' blob: data:; media-src 'self' blob: mediastream:; font-src 'self'; "
+            "connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'")
     response.force_close()
     return response
 
@@ -184,7 +208,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", default="Jarvis", help="the assistant's name: wake word, page, LLM")
     parser.add_argument("--instructions", default=None, help="more instructions for the LLM (who you are, how to talk…)")
-    parser.add_argument("--face", choices=["eyes", "orb"], default="eyes", help="the page's face (?face= wins)")
+    parser.add_argument("--skin", default="eyes", help="the screen's look: a folder of skins/ or skins_dir (?skin= wins)")
+    parser.add_argument("--skin-options", type=json.loads, default=None, help='the skin\'s options: {"accent": "#ff7a45"}')
+    parser.add_argument("--skins-dir", default=None, help="your skins (default: skins.local/)")
     parser.add_argument("--video", choices=["auto", "normal", "low", "off"], default="auto",
                         help="camera quality; auto: each device by its memory (?video= wins)")
     parser.add_argument("--detail", default="neutral",
@@ -251,11 +277,16 @@ def main():
     parser.add_argument("--ignore-others", action=argparse.BooleanOptionalAction, default=True,
                         help="the LLM stays quiet when what it hears is clearly not for it")
     preferences = settings.load()
+    if "face" in preferences:  # before skins, «face» chose between the eyes and the orb
+        preferences.setdefault("skin", preferences.pop("face"))
     known = {a.dest for a in parser._actions}
     for key in preferences.keys() - known:
         print(f"settings.json: unknown key «{key}» (ignored)", file=sys.stderr)
     parser.set_defaults(**{k: v for k, v in preferences.items() if k in known})
     args = parser.parse_args()
+    settings.active = vars(args)  # skins.available() reads skins_dir
+    if args.skin not in skins.available():
+        parser.error(f"skin: «{args.skin}» is not one of {', '.join(skins.available())}")
     levels = {**llm.DETAIL_LEVELS, **(args.detail_levels or {})}
     if args.detail not in levels:
         parser.error(f"detail: «{args.detail}» is not one of {', '.join(levels)}")
@@ -325,6 +356,8 @@ def main():
     app.router.add_get("/video.mjpg", video_mjpeg)
     app.router.add_get("/status", status)
     app.router.add_get("/config", config)
+    app.router.add_get("/skin/{name}/{path:.+}", skin_file)
+    app.router.add_get("/lab", lab)
     app.router.add_get("/eyes.jpg", eyes_image)
     app.router.add_post("/photo", photo)
     app.router.add_route("*", "/mcp", mcp_server.endpoint)

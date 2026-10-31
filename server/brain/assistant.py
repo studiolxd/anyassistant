@@ -21,6 +21,7 @@ import i18n
 import memory
 import settings
 import skills
+import skins
 import tools
 from audio import alarm_tone, louder, normalize
 from brain.transcriber import volume
@@ -188,6 +189,7 @@ class Assistant(Transcriber):
         asyncio.ensure_future(self.llm.new())
 
     def on_message(self, data: dict):
+        super().on_message(data)
         if data.get("type") == "tap" and (self.ringing or settings.get("tap_to_stop", True) and (
                 self.turn.locked() or self.speaker.speaking)):
             self.stop()
@@ -204,7 +206,8 @@ class Assistant(Transcriber):
         sentence = skills.ring_sentence(item)
         self.send({"type": "alarm", "label": item.get("label") or sentence})
         self._state("alarm")
-        tone = louder(alarm_tone(), volume())
+        own = skins.sound(getattr(self, "skin", None) or settings.get("skin"), "alarm")  # the skin's, if it has one
+        tone = louder(own if own is not None else alarm_tone(), volume())
         until = time.time() + (settings.get("ring_seconds") or 60)
         said = False
         while self.ringing is item and time.time() < until:
@@ -239,8 +242,8 @@ class Assistant(Transcriber):
         return bool(set(words(text)) & meant)
 
     def _stopped(self):
-        """«Stop» said on its own."""
-        if self.ringing:
+        """«Stop» said on its own: an alarm ringing, or an answer it is still thinking or saying."""
+        if self.ringing or self.turn.locked() or self.speaker.speaking:
             self.stop()
 
     def _snooze(self, text: str) -> str:
@@ -479,7 +482,7 @@ class Assistant(Transcriber):
         """After an answer (in which the LLM may have used its own tools): what changed in
         settings.json goes to the page now, or restarts the server when it can't change live."""
         changed = settings.refresh()
-        if changed & ({"face", "video"} | settings.SCREEN):
+        if changed & ({"skin", "skin_options", "video"} | settings.SCREEN):
             self.send({"type": "config"})  # the page reads /config again
         asked, tools.requested = set(tools.requested), set()  # by its own tools, during the answer
         if changed - settings.LIVE or "restart" in asked:

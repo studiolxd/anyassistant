@@ -228,7 +228,10 @@
     "pair_wrong": "Wrong or expired code",
     "pair_needed": "This device isn't paired: reload the page",
     "looking": "Looking…",
-    "alarm": "⏰ {label}"
+    "alarm": "⏰ {label}",
+    "demo_alarm": "Call mom",
+    "demo_heard": "What time is it?",
+    "demo_answer": "It's 8:42 in the evening."
   },
   "memory_example": {
     "known": [

@@ -1,0 +1,99 @@
+/* What isn't a skin's: starting, pairing, and what blocks need to work. The look of
+   everything else is in the skin (skins/<name>/skin.css), loaded after this. */
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  color: #ccc;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+[hidden] { display: none !important; }
+#screen { height: 100%; }
+
+#start {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;  /* no `inset`: Chrome 81 doesn't have it */
+  margin: auto;
+  width: 60%;
+  height: 20%;
+  font-size: 2em;
+  background: #222;
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 12px;
+}
+
+/* Pairing: the code from «bin/jarvis pair». */
+#pair {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  margin: auto;
+  width: 80%;
+  height: 50%;
+  text-align: center;
+  font-size: 1.4em;
+}
+#pair input {
+  width: 6.5em;
+  font-size: 2em;
+  text-align: center;
+  letter-spacing: 0.2em;
+  background: #111;
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 8px;
+}
+#pair button {
+  display: block;
+  margin: 1em auto 0;
+  padding: 0.4em 1.5em;
+  font-size: 1.2em;
+  background: #222;
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 12px;
+}
+#pair-error { color: #d66; }
+
+/* Settings show_time, show_date, show_stats. */
+body.hide-time [data-part="time"], body.hide-time [data-block="time"],
+body.hide-date [data-part="date"], body.hide-date [data-block="date"],
+body.hide-stats [data-block="stats"] { display: none; }
+
+/* The camera (live, mirrored) and the photo it looks at, with a scanning sweep.
+   Skins may move and frame them; without those blocks, these windows appear. */
+.system-window {
+  position: absolute;
+  top: 8%; left: 0; right: 0;
+  margin: 0 auto;
+  width: 80vmin;
+  height: 60vmin;
+  border-radius: 10px;
+}
+[data-block="camera"] { overflow: hidden; border: 2px solid #5bc6e8; background: #000; }
+[data-block="camera"] video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+[data-block="photo"] {
+  overflow: hidden;
+  border: 2px solid #3fe0a8;
+  box-shadow: 0 0 4vmin rgba(63, 224, 168, 0.35);
+  background: #000;
+  transition: opacity 1.2s;
+}
+[data-block="photo"] img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.6) brightness(0.9); }
+[data-block="photo"] .scan {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(63, 224, 168, 0) 0%, rgba(63, 224, 168, 0.08) 44%,
+    rgba(160, 255, 220, 0.75) 49.5%, rgba(255, 255, 255, 0.95) 50%, rgba(63, 224, 168, 0) 50.6%);
+  transform: translateY(-50%);
+}
+[data-block="photo"].scanning .scan { animation: scan 1.4s ease-in-out infinite alternate; }
+[data-block="photo"].done { opacity: 0; }
+[data-block="photo"].done .scan { display: none; }
+@keyframes scan {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(50%); }
+}

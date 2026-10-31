@@ -1,6 +1,6 @@
 """Jarvis's own tools, for the LLM to manage itself (served over MCP by mcp_server.py).
 
-Only what it may touch: face, voice, name, language, memory, the camera on the
+Only what it may touch: skin, voice, name, language, memory, the camera on the
 screen, which LLM it uses (among the installed ones), reloading its tools and
 restarting. Never the permissions, the confirmation times, the port or your
 instructions, so it cannot lift its own safeguards. Tools that change something go through your «yes» like any
@@ -27,7 +27,6 @@ import i18n
 import memory
 import settings
 
-FACES = ["eyes", "orb"]
 session = lambda: None  # noqa: E731 — the connected device's Session; set by main.py
 requested: set[str] = set()  # «reload», «restart»: for when the answer ends
 
@@ -35,7 +34,7 @@ requested: set[str] = set()  # «reload», «restart»: for when the answer ends
 # Tools that change something need the user's «yes», asked by the server itself, so
 # it holds for any LLM using them (Claude, Hermes…): the same files as
 # bin/jarvis-confirm, so the «yes» works the same (brain/assistant.py writes it).
-NEEDS_YES = {"set_face", "set_voice", "set_name", "set_language", "remember", "update", "forget",
+NEEDS_YES = {"set_voice", "set_name", "set_language", "remember", "update", "forget",
              "reload_tools", "restart", "set_llm", "add_detail_level", "remove_detail_level"}
 CONFIRM = Path(__file__).resolve().parent.parent / ".build" / "confirm"
 ASK = ("This action changes data and needs the user's confirmation. Don't assume it: ask them in one "
@@ -70,17 +69,28 @@ def get_status() -> str:
 def get_settings() -> str:
     import llm
 
-    return (f"name: {settings.get('name')}; face: {settings.get('face')}; "
+    import skins
+
+    return (f"name: {settings.get('name')}; skin: {settings.get('skin')} (skins: {', '.join(skins.available())}); "
             f"detail: {settings.get('detail') or 'neutral'} (levels: {', '.join(llm.detail_levels())}); "
             f"voice: {settings.get('voice') or 'the language default'}; language: {i18n.L.code} "
             f"(available: {', '.join(i18n.available())})")
 
 
-def set_face(face: str) -> str:
-    if face not in FACES:
-        raise ToolError(f"face must be {' or '.join(FACES)}")
-    settings.save(face=face)
-    return "Saved: the face changes when you finish answering."
+def set_skin(skin: str, this_device: bool = False) -> str:
+    import skins
+
+    available = skins.available()
+    if skin not in available:
+        raise ToolError(f"skins: {', '.join(available)}")
+    if this_device:
+        device = session()
+        if not device:
+            raise ToolError("no device connected")
+        device.send({"type": "skin", "name": skin})
+        return "This device changes its skin now."
+    settings.save(skin=skin)
+    return "Saved: the skin changes when you finish answering."
 
 
 def set_voice(voice: str) -> str:
@@ -326,7 +336,10 @@ def _schema(**properties):
 TOOLS = {
     "get_status": (get_status, "Whether the device and its camera are connected, the language, the LLM, eyes and memory.", _schema()),
     "get_settings": (get_settings, "Your name, face, voice and language.", _schema()),
-    "set_face": (set_face, "The face on the screen.", _schema(face={"type": "string", "enum": FACES})),
+    "set_skin": (set_skin, "The screen's look (a skin: eyes, orb… see get_settings), for every device or only "
+                 "the one the user is talking to (this_device).",
+                 {"type": "object", "properties": {"skin": {"type": "string"}, "this_device": {"type": "boolean"}},
+                  "required": ["skin"]}),
     "set_voice": (set_voice, "Your voice in the current language: a macOS voice name (e.g. Mónica, Samantha).",
                   _schema(voice={"type": "string"})),
     "set_name": (set_name, "Your name, which is also your wake word («Hey …»).", _schema(name={"type": "string"})),

@@ -110,7 +110,11 @@ def instructions() -> str:
     if recent and mode() == "auto":
         conversations = "\n\nRecent conversations:\n" + "\n".join(
             f"- {time.strftime('%Y-%m-%d %H:%M', time.localtime(c['at']))}: {c['summary']}" for c in recent)
-    return INSTRUCTIONS.format(facts=facts, conversations=conversations)
+    text = INSTRUCTIONS.format(facts=facts, conversations=conversations)
+    if mode() == "auto":
+        text += ("\nWhat the user tells you about themselves is remembered on its own when the "
+                 "conversation ends: use the remember tool only if they ask you to remember something.")
+    return text
 
 
 def review_prompt(transcript: list[tuple[str, str]], facts: list[str], limit: int = 40000) -> str:

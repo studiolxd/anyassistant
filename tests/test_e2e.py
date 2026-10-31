@@ -168,21 +168,22 @@ def final_texts(messages, author=None):
 
 
 def test_page_and_settings(server, tmp_path):
-    (tmp_path / "settings.json").write_text(json.dumps({"name": "Viernes", "face": "orb", "video": "low",
+    (tmp_path / "settings.json").write_text(json.dumps({"name": "Viernes", "skin": "orb", "video": "low",
                                                         "show_time": False, "history": 0}))
     url = server("--mode", "parrot", "--lang", "es")
     html = urllib.request.urlopen(url + "/").read().decode()
-    assert 'id="face"' in html and '<html lang="es"' in html and "<title>Viernes</title>" in html
+    assert 'id="screen"' in html and '<html lang="es"' in html and "<title>Viernes</title>" in html
     assert '<html lang="es"' in urllib.request.urlopen(url + "/monitor").read().decode()
     config = json.load(urllib.request.urlopen(url + "/config"))
     assert config["lang"] == "es" and config["ui"]["start"]
-    assert (config["name"], config["face"], config["video"]) == ("Viernes", "orb", "low")
+    assert (config["name"], config["skin"]["name"], config["video"]) == ("Viernes", "orb", "low")
+    assert 'data-block="face"' in config["skin"]["html"]
     assert config["screen"]["show_time"] is False and config["screen"]["history"] == 0
     assert config["screen"]["show_date"] is True  # the default
 
 
 def test_bad_settings_stop_it(tmp_path):
-    (tmp_path / "settings.json").write_text(json.dumps({"face": "smiley"}))
+    (tmp_path / "settings.json").write_text(json.dumps({"skin": "smiley"}))
     result = subprocess.run([sys.executable, ROOT / "server" / "main.py", "--mode", "parrot"], cwd=ROOT,
                             capture_output=True, text=True, timeout=60,
                             env={**os.environ, "JARVIS_SETTINGS": str(tmp_path / "settings.json")})
@@ -249,7 +250,8 @@ def test_interrupt_by_voice(server, tmp_path):
     url = server("--mode", "assistant", "--lang", "en", "--llm", "apple")
     pcm = np.concatenate([speech(tmp_path, "Hey Jarvis", "Samantha"),
                           speech(tmp_path, "Tell me a story about a dragon.", "Samantha"),
-                          speech(tmp_path, "Jarvis, stop.", "Samantha")])  # right as it starts answering
+                          np.zeros(RATE * 2, np.int16),  # while it answers (whatever the LLM takes)
+                          speech(tmp_path, "Jarvis, stop.", "Samantha")])
     log = tmp_path / "server.log"
     messages, _ = asyncio.run(talk(url, pcm, until=lambda m: "interrupted by voice" in log.read_text(), timeout=20))
     assert "interrupted by voice" in log.read_text()
@@ -346,19 +348,18 @@ def test_camera_on_the_screen_by_voice(server, tmp_path):
 
 @pytest.mark.skipif(not shutil.which("claude"), reason="needs Claude Code signed in")
 def test_its_own_tools_with_claude(server, tmp_path):
-    """In its own words: a setting (with your «yes») and the camera (without)."""
+    """In its own words: a new detail level (with your «yes») and the camera (without)."""
     from PIL import Image
 
     (tmp_path / "settings.json").write_text(json.dumps({"log_transcripts": True}))
     url = server("--mode", "assistant", "--lang", "es", "--wake", "none", "--llm", "claude", "--tts", "none")
     say = lambda text: speech(tmp_path, text, "Mónica")  # noqa: E731
     pause = np.zeros(RATE * 12, np.int16)
-    pcm = np.concatenate([say("Pon la cara redonda, la del orbe."), pause, say("Sí."), pause,
+    pcm = np.concatenate([say("Crea un modo telegráfico en el que me contestes con cinco palabras como mucho."), pause, say("Sí."), pause,
                           say("Enséñame en la pantalla lo que estás viendo.")])
     camera = lambda m: [x for x in m if x.get("type") == "camera"]  # noqa: E731
     messages, _ = asyncio.run(talk(url, pcm, until=camera, timeout=40, image=Image.new("RGB", (320, 240), "gray")))
-    assert json.loads((tmp_path / "settings.json").read_text())["face"] == "orb"
-    assert {"type": "config"} in messages  # the page changed its face at once
+    assert json.loads((tmp_path / "settings.json").read_text())["detail_levels"]  # created after the «yes»
     assert camera(messages) == [{"type": "camera", "on": True}]
 
 

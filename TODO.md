@@ -15,6 +15,8 @@
 
 ## Done
 
+- [x] **Skins**: the screen as HTML + CSS anyone can make (blocks, states, live variables,
+  options, texts, sounds); eyes, orb, minimal and bedside; a lab and a checker.
 - [x] **Not every sentence is for it**: a `follow_up` window (20 s) instead of 2 minutes
   listening, and `ignore_others`: the LLM answers `<silence>` to what isn't for it.
 - [x] **Hermes with Jarvis's tools**: `jarvis` in Hermes's MCP servers; the «yes» is asked
@@ -36,7 +38,6 @@
   instead of 2.5–3). The model stays a setting (`llm_model`).
 - [x] **Recordings**: the old debugging ones deleted; `record` only on request.
   Transcripts in the log only with `log_transcripts`.
-- [x] **Face**: «eyes» and «orb», chosen with `face`.
 - [x] **Languages**: English base and Spanish in `locales/`; `language` or by voice.
 - [x] **Settings**: `settings.json`; face, voice, name, language also by voice with your «yes».
 - [x] **Its own tools (MCP)**: the server is the `jarvis` MCP server (settings, memory,

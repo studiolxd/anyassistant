@@ -27,10 +27,10 @@ def saved(env):
 
 
 def test_settings_are_saved_for_after_the_answer(env):
-    tools.call("set_face", {"face": "orb"})
+    tools.call("set_skin", {"skin": "orb"})
     tools.call("set_name", {"name": "Viernes"})
     tools.call("set_language", {"language": "en"})
-    assert saved(env) == {"face": "orb", "name": "Viernes", "language": "en"}
+    assert saved(env) == {"skin": "orb", "name": "Viernes", "language": "en"}
 
 
 def test_voice_must_exist_and_speak_the_language(env):
@@ -43,8 +43,8 @@ def test_voice_must_exist_and_speak_the_language(env):
 
 
 @pytest.mark.parametrize("name, arguments", [
-    ("set_face", {"face": "smiley"}), ("set_name", {"name": "R2-D2"}), ("set_language", {"language": "zz"}),
-    ("set_face", {}), ("set_permissions", {"x": 1}), ("forget", {"number": 9}),
+    ("set_skin", {"skin": "smiley"}), ("set_name", {"name": "R2-D2"}), ("set_language", {"language": "zz"}),
+    ("set_skin", {}), ("set_permissions", {"x": 1}), ("forget", {"number": 9}),
 ])
 def test_refusals(env, name, arguments):
     with pytest.raises(tools.ToolError):
@@ -93,8 +93,8 @@ def test_mcp_protocol(env):
     listed = mcp_server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})["result"]["tools"]
     assert {t["name"] for t in listed} == set(tools.TOOLS)
     called = mcp_server.handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
-                                "params": {"name": "set_face", "arguments": {"face": "smiley"}}})["result"]
-    assert called["isError"] and "eyes or orb" in called["content"][0]["text"]
+                                "params": {"name": "set_skin", "arguments": {"skin": "smiley"}}})["result"]
+    assert called["isError"] and "eyes" in called["content"][0]["text"]
     assert "error" in mcp_server.handle({"jsonrpc": "2.0", "id": 4, "method": "nope"})
 
 
@@ -112,7 +112,7 @@ def test_the_hook_leaves_jarvis_tools_to_the_server():
     hook = load_script("jarvis-confirm")
     assert hook.describe("mcp__jarvis__get_settings", {}) is None
     assert hook.describe("mcp__jarvis__camera", {"on": True}) is None
-    assert hook.describe("mcp__jarvis__set_face", {"face": "orb"}) is None  # the server asks itself
+    assert hook.describe("mcp__jarvis__set_name", {"name": "Viernes"}) is None  # the server asks itself
 
 
 def test_remember_points_to_update():
@@ -150,25 +150,26 @@ def say_yes():
 
 def test_changes_wait_for_your_yes_for_any_llm(env, asking):
     with pytest.raises(tools.ToolError, match="confirmation"):
-        tools.call("set_face", {"face": "orb"})
+        tools.call("set_name", {"name": "Viernes"})
     assert not (env / "settings.json").exists()
-    assert say_yes()["action"] == 'jarvis: set_face {"face": "orb"}'
-    tools.call("set_face", {"face": "orb"})
-    assert saved(env)["face"] == "orb"
+    assert say_yes()["action"] == 'jarvis: set_name {"name": "Viernes"}'
+    tools.call("set_name", {"name": "Viernes"})
+    assert saved(env)["name"] == "Viernes"
     with pytest.raises(tools.ToolError):  # good for one use only
-        tools.call("set_face", {"face": "orb"})
+        tools.call("set_name", {"name": "Viernes"})
 
 
 def test_a_yes_for_one_call_is_not_for_another(env, asking):
     with pytest.raises(tools.ToolError):
-        tools.call("set_face", {"face": "orb"})
+        tools.call("set_name", {"name": "Viernes"})
     say_yes()
     with pytest.raises(tools.ToolError):
-        tools.call("set_name", {"name": "Viernes"})
+        tools.call("set_language", {"language": "en"})
 
 
 def test_what_doesnt_change_anything_doesnt_ask(env, asking):
     tools.call("get_settings", {})
+    tools.call("set_skin", {"skin": "orb"})
     tools.call("set_detail", {"level": "concise"})
     tools.call("set_timer", {"seconds": 60})
     assert not (tools.CONFIRM / "pending.json").exists()

@@ -1,0 +1,44 @@
+/* Minimal: what it is doing, in words and a light, as large and clear as possible. */
+
+.screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 6vmin;
+  box-sizing: border-box;
+  background: var(--background);
+  color: var(--text);
+}
+.screen > * { width: 100%; box-sizing: border-box; overflow-wrap: break-word; }
+.clock { display: none; }
+body[data-look="asleep"] .clock { display: block; }
+.clock [data-part="time"] { margin: 0; font-size: 22vmin; font-weight: bold; line-height: 1; }
+.clock [data-part="date"] { margin: 2vmin 0 6vmin; font-size: 6vmin; }
+
+.face { height: 14vmin; }
+.light {
+  width: 12vmin;
+  height: 12vmin;
+  border-radius: 50%;
+  background: #ffffff;
+  transform: scale(calc(0.8 + var(--voice, 0) * 0.5 + var(--speech, 0) * 0.5));
+  transition: background 0.3s;
+}
+body[data-look="asleep"] .light { background: #444; }
+body[data-look="hearing"] .light { background: #00e676; }
+body[data-look="thinking"] .light,
+body[data-look="looking"] .light { background: #ffd600; }
+body[data-look="speaking"] .light { background: #40c4ff; }
+body[data-look="question"] .light { background: #e040fb; }
+body[data-look="alarm"] .light { background: #ff6d00; }
+body[data-look="error"] .light { background: #ff1744; }
+
+.status { font-size: 9vmin; font-weight: bold; margin: 4vmin 0; }
+.heard { font-size: 6vmin; margin: 0 0 2vmin; opacity: 0.75; }
+.answer { font-size: 7vmin; margin: 0; }
+.timers { font-size: 7vmin; }
+.timers p { margin: 0 0 1vmin; }
+.stats { font-size: 3vmin; opacity: 0.5; }
+body[data-look="asleep"] .heard,
+body[data-look="asleep"] .answer { display: none; }

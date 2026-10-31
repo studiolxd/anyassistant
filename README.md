@@ -73,7 +73,7 @@ the preferences, so `bin/jarvis start` needs no options:
   "name": "Jarvis",
   "instructions": ["I'm a freelance designer.", "I invoice with Holded."],
   "voice": {"es": "Mónica", "en": "Samantha"},
-  "face": "eyes",
+  "skin": "eyes",
   "video": "auto"
 }
 ```
@@ -89,7 +89,9 @@ the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear'
 | `name` | `Jarvis` | the assistant's name: wake word («Hey …»), page title, the LLM's instructions |
 | `instructions` | — | text (or a list of lines) added to the LLM's instructions: who you are, your tools, how to talk |
 | `voice` | the language's | one voice or one per language: `{"es": "Mónica", "en": "Samantha"}` |
-| `face` | `eyes` | `eyes` or `orb`; a device's `?face=` wins |
+| `skin` | `eyes` | the screen's look: `eyes`, `orb`, `minimal`, `bedside` or yours (below); a device's `?skin=` wins |
+| `skin_options` | — | the skin's options: `{"accent": "#ff7a45"}` |
+| `skins_dir` | `skins.local/` | your skins |
 | `video` | `auto` | `normal`, `low` or `off`; `auto` lets each device choose (low with ≤ 1 GB of RAM); a device's `?video=` wins |
 | `port` | `8080` | `bin/jarvis` uses it too |
 | `memory` | `off` | remember across conversations: `explicit` (only when asked) or `auto` (below) |
@@ -128,7 +130,7 @@ asleep; `show_status` («Listening», «Thinking…»), `show_heard` (what you s
 **Memory**: `memory_facts` (50, then compacted), `memory_conversations` (10),
 `memory_days` (30). All apply without restarting: the page changes at once.
 
-A wrong value (`"face": "smiley"`) stops the server with the reason.
+A wrong value (`"skin": "smiley"`) stops the server with the reason.
 
 **Pairing**: with `"pairing": true`, a device must enter a code before using
 Jarvis. `bin/jarvis pair` shows one on the Mac (6 digits, 5 minutes, one device);
@@ -137,9 +139,9 @@ its hash in `.build/paired.json`). Unpaired devices can't connect, see the camer
 (`/video.mjpg`) or the status; the Mac itself always can. `bin/jarvis unpair`
 forgets them all.
 
-**By voice**: «Use the orb face», «Change your voice to Mónica», «From now on your
+**By voice**: «Use the orb skin», «Change your voice to Mónica», «From now on your
 name is …», with Jarvis's own tools (below). After every answer the server reads
-`settings.json` again (also when you edit it by hand): the face changes on the
+`settings.json` again (also when you edit it by hand): the skin changes on the
 screen at once, and anything else (voice, name, language…) restarts it when it
 finishes speaking. Options given on the command line don't change.
 
@@ -149,12 +151,13 @@ The server is also an MCP server, `jarvis`, at `/mcp` (only from the Mac itself:
 no device on the network, paired or not). Allowed like any other in
 `permissions.json` (`"allowed": {"jarvis": "all"}`, or a list of tools), Claude
 can manage Jarvis in your own words («show me what you see», «use the round
-face», «what do you know about me?»):
+skin», «what do you know about me?»):
 
 | Tool | | Your «yes» |
 |---|---|---|
-| `get_status`, `get_settings`, `get_memory` | device and camera, language, LLM, eyes, memory; name, face, voice; what it remembers | no |
-| `set_face`, `set_voice`, `set_name`, `set_language` | saved to `settings.json`, applied after the answer | yes |
+| `get_status`, `get_settings`, `get_memory` | device and camera, language, LLM, eyes, memory; name, skin, voice; what it remembers | no |
+| `set_skin` | the screen's look, for every device or only this one | no: it only changes the look |
+| `set_voice`, `set_name`, `set_language` | saved to `settings.json`, applied after the answer | yes |
 | `remember`, `forget` | memory facts | yes |
 | `camera` | shows or hides the live camera on the screen | no: it only changes the screen |
 | `set_detail` | how much it says: concise, neutral, detailed or your own levels | no: it only changes how it talks |
@@ -312,22 +315,75 @@ class MyEngine(WakeWord):
 
 and `--wake my-engine [--wake-word …]`. `server/plugins.py` is the shared registry.
 
-## Face
+## Skins
 
-Two, chosen with `face` in `settings.json` or, on one device, in its address
-(which wins):
+The screen's look is a **skin**: HTML and CSS anyone can make, **without
+JavaScript**. Four come with Jarvis (`skins/`):
 
-- **`?face=eyes`** (default): two blinking eyes; closed and breathing while asleep,
+- **`eyes`** (default): two blinking eyes; closed and breathing while asleep,
   brighter and slightly bigger with your voice, looking to one side with dots while
-  thinking, with a mouth of bars that follows its voice while speaking, a raised
-  eyebrow and «?» while waiting for your «yes», drooping and red on errors.
-- **`?face=orb`**: a sphere that breathes, beats with your voice, has a spinning
-  ring while thinking and sends out waves while speaking.
+  thinking, a mouth of bars that follows its voice, a raised eyebrow and «?» while
+  waiting for your «yes», orange when ringing, drooping and red on errors.
+- **`orb`**: a sphere that breathes, beats with your voice, has a spinning ring
+  while thinking and sends out waves while speaking.
+- **`minimal`**: high contrast and large text, a light that changes with each state.
+- **`bedside`**: nearly black, only a dim time while asleep, and soft sounds.
 
-Asleep, the screen shows the time and date in large type. `?demo` (or
-`?demo&face=orb`) cycles through every state without connecting, to look at them.
-It is all CSS and transforms (`web/faces.css`, `web/face.js`), so it runs smoothly
-on the tablet. The camera's quality: `video` in `settings.json`, or
+Chosen with `skin` for every device, `?skin=bedside` on one (remembered by it;
+`?skin=default` forgets it), or by voice («ponte la skin de mesilla», «only on
+this one»).
+
+**Making one.** `bin/jarvis skin new mine --from orb` copies a skin into your
+folder (`skins_dir`, `skins.local/` by default: where an installed Jarvis keeps
+them will come with the installer). A skin is a folder:
+
+```
+skin.json        {"name": "Mine", "author": "…", "version": "1", "description": "…",
+                  "options": {"accent": "#3ddc97"}}
+skin.html        the layout: where each block goes
+skin.css         its styles and animations for each state
+locales/es.json  optional: {"ui": {"thinking": "Mmm…"}, "skin": {"goodnight": "Buenas noches"}}
+sounds/          optional: wake.wav, sleep.wav, alarm.wav (16-bit WAV)
+images/, fonts/  whatever it uses, inside its folder
+```
+
+`skin.html` places **blocks**, which Jarvis fills: `<div data-block="clock"></div>`.
+
+| Block | |
+|---|---|
+| `face` | its face: the skin draws it inside (and gets the live variables below) |
+| `status` | «Te escucho», «Pensando…», «Di Hey Jarvis» |
+| `heard`, `answer`, `captions` | what you said last, its last answer, or both with `history` |
+| `clock`, `time`, `date` | the clock (both parts, or each on its own) |
+| `timers` | running timers, alarms and reminders |
+| `photo`, `camera` | the photo it looks at, the live camera (if the skin has no place for them, Jarvis adds its own) |
+| `stats` | the connection's numbers |
+
+`<p data-text="goodnight"></p>` shows a text of its own, from its `locales`
+(`skin`), and its `ui` texts replace Jarvis's on screen (not what it says or
+understands). Starting and pairing aren't blocks: they always work.
+
+`skin.css` follows the state with:
+
+- `body[data-state]`: the state as it comes (`asleep`, `awake`, `hearing`,
+  `thinking`, `looking`, `speaking`, `question`, `alarm`, `error`…), and
+  `body[data-look]`, with the ones that look alike grouped (listening → awake…).
+- `body.blink`, now and then for a moment.
+- On the face block, live, from 0 to 1: `--voice` (your voice), `--speech` (its
+  own) and `--bar-1` … `--bar-5` (its own as five moving bars), e.g.
+  `transform: scale(calc(1 + var(--voice) * .2))`.
+- Its `options` as variables: `--accent`, changeable with `skin_options`.
+
+**The lab**: `http://<mac>:8080/lab?skin=mine` shows every state at once, with a
+simulated voice and timer, and reloads when you save. **The check**: `bin/jarvis
+skin check skins.local/mine` points out what the tablet's Chrome 81 lacks
+(`inset`, flex `gap`, `:has()`…), unknown blocks, scripts, outside resources.
+
+**What a skin can't do**: run JavaScript, react to events (`onclick`…) or load
+anything from outside: the page has the microphone and the camera. Its HTML is
+cleaned when served and the page forbids the rest (Content-Security-Policy).
+
+The camera's quality: `video` in `settings.json`, or
 `?video=normal|low|off` on one device.
 
 ## System voice commands
@@ -584,7 +640,9 @@ so they need no account or network; they run on a free port, next to a running J
 - `server/skills/` — skills without an LLM: `parse.py` (numbers, durations, clock times), `calc.py`,
   `units.py`, `timers.py` (`timers.json`), `interpreter.py` (Apple's model).
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
-- `web/` — the phone's page (plain JS, old Chrome) and the monitor.
+- `web/` — the phone's page (plain JS, old Chrome): `app.js` (connection, blocks), `skin.js` (applies a
+  skin, its states and live variables), `system.css`; the monitor and the skins lab.
+- `skins/` — the system's skins; `server/skins.py` finds, cleans and checks them.
 - `tests/` — pytest; `test_e2e.py` drives the real server.
 
 See `TODO.md` for what's next.

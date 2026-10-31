@@ -1,6 +1,7 @@
 .venv/
 __pycache__/
 *.wav
+!skins/*/sounds/*.wav
 .DS_Store
 .build/
 # Local configuration and secrets
@@ -9,5 +10,6 @@ permissions.json
 settings.json
 memory.json
 timers.json
+skins.local/
 google-client.json
 .gog/

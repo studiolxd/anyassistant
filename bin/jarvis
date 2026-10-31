@@ -8,6 +8,7 @@
 #   bin/jarvis log                      (the live log; Ctrl+C to leave)
 #   bin/jarvis pair                     a code to pair a device (with "pairing": true)
 #   bin/jarvis unpair                   forgets every paired device
+#   bin/jarvis skin list|check <folder>|new <name> [--from orb]   the screen's skins
 #
 # Options also come from settings.json. The PID goes to .build/jarvis.pid, the port
 # to .build/jarvis.port and the log to .build/jarvis.log.
@@ -98,12 +99,16 @@ if not d["pairing"]:
     print("Note: pairing is off, so any device can connect anyway. Turn it on with \"pairing\": true in settings.json.")
 '
     ;;
+  skin)
+    shift
+    cd "$ROOT/server" && exec "$ROOT/.venv/bin/python" skins.py "$@"
+    ;;
   unpair)
     if ! alive; then echo "Jarvis isn't running."; exit 1; fi
     curl -s -m 3 -X POST "http://127.0.0.1:$PORT/pairing?forget=1" > /dev/null && echo "Every device forgotten: they'll need a new code."
     ;;
   *)
-    sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
     exit 2
     ;;
 esac

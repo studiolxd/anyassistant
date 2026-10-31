@@ -4,11 +4,33 @@
 
 var pc = null;
 var channel = null;
-var statusLine = document.getElementById('status');
-var stats = document.getElementById('stats');
 var rtt = null;
-var T = {};  // texts of the active language (locale «ui»)
-var settings = {};  // name, face, video
+var T = {};  // texts of the active language (locale «ui», and the skin's own)
+var settings = {};  // name, skin, video, screen…
+var lastState = 'connecting';
+
+// The skin's blocks (they may be missing: a skin shows what it wants).
+function setText(name, value) {
+  var box = Skin.block(name);
+  if (box) box.textContent = value;
+}
+function status(value) { setText('status', value); }
+
+// This device's own skin: ?skin= (remembered; ?skin=default forgets it), or the one in the settings.
+function deviceSkin(name) {
+  var asked = new URLSearchParams(location.search).get('skin');
+  try {
+    if (name === 'default') localStorage.removeItem('skin');
+    else if (name !== undefined) localStorage.setItem('skin', name);
+    return (asked !== 'default' && asked) || localStorage.getItem('skin') || '';
+  } catch (e) {
+    return asked !== 'default' && asked || '';
+  }
+}
+(function () {
+  var params = new URLSearchParams(location.search);
+  if (params.get('skin') && !params.has('demo')) deviceSkin(params.get('skin'));  // the lab's views don't
+})();
 
 function text(key, values) {
   var s = T[key] || key;
@@ -16,17 +38,36 @@ function text(key, values) {
   return s;
 }
 
-// Texts and settings; again after reconnecting, in case they changed («speak English», a restart).
+// Texts, settings and skin; again after reconnecting, in case they changed («speak English», a restart).
 function loadTexts() {
-  return fetch('/config').then(function (r) { return r.json(); }).then(function (data) {
-    T = data.ui;
+  var skin = deviceSkin();
+  return fetch('/config' + (skin ? '?skin=' + encodeURIComponent(skin) : '')).then(function (r) {
+    return r.json();
+  }).then(function (data) {
+    T = {};
+    for (var key in data.ui) T[key] = data.ui[key];
+    for (key in data.skin.ui) T[key] = data.skin.ui[key];  // the skin may say it its way
     settings = data;
     document.documentElement.lang = data.lang;
     document.title = data.name;
-    Face.language(data.lang);
-    Face.kind(data.face);
+    Skin.language(data.lang);
+    if (Skin.apply(data.skin)) redraw();
     showScreen(data.screen || {});
+    tellSkin();
   });
+}
+
+// A new skin: what was on screen goes into its blocks.
+function redraw() {
+  showState(lastState, lastWake);
+  drawTimers();
+}
+
+// The server plays the skin's sounds: it needs to know which one this device has.
+function tellSkin() {
+  if (channel && channel.readyState === 'open') {
+    channel.send(JSON.stringify({ type: 'skin', name: settings.skin.name }));
+  }
 }
 
 // What the screen shows (settings show_time, show_date, show_stats, clock…).
@@ -35,7 +76,7 @@ function showScreen(s) {
   screen = s;
   var hide = { 'hide-time': s.show_time === false, 'hide-date': s.show_date === false, 'hide-stats': !s.show_stats };
   for (var name in hide) document.body.classList.toggle(name, hide[name]);
-  Face.clock(s.clock);
+  Skin.clock(s.clock);
 }
 
 // Loads the texts and then shows the start button (or the demo, or the pairing form).
@@ -43,7 +84,7 @@ loadTexts().then(function () {
   if (!settings.paired) return askForCode();
   var start = document.getElementById('start');
   start.textContent = text('start');
-  statusLine.textContent = text('connecting');
+  status(text('connecting'));
   if (new URLSearchParams(location.search).has('demo')) demo();
   else start.hidden = false;
 });
@@ -162,17 +203,18 @@ async function connect() {
 
   channel = pc.createDataChannel('control');
   channel.onmessage = function (ev) { message(JSON.parse(ev.data)); };
+  channel.onopen = tellSkin;
 
   pc.ontrack = function (ev) {
     var stream = ev.streams[0] || new MediaStream([ev.track]);
     document.getElementById('speaker').srcObject = stream;
-    Face.speaker(stream);  // so the mouth follows its voice
+    Skin.speaker(stream);  // so the face follows its voice
   };
   pc.onconnectionstatechange = function () {
     if (current !== pc) return;
-    if (pc.connectionState === 'connected' && Face.current() === 'error') {
-      Face.state('connected');
-      statusLine.textContent = text('connected');
+    if (pc.connectionState === 'connected' && Skin.current() === 'error') {
+      Skin.state('connected');
+      status(text('connected'));
     } else if (pc.connectionState === 'failed') {
       reconnect();
     } else if (pc.connectionState === 'disconnected') {
@@ -221,17 +263,21 @@ function ping() {
   if (channel && channel.readyState === 'open') channel.send(JSON.stringify({ type: 'ping', t: performance.now() }));
 }
 
+var lastWake;
 function showState(state, wakePhrase) {
+  lastState = state;
+  lastWake = wakePhrase || lastWake;
   if (state === 'alarm') {
-    statusLine.textContent = text('alarm', { label: alarmLabel });
+    status(text('alarm', { label: alarmLabel }));
   } else if (state === 'asleep') {
-    statusLine.textContent = screen.show_hint === false ? '' : text('asleep', { wake: wakePhrase || 'Hey Jarvis' });
+    status(screen.show_hint === false ? '' : text('asleep', { wake: lastWake || 'Hey Jarvis' }));
   } else {
-    statusLine.textContent = screen.show_status === false && state !== 'error' ? '' : text(state);
+    status(screen.show_status === false && state !== 'error' ? '' : text(state));
   }
-  Face.state(state);
+  Skin.state(state);
   photoFollows(state);
-  if (state === 'asleep' && !camera.hidden) showCamera(false);
+  var camera = Skin.block('camera');
+  if (state === 'asleep' && camera && !camera.hidden) showCamera(false);
 }
 
 function message(m) {
@@ -244,20 +290,21 @@ function message(m) {
   else if (m.type === 'photo') takePhoto(m.id);
   else if (m.type === 'timers') showTimers(m.items);
   else if (m.type === 'alarm') alarmLabel = m.label || '';
+  else if (m.type === 'skin') { deviceSkin(m.name); loadTexts(); }  // «use the orb skin here»
 }
 
 // «Turn on the camera»: what this device's camera sees, live, like a mirror (the same
 // stream it already sends, so no extra load); «turn off the camera» hides it.
 // Also hidden when it goes to sleep.
-var camera = document.getElementById('camera');
 function showCamera(on) {
-  var video = media && media.getVideoTracks().length;
-  if (on && video) {
-    camera.srcObject = media;
-    camera.hidden = false;
+  var box = Skin.block('camera');
+  var video = box.querySelector('video');
+  if (on && media && media.getVideoTracks().length) {
+    video.srcObject = media;
+    box.hidden = false;
   } else {
-    camera.hidden = true;
-    camera.srcObject = null;
+    box.hidden = true;
+    video.srcObject = null;
   }
 }
 
@@ -322,7 +369,8 @@ function showTimers(items) {
   drawTimers();
 }
 function drawTimers() {
-  var box = document.getElementById('timers');
+  var box = Skin.block('timers');
+  if (!box) return;
   if (screen.show_timers === false) { box.textContent = ''; return; }
   var now = Date.now() / 1000;
   var lines = timerItems.filter(function (i) { return i.at > now - 1; }).map(function (i) {
@@ -347,22 +395,27 @@ setInterval(drawTimers, 1000);
 
 // What it looks at through the camera, with a scanning sweep while it thinks about it;
 // it fades out once it starts answering.
-var photo = document.getElementById('photo');
 function showPhoto(at) {
+  var photo = Skin.block('photo');
   var img = photo.querySelector('img');
-  img.onload = function () { photo.hidden = false; photo.className = 'scanning'; };
+  img.onload = function () { photo.hidden = false; photo.classList.remove('done'); photo.classList.add('scanning'); };
   img.src = '/eyes.jpg?t=' + at;
 }
 function photoFollows(state) {
-  if (photo.hidden || state === 'looking' || state === 'thinking') return;
-  photo.className = 'done';
-  setTimeout(function () { if (photo.className === 'done') photo.hidden = true; }, 1500);
+  var photo = Skin.block('photo');
+  if (!photo || photo.hidden || state === 'looking' || state === 'thinking') return;
+  photo.classList.remove('scanning');
+  photo.classList.add('done');
+  setTimeout(function () { if (photo.classList.contains('done')) photo.hidden = true; }, 1500);
 }
 
 // Answers arrive in pieces with the same id: the same paragraph is updated.
+// Blocks: «heard» (what you said last), «answer» (its last answer), «captions» (both, with history).
 function caption(m) {
   if (m.author === 'assistant' ? screen.show_answer === false : screen.show_heard === false) return;
-  var list = document.getElementById('captions');
+  setText(m.author === 'assistant' ? 'answer' : 'heard', m.text);
+  var list = Skin.block('captions');
+  if (!list) return;
   var p = m.id && document.getElementById('answer-' + m.id);
   if (p) {
     p.textContent = m.text;
@@ -387,7 +440,7 @@ async function collectStats() {
       lost = s.packetsLost;
     }
   });
-  stats.textContent = 'RTT ' + rtt + ' ms · jitter ' + jitter + ' ms · lost ' + lost;
+  setText('stats', 'RTT ' + rtt + ' ms · jitter ' + jitter + ' ms · lost ' + lost);
 }
 
 // The face reacts to the microphone's volume.
@@ -401,30 +454,37 @@ function levelMeter(media) {
     analyser.getByteTimeDomainData(buffer);
     var peak = 0;
     for (var i = 0; i < buffer.length; i++) peak = Math.max(peak, Math.abs(buffer[i] - 128));
-    Face.voice(peak / 128);
+    Skin.voice(peak / 128);
     requestAnimationFrame(loop);
   })();
 }
 
 function fail(message) {
-  Face.state('error');
-  statusLine.textContent = message;
+  lastState = 'error';
+  Skin.state('error');
+  status(message);
 }
 
-// ?demo: without connecting, cycles through every state to see the face (?demo&face=orb).
+// ?demo: without connecting, cycles through every state to see the skin (?demo&skin=orb);
+// ?demo=thinking stays in one (the skins lab shows them all at once).
+var DEMO_STATES = ['asleep', 'awake', 'hearing', 'looking', 'thinking', 'speaking', 'question', 'alarm', 'error'];
 function demo() {
   document.getElementById('screen').hidden = false;
-  var STATES = ['asleep', 'awake', 'hearing', 'looking', 'thinking', 'speaking', 'question', 'error'];
+  var fixed = new URLSearchParams(location.search).get('demo');
   var step = 0;
   var next = function () {
-    var state = STATES[step++ % STATES.length];
-    showState(state);
+    var state = DEMO_STATES.indexOf(fixed) >= 0 ? fixed : DEMO_STATES[step++ % DEMO_STATES.length];
+    alarmLabel = text('demo_alarm');
+    showState(state, 'Hey Jarvis');
     if (state === 'looking') showPhoto(Date.now());  // the last photo, if there is one
-    stats.textContent = 'demo: ' + state;
+    setText('stats', 'demo: ' + state);
   };
-  setInterval(function () {  // simulated voice while «hearing»
-    Face.voice(Face.current() === 'hearing' ? 0.3 + 0.3 * Math.sin(Date.now() / 150) : 0);
+  showTimers([{ kind: 'timer', at: Date.now() / 1000 + 299, label: '' }]);
+  caption({ text: text('demo_heard') });
+  caption({ text: text('demo_answer'), author: 'assistant', id: 'demo' });
+  setInterval(function () {  // a simulated voice: yours while «hearing»
+    Skin.voice(Skin.current() === 'hearing' ? 0.3 + 0.3 * Math.sin(Date.now() / 150) : 0);
   }, 50);
   next();
-  setInterval(next, 3000);
+  if (DEMO_STATES.indexOf(fixed) < 0) setInterval(next, 3000);
 }

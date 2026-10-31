@@ -1,0 +1,7 @@
+{
+  "name": "Eyes",
+  "author": "Jarvis",
+  "version": "1",
+  "description": "Two blinking eyes and a mouth that follows its voice.",
+  "options": {"accent": "#3ddc97", "background": "#000"}
+}
