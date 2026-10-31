@@ -111,7 +111,7 @@ def test_options_check():
 def test_the_command_line_has_every_option():
     import options
 
-    args = options.parser().parse_args(["--lang", "es", "--no-beeps", "--volume", "70", "--voice", "Mónica",
+    args = options.parser().parse_args(["--lang", "es", "--no-fillers", "--volume", "70", "--voice", "Mónica",
                                         "--detail-levels", '{"x": "Be short."}'])
-    assert (args.language, args.beeps, args.volume, args.voice) == ("es", False, 70, "Mónica")
+    assert (args.language, args.fillers, args.volume, args.voice) == ("es", False, 70, "Mónica")
     assert args.detail_levels == {"x": "Be short."}

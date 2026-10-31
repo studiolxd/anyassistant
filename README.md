@@ -133,7 +133,6 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `echo_guard` | `1.2` | seconds without listening after speaking (its own echo) *(restarts)* |
 | `voice_interrupt` | `true` | «Jarvis, stop» while it speaks |
 | `tap_to_stop` | `true` | tapping the screen stops it talking |
-| `beeps` | `true` | a sound when it wakes up and when it falls asleep |
 | `fillers` | `true` | «One moment, let me check» when a tool is slow |
 
 **Skills**
@@ -358,7 +357,8 @@ the class, so they aren't loaded when unused.
 It sleeps until it hears **«Hey Jarvis»**; then it beeps and enters
 **conversation mode**: it transcribes sentence by sentence without repeating the
 word, until you say the sleep command (**«go to sleep»** / **«apágate»**) or
-**2 minutes** pass without talking to it; it beeps downwards when falling asleep.
+**2 minutes** pass without talking to it; it beeps downwards when falling asleep
+(the plugin `sounds`: turned off, it wakes and sleeps in silence).
 «Hey Jarvis, what time is it?» in one go also works: it wakes up and transcribes
 the question.
 
@@ -418,7 +418,8 @@ skin.json        {"name": "Mine", "author": "…", "version": "1", "description"
 skin.html        the layout: where each block goes
 skin.css         its styles and animations for each state
 locales/es.json  optional: {"ui": {"thinking": "Mmm…"}, "skin": {"goodnight": "Buenas noches"}}
-sounds/          optional: wake.wav, sleep.wav, alarm.wav (16-bit WAV)
+sounds/          optional: wake.wav, sleep.wav, alarm.wav (16-bit WAV); without them,
+                 the plugins' own (sounds: wake, sleep; skill-alarms: alarm)
 images/, fonts/  whatever it uses, inside its folder
 ```
 
@@ -504,7 +505,8 @@ Everything comes on. To turn one off, `"plugins": {"skill-arithmetic": false}` i
 `settings.json`, or by voice («desactiva las cuentas», «¿qué plugins tienes?»),
 with your «yes» to turn one off. Security plugins (and the plugin manager) can
 only be turned off by hand, and an engine in use only after choosing another.
-Skills and tools turn on and off at once; engines when chosen.
+Skills and tools turn on and off at once; engines when chosen. The only one off
+at first is `pairing` (it was opt-in before plugins too).
 
 A plugin is a folder:
 

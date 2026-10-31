@@ -1,9 +1,10 @@
 """Phase 2: listens and shows what you say on the phone's screen."""
 
 import i18n
+import kernel
 import settings
 import skins
-from audio import beep, louder
+from audio import louder
 
 
 def volume() -> float:
@@ -52,17 +53,18 @@ class Transcriber:
         if data.get("type") == "skin" and data.get("name") in skins.available():
             self.skin = data["name"]  # this device's skin: its sounds
 
-    def _sound(self, kind: str, default):
-        own = skins.sound(getattr(self, "skin", None) or settings.get("skin"), kind)
-        return louder(own if own is not None else default, volume())
+    def _beep(self, kind: str):
+        """Wake or sleep: the plugin «sounds» (the skin's, or its own); silence without it."""
+        sounds = kernel.module("sounds")
+        pcm = sounds.sound(kind, getattr(self, "skin", None) or settings.get("skin")) if sounds else None
+        if pcm is not None:
+            self.speaker.play(louder(pcm, volume()))
 
     def _woke_up(self):
-        if settings.get("beeps", True):
-            self.speaker.play(self._sound("wake", beep()))
+        self._beep("wake")
 
     def _fell_asleep(self, by_command: bool):
-        if settings.get("beeps", True):
-            self.speaker.play(self._sound("sleep", beep(falling=True)))
+        self._beep("sleep")
         if by_command:
             self.send({"type": "text", "text": i18n.L("speech.goodbye"), "author": "assistant"})
 

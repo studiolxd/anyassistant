@@ -95,7 +95,7 @@ def test_new_skin_from_another(mine):
 
 
 def test_sounds(mine):
-    assert skins.sound("eyes", "wake") is None  # the system's beeps
+    assert skins.sound("eyes", "wake") is None  # the plugin «sounds»'s, then
     bedside = skins.sound("bedside", "alarm")
     assert bedside is not None and bedside.dtype.name == "int16" and len(bedside) > 48000
 

@@ -14,6 +14,8 @@ import re
 import signal
 import time
 
+import numpy as np
+
 import confirmation
 import eyes
 import i18n
@@ -22,7 +24,7 @@ import settings
 import skills
 import skins
 import tools
-from audio import alarm_tone, louder, normalize
+from audio import louder, normalize
 from brain.transcriber import Transcriber, volume
 from llm import SILENCE
 from llm import detail as llm_detail
@@ -136,8 +138,8 @@ class Assistant(Transcriber):
         sentence = alarms.ring_sentence(item) if alarms else ""
         self.send({"type": "alarm", "label": item.get("label") or sentence})
         self._state("alarm")
-        own = skins.sound(getattr(self, "skin", None) or settings.get("skin"), "alarm")  # the skin's, if it has one
-        tone = louder(own if own is not None else alarm_tone(), volume())
+        pcm = alarms.alarm_sound(getattr(self, "skin", None) or settings.get("skin")) if alarms else None
+        tone = louder(pcm, volume()) if pcm is not None else np.zeros(0, np.int16)
         until = time.time() + (settings.get("ring_seconds") or 60)
         said = False
         while self.ringing is item and time.time() < until:

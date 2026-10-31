@@ -7,15 +7,22 @@ device (brain/assistant.py) or on the Mac.
 import asyncio
 import logging
 import time
-import wave
+from pathlib import Path
 
 import i18n
-import paths
+import skins
 from skills import Skill, skill, spoken_duration, spoken_list, spoken_when, timers
 from skills.parse import Clock, Token, clock, day_tokens, duration, resolve, words
 from tools import ToolError, tool
 
 log = logging.getLogger("skills")
+ALARM = Path(__file__).parent / "sounds" / "alarm.wav"  # three quick high notes
+
+
+def alarm_sound(skin: str | None):
+    """What rings, as 48 kHz PCM: the skin's alarm.wav, or this plugin's."""
+    own = skins.sound(skin, "alarm") if skin else None
+    return own if own is not None else skins.wav(ALARM)
 
 
 def set_timer(seconds: float, label: str = "") -> str:
@@ -70,19 +77,9 @@ def ring_sentence(item: dict) -> str:
 
 async def ring_on_mac(item: dict):
     """No device connected: it rings on the Mac (afplay and say)."""
-    from audio import RATE, alarm_tone
-
-    path = paths.CACHE / "alarm.wav"
-    if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with wave.open(str(path), "wb") as f:
-            f.setnchannels(1)
-            f.setsampwidth(2)
-            f.setframerate(RATE)
-            f.writeframes(alarm_tone().tobytes())
     log.info("ringing on the Mac: %s", item["kind"])
     for _ in range(3):
-        await (await asyncio.create_subprocess_exec("afplay", str(path))).wait()
+        await (await asyncio.create_subprocess_exec("afplay", str(ALARM))).wait()
     await (await asyncio.create_subprocess_exec("say", "-v", i18n.L.tts_voice, ring_sentence(item))).wait()
 
 

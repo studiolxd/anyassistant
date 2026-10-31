@@ -67,25 +67,6 @@ class Speaker(MediaStreamTrack):
         return frame
 
 
-def beep(falling: bool = False) -> np.ndarray:
-    """Two short notes: rising means «I'm listening»; falling, «going to sleep»."""
-    notes = []
-    for frequency in (1320, 880) if falling else (880, 1320):
-        t = np.arange(int(0.09 * RATE)) / RATE
-        envelope = np.minimum(1, np.minimum(t, t[::-1]) / 0.01)  # no clicks
-        notes.append(np.sin(2 * np.pi * frequency * t) * envelope * 0.5 * 32767)
-    return np.concatenate(notes).astype(np.int16)
-
-
-def alarm_tone() -> np.ndarray:
-    """An alarm: three quick high notes."""
-    t = np.arange(int(0.12 * RATE)) / RATE
-    envelope = np.minimum(1, np.minimum(t, t[::-1]) / 0.01)
-    note = np.sin(2 * np.pi * 1760 * t) * envelope * 0.6 * 32767
-    gap = np.zeros(int(0.08 * RATE))
-    return np.concatenate([note, gap, note, gap, note]).astype(np.int16)
-
-
 def louder(pcm: np.ndarray, volume: float) -> np.ndarray:
     """Scaled by a volume from 0 to 1."""
     return (pcm.astype(np.float32) * volume).astype(np.int16)

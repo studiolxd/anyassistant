@@ -97,7 +97,6 @@ OPTIONS = [
     Option("echo_guard", 1.2, "seconds without listening after speaking (its own echo)", "voice", "float"),
     Option("voice_interrupt", True, "«Jarvis, stop» while it speaks", "voice", "bool", live=True),
     Option("tap_to_stop", True, "tapping the screen stops it talking", "voice", "bool", live=True),
-    Option("beeps", True, "a sound when it wakes up and when it falls asleep", "voice", "bool", live=True),
     Option("fillers", True, "«One moment, let me check» when a tool is slow", "voice", "bool", live=True),
     # Skills
     Option("skills", True, "time, date, timers, alarms, reminders, sums, units and volume, without the LLM",

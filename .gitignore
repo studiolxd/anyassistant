@@ -2,6 +2,7 @@
 __pycache__/
 *.wav
 !skins/*/sounds/*.wav
+!plugins/*/sounds/*.wav
 .DS_Store
 .build/
 native/

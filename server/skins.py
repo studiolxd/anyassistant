@@ -191,16 +191,23 @@ def asset(name: str, path: str) -> Path | None:
 
 # --- Its sounds ---
 
-_sounds: dict[tuple[str, str, float], np.ndarray | None] = {}
+_sounds: dict[tuple[str, float], np.ndarray | None] = {}
 
 
 def sound(name: str, kind: str) -> np.ndarray | None:
-    """The skin's sound (wake, sleep, alarm) as 48 kHz mono PCM, or None to use Jarvis's own."""
+    """The skin's sound (wake, sleep, alarm) as 48 kHz mono PCM, or None (the plugins' then)."""
     path = folder(name)
     file = path / "sounds" / f"{kind}.wav" if path else None
     if not file or not file.exists():
         return None
-    key = (name, kind, file.stat().st_mtime)
+    return wav(file)
+
+
+def wav(file: Path) -> np.ndarray | None:
+    """A 16-bit WAV as 48 kHz mono PCM (kept while the file doesn't change), or None."""
+    if not file.exists():
+        return None
+    key = (str(file), file.stat().st_mtime)
     if key not in _sounds:
         _sounds[key] = _read_wav(file)
     return _sounds[key]
