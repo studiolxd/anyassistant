@@ -103,16 +103,21 @@ body[data-look="asleep"] .stats { display: none; }
   margin: 0 5vmin;
   border-radius: 50%;
   background: var(--eye);
-  /* Transparent: only the side a state draws is coloured (Safari drew a hairline of the
-     colour along the zero-width sides of these rotated ovals: an outline round the arcs). */
-  border: 0 solid transparent;
-  /* Safari (iPad, iPhone) let the background show past a rounded border, and softened the
-     edges of these rotated, moving ovals into a halo: the background stops at the border,
-     and each eye is drawn as a crisp layer of its own. */
-  background-clip: padding-box;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
   transition: height 0.2s, width 0.2s, transform 0.15s, background 0.3s;
+}
+/* The arcs (closed ‿, happy ^) aren't borders: Safari on iPad and iPhone outlined the rest
+   of a partly bordered oval. The eye stays a whole blue oval, and a cover of the
+   background's colour, a little wider, hides all of it but a crescent: below (closed) or
+   above (happy). */
+.eye::after {
+  content: "";
+  position: absolute;
+  left: -6%; right: -6%;
+  top: 0; height: 100%;
+  border-radius: 50%;
+  background: var(--background);
+  opacity: 0;
+  transition: top 0.2s, opacity 0.15s;
 }
 .eye.left { transform: rotate(-7deg); }
 .eye.right { transform: rotate(7deg); }
@@ -149,7 +154,8 @@ body.blink .eye.right { transform: rotate(7deg) scaleY(0.1); }
 /* Asleep: closed (‿ ‿), resting under the clock (same size, same blue). */
 body[data-look="asleep"] .pulse { animation: none; }
 body[data-look="asleep"] .lid { display: none; }  /* they would cover the date */
-body[data-look="asleep"] .eye { height: 11vmin; width: 26vmin; background: transparent; border-bottom-width: 3.5vmin; border-bottom-color: var(--eye); }
+body[data-look="asleep"] .eye { height: 11vmin; width: 26vmin; }
+body[data-look="asleep"] .eye::after { opacity: 1; top: -3.5vmin; }  /* a crescent below: ‿ */
 
 /* Awake: it looks around now and then. */
 body[data-look="awake"] .eyes { animation: wander 9s ease-in-out infinite; }
@@ -173,12 +179,14 @@ body[data-look="looking"] .eye { width: 27vmin; height: 22vmin; }
 body[data-look="looking"] .eyes { animation: eyes-scan 2.4s ease-in-out infinite; }
 
 /* Speaking: happy (^ ^) and a mouth that follows its voice. */
-body[data-look="speaking"] .eye { height: 13vmin; width: 26vmin; background: transparent; border-top-width: 4vmin; border-top-color: var(--eye); }
+body[data-look="speaking"] .eye { height: 13vmin; width: 26vmin; }
+body[data-look="speaking"] .eye::after { opacity: 1; top: 4vmin; }  /* a crescent above: ^ */
 body[data-look="speaking"] .mouth { visibility: visible; }
 
 /* Question: one eye wide, the other a wink (^). */
 body[data-look="question"] .eye.left { width: 28vmin; height: 23vmin; }
-body[data-look="question"] .eye.right { height: 13vmin; width: 26vmin; background: transparent; border-top-width: 4vmin; border-top-color: var(--eye); }
+body[data-look="question"] .eye.right { height: 13vmin; width: 26vmin; }
+body[data-look="question"] .eye.right::after { opacity: 1; top: 4vmin; }
 
 /* Ringing: wide, throbbing. */
 body[data-look="alarm"] .eye { width: 28vmin; height: 23vmin; }
