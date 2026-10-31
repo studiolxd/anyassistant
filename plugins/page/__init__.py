@@ -12,6 +12,7 @@ from pathlib import Path
 from aiohttp import web as http
 
 import i18n
+import kernel
 import options
 import settings
 import web
@@ -46,8 +47,16 @@ for option in (
     options.add(option)
 
 
+LOCAL = {"127.0.0.1", "::1"}
+
+
 @web.route("GET", "/")
 async def _index(request):
+    # With the plugin «https», another device on plain HTTP goes to the HTTPS page: on HTTP the
+    # browser doesn't let it use the microphone (it would ask for Chrome's flag). The Mac stays.
+    https = kernel.module("https")
+    if https and not request.secure and request.remote not in LOCAL:
+        raise http.HTTPFound(https.address(request.url.raw_host or https.NAME, request.path_qs))
     return web.page(WEB / "index.html")
 
 

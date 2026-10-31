@@ -1,5 +1,7 @@
 """The plugin «https»: its own authority, a certificate for the Mac's names and addresses."""
 
+import pytest
+
 import kernel
 
 
@@ -24,3 +26,25 @@ def test_a_certificate_for_the_mac_signed_by_its_own_authority(tmp_path, monkeyp
     https.certificate()
     assert x509.load_pem_x509_certificate(cert.read_bytes()).serial_number != made.serial_number
     assert https.CA.read_bytes() == authority  # the devices keep trusting it
+
+
+def test_another_device_on_http_goes_to_the_https_page(monkeypatch):
+    """With «https» on, the page on plain HTTP sends another device to HTTPS (where it may use the
+    microphone); the Mac itself stays."""
+    import asyncio
+
+    import kernel
+    from aiohttp import web as http
+    from aiohttp.test_utils import make_mocked_request
+    from plugins import page
+
+    https = kernel.load("https")
+
+    monkeypatch.setattr(kernel, "module", lambda name: https if name == "https" else None)
+    monkeypatch.setattr(https, "port", lambda: 443)
+    tablet = make_mocked_request("GET", "/?code=1", headers={"Host": "192.168.86.32:8080"},
+                                 transport=type("T", (), {"get_extra_info": lambda self, k, d=None:
+                                                          ("192.168.86.34", 5000) if k == "peername" else d})())
+    with pytest.raises(http.HTTPFound) as moved:
+        asyncio.run(page._index(tablet))
+    assert moved.value.location == "https://192.168.86.32/?code=1"

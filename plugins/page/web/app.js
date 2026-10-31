@@ -132,9 +132,9 @@ function askForCode() {
 document.getElementById('start').onclick = function () {
   this.hidden = true;
   document.getElementById('screen').hidden = false;
-  fullScreen();
   keepAwake();
-  begin();
+  begin();  // full screen once it may use the microphone and camera: in full screen, Safari
+            // on the iPad doesn't show the permission prompt, and it stays «connecting»
 };
 
 // Tapping the face: goes back to full screen and, if it is speaking, stops it.
@@ -200,6 +200,7 @@ async function begin() {
     fail(text('no_media', { error: e.name }));
     return;
   }
+  fullScreen();  // if the browser still allows it after the prompt; a tap on the face does it too
   levelMeter(media);
   setInterval(ping, 1000);
   setInterval(collectStats, 2000);
