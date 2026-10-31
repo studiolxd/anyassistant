@@ -30,8 +30,10 @@ import llm
 import mcp_server
 import pairing
 import settings
+import skills
 import stt
 import tools
+from skills import timers as skill_timers
 import tts
 import wake
 from brain import assistant, transcriber
@@ -215,6 +217,14 @@ def main():
     parser.add_argument("--voice-interrupt", action=argparse.BooleanOptionalAction, default=True, help="«Jarvis, stop» while it speaks")
     parser.add_argument("--tap-to-stop", action=argparse.BooleanOptionalAction, default=True, help="tapping the screen stops it talking")
     parser.add_argument("--read-photo", action=argparse.BooleanOptionalAction, default=True, help="a full-resolution photo when asked to read")
+    parser.add_argument("--skills", action=argparse.BooleanOptionalAction, default=True,
+                        help="time, date, timers, alarms, reminders, sums, units and volume, without the LLM")
+    parser.add_argument("--interpreter", choices=["auto", "apple", "off"], default="auto",
+                        help="Apple's local model for skills said in unusual ways (auto: if this Mac has it)")
+    parser.add_argument("--volume", type=int, default=100, help="its voice and sounds, 5–100 %")
+    parser.add_argument("--ring-seconds", type=int, default=60, help="how long an alarm rings if nobody stops it")
+    parser.add_argument("--snooze-minutes", type=int, default=5, help="«snooze» without saying how long")
+    parser.add_argument("--show-timers", action=argparse.BooleanOptionalAction, default=True, help="running timers, alarms and reminders on screen")
     parser.add_argument("--memory-facts", type=int, default=50, help="facts before the LLM compacts them")
     parser.add_argument("--memory-conversations", type=int, default=10, help="conversation summaries kept")
     parser.add_argument("--memory-days", type=int, default=30, help="days a conversation summary is kept")
@@ -297,6 +307,13 @@ def main():
 
     eyes.source = lambda: (session := current_session()) and session.jpeg()
     tools.session = current_session
+
+    def timers_changed():
+        session = current_session()
+        if session and hasattr(session.brain, "send_timers"):
+            session.brain.send_timers()
+
+    skill_timers.changed = timers_changed
     eyes.ask_device = lambda message: bool((session := current_session()) and session.send(message) is None)
     app = web.Application(middlewares=[no_cache], client_max_size=20 * 1024 * 1024)  # photos
     app.router.add_get("/", index)
@@ -322,6 +339,25 @@ def main():
         asyncio.get_running_loop().add_signal_handler(signal.SIGHUP, on_sighup)
 
     app.on_startup.append(listen_for_sighup)
+
+    async def ring_when_due(app):
+        """Timers, alarms and reminders: on the device, or on the Mac if none is connected."""
+        async def loop():
+            while True:
+                try:
+                    for item in skill_timers.due():
+                        session = current_session()
+                        if session and hasattr(session.brain, "ring") and session.pc.connectionState == "connected":
+                            asyncio.ensure_future(session.brain.ring(item))
+                        else:
+                            asyncio.ensure_future(skills.ring_on_mac(item))
+                except Exception as e:
+                    logging.warning("timers: %r", e)
+                await asyncio.sleep(0.5)
+
+        app["timers"] = asyncio.ensure_future(loop())
+
+    app.on_startup.append(ring_when_due)
     # Short shutdown_timeout: the camera monitor (/video.mjpg) never ends by itself.
     web.run_app(app, host=args.host, port=args.port, shutdown_timeout=3)
     if restart:

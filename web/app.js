@@ -222,7 +222,9 @@ function ping() {
 }
 
 function showState(state, wakePhrase) {
-  if (state === 'asleep') {
+  if (state === 'alarm') {
+    statusLine.textContent = text('alarm', { label: alarmLabel });
+  } else if (state === 'asleep') {
     statusLine.textContent = screen.show_hint === false ? '' : text('asleep', { wake: wakePhrase || 'Hey Jarvis' });
   } else {
     statusLine.textContent = screen.show_status === false && state !== 'error' ? '' : text(state);
@@ -240,6 +242,8 @@ function message(m) {
   else if (m.type === 'look') showPhoto(m.at);
   else if (m.type === 'camera') showCamera(m.on);
   else if (m.type === 'photo') takePhoto(m.id);
+  else if (m.type === 'timers') showTimers(m.items);
+  else if (m.type === 'alarm') alarmLabel = m.label || '';
 }
 
 // «Turn on the camera»: what this device's camera sees, live, like a mirror (the same
@@ -308,6 +312,38 @@ function videoFrame(track, send) {
   };
   video.play();
 }
+
+// Running timers, alarms and reminders, with a countdown (settings show_timers).
+var alarmLabel = '';
+var timerItems = [];
+var ICONS = { timer: '⏱', alarm: '⏰', reminder: '🔔' };
+function showTimers(items) {
+  timerItems = items || [];
+  drawTimers();
+}
+function drawTimers() {
+  var box = document.getElementById('timers');
+  if (screen.show_timers === false) { box.textContent = ''; return; }
+  var now = Date.now() / 1000;
+  var lines = timerItems.filter(function (i) { return i.at > now - 1; }).map(function (i) {
+    var when;
+    if (i.kind === 'timer') {
+      var left = Math.max(0, Math.round(i.at - now));
+      var h = Math.floor(left / 3600), m = Math.floor(left / 60) % 60, s = left % 60;
+      when = (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    } else {
+      when = new Date(i.at * 1000).toLocaleTimeString(document.documentElement.lang, { hour: 'numeric', minute: '2-digit' });
+    }
+    return ICONS[i.kind] + ' ' + when + (i.label ? ' · ' + i.label : '');
+  });
+  box.textContent = '';
+  lines.forEach(function (line) {
+    var p = document.createElement('p');
+    p.textContent = line;
+    box.appendChild(p);
+  });
+}
+setInterval(drawTimers, 1000);
 
 // What it looks at through the camera, with a scanning sweep while it thinks about it;
 // it fades out once it starts answering.

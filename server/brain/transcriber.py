@@ -2,7 +2,12 @@
 
 import i18n
 import settings
-from audio import beep
+from audio import beep, louder
+
+
+def volume() -> float:
+    """Settings «volume» (5–100 %) as a factor."""
+    return max(5, min(100, settings.get("volume") or 100)) / 100
 from brain.ear import Ear
 
 
@@ -21,7 +26,7 @@ def create(stt, wake=None, ear=None):
 
 
 class Transcriber:
-    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None, on_interrupt=None):
+    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None, on_interrupt=None, on_stop=None):
         self.send = send
         self.speaker = speaker
         self.wake = wake
@@ -34,6 +39,7 @@ class Transcriber:
             on_sleep=self._fell_asleep,
             deaf=deaf,
             on_interrupt=on_interrupt,
+            on_stop=on_stop,
             **(ear or {}),
         )
 
@@ -42,11 +48,11 @@ class Transcriber:
 
     def _woke_up(self):
         if settings.get("beeps", True):
-            self.speaker.play(beep())
+            self.speaker.play(louder(beep(), volume()))
 
     def _fell_asleep(self, by_command: bool):
         if settings.get("beeps", True):
-            self.speaker.play(beep(falling=True))
+            self.speaker.play(louder(beep(falling=True), volume()))
         if by_command:
             self.send({"type": "text", "text": i18n.L("speech.goodbye"), "author": "assistant"})
 

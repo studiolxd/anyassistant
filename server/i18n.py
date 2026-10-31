@@ -94,8 +94,20 @@ class Locale:
         """Date and time as one would say them («Friday, October 30, 2026, 8:42 pm»)."""
         return _spoken_now(self, time.localtime())
 
+    def time_spoken(self, t=None) -> str:
+        """Just the time («8:42 pm», «las 8 y 42 de la noche»): calendar.time_format."""
+        return self.data["calendar"]["time_format"].format(**_calendar(self, t or time.localtime()))
+
+    def date_spoken(self, t=None) -> str:
+        """Just the date («Friday, October 30»): calendar.date_format."""
+        return self.data["calendar"]["date_format"].format(**_calendar(self, t or time.localtime()))
+
 
 def _spoken_now(locale: Locale, t) -> str:
+    return locale.data["calendar"]["now_format"].format(**_calendar(locale, t))
+
+
+def _calendar(locale: Locale, t) -> dict:
     """The current date and time following the locale's calendar.now_format.
 
     Two styles, chosen by calendar.now_style:
@@ -120,9 +132,11 @@ def _spoken_now(locale: Locale, t) -> str:
             values["period"] = periods["night"]
         else:
             values["period"] = periods["early_morning"]
-        values["minutes"] = cal["on_the_hour"] if t.tm_min == 0 else cal["past_the_hour"].format(minute=t.tm_min)
+        named = cal.get("minutes_named", {}).get(str(t.tm_min))  # «y media», «y cuarto»
+        values["minutes"] = (cal["on_the_hour"] if t.tm_min == 0 else named
+                             or cal["past_the_hour"].format(minute=t.tm_min))
         values["article"] = cal["article_one"] if hour == 1 else cal["article_other"]
-    return cal["now_format"].format(**values)
+    return values
 
 
 L = Locale("en")

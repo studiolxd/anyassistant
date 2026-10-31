@@ -1,0 +1,119 @@
+"""Apple's local model as an interpreter for skills said in an unusual way.
+
+«Avísame dentro de un rato largo, como 40 minutos» doesn't fit quick()'s
+patterns; the local model turns it into data ({"skill": "timer", "seconds":
+2400}) that the same skills execute. Settings «interpreter»: "auto" (Apple's
+model if this Mac has it: elsewhere, nothing), "apple" (always try it) or "off".
+Only for sentences that sound like a skill (skills.sounds_like_one): the rest go
+straight to the LLM.
+"""
+
+import json
+import logging
+import re
+import time
+
+import i18n
+import settings
+import skills
+from skills import parse, units
+
+log = logging.getLogger("skills")
+_model = None
+
+PROMPT = """Turn the request to a voice assistant into JSON, nothing else.
+{{"skill": "timer" | "alarm" | "reminder" | "cancel" | "remaining" | "list" | "time" | "date" | "volume" | "none",
+ "seconds": seconds from now (a timer, or an alarm or reminder «in …»),
+ "hour": 0-23, "minute": 0-59, "day": 0 today, 1 tomorrow, 2 the day after (an alarm or reminder at a time),
+ "text": what to remind, in the user's words, if there is something (reminder),
+ "kind": "timer", "alarm", "reminder" or "all" (cancel),
+ "volume": 5-100, "up" or "down"}}
+Leave out the fields that don't apply. "none" if it is anything else. It is now {now}.
+Example: «{said}» → {answer}
+
+Request: «{text}»"""
+
+
+def enabled() -> bool:
+    mode = settings.get("interpreter") or "auto"
+    if mode == "off" or not skills.enabled():
+        return False
+    from tools import llm_ready
+
+    return llm_ready("apple") is None
+
+
+async def interpret(text: str) -> str | None:
+    """The sentence to say, if Apple's model understood a skill in it; None otherwise."""
+    global _model
+    if not enabled() or not skills.sounds_like_one(text):
+        return None
+    try:
+        if _model is None:
+            import llm
+
+            _model = llm.create("apple")
+        example = i18n.L.data["skills"]["interpreter_example"]
+        answer = await _model.complete(PROMPT.format(
+            now=time.strftime("%A %Y-%m-%d %H:%M"), said=example["said"],
+            answer=json.dumps(example["answer"], ensure_ascii=False), text=text))
+        match = re.search(r"\{.*\}", answer, re.S)
+        data = json.loads(match.group()) if match else {}
+        log.info("interpreter: %s", settings.private(json.dumps(data, ensure_ascii=False)))
+        return execute(data)
+    except Exception as e:  # the interpreter must never break the conversation
+        log.warning("interpreter: %r", e)
+        return None
+
+
+def execute(data: dict) -> str | None:
+    """Runs a skill from the interpreter's data (or anyone's); None if it isn't one or lacks something."""
+    skill = data.get("skill")
+    number = lambda key: float(data[key]) if isinstance(data.get(key), (int, float)) else None  # noqa: E731
+    seconds, hour = number("seconds"), number("hour")
+    if skill in ("alarm", "reminder"):
+        if hour is not None:
+            when = parse.Clock(int(hour) % 24, int(number("minute") or 0), None, int(number("day") or 0))
+            at = parse.resolve(when, waking=skill == "alarm") if number("day") is not None else _next(int(hour), when.minute)
+        elif seconds:
+            at = time.time() + seconds
+        else:
+            return None
+        if skill == "alarm":
+            return skills.set_alarm(at)
+        text = str(data.get("text") or "").strip()
+        if {t.plain for t in parse.tokens(text)} <= parse.words("reminder"):
+            text = ""  # «Avísame»: nothing to remind, just a timer
+        return skills.set_reminder(at, text) if text else skills.set_timer(at - time.time())
+    if skill == "timer" and seconds:
+        return skills.set_timer(seconds, str(data.get("text") or ""))
+    if skill == "cancel":
+        kind = data.get("kind")
+        return skills.cancel(kind if kind in ("timer", "alarm", "reminder") else None)
+    if skill == "remaining":
+        return skills.remaining()
+    if skill == "list":
+        return skills.listing()
+    if skill == "time":
+        return skills.say_time()
+    if skill == "date":
+        return skills.say_date()
+    if skill == "volume":
+        volume = data.get("volume")
+        current = settings.get("volume") or 100
+        if volume in ("up", "down"):
+            return skills.set_volume(current + (skills.VOLUME_STEP if volume == "up" else -skills.VOLUME_STEP))
+        if isinstance(volume, (int, float)):
+            return skills.set_volume(volume)
+    return None
+
+
+def _next(hour: int, minute: int) -> float:
+    """The next time the clock shows hour:minute (24 h, as the model gives it)."""
+    now = time.localtime()
+    at = time.mktime((now.tm_year, now.tm_mon, now.tm_mday, hour, minute, 0, 0, 0, -1))
+    return at if at > time.time() else at + 86400
+
+
+def known_units() -> list[str]:
+    return [u for d in units.FACTORS.values() for u in d]

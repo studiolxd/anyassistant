@@ -37,7 +37,35 @@
     "camera_off": "Camera off.",
     "llm_changing": "Okay, switching to {llm}. I'll be back in a few seconds.",
     "llm_same": "I'm already using {llm}.",
-    "llm_unavailable": "{llm} isn't available on this Mac."
+    "llm_unavailable": "{llm} isn't available on this Mac.",
+    "time_is": "It's {time}.",
+    "time_is_one": "It's {time}.",
+    "date_is": "Today is {date}.",
+    "timer_set": "Timer for {duration}.",
+    "alarm_set": "Alarm set for {when}.",
+    "reminder_set": "I'll remind you {when}: {text}.",
+    "remaining": "{duration} left.",
+    "no_timers": "There's nothing running.",
+    "listing": "You have {items}.",
+    "item_timer": "a timer with {duration} left",
+    "item_alarm": "an alarm {when}",
+    "item_reminder": "a reminder {when}: {text}",
+    "list_and": " and ",
+    "cancelled": "Cancelled.",
+    "nothing_to_cancel": "There was nothing to cancel.",
+    "timer_done": "Time's up!",
+    "alarm_ring": "It's {time}.",
+    "reminder_ring": "Reminder: {text}.",
+    "snoozed": "Snoozed for {duration}.",
+    "math": "That's {result}.",
+    "convert": "{value} {source} is {result} {target}.",
+    "volume": "Volume at {percent} percent.",
+    "skill_failed": "I didn't get the time or the amount.",
+    "when_today": "today at {time}",
+    "when_tomorrow": "tomorrow at {time}",
+    "when_in": "in {duration}",
+    "duration_and": " and ",
+    "when_day": "on {date} at {time}"
   },
   "commands": {
     "sleep": [
@@ -171,7 +199,9 @@
       "December"
     ],
     "now_style": "ampm",
-    "now_format": "{weekday}, {month} {day}, {year}, {hour}:{minute} {ampm}"
+    "now_format": "{weekday}, {month} {day}, {year}, {hour}:{minute} {ampm}",
+    "time_format": "{hour}:{minute} {ampm}",
+    "date_format": "{weekday}, {month} {day}"
   },
   "ui": {
     "start": "Start",
@@ -197,7 +227,8 @@
     "pair_button": "Pair",
     "pair_wrong": "Wrong or expired code",
     "pair_needed": "This device isn't paired: reload the page",
-    "looking": "Looking…"
+    "looking": "Looking…",
+    "alarm": "⏰ {label}"
   },
   "memory_example": {
     "known": [
@@ -221,6 +252,483 @@
         "Has a cat called Mia."
       ],
       "summary": "Corrected their name, moved to Seville and mentioned their cat."
+    }
+  },
+  "skills": {
+    "numbers": {
+      "zero": 0,
+      "a": 1,
+      "an": 1,
+      "one": 1,
+      "two": 2,
+      "three": 3,
+      "four": 4,
+      "five": 5,
+      "six": 6,
+      "seven": 7,
+      "eight": 8,
+      "nine": 9,
+      "ten": 10,
+      "eleven": 11,
+      "twelve": 12,
+      "thirteen": 13,
+      "fourteen": 14,
+      "fifteen": 15,
+      "sixteen": 16,
+      "seventeen": 17,
+      "eighteen": 18,
+      "nineteen": 19,
+      "twenty": 20,
+      "thirty": 30,
+      "forty": 40,
+      "fifty": 50,
+      "sixty": 60,
+      "seventy": 70,
+      "eighty": 80,
+      "ninety": 90,
+      "hundred": 100
+    },
+    "multipliers": {
+      "thousand": 1000,
+      "million": 1000000
+    },
+    "joiners": [
+      "and"
+    ],
+    "decimal": [
+      "point"
+    ],
+    "fractions": {
+      "half": 0.5,
+      "quarter": 0.25,
+      "quarters": 0.25
+    },
+    "durations": {
+      "second": [
+        "second",
+        "seconds",
+        "sec",
+        "secs"
+      ],
+      "minute": [
+        "minute",
+        "minutes",
+        "min",
+        "mins"
+      ],
+      "hour": [
+        "hour",
+        "hours",
+        "hr",
+        "hrs"
+      ]
+    },
+    "words": {
+      "timer": [
+        "timer",
+        "timers",
+        "countdown"
+      ],
+      "alarm": [
+        "alarm",
+        "alarms",
+        "wake"
+      ],
+      "reminder": [
+        "remind",
+        "reminder",
+        "reminders",
+        "notify",
+        "alert"
+      ],
+      "cancel": [
+        "cancel",
+        "delete",
+        "remove",
+        "clear",
+        "stop"
+      ],
+      "remaining": [
+        "left",
+        "remaining",
+        "remain"
+      ],
+      "list": [
+        "what",
+        "which",
+        "list",
+        "have",
+        "any"
+      ],
+      "all": [
+        "all",
+        "every"
+      ],
+      "time": [
+        "time"
+      ],
+      "date": [
+        "date",
+        "day",
+        "today"
+      ],
+      "ask": [
+        "what",
+        "whats",
+        "tell",
+        "is",
+        "s"
+      ],
+      "in": [
+        "in",
+        "after"
+      ],
+      "at": [
+        "at",
+        "for"
+      ],
+      "today": [
+        "today",
+        "tonight"
+      ],
+      "tomorrow": [
+        "tomorrow"
+      ],
+      "math": [
+        "whats",
+        "what",
+        "calculate",
+        "how",
+        "much",
+        "is",
+        "compute",
+        "s"
+      ],
+      "volume": [
+        "volume"
+      ],
+      "up": [
+        "up",
+        "louder",
+        "raise",
+        "increase"
+      ],
+      "down": [
+        "down",
+        "lower",
+        "quieter",
+        "decrease",
+        "reduce"
+      ],
+      "max": [
+        "max",
+        "maximum",
+        "full"
+      ],
+      "min": [
+        "min",
+        "minimum"
+      ],
+      "snooze": [
+        "snooze"
+      ],
+      "convert": [
+        "convert",
+        "how",
+        "many",
+        "much",
+        "is",
+        "are",
+        "in",
+        "to",
+        "into"
+      ],
+      "fillers": [
+        "the",
+        "a",
+        "an",
+        "me",
+        "please",
+        "set",
+        "start",
+        "put",
+        "for",
+        "of",
+        "my",
+        "to",
+        "that",
+        "is"
+      ],
+      "notify": [
+        "notify",
+        "alert"
+      ],
+      "connectors": [
+        "to",
+        "that"
+      ]
+    },
+    "clock": {
+      "half": [
+        "half"
+      ],
+      "quarter": [
+        "quarter"
+      ],
+      "past": [
+        "past",
+        "after"
+      ],
+      "to": [
+        "to",
+        "before"
+      ],
+      "oclock": [
+        "oclock",
+        "o",
+        "clock"
+      ],
+      "am": [
+        "am",
+        "morning"
+      ],
+      "pm": [
+        "pm",
+        "afternoon",
+        "evening",
+        "night",
+        "tonight"
+      ],
+      "noon": [
+        "noon",
+        "midday"
+      ],
+      "midnight": [
+        "midnight"
+      ]
+    },
+    "operators": {
+      "+": [
+        "plus",
+        "add"
+      ],
+      "-": [
+        "minus",
+        "less"
+      ],
+      "*": [
+        "times",
+        "multiplied",
+        "x"
+      ],
+      "/": [
+        "divided",
+        "over"
+      ],
+      "^": [
+        "power",
+        "squared",
+        "cubed"
+      ],
+      "%": [
+        "percent",
+        "%"
+      ]
+    },
+    "units": {
+      "mm": {
+        "one": "millimeter",
+        "other": "millimeters",
+        "words": [
+          "mm",
+          "millimeter",
+          "millimeters",
+          "millimetre",
+          "millimetres"
+        ]
+      },
+      "cm": {
+        "one": "centimeter",
+        "other": "centimeters",
+        "words": [
+          "cm",
+          "centimeter",
+          "centimeters",
+          "centimetre",
+          "centimetres"
+        ]
+      },
+      "m": {
+        "one": "meter",
+        "other": "meters",
+        "words": [
+          "meter",
+          "meters",
+          "metre",
+          "metres"
+        ]
+      },
+      "km": {
+        "one": "kilometer",
+        "other": "kilometers",
+        "words": [
+          "km",
+          "kilometer",
+          "kilometers",
+          "kilometre",
+          "kilometres"
+        ]
+      },
+      "in": {
+        "one": "inch",
+        "other": "inches",
+        "words": [
+          "inch",
+          "inches"
+        ]
+      },
+      "ft": {
+        "one": "foot",
+        "other": "feet",
+        "words": [
+          "foot",
+          "feet",
+          "ft"
+        ]
+      },
+      "yd": {
+        "one": "yard",
+        "other": "yards",
+        "words": [
+          "yard",
+          "yards"
+        ]
+      },
+      "mi": {
+        "one": "mile",
+        "other": "miles",
+        "words": [
+          "mile",
+          "miles"
+        ]
+      },
+      "g": {
+        "one": "gram",
+        "other": "grams",
+        "words": [
+          "gram",
+          "grams",
+          "g"
+        ]
+      },
+      "kg": {
+        "one": "kilogram",
+        "other": "kilograms",
+        "words": [
+          "kilo",
+          "kilos",
+          "kilogram",
+          "kilograms",
+          "kg"
+        ]
+      },
+      "lb": {
+        "one": "pound",
+        "other": "pounds",
+        "words": [
+          "pound",
+          "pounds",
+          "lb",
+          "lbs"
+        ]
+      },
+      "oz": {
+        "one": "ounce",
+        "other": "ounces",
+        "words": [
+          "ounce",
+          "ounces",
+          "oz"
+        ]
+      },
+      "ml": {
+        "one": "milliliter",
+        "other": "milliliters",
+        "words": [
+          "ml",
+          "milliliter",
+          "milliliters",
+          "millilitre",
+          "millilitres"
+        ]
+      },
+      "l": {
+        "one": "liter",
+        "other": "liters",
+        "words": [
+          "liter",
+          "liters",
+          "litre",
+          "litres"
+        ]
+      },
+      "gal": {
+        "one": "gallon",
+        "other": "gallons",
+        "words": [
+          "gallon",
+          "gallons"
+        ]
+      },
+      "cup": {
+        "one": "cup",
+        "other": "cups",
+        "words": [
+          "cup",
+          "cups"
+        ]
+      },
+      "c": {
+        "one": "degree Celsius",
+        "other": "degrees Celsius",
+        "words": [
+          "celsius",
+          "centigrade"
+        ]
+      },
+      "f": {
+        "one": "degree Fahrenheit",
+        "other": "degrees Fahrenheit",
+        "words": [
+          "fahrenheit"
+        ]
+      }
+    },
+    "degrees": [
+      "degree",
+      "degrees"
+    ],
+    "duration_names": {
+      "hour": [
+        "hour",
+        "hours"
+      ],
+      "minute": [
+        "minute",
+        "minutes"
+      ],
+      "second": [
+        "second",
+        "seconds"
+      ]
+    },
+    "interpreter_example": {
+      "said": "remind me in a bit, like 40 minutes, to take the laundry out",
+      "answer": {
+        "skill": "reminder",
+        "seconds": 2400,
+        "text": "take the laundry out"
+      }
     }
   }
 }

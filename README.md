@@ -329,6 +329,38 @@ language in `locales/*.json` → `commands`):
   listens for its name, so it can be interrupted; «Jarvis, and tomorrow?» stops it
   and asks. Its own voice saying its name doesn't count. Tapping the screen works too.
 
+## Skills without an LLM
+
+Time and date, timers, alarms, reminders, sums, unit conversions and volume are
+handled by the server itself: at once, offline, with any LLM or none
+(`server/skills/`; `"skills": false` turns them off).
+
+- «¿Qué hora es?», «¿qué día es hoy?» / «what time is it?».
+- «Pon un temporizador de 10 minutos», «avísame en media hora», «¿cuánto queda?».
+- «Pon una alarma a las 7 y media», «despiértame mañana a las 7».
+- «Recuérdame en 20 minutos que saque la ropa», «recuérdame mañana a las 6 que llame a mamá».
+- «¿Qué alarmas tengo?», «cancela las alarmas», «cancela todos los temporizadores».
+- «¿Cuánto es 23 por 47?», «el 15 por ciento de 80», «2 elevado a 10».
+- «¿Cuántos kilómetros son 5 millas?», «20 grados en fahrenheit» (length, mass, volume, temperature).
+- «Sube / baja el volumen», «volumen al 70» (`volume`, its voice and sounds).
+
+The words are in the locale (`skills`: numbers said in words, «media hora», «y
+cuarto», «de la tarde», units…), so another language is another file. Timers,
+alarms and reminders are kept in `timers.json` (they survive a restart), shown
+on screen with a countdown (`show_timers`) and ring on the device: a tone, the
+face in orange, and what it is («Recordatorio: llamar a mamá»). «Para», «apaga
+la alarma», «Jarvis, para» or a tap stop it; «pospón» («pospón 10 minutos»)
+snoozes it (`snooze_minutes`). While it rings, only words meant to stop it count
+(its own tone, transcribed, doesn't). It rings for `ring_seconds`; with no device
+connected, on the Mac.
+
+**The interpreter**: what doesn't fit the usual ways of saying it («avísame dentro
+de un rato largo, como tres cuartos de hora») can go to Apple's local model, which
+turns it into data for the same skills. `"interpreter"`: `auto` (the default:
+only if this Mac has Apple's model; elsewhere nothing), `apple` or `off`. And the
+LLM has them as tools (`set_timer`, `set_alarm`, `set_reminder`, `list_timers`,
+`cancel_timers`, `set_volume`), without asking for your «yes».
+
 ## Phase 3 · Answers (LLM)
 
 What you say goes to the LLM and the answer appears on screen as it is generated.
@@ -526,6 +558,8 @@ so they need no account or network; they run on a free port, next to a running J
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
 - `server/tools.py`, `server/mcp_server.py` — Jarvis's own tools, as the `jarvis` MCP server.
 - `server/memory.py` — memory across conversations (`memory.json`).
+- `server/skills/` — skills without an LLM: `parse.py` (numbers, durations, clock times), `calc.py`,
+  `units.py`, `timers.py` (`timers.json`), `interpreter.py` (Apple's model).
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
 - `web/` — the phone's page (plain JS, old Chrome) and the monitor.
 - `tests/` — pytest; `test_e2e.py` drives the real server.

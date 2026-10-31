@@ -21,9 +21,10 @@ fixed: set = set()  # the ones given on the command line: settings.json doesn't 
 # or settings.json edited by hand). Anything else restarts the server.
 # What the page shows (sent to it in /config; it reads it again when one changes).
 SCREEN = {"show_time", "show_date", "show_hint", "show_status", "show_heard", "show_answer", "history",
-          "show_stats", "clock"}
+          "show_stats", "clock", "show_timers"}
 LIVE = {"instructions", "face", "video", "confirm_wait", "confirm_valid", "log_transcripts", "eyes", "memory",
-        "detail", "detail_levels", "beeps", "fillers", "voice_interrupt", "tap_to_stop", "read_photo", "memory_facts",
+        "detail", "detail_levels", "skills", "interpreter", "volume", "ring_seconds", "snooze_minutes",
+        "beeps", "fillers", "voice_interrupt", "tap_to_stop", "read_photo", "memory_facts",
         "memory_conversations", "memory_days"} | SCREEN
 
 

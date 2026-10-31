@@ -37,7 +37,35 @@
     "camera_off": "Cámara apagada.",
     "llm_changing": "Vale, cambio a {llm}. Vuelvo en unos segundos.",
     "llm_same": "Ya estoy usando {llm}.",
-    "llm_unavailable": "{llm} no está disponible en este Mac."
+    "llm_unavailable": "{llm} no está disponible en este Mac.",
+    "time_is": "Son {time}.",
+    "time_is_one": "Es {time}.",
+    "date_is": "Hoy es {date}.",
+    "timer_set": "Temporizador de {duration}.",
+    "alarm_set": "Alarma para {when}.",
+    "reminder_set": "Te lo recordaré {when}: {text}.",
+    "remaining": "Quedan {duration}.",
+    "no_timers": "No hay nada en marcha.",
+    "listing": "Tienes {items}.",
+    "item_timer": "un temporizador al que le quedan {duration}",
+    "item_alarm": "una alarma {when}",
+    "item_reminder": "un recordatorio {when}: {text}",
+    "list_and": " y ",
+    "cancelled": "Cancelado.",
+    "nothing_to_cancel": "No había nada que cancelar.",
+    "timer_done": "¡Tiempo!",
+    "alarm_ring": "Son {time}.",
+    "reminder_ring": "Recordatorio: {text}.",
+    "snoozed": "Pospuesto {duration}.",
+    "math": "Son {result}.",
+    "convert": "{value} {source} son {result} {target}.",
+    "volume": "Volumen al {percent} por ciento.",
+    "skill_failed": "No he entendido la hora o la cantidad.",
+    "when_today": "hoy a {time}",
+    "when_tomorrow": "mañana a {time}",
+    "when_in": "dentro de {duration}",
+    "duration_and": " y ",
+    "when_day": "el {date} a {time}"
   },
   "commands": {
     "sleep": [
@@ -225,7 +253,13 @@
     "on_the_hour": "en punto",
     "past_the_hour": "y {minute}",
     "article_one": "la",
-    "article_other": "las"
+    "article_other": "las",
+    "time_format": "{article} {hour} {minutes} {period}",
+    "date_format": "{weekday} {day} de {month}",
+    "minutes_named": {
+      "15": "y cuarto",
+      "30": "y media"
+    }
   },
   "ui": {
     "start": "Empezar",
@@ -251,7 +285,8 @@
     "pair_button": "Emparejar",
     "pair_wrong": "Código incorrecto o caducado",
     "pair_needed": "Este aparato no está emparejado: recarga la página",
-    "looking": "Mirando…"
+    "looking": "Mirando…",
+    "alarm": "⏰ {label}"
   },
   "memory_example": {
     "known": [
@@ -275,6 +310,493 @@
         "Tiene una gata que se llama Mía."
       ],
       "summary": "Corrigió su nombre, se mudó a Sevilla y habló de su gata."
+    }
+  },
+  "skills": {
+    "numbers": {
+      "cero": 0,
+      "un": 1,
+      "uno": 1,
+      "una": 1,
+      "dos": 2,
+      "tres": 3,
+      "cuatro": 4,
+      "cinco": 5,
+      "seis": 6,
+      "siete": 7,
+      "ocho": 8,
+      "nueve": 9,
+      "diez": 10,
+      "once": 11,
+      "doce": 12,
+      "trece": 13,
+      "catorce": 14,
+      "quince": 15,
+      "dieciseis": 16,
+      "diecisiete": 17,
+      "dieciocho": 18,
+      "diecinueve": 19,
+      "veinte": 20,
+      "veintiuno": 21,
+      "veintiun": 21,
+      "veintiuna": 21,
+      "veintidos": 22,
+      "veintitres": 23,
+      "veinticuatro": 24,
+      "veinticinco": 25,
+      "veintiseis": 26,
+      "veintisiete": 27,
+      "veintiocho": 28,
+      "veintinueve": 29,
+      "treinta": 30,
+      "cuarenta": 40,
+      "cincuenta": 50,
+      "sesenta": 60,
+      "setenta": 70,
+      "ochenta": 80,
+      "noventa": 90,
+      "cien": 100,
+      "ciento": 100,
+      "doscientos": 200,
+      "doscientas": 200,
+      "trescientos": 300,
+      "trescientas": 300,
+      "cuatrocientos": 400,
+      "quinientos": 500,
+      "quinientas": 500,
+      "seiscientos": 600,
+      "setecientos": 700,
+      "ochocientos": 800,
+      "novecientos": 900
+    },
+    "multipliers": {
+      "mil": 1000,
+      "millon": 1000000,
+      "millones": 1000000
+    },
+    "joiners": [
+      "y"
+    ],
+    "decimal": [
+      "coma",
+      "punto"
+    ],
+    "fractions": {
+      "media": 0.5,
+      "medio": 0.5,
+      "cuarto": 0.25,
+      "cuartos": 0.25
+    },
+    "durations": {
+      "second": [
+        "segundo",
+        "segundos",
+        "seg"
+      ],
+      "minute": [
+        "minuto",
+        "minutos",
+        "min"
+      ],
+      "hour": [
+        "hora",
+        "horas"
+      ]
+    },
+    "words": {
+      "timer": [
+        "temporizador",
+        "temporizadores",
+        "cuenta"
+      ],
+      "alarm": [
+        "alarma",
+        "alarmas",
+        "despiertame",
+        "despertador"
+      ],
+      "reminder": [
+        "recuerdame",
+        "recordatorio",
+        "recordatorios",
+        "recuerdes",
+        "avisame",
+        "avisa"
+      ],
+      "cancel": [
+        "cancela",
+        "cancelar",
+        "quita",
+        "quitar",
+        "borra",
+        "borrar",
+        "elimina",
+        "eliminar",
+        "anula",
+        "anular"
+      ],
+      "remaining": [
+        "queda",
+        "quedan",
+        "falta",
+        "faltan"
+      ],
+      "list": [
+        "que",
+        "cuales",
+        "tengo",
+        "hay",
+        "dime"
+      ],
+      "all": [
+        "todos",
+        "todas",
+        "todo"
+      ],
+      "time": [
+        "hora"
+      ],
+      "date": [
+        "dia",
+        "fecha",
+        "estamos"
+      ],
+      "ask": [
+        "que",
+        "dime",
+        "a"
+      ],
+      "in": [
+        "en",
+        "dentro"
+      ],
+      "at": [
+        "a",
+        "las",
+        "la",
+        "para"
+      ],
+      "today": [
+        "hoy",
+        "esta"
+      ],
+      "tomorrow": [
+        "manana"
+      ],
+      "math": [
+        "cuanto",
+        "cuantos",
+        "calcula",
+        "calculame",
+        "es",
+        "son"
+      ],
+      "volume": [
+        "volumen"
+      ],
+      "up": [
+        "sube",
+        "subir",
+        "subelo",
+        "mas"
+      ],
+      "down": [
+        "baja",
+        "bajar",
+        "bajalo",
+        "menos"
+      ],
+      "max": [
+        "maximo",
+        "tope"
+      ],
+      "min": [
+        "minimo"
+      ],
+      "snooze": [
+        "pospon",
+        "posponer",
+        "pospone",
+        "aplaza",
+        "aplazar"
+      ],
+      "convert": [
+        "convierte",
+        "pasa",
+        "cuantos",
+        "cuantas",
+        "son",
+        "es",
+        "en",
+        "a"
+      ],
+      "fillers": [
+        "el",
+        "la",
+        "los",
+        "las",
+        "un",
+        "una",
+        "me",
+        "por",
+        "favor",
+        "pon",
+        "ponme",
+        "programa",
+        "de",
+        "que",
+        "mi"
+      ],
+      "notify": [
+        "avisame",
+        "avisa"
+      ],
+      "connectors": [
+        "que"
+      ]
+    },
+    "clock": {
+      "half": [
+        "media"
+      ],
+      "quarter": [
+        "cuarto"
+      ],
+      "past": [
+        "y"
+      ],
+      "to": [
+        "menos"
+      ],
+      "oclock": [
+        "punto",
+        "en"
+      ],
+      "am": [
+        "madrugada"
+      ],
+      "pm": [
+        "tarde",
+        "noche"
+      ],
+      "morning": [
+        "manana"
+      ],
+      "noon": [
+        "mediodia"
+      ],
+      "midnight": [
+        "medianoche"
+      ]
+    },
+    "operators": {
+      "+": [
+        "mas",
+        "sumale"
+      ],
+      "-": [
+        "menos",
+        "restale"
+      ],
+      "*": [
+        "por",
+        "x",
+        "multiplicado"
+      ],
+      "/": [
+        "entre",
+        "dividido"
+      ],
+      "^": [
+        "elevado",
+        "cuadrado",
+        "cubo"
+      ],
+      "%": [
+        "ciento",
+        "porciento",
+        "%"
+      ]
+    },
+    "units": {
+      "mm": {
+        "one": "milímetro",
+        "other": "milímetros",
+        "words": [
+          "mm",
+          "milimetro",
+          "milimetros"
+        ]
+      },
+      "cm": {
+        "one": "centímetro",
+        "other": "centímetros",
+        "words": [
+          "cm",
+          "centimetro",
+          "centimetros"
+        ]
+      },
+      "m": {
+        "one": "metro",
+        "other": "metros",
+        "words": [
+          "metro",
+          "metros"
+        ]
+      },
+      "km": {
+        "one": "kilómetro",
+        "other": "kilómetros",
+        "words": [
+          "km",
+          "kilometro",
+          "kilometros"
+        ]
+      },
+      "in": {
+        "one": "pulgada",
+        "other": "pulgadas",
+        "words": [
+          "pulgada",
+          "pulgadas"
+        ]
+      },
+      "ft": {
+        "one": "pie",
+        "other": "pies",
+        "words": [
+          "pie",
+          "pies"
+        ]
+      },
+      "yd": {
+        "one": "yarda",
+        "other": "yardas",
+        "words": [
+          "yarda",
+          "yardas"
+        ]
+      },
+      "mi": {
+        "one": "milla",
+        "other": "millas",
+        "words": [
+          "milla",
+          "millas"
+        ]
+      },
+      "g": {
+        "one": "gramo",
+        "other": "gramos",
+        "words": [
+          "gramo",
+          "gramos",
+          "g"
+        ]
+      },
+      "kg": {
+        "one": "kilo",
+        "other": "kilos",
+        "words": [
+          "kilo",
+          "kilos",
+          "kilogramo",
+          "kilogramos",
+          "kg"
+        ]
+      },
+      "lb": {
+        "one": "libra",
+        "other": "libras",
+        "words": [
+          "libra",
+          "libras"
+        ]
+      },
+      "oz": {
+        "one": "onza",
+        "other": "onzas",
+        "words": [
+          "onza",
+          "onzas"
+        ]
+      },
+      "ml": {
+        "one": "mililitro",
+        "other": "mililitros",
+        "words": [
+          "ml",
+          "mililitro",
+          "mililitros"
+        ]
+      },
+      "l": {
+        "one": "litro",
+        "other": "litros",
+        "words": [
+          "litro",
+          "litros"
+        ]
+      },
+      "gal": {
+        "one": "galón",
+        "other": "galones",
+        "words": [
+          "galon",
+          "galones"
+        ]
+      },
+      "cup": {
+        "one": "taza",
+        "other": "tazas",
+        "words": [
+          "taza",
+          "tazas"
+        ]
+      },
+      "c": {
+        "one": "grado centígrado",
+        "other": "grados centígrados",
+        "words": [
+          "celsius",
+          "centigrados",
+          "centigrado"
+        ]
+      },
+      "f": {
+        "one": "grado Fahrenheit",
+        "other": "grados Fahrenheit",
+        "words": [
+          "fahrenheit"
+        ]
+      }
+    },
+    "degrees": [
+      "grado",
+      "grados"
+    ],
+    "duration_names": {
+      "hour": [
+        "hora",
+        "horas"
+      ],
+      "minute": [
+        "minuto",
+        "minutos"
+      ],
+      "second": [
+        "segundo",
+        "segundos"
+      ]
+    },
+    "interpreter_example": {
+      "said": "recuérdame dentro de un rato, unos 40 minutos, que saque la ropa",
+      "answer": {
+        "skill": "reminder",
+        "seconds": 2400,
+        "text": "saque la ropa"
+      }
     }
   }
 }

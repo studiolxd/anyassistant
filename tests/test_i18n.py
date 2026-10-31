@@ -8,7 +8,9 @@ import i18n
 from conftest import ROOT
 
 # Keys only some languages need: the "periods" style of telling the time.
-STYLE_KEYS = re.compile(r"^calendar\.(periods\.|article_|on_the_hour|past_the_hour)")
+# And vocabularies keyed by the language's own words («mil», «media»).
+STYLE_KEYS = re.compile(r"^calendar\.(periods\.|article_|on_the_hour|past_the_hour|minutes_named\.)"
+                        r"|^skills\.(numbers|fractions|multipliers)\.|^skills\.clock\.morning$")
 
 
 def flatten(data, prefix=""):

@@ -50,7 +50,8 @@ def server(tmp_path):
         process = subprocess.Popen(
             [sys.executable, ROOT / "server" / "main.py", "--host", "127.0.0.1", "--port", str(port), *options],
             cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONUNBUFFERED": "1", "JARVIS_SETTINGS": str(tmp_path / "settings.json"),
-                 "JARVIS_PAIRED": str(tmp_path / "paired.json"), "JARVIS_MEMORY": str(tmp_path / "memory.json")},
+                 "JARVIS_PAIRED": str(tmp_path / "paired.json"), "JARVIS_MEMORY": str(tmp_path / "memory.json"),
+                 "JARVIS_TIMERS": str(tmp_path / "timers.json")},
         )
         processes.append(process)
         url = f"http://127.0.0.1:{port}"
@@ -379,3 +380,20 @@ def test_reads_with_a_full_resolution_photo(server, tmp_path):
                                    image=page.resize((320, 240)), photo=jpeg.getvalue()))
     assert any(m.get("type") == "photo" for m in messages)
     assert "7351" in final_texts(messages, "assistant")[0].replace(" ", "")
+
+
+def test_timer_rings_and_stops(server, tmp_path):
+    """Without the LLM: «¿Qué hora es?», a 3-second timer, and «Para» while it rings."""
+    url = server("--mode", "assistant", "--lang", "es", "--wake", "none", "--llm", "apple")
+    say = lambda text: speech(tmp_path, text, "Mónica")  # noqa: E731
+    pause = lambda seconds: np.zeros(RATE * seconds, np.int16)  # noqa: E731 — while it answers it doesn't listen
+    pcm = np.concatenate([say("¿Qué hora es?"), pause(4), say("Pon un temporizador de 3 segundos."),
+                          pause(6), say("Para.")])
+    alarms = lambda m: [x for x in m if x.get("type") == "alarm"]  # noqa: E731
+    messages, loudest = asyncio.run(talk(url, pcm, until=lambda m: len(alarms(m)) >= 2, timeout=20))
+    said = final_texts(messages, "assistant")
+    assert said[0].startswith("Son las") or said[0].startswith("Es la")
+    assert "Temporizador de 3 segundos." in said
+    assert "alarm" in states(messages)
+    assert alarms(messages)[-1] == {"type": "alarm", "off": True}  # stopped by «Para»
+    assert "thinking" not in states(messages)  # no LLM involved

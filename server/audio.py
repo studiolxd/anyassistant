@@ -77,6 +77,20 @@ def beep(falling: bool = False) -> np.ndarray:
     return np.concatenate(notes).astype(np.int16)
 
 
+def alarm_tone() -> np.ndarray:
+    """An alarm: three quick high notes."""
+    t = np.arange(int(0.12 * RATE)) / RATE
+    envelope = np.minimum(1, np.minimum(t, t[::-1]) / 0.01)
+    note = np.sin(2 * np.pi * 1760 * t) * envelope * 0.6 * 32767
+    gap = np.zeros(int(0.08 * RATE))
+    return np.concatenate([note, gap, note, gap, note]).astype(np.int16)
+
+
+def louder(pcm: np.ndarray, volume: float) -> np.ndarray:
+    """Scaled by a volume from 0 to 1."""
+    return (pcm.astype(np.float32) * volume).astype(np.int16)
+
+
 def normalize(pcm: np.ndarray, peak: float = 0.95) -> np.ndarray:
     """Raises (or lowers) the volume until the peak reaches `peak` of full scale."""
     maximum = np.abs(pcm).max() if len(pcm) else 0

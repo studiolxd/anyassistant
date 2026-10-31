@@ -72,7 +72,7 @@ def load_vad():
 class Ear:
     def __init__(
         self, stt, on_state, on_heard, wake=None, on_wake=None, on_sleep=None,
-        deaf=None, record=None, silence=SILENCE, idle_timeout=IDLE_TIMEOUT, on_interrupt=None,
+        deaf=None, record=None, silence=SILENCE, idle_timeout=IDLE_TIMEOUT, on_interrupt=None, on_stop=None,
     ):
         import torch
 
@@ -99,6 +99,7 @@ class Ear:
         # says whether to stop (False: it was its own voice saying its name).
         self.deaf = deaf or (lambda: False)
         self.on_interrupt = on_interrupt
+        self.on_stop = on_stop or (lambda: None)  # «stop» said on its own: e.g. an alarm ringing
         self.interruptible = False  # the wake word is listening while it speaks
         self.recording = None  # WAV with everything that arrives, for debugging
         if record:
@@ -238,7 +239,8 @@ class Ear:
             if not text:  # only the wake word was said
                 self.on_state(self.idle_state)
                 return
-        if text and is_stop_command(text):  # «(Jarvis,) stop»: it already stopped
+        if text and is_stop_command(text):  # «(Jarvis,) stop»: it already stopped talking
+            self.on_stop()
             self.on_state(self.idle_state)
             return
         if text and is_sleep_command(text):

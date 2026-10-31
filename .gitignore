@@ -8,5 +8,6 @@ __pycache__/
 permissions.json
 settings.json
 memory.json
+timers.json
 google-client.json
 .gog/

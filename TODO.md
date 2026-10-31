@@ -19,6 +19,8 @@
 
 ## Done
 
+- [x] **Skills without an LLM**: time, date, timers, alarms, reminders, sums, units and
+  volume; Apple's model as an optional interpreter; also as the LLM's tools.
 - [x] **Eyes, second step**: a full-resolution photo to read (1200×1600 on the tablet);
   Hermes sees too (asked with «look», «read»…).
 - [x] **Memory, more**: compacted by the LLM beyond 50 facts; reviewed by Apple's model

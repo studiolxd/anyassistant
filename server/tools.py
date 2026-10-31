@@ -15,6 +15,7 @@ off the LLM while it is still using the tool.
 
 import platform
 import re
+import time
 import shutil
 import subprocess
 import urllib.request
@@ -186,6 +187,61 @@ def remove_detail_level(name: str) -> str:
     return "Removed." + (" Back to neutral." if "detail" in changes else "")
 
 
+# Timers, alarms, reminders and volume: the same skills as by voice (skills/), for
+# when the LLM is asked in its own words.
+
+def set_timer(seconds: float, label: str = "") -> str:
+    import skills
+
+    if not 1 <= seconds <= 7 * 86400:
+        raise ToolError("seconds: from 1 to a week")
+    return skills.set_timer(seconds, label)
+
+
+def _at(hour, minute, day, seconds) -> float:
+    from skills import interpreter, parse
+
+    if seconds:
+        return time.time() + seconds
+    if hour is None:
+        raise ToolError("give seconds from now, or hour and minute")
+    if day is None:
+        return interpreter._next(int(hour) % 24, int(minute or 0))
+    return parse.resolve(parse.Clock(int(hour) % 24, int(minute or 0), None, int(day)), waking=True)
+
+
+def set_alarm(hour: int | None = None, minute: int = 0, day: int | None = None, seconds: float = 0) -> str:
+    import skills
+
+    return skills.set_alarm(_at(hour, minute, day, seconds))
+
+
+def set_reminder(text: str, hour: int | None = None, minute: int = 0, day: int | None = None, seconds: float = 0) -> str:
+    import skills
+
+    if not text.strip():
+        raise ToolError("what should it remind?")
+    return skills.set_reminder(_at(hour, minute, day, seconds), text.strip())
+
+
+def list_timers() -> str:
+    import skills
+
+    return skills.listing()
+
+
+def cancel_timers(kind: str = "all") -> str:
+    import skills
+
+    return skills.cancel(kind if kind in ("timer", "alarm", "reminder") else None)
+
+
+def set_volume(percent: int) -> str:
+    import skills
+
+    return skills.set_volume(percent)
+
+
 def _memory_on():
     if memory.mode() == "off":
         raise ToolError("memory is off («memory» in settings.json)")
@@ -284,6 +340,23 @@ TOOLS = {
                          _schema(name={"type": "string"}, instruction={"type": "string"})),
     "remove_detail_level": (remove_detail_level, "Remove a detail level the user created (built-in ones go back "
                             "to their text).", _schema(name={"type": "string"})),
+    "set_timer": (set_timer, "A timer: seconds from now, optionally with a label.",
+                  {"type": "object", "properties": {"seconds": {"type": "number"}, "label": {"type": "string"}},
+                   "required": ["seconds"]}),
+    "set_alarm": (set_alarm, "An alarm at hour:minute (24 h; day 0 today, 1 tomorrow, 2 the day after; without "
+                  "day, the next time it comes), or in some seconds.",
+                  {"type": "object", "properties": {"hour": {"type": "integer"}, "minute": {"type": "integer"},
+                                                    "day": {"type": "integer"}, "seconds": {"type": "number"}}}),
+    "set_reminder": (set_reminder, "A reminder that says text aloud at hour:minute (24 h; day as for alarms) or "
+                     "in some seconds.",
+                     {"type": "object", "properties": {"text": {"type": "string"}, "hour": {"type": "integer"},
+                                                       "minute": {"type": "integer"}, "day": {"type": "integer"},
+                                                       "seconds": {"type": "number"}}, "required": ["text"]}),
+    "list_timers": (list_timers, "The running timers, alarms and reminders.", _schema()),
+    "cancel_timers": (cancel_timers, "Cancel the timers, alarms or reminders (kind), or all of them.",
+                      {"type": "object", "properties": {"kind": {"type": "string",
+                                                                 "enum": ["timer", "alarm", "reminder", "all"]}}}),
+    "set_volume": (set_volume, "Its voice's volume, 5–100 %.", _schema(percent={"type": "integer"})),
     "get_llms": (get_llms, "The LLMs Jarvis can use, which one is in use and whether each is available.", _schema()),
     "set_llm": (set_llm, "Switch to another LLM (claude, apple, hermes), optionally with a model (for Claude: "
                 "sonnet, opus, haiku…; empty for the default). Apple's can't use tools: to come back, the user "

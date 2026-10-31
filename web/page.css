@@ -138,6 +138,10 @@ html, body {
 #time { margin: 0; font-size: 24vmin; font-weight: 200; line-height: 1; }
 #date { margin: 1vmin 0 4vmin; font-size: 5vmin; }
 body[data-state="asleep"] #clock { display: block; }
+/* Running timers, alarms and reminders. */
+#timers { text-align: center; color: #e0b54a; font-size: 5vmin; }
+#timers p { margin: 0.2em 0; }
+
 /* Settings show_time, show_date, show_stats. */
 body.hide-time #time,
 body.hide-date #date,

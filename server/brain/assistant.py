@@ -20,8 +20,12 @@ import eyes
 import i18n
 import memory
 import settings
+import skills
 import tools
-from audio import normalize
+from audio import alarm_tone, louder, normalize
+from brain.transcriber import volume
+from skills import interpreter, timers
+from skills.parse import duration, tokens
 from llm import detail as llm_detail
 from brain.transcriber import Transcriber
 from text import words
@@ -130,7 +134,11 @@ def split(text: str) -> tuple[list[str], str]:
 
 class Assistant(Transcriber):
     def __init__(self, stt, wake, llm, tts, speaker, send, ear=None, guard=GUARD):
-        super().__init__(stt, wake, speaker, send, ear, deaf=self._deaf, on_interrupt=self._interrupt)
+        super().__init__(stt, wake, speaker, send, ear, deaf=self._deaf, on_interrupt=self._interrupt,
+                         on_stop=self._stopped)
+        self.ringing = None  # the timer, alarm or reminder ringing now
+        self.toning_until = 0.0  # while its tone plays it still listens: a tone isn't speech
+        self.rang = None  # the last one that rang, to snooze it
         self.guard = guard
         self.said = []  # words of the last thing it said, to recognize its echo
         self.saying = []  # words of what it is saying now (sentence by sentence)
@@ -138,7 +146,9 @@ class Assistant(Transcriber):
         self.llm = llm
         self.tts = tts
         self.turn = asyncio.Lock()  # one answer at a time, in order
-        self.number = 0
+        # Ids of the answers on screen: unique across restarts, or a new answer would
+        # overwrite an old one the page still shows with the same id.
+        self.number = int(time.time() * 1000)
         self.cut = 0  # number of the answer that was told to stop
         self.sentences = asyncio.Queue()  # (number, sentence); sentence None = end of answer
         if tts:
@@ -146,6 +156,8 @@ class Assistant(Transcriber):
 
     def _idle_state(self) -> str:
         """The resting state, or «question» if an action awaits your «yes» (the face shows it)."""
+        if self.ringing:
+            return "alarm"
         try:
             pending = json.loads((CONFIRM / "pending.json").read_text())
             if time.time() - pending.get("at", 0) < settings.get("confirm_wait", 120):
@@ -155,6 +167,8 @@ class Assistant(Transcriber):
         return self.ear.idle_state
 
     def _deaf(self) -> bool:
+        if self.ringing:  # its tone isn't speech: it listens for «stop», «snooze» through it
+            return self.speaker.speaking and time.time() > self.toning_until
         return self.speaker.speaking or time.time() - self.speaker.last_sound < self.guard
 
     def _is_echo(self, text: str, timings: dict) -> bool:
@@ -168,12 +182,72 @@ class Assistant(Transcriber):
 
     def on_connect(self):
         super().on_connect()
+        self.send_timers()
         asyncio.ensure_future(self.llm.new())
 
     def on_message(self, data: dict):
-        if data.get("type") == "tap" and settings.get("tap_to_stop", True) and (
-                self.turn.locked() or self.speaker.speaking):
+        if data.get("type") == "tap" and (self.ringing or settings.get("tap_to_stop", True) and (
+                self.turn.locked() or self.speaker.speaking)):
             self.stop()
+
+    def send_timers(self):
+        self.send({"type": "timers", "items": timers.pending()})
+
+    async def ring(self, item: dict):
+        """A timer, alarm or reminder is due: it rings until stopped (or ring_seconds), saying what it is."""
+        log.info("ringing: %s", item["kind"])
+        self.ringing = self.rang = item
+        if self.ear.wake and not self.ear.awake:
+            self.ear._wake_up()  # so it hears «stop» or «snooze» without its name
+        sentence = skills.ring_sentence(item)
+        self.send({"type": "alarm", "label": item.get("label") or sentence})
+        self._state("alarm")
+        tone = louder(alarm_tone(), volume())
+        until = time.time() + (settings.get("ring_seconds") or 60)
+        said = False
+        while self.ringing is item and time.time() < until:
+            self.toning_until = time.time() + len(tone) / 48000 + 0.1
+            self.speaker.play(tone)
+            await asyncio.sleep(len(tone) / 48000 + 0.3)
+            if not said:
+                said = True
+                self._say(sentence)
+                await asyncio.sleep(3)
+            await asyncio.sleep(1.7)
+        if self.ringing is item:  # nobody stopped it
+            self._stop_ringing()
+
+    def _stop_ringing(self):
+        self.ringing = None
+        self.send({"type": "alarm", "off": True})
+        self._state(self._idle_state())
+
+    def _state(self, state: str):
+        # While ringing, the ear's «awake» or «listening» doesn't hide the alarm on the face.
+        if self.ringing and state in ("awake", "listening", "asleep"):
+            state = "alarm"
+        super()._state(state)
+
+    def _stops_ringing(self, text: str) -> bool:
+        """«Para», «apaga la alarma», «vale», «cancélalo»…: words meant to stop it."""
+        vocabulary = i18n.L.data["skills"]["words"]
+        meant = set(i18n.L.list("commands.stop")) | set(i18n.L.list("commands.yes")) | set(i18n.L.list("commands.sleep"))
+        meant |= set(vocabulary["cancel"]) | set(vocabulary["timer"]) | set(vocabulary["alarm"]) | set(vocabulary["reminder"])
+        meant |= set(i18n.L.list("commands.camera_off"))  # «apaga»
+        return bool(set(words(text)) & meant)
+
+    def _stopped(self):
+        """«Stop» said on its own."""
+        if self.ringing:
+            self.stop()
+
+    def _snooze(self, text: str) -> str:
+        span = duration(tokens(text))
+        seconds = span.value if span else (settings.get("snooze_minutes") or 5) * 60
+        item = self.rang
+        timers.add(item["kind"], time.time() + seconds, item.get("label", ""))
+        self.stop()
+        return i18n.L("speech.snoozed", duration=skills.spoken_duration(seconds))
 
     def _interrupt(self, text: str) -> bool:
         """The wake word heard while it speaks: stop, unless it was its own voice saying its name."""
@@ -188,6 +262,8 @@ class Assistant(Transcriber):
         log.info("stopped")
         self.cut = self.number
         self.speaker.stop()
+        if self.ringing:
+            self._stop_ringing()
         self._state(self._idle_state())
 
     def _woke_up(self):
@@ -221,9 +297,37 @@ class Assistant(Transcriber):
             Transcriber._heard(self, text, timings)  # shown on screen, but not sent to the LLM
             asyncio.ensure_future(self._command(command))
             return
+        if self.rang and set(words(text)) & set(i18n.L.data["skills"]["words"]["snooze"]):
+            Transcriber._heard(self, text, timings)
+            self._say(self._snooze(text))
+            return
+        if self.ringing:
+            if not self._stops_ringing(text):  # its own tone, transcribed («Kimbo.»): not a word for it
+                log.info("ignored while ringing: «%s»", settings.private(text))
+                return
+            Transcriber._heard(self, text, timings)
+            self.stop()
+            return
+        reply = skills.quick(text)  # time, timers, sums…: at once, without the LLM
+        if reply:
+            Transcriber._heard(self, text, timings)
+            log.info("skill: «%s»", settings.private(reply))
+            self._say(reply)
+            return
         super()._heard(text, timings)
         self.transcript.append(("user", text))
-        asyncio.ensure_future(self._answer(text))
+        asyncio.ensure_future(self._interpret_or_answer(text))
+
+    async def _interpret_or_answer(self, text: str):
+        """Apple's model may still find a skill in it («avísame dentro de un rato largo…»); else, the LLM."""
+        if interpreter.enabled() and skills.sounds_like_one(text):
+            self._state("thinking")
+            reply = await interpreter.interpret(text)
+            if reply:
+                self.transcript.pop()  # not a conversation for the LLM
+                self._say(reply)
+                return
+        await self._answer(text)
 
     async def _command(self, command: str):
         if command == "reload":
@@ -396,5 +500,5 @@ class Assistant(Transcriber):
             if not self.speaker.speaking:
                 self._state("speaking")
             self.saying += words(sentence)
-            self.speaker.play(normalize(pcm))
+            self.speaker.play(normalize(pcm, 0.95 * volume()))
             log.info("voice «%s» (%d ms)", settings.private(sentence), (time.time() - start) * 1000)

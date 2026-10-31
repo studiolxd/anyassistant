@@ -42,8 +42,10 @@ GOG_READ = {
     ("tasks", "list"), ("tasks", "lists"),
 }
 MCP_READ = ("get_", "list_", "search_", "find_", "preview_", "download_")
-# Jarvis's own tools that only change what the screen shows or how it talks.
-NO_CONFIRMATION = {"mcp__jarvis__camera", "mcp__jarvis__set_detail"}
+# Jarvis's own tools that only change the screen, how it talks or its timers.
+NO_CONFIRMATION = {"mcp__jarvis__camera", "mcp__jarvis__set_detail", "mcp__jarvis__set_timer",
+                   "mcp__jarvis__set_alarm", "mcp__jarvis__set_reminder", "mcp__jarvis__cancel_timers",
+                   "mcp__jarvis__set_volume"}
 
 
 def describe_command(command):
