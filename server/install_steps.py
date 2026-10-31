@@ -178,6 +178,10 @@ def service(value):
         raise Skip("only for an installed copy (install.sh); while developing, bin/anyassistant start")
     domain = f"gui/{os.getuid()}"
     _launchctl("bootout", f"{domain}/{LABEL}", check=False)
+    for _ in range(30):  # bootout returns before it is fully unloaded
+        if _launchctl("print", f"{domain}/{LABEL}", check=False).returncode:
+            break
+        time.sleep(0.5)
     if not value:
         if os.path.exists(AGENT):
             os.remove(AGENT)
@@ -195,8 +199,12 @@ def service(value):
             "EnvironmentVariables": {"PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:"
                                              + os.path.expanduser("~/.local/bin")},
         }, f)
-    _launchctl("bootstrap", domain, AGENT)
-    return "on: it starts with the Mac"
+    for attempt in range(5):
+        done = _launchctl("bootstrap", domain, AGENT, check=False)
+        if done.returncode == 0:
+            return "on: it starts with the Mac"
+        time.sleep(1)
+    raise RuntimeError(f"launchd didn't take it: {done.stderr.strip()}")
 
 
 # --- Connecting a device ---
