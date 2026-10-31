@@ -1,5 +1,11 @@
 {
   "name": "Wake word (openWakeWord)",
   "description": "openWakeWord's trained models (hey_jarvis, alexa…).",
-  "kind": "wake"
+  "kind": "wake",
+  "needs": {
+    "python": [
+      "openwakeword>=0.4.0",
+      "onnxruntime>=1.31.1"
+    ]
+  }
 }

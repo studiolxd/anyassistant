@@ -1,5 +1,16 @@
 {
   "name": "Whisper (MLX)",
   "description": "OpenAI's Whisper on MLX: speech recognition, and the fallback when Parakeet drifts into another language.",
-  "kind": "stt"
+  "kind": "stt",
+  "needs": {
+    "python": [
+      "mlx-whisper>=0.4.3"
+    ],
+    "system": [
+      "darwin"
+    ],
+    "arch": [
+      "arm64"
+    ]
+  }
 }

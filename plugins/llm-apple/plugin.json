@@ -1,5 +1,17 @@
 {
   "name": "Apple Intelligence",
   "description": "Apple's local model (Foundation Models), on macOS 26 with Apple Intelligence.",
-  "kind": "llm"
+  "kind": "llm",
+  "needs": {
+    "system": [
+      "darwin"
+    ],
+    "arch": [
+      "arm64"
+    ],
+    "macos": 26,
+    "commands": [
+      "swiftc"
+    ]
+  }
 }

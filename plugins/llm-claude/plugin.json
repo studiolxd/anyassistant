@@ -1,5 +1,10 @@
 {
   "name": "Claude",
   "description": "Claude through the Claude Code CLI: your subscription, MCP servers and allowed commands.",
-  "kind": "llm"
+  "kind": "llm",
+  "needs": {
+    "commands": [
+      "claude"
+    ]
+  }
 }

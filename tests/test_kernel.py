@@ -116,3 +116,31 @@ def test_no_plugin_breaks_whatever_is_imported_first():
     result = subprocess.run([sys.executable, "-c", code], cwd=ROOT / "server", capture_output=True, text=True)
     assert "couldn't load" not in result.stderr, result.stderr
     assert "claude" in result.stdout and "hermes" in result.stdout
+
+
+def test_pyproject_lists_each_plugins_packages():
+    """plugin.json «needs» is the source; pyproject's extras (for uv) must say the same."""
+    import tomllib
+
+    from conftest import ROOT
+
+    extras = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["optional-dependencies"]
+    declared = {p.id: p.needs["python"] for p in kernel.discover().values() if p.needs.get("python")
+                and not p.yours}
+    assert extras == declared
+
+
+def test_a_plugin_that_doesnt_fit_is_off(tmp_path, monkeypatch):
+    import paths
+
+    mine = tmp_path / "plugins"
+    (mine / "needs-much").mkdir(parents=True)
+    (mine / "needs-much" / "plugin.json").write_text(json.dumps(
+        {"name": "x", "kind": "feature", "needs": {"python": ["surely-not-installed-pkg>=1"], "system": ["plan9"]}}))
+    (mine / "needs-much" / "__init__.py").write_text("")
+    monkeypatch.setattr(paths, "USER_PLUGINS", mine)
+    kernel.reset()
+    assert not kernel.enabled("needs-much") and kernel.wanted("needs-much")
+    assert any("plan9" in w for w in kernel.unfit("needs-much"))
+    assert "surely-not-installed-pkg>=1" not in kernel.requirements()  # another system: not even installed
+    kernel.reset()

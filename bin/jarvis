@@ -9,6 +9,7 @@
 #   bin/jarvis pair                     a code to pair a device (with "pairing": true)
 #   bin/jarvis unpair                   forgets every paired device
 #   bin/jarvis skin list|check <folder>|new <name> [--from orb]   the screen's skins
+#   bin/jarvis plugins [requirements [--all]]   which are on, what they lack; their Python packages
 #
 # Options also come from settings.json. The PID, the port and the log go to the cache
 # folder (.build/ while developing; $JARVIS_CACHE).
@@ -99,6 +100,10 @@ except ValueError:
     sys.exit("Pairing is off (the plugin «pairing»), so any device can connect. Turn it on with \"plugins\": {\"pairing\": true} in settings.json.")
 print("Code: %s  (valid %d minutes; type it on the device)" % (d["code"], d["seconds"] // 60))
 '
+    ;;
+  plugins)
+    shift
+    PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/server/kernel.py" "$@"
     ;;
   skin)
     shift

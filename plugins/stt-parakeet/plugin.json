@@ -4,5 +4,16 @@
   "kind": "stt",
   "requires": [
     "stt-mlx-whisper"
-  ]
+  ],
+  "needs": {
+    "python": [
+      "parakeet-mlx>=0.5.3"
+    ],
+    "system": [
+      "darwin"
+    ],
+    "arch": [
+      "arm64"
+    ]
+  }
 }

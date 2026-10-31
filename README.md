@@ -521,6 +521,13 @@ plugins.local/skill-weather/
   locales/es.json  its texts, joined to Jarvis's
 ```
 
+What it needs goes in `plugin.json` too, for the installer:
+`"needs": {"python": ["parakeet-mlx>=0.5.3"], "system": ["darwin"], "arch": ["arm64"],
+"macos": 26, "commands": ["claude"]}`. One that doesn't fit the computer, or lacks its
+packages, stays off whatever the settings say. `bin/jarvis plugins` lists them (on,
+off, and why one can't work); `bin/jarvis plugins requirements` prints the Python
+packages of those that are on.
+
 `kind`: `stt`, `wake`, `llm`, `tts`, `vad` (engines: the settings choose one),
 `skill` or `feature`. Plugins import each other as `plugins.<id with underscores>`
 (`from plugins.stt_mlx_whisper import transcribe_mlx`). Loading must be cheap:

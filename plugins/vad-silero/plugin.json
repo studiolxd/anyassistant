@@ -1,5 +1,10 @@
 {
   "name": "Silero VAD",
   "description": "Voice activity detection with Silero (PyTorch).",
-  "kind": "vad"
+  "kind": "vad",
+  "needs": {
+    "python": [
+      "silero-vad>=6.2.3"
+    ]
+  }
 }

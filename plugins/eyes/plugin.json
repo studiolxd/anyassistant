@@ -2,5 +2,10 @@
   "name": "Eyes",
   "description": "Sees through the device's camera when asked («what do you see?», «read this»), or when Claude decides to look.",
   "kind": "feature",
-  "default": false
+  "default": false,
+  "needs": {
+    "python": [
+      "pillow>=10"
+    ]
+  }
 }

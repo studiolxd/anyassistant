@@ -3,21 +3,30 @@ name = "jarvis"
 version = "0.1.0"
 description = "An old phone or tablet as the eyes, mouth and ears of a voice assistant running on the Mac"
 requires-python = ">=3.12"
-dependencies = [
+dependencies = [  # the core; each plugin's own are in its plugin.json «needs» (and below, for uv)
     "aiohttp>=3.9",
     "aiortc>=1.9",
-    "mlx-whisper>=0.4.3",
     "numpy>=1.26",
-    "onnxruntime>=1.31.1",
-    "openwakeword>=0.4.0",
-    "parakeet-mlx>=0.5.3",
-    "pillow>=10",
     "scipy>=1.18.1",
-    "silero-vad>=6.2.3",
 ]
 
+# The system plugins' packages (their plugin.json «needs», kept equal by a test): the
+# installer installs those of the plugins that are on (bin/jarvis plugins requirements).
+[project.optional-dependencies]
+eyes = ["pillow>=10"]
+stt-mlx-whisper = ["mlx-whisper>=0.4.3"]
+stt-parakeet = ["parakeet-mlx>=0.5.3"]
+vad-silero = ["silero-vad>=6.2.3"]
+wake-openwakeword = ["openwakeword>=0.4.0", "onnxruntime>=1.31.1"]
+
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = [  # while developing: every system plugin's packages too (uv run would remove them otherwise)
+    "pytest>=8",
+    "jarvis[eyes,stt-mlx-whisper,stt-parakeet,vad-silero,wake-openwakeword]",
+]
+
+[tool.uv]
+default-groups = ["dev"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
