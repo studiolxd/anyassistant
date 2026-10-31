@@ -15,14 +15,16 @@ memory = kernel.load("memory")
 @pytest.fixture
 def mem(tmp_path, monkeypatch, en):
     monkeypatch.setattr(memory, "PATH", tmp_path / "memory.json")
-    monkeypatch.setattr(settings, "active", {"memory": "auto"})
+    monkeypatch.setattr(settings, "active", {"memory": "auto", "plugins": {"memory": True}})
     return tmp_path / "memory.json"
 
 
 def test_off_remembers_nothing(mem):
     mem.write_text(json.dumps({"facts": ["Invoices with Holded."]}))
-    settings.active["memory"] = "off"
-    assert memory.instructions() == ""
+    settings.active["plugins"] = {"memory": False}  # the plugin off: nothing reaches the LLM
+    import llm
+
+    assert "Invoices with Holded." not in llm.instructions()
 
 
 def test_facts_go_to_the_instructions_as_notes(mem):

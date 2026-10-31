@@ -106,7 +106,9 @@ class Clock:
 def test_follow_up_window(monkeypatch):
     """It goes back to sleep after follow_up seconds without speech, but not while busy."""
     clock = Clock()
-    monkeypatch.setattr("plugins.brain_transcriber.ear.time.time", clock)
+    import plugins.brain_transcriber.ear as ear_module
+
+    monkeypatch.setattr(ear_module.time, "time", clock)
     monkeypatch.setattr(settings, "active", {"follow_up": 20})
     slept = []
     ear = object.__new__(Ear)

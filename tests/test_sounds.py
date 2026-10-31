@@ -4,8 +4,9 @@ import numpy as np
 
 import kernel
 import settings
-import skins
 from audio import RATE
+
+skins = kernel.load("page").skins
 
 
 class Speaker:

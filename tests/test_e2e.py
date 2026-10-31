@@ -310,7 +310,7 @@ def test_eyes_with_claude(server, tmp_path):
 
     image = Image.new("RGB", (640, 480), "white")
     ImageDraw.Draw(image).text((150, 200), "MILK  BREAD  42", fill="black", font=ImageFont.load_default(size=44))
-    (tmp_path / "settings.json").write_text(json.dumps({"eyes": True}))
+    (tmp_path / "settings.json").write_text(json.dumps({"plugins": {"eyes": True}}))
     url = server("--mode", "assistant", "--lang", "en", "--wake", "none", "--llm", "claude", "--tts", "none")
     done = lambda m: len(final_texts(m, "assistant")) >= 2  # noqa: E731
     pcm = np.concatenate([speech(tmp_path, "Read what I'm holding.", "Samantha"), np.zeros(RATE * 12, np.int16),
@@ -324,7 +324,7 @@ def test_eyes_with_claude(server, tmp_path):
 @pytest.mark.skipif(not shutil.which("claude"), reason="needs Claude Code signed in")
 def test_memory_with_claude(server, tmp_path):
     """auto: what you say in one conversation is there in the next one."""
-    (tmp_path / "settings.json").write_text(json.dumps({"memory": "auto"}))
+    (tmp_path / "settings.json").write_text(json.dumps({"memory": "auto", "plugins": {"memory": True}}))
     url = server("--mode", "assistant", "--lang", "es", "--llm", "claude", "--tts", "none")
     say = lambda text: speech(tmp_path, text, "Mónica")  # noqa: E731
     pcm = np.concatenate([say("Hey Jarvis"), say("Mi perro se llama Toby."), np.zeros(RATE * 6, np.int16),
@@ -376,7 +376,7 @@ def test_reads_with_a_full_resolution_photo(server, tmp_path):
     ImageDraw.Draw(page).text((500, 560), "CODE 7351", fill="black", font=ImageFont.load_default(size=22))
     jpeg = io.BytesIO()
     page.save(jpeg, "JPEG", quality=90)
-    (tmp_path / "settings.json").write_text(json.dumps({"eyes": True}))
+    (tmp_path / "settings.json").write_text(json.dumps({"plugins": {"eyes": True}}))
     url = server("--mode", "assistant", "--lang", "en", "--wake", "none", "--llm", "claude", "--tts", "none")
     messages, _ = asyncio.run(talk(url, speech(tmp_path, "Read the code on this paper.", "Samantha"),
                                    until=lambda m: final_texts(m, "assistant"), timeout=60,

@@ -5,7 +5,9 @@ import json
 import pytest
 
 import settings
-import skins
+import kernel
+
+skins = kernel.load("page").skins
 from conftest import ROOT
 
 
@@ -24,7 +26,7 @@ def mine(tmp_path, monkeypatch):
 def test_system_skins_are_fine():
     assert {"eyes", "orb", "minimal", "bedside"} <= set(skins.available())
     for name in ("eyes", "orb", "minimal", "bedside"):
-        assert skins.check(ROOT / "skins" / name) == [], name
+        assert skins.check(ROOT / "plugins" / "page" / "skins" / name) == [], name
 
 
 @pytest.mark.parametrize("html, kept, gone", [

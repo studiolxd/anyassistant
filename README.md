@@ -102,14 +102,13 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `detail` | `"neutral"` | how much it says: concise, neutral, detailed or one of detail_levels |
 | `detail_levels` | — | more levels, or other texts for these: {"name": "instruction for the prompt"} |
 | `ignore_others` | `true` | the LLM stays quiet when what it hears is clearly not for it |
-| `eyes` | `false` | it may look through the device's camera (Claude, Hermes) |
 | `read_photo` | `true` | a full-resolution photo when asked to read |
 
 **Memory**
 
 | Option | Default | |
 |---|---|---|
-| `memory` | `"off"` | remember across conversations: only when asked (explicit) or also on its own (auto) |
+| `memory` | `"explicit"` | what it remembers: only when asked (explicit) or also on its own (auto) |
 | `memory_facts` | `50` | facts before the LLM compacts them |
 | `memory_conversations` | `10` | conversation summaries kept |
 | `memory_days` | `30` | days a conversation summary is kept |
@@ -140,7 +139,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | Option | Default | |
 |---|---|---|
 | `skills` | `true` | time, date, timers, alarms, reminders, sums, units and volume, without the LLM |
-| `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it), off, or an LLM's name |
+| `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name |
 | `ring_seconds` | `60` | how long an alarm rings if nobody stops it |
 | `snooze_minutes` | `5` | «snooze» without saying how long |
 

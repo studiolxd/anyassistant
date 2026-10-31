@@ -2,14 +2,16 @@ import json
 
 import pytest
 
-import eyes
+import kernel
+
+eyes = kernel.load("eyes")
 import settings
 from plugins.llm_claude.permissions import load
 
 
 @pytest.fixture
 def seeing(monkeypatch, tmp_path):
-    monkeypatch.setattr(settings, "active", {"eyes": True})
+    monkeypatch.setattr(settings, "active", {"plugins": {"eyes": True}})
     monkeypatch.setattr(eyes, "FRAME", tmp_path / "eyes" / "now.jpg")
     monkeypatch.setattr(eyes, "source", lambda: b"jpeg")
 
@@ -27,7 +29,7 @@ def test_capture_leaves_the_frame_for_claude(seeing):
 
 def test_off_sees_nothing_and_keeps_nothing(seeing):
     eyes.capture()
-    settings.active["eyes"] = False
+    settings.active["plugins"] = {"eyes": False}
     assert eyes.capture() is None and not eyes.FRAME.exists()
     assert eyes.instructions() == ""
 

@@ -20,6 +20,11 @@
 
 ## Done
 
+- [x] **Everything is a plugin** (31 Oct): the core only finds, loads and joins them
+  (kernel, web hooks, events, kinds). Pairing, confirmation, memory, eyes, the page
+  and skins, sounds, tap to wake, monitor, lab, MCP server, interpreter, the brains,
+  «go to sleep» and «stop»… each a plugin, with what it needs in plugin.json.
+
 - [x] **Skins**: the screen as HTML + CSS anyone can make (blocks, states, live variables,
   options, texts, sounds); eyes, orb, minimal and bedside; a lab and a checker.
 - [x] **Not every sentence is for it**: a `follow_up` window (20 s) instead of 2 minutes

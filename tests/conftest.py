@@ -65,7 +65,6 @@ def isolated(tmp_path, monkeypatch):
     """Tests never touch the running Jarvis: its timers (they would ring on the tablet), settings,
     memory, paired devices, confirmations and camera image all go to a temporary folder.
     Jarvis's tools don't ask for a «yes» here (test_tools checks that they do)."""
-    import eyes
     import kernel
     import paths
     import settings
@@ -79,7 +78,7 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "PATH", data / "settings.json")
     monkeypatch.setattr(kernel.load("memory"), "PATH", data / "memory.json")
     monkeypatch.setattr(kernel.load("pairing"), "FILE", data / "paired.json")
-    monkeypatch.setattr(eyes, "FRAME", data / "eyes" / "now.jpg")
+    monkeypatch.setattr(kernel.load("eyes"), "FRAME", data / "eyes" / "now.jpg")
     monkeypatch.setattr(paths, "CACHE", data / "cache")
     monkeypatch.setattr(paths, "CONFIRM", data / "cache" / "confirm")
     monkeypatch.setattr(paths, "PERMISSIONS", data / "permissions.json")

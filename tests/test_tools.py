@@ -18,9 +18,12 @@ from plugins.llm_claude.permissions import load
 
 @pytest.fixture
 def env(tmp_path, monkeypatch, es):
+    global memory
+    memory = kernel.load("memory")  # as loaded now (other tests may have loaded the plugins again)
     monkeypatch.setattr(settings, "PATH", tmp_path / "settings.json")
     monkeypatch.setattr(memory, "PATH", tmp_path / "memory.json")
-    monkeypatch.setattr(settings, "active", {"name": "Jarvis", "face": "eyes", "memory": "explicit", "port": 8080})
+    monkeypatch.setattr(settings, "active", {"name": "Jarvis", "face": "eyes", "memory": "explicit", "port": 8080,
+                                                  "plugins": {"memory": True}})
     monkeypatch.setattr(tools, "requested", set())
     return tmp_path
 
@@ -67,7 +70,7 @@ def test_memory(env):
         tools.call("update", {"number": 5, "fact": "x"})
     tools.call("forget", {"number": 1})
     assert memory.load()["facts"] == []
-    settings.active["memory"] = "off"
+    settings.active["plugins"] = {"memory": False}  # the plugin off: its tools aren't there
     with pytest.raises(tools.ToolError):
         tools.call("remember", {"fact": "x"})
 
@@ -94,7 +97,7 @@ def test_mcp_protocol(env):
     assert init["result"]["serverInfo"]["name"] == "jarvis"
     assert mcp_server.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None
     listed = mcp_server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})["result"]["tools"]
-    assert {t["name"] for t in listed} == set(tools.TOOLS)
+    assert {t["name"] for t in listed} == set(tools.available())
     called = mcp_server.handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
                                 "params": {"name": "set_skin", "arguments": {"skin": "smiley"}}})["result"]
     assert called["isError"] and "eyes" in called["content"][0]["text"]
