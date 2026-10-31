@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 
 import i18n
-import eyes
+import kernel
 import paths
 import settings
 from llm import LLM, instructions, register
@@ -125,7 +125,8 @@ class Claude(LLM):
     def _load_permissions(self):
         """Reads .mcp.json and permissions.json: on every conversation, to pick up changes."""
         self._permissions = permissions.load(servers=Path(self.mcp))
-        self._instructions = instructions() + CLAUDE_INSTRUCTIONS + eyes.instructions()
+        eyes = kernel.module("eyes")
+        self._instructions = instructions() + CLAUDE_INSTRUCTIONS + (eyes.instructions() if eyes else "")
         if self._permissions.tools:
             self._instructions += TOOL_INSTRUCTIONS + self._permissions.instructions
 

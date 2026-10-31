@@ -1,5 +1,5 @@
 """The server's web side: the page, its configuration and skins, WebRTC signaling,
-the hooks plugins use (routes, guards like pairing's, /config), the camera monitor, the photos it takes, its MCP server, and the loop that
+the hooks plugins use (routes, guards like pairing's, /config), the camera monitor, its MCP server, and the loop that
 rings alarms. main.py chooses the brain and runs it."""
 
 import asyncio
@@ -9,7 +9,6 @@ from html import escape
 
 from aiohttp import web
 
-import eyes
 import hub
 import i18n
 import mcp_server
@@ -110,21 +109,6 @@ async def status(request: web.Request) -> web.Response:
         "connected": bool(session and session.pc.connectionState == "connected"),
         "frames": session.frames if session else 0,
     })
-
-
-async def eyes_image(request: web.Request) -> web.StreamResponse:
-    """The photo it just looked at, for the screen (paired devices only)."""
-    if not is_allowed(request) or not eyes.enabled() or not eyes.FRAME.exists():
-        return web.Response(status=404)
-    return web.FileResponse(eyes.FRAME)
-
-
-async def photo(request: web.Request) -> web.Response:
-    """The full-resolution photo the device took when asked to (eyes.photo)."""
-    if refusal := refused(request):
-        return refusal
-    eyes.photo_arrived(int(request.query.get("id", 0)), await request.read(), request.query.get("how", "?"))
-    return web.Response(status=204)
 
 
 async def skin_file(request: web.Request) -> web.StreamResponse:
@@ -242,8 +226,6 @@ def application() -> web.Application:
     app.router.add_get("/config", page_config)
     app.router.add_get("/skin/{name}/{path:.+}", skin_file)
     app.router.add_get("/lab", lab)
-    app.router.add_get("/eyes.jpg", eyes_image)
-    app.router.add_post("/photo", photo)
     app.router.add_route("*", "/mcp", mcp_server.endpoint)
     kernel.load_all()
     for method, path, handler, plugin in ROUTES:  # the plugins' own

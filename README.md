@@ -705,7 +705,7 @@ and `--llm my-llm [--llm-model …]`.
 
 ## Eyes (Phase 4)
 
-With `"eyes": true`, Jarvis sees through the device's camera (with Claude, or
+With the plugin `eyes` (off by default: `"plugins": {"eyes": true}`), Jarvis sees through the device's camera (with Claude, or
 Hermes when asked with those words):
 
 - A question with words like «see», «look», «read» («¿qué ves?», «léeme esto»;

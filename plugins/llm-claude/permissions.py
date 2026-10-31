@@ -35,7 +35,6 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import eyes
 import kernel
 import paths
 import settings
@@ -104,7 +103,8 @@ def load(root: Path | None = None, servers: Path | None = None) -> Permissions:
 
     instructions = ""
     tools = []  # Claude Code's own tools, each limited by `allow`
-    if eyes.enabled():  # the camera's image, and no other file
+    eyes = kernel.module("eyes")
+    if eyes:  # the camera's image, and no other file
         tools.append("Read")
         allow.append(f"Read(/{eyes.FRAME})")
     if commands:

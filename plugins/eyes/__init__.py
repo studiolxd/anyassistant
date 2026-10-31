@@ -1,16 +1,18 @@
-"""Eyes (settings «eyes», off by default): Jarvis sees through the device's camera, with Claude.
+"""Eyes (the plugin «eyes», off by default): Jarvis sees through the device's camera.
 
 Two ways, so it only looks when needed:
 - A question with words like «see», «look», «read» (locale commands.look) carries
   the camera's image at that moment.
 - For the rest («is my tie straight?»), Claude may open FRAME, the image at the
-  moment of the question, with its Read tool: only that file (llm/permissions.py).
+  moment of the question, with its Read tool: only that file (llm-claude/permissions.py).
 
 To read («read this», «what does it say?»; locale commands.read) the video is
 too small on some devices (320×240): the device takes a full-resolution photo
 instead (photo()), and the video frame is used only if it doesn't arrive in time.
 
 Nothing leaves the Mac unless it looks; only the latest image is kept, in .build/eyes.
+It brings /eyes.jpg (the photo it looked at, for the screen) and /photo (where the
+device sends the full-resolution one).
 """
 
 import asyncio
@@ -18,12 +20,16 @@ import io
 import itertools
 import logging
 
-from pathlib import Path
+
+from aiohttp import web as http
 
 import hub
 import i18n
+import kernel
+import options
 import paths
-import settings
+import web
+from options import Option
 from text import words
 
 log = logging.getLogger("eyes")
@@ -43,8 +49,11 @@ _waiting: dict[int, asyncio.Future] = {}
 _ids = itertools.count(1)
 
 
+options.add(Option("read_photo", True, "a full-resolution photo when asked to read", "assistant", "bool", live=True))
+
+
 def enabled() -> bool:
-    return bool(settings.get("eyes"))
+    return kernel.enabled("eyes")
 
 
 def wants_to_look(text: str) -> bool:
@@ -114,3 +123,22 @@ def capture() -> bytes | None:
 
 def instructions() -> str:
     return INSTRUCTIONS.format(frame=FRAME) if enabled() else ""
+
+
+# --- In the web server ---
+
+@web.route("GET", "/eyes.jpg")
+async def _eyes_image(request):
+    """The photo it just looked at, for the screen (paired devices only)."""
+    if web.refused(request) or not FRAME.exists():
+        return http.Response(status=404)
+    return http.FileResponse(FRAME)
+
+
+@web.route("POST", "/photo")
+async def _photo(request):
+    """The full-resolution photo the device took when asked to (photo())."""
+    if refusal := web.refused(request):
+        return refusal
+    photo_arrived(int(request.query.get("id", 0)), await request.read(), request.query.get("how", "?"))
+    return http.Response(status=204)

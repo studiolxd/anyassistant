@@ -69,8 +69,6 @@ OPTIONS = [
            "assistant", "json", live=True),
     Option("ignore_others", True, "the LLM stays quiet when what it hears is clearly not for it", "assistant",
            "bool", live=True),
-    Option("eyes", False, "it may look through the device's camera (Claude, Hermes)", "assistant", "bool", live=True),
-    Option("read_photo", True, "a full-resolution photo when asked to read", "assistant", "bool", live=True),
     # Listening and speaking
     Option("stt", "parakeet", "speech recognition: parakeet, mlx-whisper…", "voice", "choice", _plugins("stt")),
     Option("stt_model", None, "its model", "voice"),

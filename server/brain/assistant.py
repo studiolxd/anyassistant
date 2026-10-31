@@ -17,7 +17,6 @@ import time
 import numpy as np
 
 import events
-import eyes
 import i18n
 import settings
 import skills
@@ -266,7 +265,8 @@ class Assistant(Transcriber):
             self.number += 1
             number = self.number
             message = {"type": "text", "author": "assistant", "id": number}
-            image = eyes.capture()  # also for Claude's Read tool, if it decides to look
+            eyes = kernel.module("eyes")
+            image = eyes.capture() if eyes else None  # also for Claude's Read tool, if it decides to look
             if image and settings.get("read_photo", True) and eyes.wants_to_read(text):  # small text
                 self._state("looking")
                 image = await eyes.photo() or image
