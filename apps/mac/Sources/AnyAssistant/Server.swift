@@ -80,7 +80,7 @@ final class Server: ObservableObject {
         env["ANYASSISTANT_CACHE"] = cache.path
         env["UV"] = uv.path
         env["PYTHONUNBUFFERED"] = "1"
-        env["ANYASSISTANT_APP"] = "1"  # the server follows the app: if it goes, so does the server
+        env["ANYASSISTANT_APP"] = "1"  // the server follows the app: if it goes, so does the server
         return env
     }
 
