@@ -19,13 +19,10 @@ active: dict = {}
 fixed: set = set()  # the ones given on the command line: settings.json doesn't change them
 # What can change without restarting (read again after every answer: its own tools,
 # or settings.json edited by hand). Anything else restarts the server.
-# What the page shows (sent to it in /config; it reads it again when one changes).
-SCREEN = {"show_time", "show_date", "show_hint", "show_status", "show_heard", "show_answer", "history",
-          "show_stats", "clock", "show_timers"}
-LIVE = {"instructions", "skin", "skin_options", "video", "confirm_wait", "confirm_valid", "log_transcripts", "eyes", "memory",
-        "follow_up", "ignore_others", "detail", "detail_levels", "skills", "interpreter", "volume", "ring_seconds", "snooze_minutes",
-        "beeps", "fillers", "voice_interrupt", "tap_to_stop", "read_photo", "memory_facts",
-        "memory_conversations", "memory_days"} | SCREEN
+# What the page shows (sent to it in /config; it reads it again when one changes), and
+# what can change without restarting (read again after every answer: its own tools,
+# or settings.json edited by hand); anything else restarts the server. From options.py.
+from options import LIVE, SCREEN  # noqa: E402
 
 
 def get(key: str, default=None):

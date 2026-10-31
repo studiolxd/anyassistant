@@ -79,27 +79,102 @@ the preferences, so `bin/jarvis start` needs no options:
 ```
 
 Keys are the server's options with underscores instead of dashes; options on the
-command line win over it (`uv run server/main.py --help` lists them all). Besides
-the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear's
-(`silence`, `follow_up`, `echo_guard`):
+command line win over it (`uv run server/main.py --help` lists them all). They are
+all defined in `server/options.py`; most apply at once, the rest restart it.
 
-| Key | Default | |
+<!-- options: made by `python server/options.py markdown`; a test checks it is current -->
+**The assistant**
+
+| Option | Default | |
 |---|---|---|
-| `language` | the Mac's | `en`, `es`… (also by voice) |
-| `name` | `Jarvis` | the assistant's name: wake word («Hey …»), page title, the LLM's instructions |
-| `instructions` | — | text (or a list of lines) added to the LLM's instructions: who you are, your tools, how to talk |
-| `voice` | the language's | one voice or one per language: `{"es": "Mónica", "en": "Samantha"}` |
-| `skin` | `eyes` | the screen's look: `eyes`, `orb`, `minimal`, `bedside` or yours (below); a device's `?skin=` wins |
-| `skin_options` | — | the skin's options: `{"accent": "#ff7a45"}` |
-| `skins_dir` | `skins.local/` | your skins |
-| `video` | `auto` | `normal`, `low` or `off`; `auto` lets each device choose (low with ≤ 1 GB of RAM); a device's `?video=` wins |
-| `port` | `8080` | `bin/jarvis` uses it too |
-| `memory` | `off` | remember across conversations: `explicit` (only when asked) or `auto` (below) |
-| `eyes` | `false` | it may look through the device's camera, with Claude (below) |
-| `pairing` | `false` | only devices paired with a code may connect (below) |
-| `log_transcripts` | `false` | write what it hears and says to the log (to debug); otherwise only lengths |
-| `confirm_wait` | `120` | seconds to answer «yes» to an action that writes |
+| `name` | `"Jarvis"` | the assistant's name: its wake word, the page's title, what the LLM calls itself *(restarts)* |
+| `language` | — | en, es…: what it speaks and understands (default: the Mac's) *(restarts)* |
+| `llm` | `"claude"` | the LLM: claude, apple, hermes… *(restarts)* |
+| `llm_model` | — | the LLM's model (for Claude: sonnet, opus, haiku…) *(restarts)* |
+| `mcp` | — | .mcp.json with the MCP servers (default: your data folder's) *(restarts)* |
+| `instructions` | — | yours, added to the LLM's (text or a list of lines): who you are, how to talk… |
+| `detail` | `"neutral"` | how much it says: concise, neutral, detailed or one of detail_levels |
+| `detail_levels` | — | more levels, or other texts for these: {"name": "instruction for the prompt"} |
+| `ignore_others` | `true` | the LLM stays quiet when what it hears is clearly not for it |
+| `eyes` | `false` | it may look through the device's camera (Claude, Hermes) |
+| `read_photo` | `true` | a full-resolution photo when asked to read |
+
+**Memory**
+
+| Option | Default | |
+|---|---|---|
+| `memory` | `"off"` | remember across conversations: only when asked (explicit) or also on its own (auto) |
+| `memory_facts` | `50` | facts before the LLM compacts them |
+| `memory_conversations` | `10` | conversation summaries kept |
+| `memory_days` | `30` | days a conversation summary is kept |
+
+**Listening and speaking**
+
+| Option | Default | |
+|---|---|---|
+| `stt` | `"parakeet"` | speech recognition: parakeet, mlx-whisper… *(restarts)* |
+| `stt_model` | — | its model *(restarts)* |
+| `tts` | `"avspeech"` | its voice engine: avspeech, macos… or none *(restarts)* |
+| `voice` | — | the voice (default: the language's); one, or one per language: {"es": "Mónica", "en": "Samantha"} *(restarts)* |
+| `rate` | — | words per minute *(restarts)* |
+| `volume` | `100` | its voice and sounds, 5–100 % |
+| `wake` | `"whisper"` | the wake word engine: whisper, openwakeword… or none *(restarts)* |
+| `wake_word` | — | the word or model (default: its name) *(restarts)* |
+| `threshold` | — | how sure the wake word must be (each engine has its own default) *(restarts)* |
+| `silence` | `0.6` | seconds of silence that end a sentence *(restarts)* |
+| `follow_up` | `20` | seconds it keeps listening without its name after it last spoke or heard you |
+| `echo_guard` | `1.2` | seconds without listening after speaking (its own echo) *(restarts)* |
+| `voice_interrupt` | `true` | «Jarvis, stop» while it speaks |
+| `tap_to_stop` | `true` | tapping the screen stops it talking |
+| `beeps` | `true` | a sound when it wakes up and when it falls asleep |
+| `fillers` | `true` | «One moment, let me check» when a tool is slow |
+
+**Skills**
+
+| Option | Default | |
+|---|---|---|
+| `skills` | `true` | time, date, timers, alarms, reminders, sums, units and volume, without the LLM |
+| `interpreter` | `"auto"` | Apple's local model for skills said in unusual ways (auto: if this Mac has it) |
+| `ring_seconds` | `60` | how long an alarm rings if nobody stops it |
+| `snooze_minutes` | `5` | «snooze» without saying how long |
+
+**The screen**
+
+| Option | Default | |
+|---|---|---|
+| `skin` | `"eyes"` | the screen's look: eyes, orb, minimal, bedside or yours (a device's ?skin= wins) |
+| `skin_options` | — | the skin's options: {"accent": "#ff7a45"} |
+| `skins_dir` | — | your skins (default: skins in your data folder) *(restarts)* |
+| `video` | `"auto"` | camera quality; auto: each device by its memory (a device's ?video= wins) |
+| `show_time` | `true` | the time while asleep |
+| `show_date` | `true` | the date while asleep |
+| `show_hint` | `true` | «Say Hey Jarvis» while asleep |
+| `show_status` | `true` | «Listening», «Thinking…» while awake |
+| `show_heard` | `true` | what you said |
+| `show_answer` | `true` | what it answers |
+| `history` | `2` | earlier sentences kept on screen |
+| `show_timers` | `true` | running timers, alarms and reminders |
+| `show_stats` | `false` | the connection's RTT, jitter and losses |
+| `clock` | `"auto"` | 12 or 24 hours (auto: the language's) |
+
+**Privacy and security**
+
+| Option | Default | |
+|---|---|---|
+| `pairing` | `false` | only devices paired with a code (bin/jarvis pair) may connect *(restarts)* |
+| `confirm_wait` | `120` | seconds to answer «yes» to an action that changes something |
 | `confirm_valid` | `60` | seconds a «yes» stays valid |
+| `log_transcripts` | `false` | write what it hears and says to the log (to debug); otherwise only lengths |
+
+**The server**
+
+| Option | Default | |
+|---|---|---|
+| `host` | `"0.0.0.0"` | the address it listens on *(restarts)* |
+| `port` | `8080` | the port (bin/jarvis reads it too) *(restarts)* |
+| `mode` | `"assistant"` | assistant, transcribe (only shows what it hears) or parrot (repeats it) *(restarts)* |
+| `record` | — | saves everything that arrives to a WAV (to debug) *(restarts)* |
+<!-- /options -->
 
 **How much it says**: `detail` is `concise` (one short sentence), `neutral` (one
 to three; the default) or `detailed` (a paragraph or two). Each level is an
@@ -120,15 +195,7 @@ that explains step by step») does, since its text goes into its instructions:
 Jarvis says what it will save first. If the level changes mid-conversation, the
 LLM hears it with the next question.
 
-**The screen**: `show_time`, `show_date` and `show_hint` («Say Hey Jarvis») while
-asleep; `show_status` («Listening», «Thinking…»), `show_heard` (what you said),
-`show_answer` (its answer) and `history` (earlier sentences kept, 2) while awake;
-`show_stats` (the connection's RTT, jitter and losses; off) and `clock` (`auto`,
-`12`, `24`). **Sounds and behavior**: `beeps` (on waking up and falling asleep),
-`fillers` («One moment, let me check» when a tool is slow), `voice_interrupt`
-(«Jarvis, stop»), `tap_to_stop`, `read_photo` (a full-resolution photo to read).
-**Memory**: `memory_facts` (50, then compacted), `memory_conversations` (10),
-`memory_days` (30). All apply without restarting: the page changes at once.
+The page changes at once when a screen option changes.
 
 A wrong value (`"skin": "smiley"`) stops the server with the reason.
 

@@ -28,6 +28,7 @@ import eyes
 import i18n
 import llm
 import mcp_server
+import options
 import pairing
 import paths
 import settings
@@ -206,77 +207,7 @@ async def on_shutdown(app: web.Application):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--name", default="Jarvis", help="the assistant's name: wake word, page, LLM")
-    parser.add_argument("--instructions", default=None, help="more instructions for the LLM (who you are, how to talk…)")
-    parser.add_argument("--skin", default="eyes", help="the screen's look: a folder of skins/ or skins_dir (?skin= wins)")
-    parser.add_argument("--skin-options", type=json.loads, default=None, help='the skin\'s options: {"accent": "#ff7a45"}')
-    parser.add_argument("--skins-dir", default=None, help="your skins (default: skins.local/)")
-    parser.add_argument("--video", choices=["auto", "normal", "low", "off"], default="auto",
-                        help="camera quality; auto: each device by its memory (?video= wins)")
-    parser.add_argument("--detail", default="neutral",
-                        help="how much it says: concise, neutral, detailed or one of «detail_levels»")
-    parser.add_argument("--detail-levels", type=json.loads, default=None,
-                        help='more levels, or other texts for these: {"name": "instruction for the prompt"}')
-    parser.add_argument("--memory", choices=["off", "explicit", "auto"], default="off",
-                        help="remember across conversations: only when asked (explicit) or also on its own (auto)")
-    parser.add_argument("--eyes", action=argparse.BooleanOptionalAction, default=False,
-                        help="it may look through the device's camera (with Claude)")
-    parser.add_argument("--pairing", action=argparse.BooleanOptionalAction, default=False,
-                        help="only devices paired with a code (bin/jarvis pair) may connect")
-    parser.add_argument("--log-transcripts", action=argparse.BooleanOptionalAction, default=False,
-                        help="write what it hears and says to the log (to debug); off: only lengths")
-    parser.add_argument("--confirm-wait", type=float, default=120, help="seconds to answer «yes» to an action")
-    parser.add_argument("--confirm-valid", type=float, default=60, help="seconds a «yes» stays valid")
-    # The screen
-    parser.add_argument("--show-time", action=argparse.BooleanOptionalAction, default=True, help="the time while asleep")
-    parser.add_argument("--show-date", action=argparse.BooleanOptionalAction, default=True, help="the date while asleep")
-    parser.add_argument("--show-hint", action=argparse.BooleanOptionalAction, default=True, help="«Say Hey Jarvis» while asleep")
-    parser.add_argument("--show-status", action=argparse.BooleanOptionalAction, default=True, help="«Listening», «Thinking…» while awake")
-    parser.add_argument("--show-heard", action=argparse.BooleanOptionalAction, default=True, help="what you said")
-    parser.add_argument("--show-answer", action=argparse.BooleanOptionalAction, default=True, help="what it answers")
-    parser.add_argument("--history", type=int, default=2, help="earlier sentences kept on screen")
-    parser.add_argument("--show-stats", action=argparse.BooleanOptionalAction, default=False, help="the connection's RTT, jitter and losses")
-    parser.add_argument("--clock", choices=["auto", "12", "24"], default="auto", help="12 or 24 hours (auto: the language's)")
-    # Sounds and behavior
-    parser.add_argument("--beeps", action=argparse.BooleanOptionalAction, default=True, help="a beep when it wakes up and when it falls asleep")
-    parser.add_argument("--fillers", action=argparse.BooleanOptionalAction, default=True, help="«One moment, let me check» when a tool is slow")
-    parser.add_argument("--voice-interrupt", action=argparse.BooleanOptionalAction, default=True, help="«Jarvis, stop» while it speaks")
-    parser.add_argument("--tap-to-stop", action=argparse.BooleanOptionalAction, default=True, help="tapping the screen stops it talking")
-    parser.add_argument("--read-photo", action=argparse.BooleanOptionalAction, default=True, help="a full-resolution photo when asked to read")
-    parser.add_argument("--skills", action=argparse.BooleanOptionalAction, default=True,
-                        help="time, date, timers, alarms, reminders, sums, units and volume, without the LLM")
-    parser.add_argument("--interpreter", choices=["auto", "apple", "off"], default="auto",
-                        help="Apple's local model for skills said in unusual ways (auto: if this Mac has it)")
-    parser.add_argument("--volume", type=int, default=100, help="its voice and sounds, 5–100 %")
-    parser.add_argument("--ring-seconds", type=int, default=60, help="how long an alarm rings if nobody stops it")
-    parser.add_argument("--snooze-minutes", type=int, default=5, help="«snooze» without saying how long")
-    parser.add_argument("--show-timers", action=argparse.BooleanOptionalAction, default=True, help="running timers, alarms and reminders on screen")
-    parser.add_argument("--memory-facts", type=int, default=50, help="facts before the LLM compacts them")
-    parser.add_argument("--memory-conversations", type=int, default=10, help="conversation summaries kept")
-    parser.add_argument("--memory-days", type=int, default=30, help="days a conversation summary is kept")
-    parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", type=int, default=8080)
-    parser.add_argument("--lang", dest="language", default=None, help=f"language: {', '.join(i18n.available())} (default: settings.json or the Mac's)")
-    parser.add_argument("--mode", choices=["parrot", "transcribe", "assistant"], default="assistant")
-    parser.add_argument("--stt", default="parakeet", help=f"plugin: {', '.join(stt.available())}")
-    parser.add_argument("--stt-model", default=None)
-    parser.add_argument("--llm", default="claude", help=f"plugin: {', '.join(llm.available())}")
-    parser.add_argument("--llm-model", default=None)
-    parser.add_argument("--mcp", default=None, help=".mcp.json with the MCP servers (default: the project's)")
-    parser.add_argument("--tts", default="avspeech", help=f"voice: {', '.join(tts.available())} or none")
-    parser.add_argument("--voice", default=None, help="the plugin's voice (default: the language's)")
-    parser.add_argument("--rate", type=int, default=None, help="words per minute")
-    parser.add_argument("--echo-guard", type=float, default=1.2, help="seconds without listening after speaking")
-    parser.add_argument("--wake", default="whisper", help=f"wake word: {', '.join(wake.available())} or none")
-    parser.add_argument("--wake-word", default=None, help="the word or model (jarvis, hey_jarvis, alexa…)")
-    parser.add_argument("--threshold", type=float, default=None, help="each wake plugin has its own default")
-    parser.add_argument("--record", default=None, help="saves everything that arrives to a WAV (debugging)")
-    parser.add_argument("--silence", type=float, default=0.6, help="seconds of silence that end a sentence")
-    parser.add_argument("--follow-up", type=float, default=20,
-                        help="seconds it keeps listening without its name after it last spoke or heard you")
-    parser.add_argument("--ignore-others", action=argparse.BooleanOptionalAction, default=True,
-                        help="the LLM stays quiet when what it hears is clearly not for it")
+    parser = options.parser()
     preferences = settings.load()
     if "face" in preferences:  # before skins, «face» chose between the eyes and the orb
         preferences.setdefault("skin", preferences.pop("face"))
@@ -285,15 +216,10 @@ def main():
         print(f"settings.json: unknown key «{key}» (ignored)", file=sys.stderr)
     parser.set_defaults(**{k: v for k, v in preferences.items() if k in known})
     args = parser.parse_args()
-    settings.active = vars(args)  # skins.available() reads skins_dir
-    if args.skin not in skins.available():
-        parser.error(f"skin: «{args.skin}» is not one of {', '.join(skins.available())}")
-    levels = {**llm.DETAIL_LEVELS, **(args.detail_levels or {})}
-    if args.detail not in levels:
-        parser.error(f"detail: «{args.detail}» is not one of {', '.join(levels)}")
-    for action in parser._actions:  # argparse doesn't check defaults, which come from settings.json
-        if action.choices and getattr(args, action.dest) not in action.choices:
-            parser.error(f"{action.dest}: «{getattr(args, action.dest)}» is not one of {', '.join(action.choices)}")
+    settings.active = vars(args)  # the skins' list reads skins_dir
+    problems = options.check(vars(args))
+    if problems:
+        parser.error("; ".join(problems))
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     logging.getLogger("aioice").setLevel(logging.WARNING)
@@ -315,11 +241,11 @@ def main():
         engine.warm_up()
         wake_factory = None
         if args.wake != "none":
-            options = {"word": args.wake_word}
+            wake_options = {"word": args.wake_word}
             if args.threshold is not None:
-                options["threshold"] = args.threshold
-            logging.info("wake word: %s", wake.create(args.wake, **options).phrase)
-            wake_factory = lambda: wake.create(args.wake, **options)  # noqa: E731
+                wake_options["threshold"] = args.threshold
+            logging.info("wake word: %s", wake.create(args.wake, **wake_options).phrase)
+            wake_factory = lambda: wake.create(args.wake, **wake_options)  # noqa: E731
         if args.mode == "assistant":
             model = llm.create(args.llm, model=args.llm_model, mcp=args.mcp)
             logging.info("LLM: %s (%s)", model.name, model.model)

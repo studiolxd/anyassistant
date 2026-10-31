@@ -89,3 +89,29 @@ def test_transcripts_stay_out_of_the_log_unless_asked(active):
     assert settings.private("my bank password is 1234") == "[24 characters]"
     active["log_transcripts"] = True
     assert settings.private("hello") == "hello"
+
+
+def test_the_readme_lists_every_option():
+    import options
+    from conftest import ROOT
+
+    readme = (ROOT / "README.md").read_text()
+    table = readme[readme.index("<!-- options:"):readme.index("<!-- /options -->")]
+    assert options.markdown() in table, "run: python server/options.py markdown"
+
+
+def test_options_check():
+    import options
+
+    assert options.check({"skin": "eyes", "memory": "auto", "detail": "concise"}) == []
+    problems = options.check({"skin": "smiley", "memory": "sometimes", "detail": "verbose"})
+    assert len(problems) == 3 and any("smiley" in p for p in problems)
+
+
+def test_the_command_line_has_every_option():
+    import options
+
+    args = options.parser().parse_args(["--lang", "es", "--no-beeps", "--volume", "70", "--voice", "Mónica",
+                                        "--detail-levels", '{"x": "Be short."}'])
+    assert (args.language, args.beeps, args.volume, args.voice) == ("es", False, 70, "Mónica")
+    assert args.detail_levels == {"x": "Be short."}
