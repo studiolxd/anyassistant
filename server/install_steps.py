@@ -188,6 +188,8 @@ def service(value):
         raise Skip("only for an installed copy (install.sh); while developing, bin/anyassistant start")
     if not ours():
         raise Skip("another copy of AnyAssistant starts with the Mac: left as it is")
+    if value and os.path.isdir("/Applications/AnyAssistant.app"):
+        raise Skip("the AnyAssistant app starts it (open it at login: its menu)")
     domain = f"gui/{os.getuid()}"
     _launchctl("bootout", f"{domain}/{LABEL}", check=False)
     for _ in range(30):  # bootout returns before it is fully unloaded

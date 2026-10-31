@@ -26,6 +26,12 @@ LABEL="com.anyassistant.server"
 AGENT="$HOME/Library/LaunchAgents/$LABEL.plist"
 DOMAIN="gui/$(id -u)"
 # launchd starts this copy (and not another: the development one, a second install).
+# Or the AnyAssistant app runs it (its own process): then the app's menu starts and stops it.
+by_app() {
+  [ -f "$PID" ] || return 1
+  parent=$(ps -o ppid= -p "$(cat "$PID")" 2>/dev/null | tr -d ' ')
+  [ -n "$parent" ] && ps -o command= -p "$parent" 2>/dev/null | grep -q "AnyAssistant.app/Contents/MacOS/AnyAssistant"
+}
 SERVICE=0
 if [ -f "$AGENT" ] && grep -q "<string>$ROOT/bin/anyassistant</string>" "$AGENT"; then SERVICE=1; fi
 CACHE="${ANYASSISTANT_CACHE:-${ANYASSISTANT_HOME:-$ROOT}/.build}"  # as server/paths.py
@@ -100,6 +106,7 @@ case "$1" in
     ;;
   start)
     shift
+    if by_app; then echo "The AnyAssistant app runs it: it is already running (its menu: Restart, Stop)."; exit 0; fi
     if alive; then echo "AnyAssistant is already running (PID $(cat "$PID"))."; exit 0; fi
     if [ $SERVICE = 1 ] && [ $# -eq 0 ]; then  # installed with launchd: it starts it
       launchctl bootstrap "$DOMAIN" "$AGENT" 2>/dev/null || launchctl kickstart "$DOMAIN/$LABEL"
@@ -123,6 +130,7 @@ case "$1" in
     echo " · taking longer than usual; see $LOG"
     ;;
   stop)
+    if by_app; then echo "The AnyAssistant app runs it: stop it from its menu (or quit the app)."; exit 1; fi
     if [ $SERVICE = 1 ]; then  # installed with launchd: so it doesn't bring it back
       launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null && { rm -f "$PID"; echo "AnyAssistant stopped."; exit 0; }
     fi
