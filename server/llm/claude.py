@@ -45,10 +45,28 @@ class Claude(LLM):
         EMPTY.mkdir(parents=True, exist_ok=True)
         self._load_permissions()
         self._process = None
+        # A spare process, already started: starting one (MCP servers, login…) takes
+        # 1–1.5 s, which «Hey Jarvis, what time is it?» in one go would wait for.
+        self._spare = None
+        self._spare_for = None  # the arguments it was started with
         self._turn = asyncio.Lock()
 
+    def _arguments(self) -> tuple:
+        return (self.model, self._instructions, *self._permissions.arguments)
+
     async def _start(self):
-        self._process = await asyncio.create_subprocess_exec(
+        """The conversation's process: the spare if it is still valid, and another spare."""
+        spare, self._spare = self._spare, None
+        if spare and spare.returncode is None and self._spare_for == self._arguments():
+            self._process = spare
+        else:
+            await self._kill(spare)
+            self._process = await self._spawn()
+        self._spare = await self._spawn()
+        self._spare_for = self._arguments()
+
+    async def _spawn(self):
+        process = await asyncio.create_subprocess_exec(
             "claude", "-p",
             "--input-format", "stream-json",
             "--output-format", "stream-json",
@@ -63,23 +81,30 @@ class Claude(LLM):
             stderr=asyncio.subprocess.PIPE,
             limit=1 << 20,  # some stream-json lines exceed the default 64 KB
         )
-        asyncio.ensure_future(self._errors(self._process))
+        asyncio.ensure_future(self._errors(process))
+        return process
 
     async def _errors(self, process):
         async for line in process.stderr:
             log.warning("claude: %s", line.decode().rstrip())
 
-    async def _stop(self):
-        if self._process and self._process.returncode is None:
-            self._process.stdin.close()
+    @staticmethod
+    async def _kill(process):
+        if process and process.returncode is None:
+            process.stdin.close()
             try:
-                await asyncio.wait_for(self._process.wait(), 2)
+                await asyncio.wait_for(process.wait(), 2)
             except asyncio.TimeoutError:
-                self._process.kill()
+                process.kill()
+
+    async def _stop(self):
+        await self._kill(self._process)
         self._process = None
 
     async def close(self):
         await self._stop()
+        await self._kill(self._spare)
+        self._spare = None
 
     def _load_permissions(self):
         """Reads .mcp.json and permissions.json: on every conversation, to pick up changes."""
