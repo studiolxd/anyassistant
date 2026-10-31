@@ -44,3 +44,43 @@ def test_no_eyes_no_read(project, monkeypatch):
     (project / "permissions.json").write_text(json.dumps({"commands": {}}))
     args = load(project, project / ".mcp.json").arguments
     assert args[args.index("--tools") + 1] == ""
+
+
+def test_read_words(lang):
+    yes, no = {"en": ("Read this", "What do you see?"), "es": ("¿Qué pone aquí?", "¿Qué ves?")}[lang.code]
+    assert eyes.wants_to_read(yes) and not eyes.wants_to_read(no)
+
+
+def test_photo_from_the_device(seeing, monkeypatch):
+    import asyncio
+    import io
+
+    from PIL import Image
+
+    big = io.BytesIO()
+    Image.new("RGB", (4000, 3000), "white").save(big, "JPEG")
+
+    def ask(message):
+        asyncio.get_running_loop().call_later(0.05, eyes.photo_arrived, message["id"], big.getvalue())
+        return True
+
+    monkeypatch.setattr(eyes, "ask_device", ask)
+    image = asyncio.run(eyes.photo())
+    assert Image.open(io.BytesIO(image)).size == (1568, 1176)  # resized for the LLM
+    assert eyes.FRAME.read_bytes() == image
+
+
+def test_no_photo_in_time(seeing, monkeypatch):
+    import asyncio
+
+    monkeypatch.setattr(eyes, "PHOTO_WAIT", 0.1)
+    monkeypatch.setattr(eyes, "ask_device", lambda message: True)
+    assert asyncio.run(eyes.photo()) is None
+
+
+def test_hermes_gets_the_image():
+    from llm.hermes import Hermes
+
+    content = Hermes._content("What's this?", b"jpeg")
+    assert content[1]["image_url"]["url"].startswith("data:image/jpeg;base64,")
+    assert Hermes._content("Hi", None) == "Hi"

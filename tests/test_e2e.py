@@ -73,10 +73,11 @@ def server(tmp_path):
             process.kill()
 
 
-async def talk(url, pcm, until, timeout=60, image=None):
+async def talk(url, pcm, until, timeout=60, image=None, photo=None):
     """Plays `pcm` as the phone's microphone; returns (messages, sound that came back).
 
-    With `image` (a PIL image), the phone's camera shows it.
+    With `image` (a PIL image), the phone's camera shows it; with `photo` (JPEG bytes),
+    that is the full-resolution photo it takes when asked to.
 
     Waits until until(messages) is true (or the timeout) after the audio ends.
     """
@@ -123,7 +124,16 @@ async def talk(url, pcm, until, timeout=60, image=None):
         pc.addTrack(Camera())
     channel = pc.createDataChannel("control")
     messages, loudest = [], []
-    channel.on("message", lambda m: messages.append(json.loads(m)))
+    def on_message(m):
+        messages.append(json.loads(m))
+        if messages[-1].get("type") == "photo" and photo:
+            asyncio.ensure_future(send_photo(messages[-1]["id"]))
+
+    async def send_photo(number):
+        async with aiohttp.ClientSession() as http:
+            await http.post(f"{url}/photo?id={number}", data=photo)
+
+    channel.on("message", on_message)
 
     @pc.on("track")
     def on_track(track):
@@ -346,3 +356,23 @@ def test_its_own_tools_with_claude(server, tmp_path):
     assert json.loads((tmp_path / "settings.json").read_text())["face"] == "orb"
     assert {"type": "config"} in messages  # the page changed its face at once
     assert camera(messages) == [{"type": "camera", "on": True}]
+
+
+@pytest.mark.skipif(not shutil.which("claude"), reason="needs Claude Code signed in")
+def test_reads_with_a_full_resolution_photo(server, tmp_path):
+    """Small print can't be read in a 320×240 video: asked to read, it takes a photo."""
+    import io
+
+    from PIL import Image, ImageDraw, ImageFont
+
+    page = Image.new("RGB", (1600, 1200), "white")
+    ImageDraw.Draw(page).text((500, 560), "CODE 7351", fill="black", font=ImageFont.load_default(size=22))
+    jpeg = io.BytesIO()
+    page.save(jpeg, "JPEG", quality=90)
+    (tmp_path / "settings.json").write_text(json.dumps({"eyes": True}))
+    url = server("--mode", "assistant", "--lang", "en", "--wake", "none", "--llm", "claude", "--tts", "none")
+    messages, _ = asyncio.run(talk(url, speech(tmp_path, "Read the code on this paper.", "Samantha"),
+                                   until=lambda m: final_texts(m, "assistant"), timeout=60,
+                                   image=page.resize((320, 240)), photo=jpeg.getvalue()))
+    assert any(m.get("type") == "photo" for m in messages)
+    assert "7351" in final_texts(messages, "assistant")[0].replace(" ", "")

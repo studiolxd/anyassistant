@@ -2,8 +2,6 @@
 
 ## Next
 
-- [ ] **Eyes, second step**: a high-resolution photo when asked to read (the video
-  is 320×240 on small devices); with Hermes too if its model takes images.
 - [ ] **The server as a packaged app** (the Mac first): install, start with the
   system, settings and pairing from its own window. What launchd would have done
   belongs to its installer.
@@ -21,6 +19,8 @@
 
 ## Done
 
+- [x] **Eyes, second step**: a full-resolution photo to read (1200×1600 on the tablet);
+  Hermes sees too (asked with «look», «read»…).
 - [x] **Memory, more**: compacted by the LLM beyond 50 facts; reviewed by Apple's model
   too (it misses some new facts; Claude doesn't); corrections update the fact.
 - [x] **Choosing the LLM**: `get_llms`/`set_llm` and «use Claude» / «cambia a Hermes».

@@ -423,7 +423,8 @@ and `--llm my-llm [--llm-model …]`.
 
 ## Eyes (Phase 4)
 
-With `"eyes": true` and Claude, Jarvis sees through the device's camera:
+With `"eyes": true`, Jarvis sees through the device's camera (with Claude, or
+Hermes when asked with those words):
 
 - A question with words like «see», «look», «read» («¿qué ves?», «léeme esto»;
   locale `commands.look`) carries the camera's image at that moment (~1.5 s).
@@ -431,10 +432,15 @@ With `"eyes": true` and Claude, Jarvis sees through the device's camera:
   moment of the question with its Read tool (~4 s), and only that file:
   `.build/eyes/now.jpg`. Any other file is denied.
 
-The face opens its eyes wide while it looks («looking»). Nothing leaves the Mac
-unless it looks, and only the latest image is kept. To read small text, the
-camera's `video` quality matters: `low` (320×240, the default on devices with
-≤ 1 GB of RAM) is enough to see, not always to read.
+- To **read** («read this», «¿qué pone aquí?»; locale `commands.read`) the video is
+  too small on some devices, so the device takes a **full-resolution photo**
+  (ImageCapture at its maximum size; or the camera at its largest for a moment;
+  or, at worst, a video frame), resized to 1568 px for the LLM. The tablet: a
+  1200×1600 photo instead of 240×320 video. If it doesn't arrive in 4 s, the
+  video frame is used.
+
+While it looks the screen shows the photo with a scanning sweep. Nothing leaves
+the Mac unless it looks, and only the latest image is kept.
 
 ## Voice (TTS)
 

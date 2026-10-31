@@ -308,7 +308,10 @@ class Assistant(Transcriber):
             number = self.number
             message = {"type": "text", "author": "assistant", "id": number}
             image = eyes.capture()  # also for Claude's Read tool, if it decides to look
-            look = image if image and eyes.wants_to_look(text) else None
+            if image and eyes.wants_to_read(text):  # small text: a full-resolution photo
+                self._state("looking")
+                image = await eyes.photo() or image
+            look = image if image and (eyes.wants_to_look(text) or eyes.wants_to_read(text)) else None
             self.llm.on_tool = lambda name: self._looked() if name == "Read" and image else None
             if look:
                 self._looked()

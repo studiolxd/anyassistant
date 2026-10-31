@@ -12,6 +12,7 @@ Each conversation is a Hermes session (X-Hermes-Session-Id header).
 """
 
 import asyncio
+import base64
 import json
 import logging
 import os
@@ -69,7 +70,7 @@ class Hermes(LLM):
         if self._http and not self._http.closed:
             await self._http.close()
 
-    async def answer(self, text: str, image: bytes | None = None):  # it can't see: no image
+    async def answer(self, text: str, image: bytes | None = None):
         import aiohttp
 
         async with self._turn:
@@ -79,7 +80,7 @@ class Hermes(LLM):
             body = {
                 "model": self.model, "stream": True,
                 "messages": [{"role": "system", "content": instructions()},
-                             {"role": "user", "content": text}],
+                             {"role": "user", "content": self._content(text, image)}],
             }
             said = False
             try:
@@ -118,6 +119,14 @@ class Hermes(LLM):
                         event = None
             except aiohttp.ClientConnectorError:
                 yield i18n.L("speech.hermes_down")
+
+    @staticmethod
+    def _content(text: str, image: bytes | None):
+        """The message, with the camera's image if it looked (OpenAI's format, which Hermes takes)."""
+        if not image:
+            return text
+        url = "data:image/jpeg;base64," + base64.b64encode(image).decode()
+        return [{"type": "text", "text": text}, {"type": "image_url", "image_url": {"url": url}}]
 
     def _approval(self, data: dict) -> str:
         """Records the approval as pending, waits for your «yes» in the background, returns the question."""

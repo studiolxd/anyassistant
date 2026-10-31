@@ -101,6 +101,14 @@ async def eyes_image(request: web.Request) -> web.StreamResponse:
     return web.FileResponse(eyes.FRAME)
 
 
+async def photo(request: web.Request) -> web.Response:
+    """The full-resolution photo the device took when asked to (eyes.photo)."""
+    if not is_allowed(request):
+        return not_paired()
+    eyes.photo_arrived(int(request.query.get("id", 0)), await request.read(), request.query.get("how", "?"))
+    return web.Response(status=204)
+
+
 async def config(request: web.Request) -> web.Response:
     """What the page needs: its texts in the active language (locale «ui») and the settings."""
     return web.json_response({
@@ -261,7 +269,8 @@ def main():
 
     eyes.source = lambda: (session := current_session()) and session.jpeg()
     tools.session = current_session
-    app = web.Application(middlewares=[no_cache])
+    eyes.ask_device = lambda message: bool((session := current_session()) and session.send(message) is None)
+    app = web.Application(middlewares=[no_cache], client_max_size=20 * 1024 * 1024)  # photos
     app.router.add_get("/", index)
     app.router.add_get("/monitor", monitor)
     app.router.add_post("/offer", offer)
@@ -269,6 +278,7 @@ def main():
     app.router.add_get("/status", status)
     app.router.add_get("/config", config)
     app.router.add_get("/eyes.jpg", eyes_image)
+    app.router.add_post("/photo", photo)
     app.router.add_route("*", "/mcp", mcp_server.endpoint)
     app.router.add_post("/pairing", new_pairing_code)
     app.router.add_post("/pair", pair)

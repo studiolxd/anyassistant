@@ -225,6 +225,7 @@ function message(m) {
   else if (m.type === 'config') loadTexts();  // the settings changed
   else if (m.type === 'look') showPhoto(m.at);
   else if (m.type === 'camera') showCamera(m.on);
+  else if (m.type === 'photo') takePhoto(m.id);
 }
 
 // «Turn on the camera»: what this device's camera sees, live, like a mirror (the same
@@ -240,6 +241,58 @@ function showCamera(on) {
     camera.hidden = true;
     camera.srcObject = null;
   }
+}
+
+// «Read this»: a photo at the camera's full resolution (the video may be 320×240).
+// ImageCapture where it works; else the camera at its largest size for a moment
+// (then back); else a frame of the video as it is. ?how= tells the server which.
+function takePhoto(id) {
+  var track = media && media.getVideoTracks()[0];
+  if (!track) return;
+  var send = function (how) {
+    return function (blob) { fetch('/photo?id=' + id + '&how=' + how, { method: 'POST', body: blob }); };
+  };
+  if (!('ImageCapture' in window)) return largest(track, send);
+  var camera = new ImageCapture(track);
+  var video = track.getSettings().width || 0;
+  camera.getPhotoCapabilities().then(function (can) {
+    // Without asking for a size, some devices take it at the video's (240×320).
+    return camera.takePhoto({ imageWidth: can.imageWidth.max, imageHeight: can.imageHeight.max });
+  }).then(function (blob) {
+    return createImageBitmap(blob).then(function (bitmap) {
+      if (Math.max(bitmap.width, bitmap.height) > Math.max(video, 640)) send('photo')(blob);
+      else largest(track, send);  // no bigger than the video: try the other way
+    });
+  }).catch(function () { largest(track, send); });
+}
+
+function largest(track, send) {
+  var can = track.getCapabilities && track.applyConstraints ? track.getCapabilities() : {};
+  if (!can.width || !can.width.max) return videoFrame(track, send('video'));
+  var before = track.getConstraints();
+  track.applyConstraints({ width: can.width.max, height: can.height.max }).then(function () {
+    setTimeout(function () {  // the camera needs a moment to switch
+      videoFrame(track, function (blob) {
+        track.applyConstraints(before).catch(function () {});
+        send('largest')(blob);
+      });
+    }, 800);
+  }).catch(function () { videoFrame(track, send('video')); });
+}
+
+function videoFrame(track, send) {
+  var video = document.createElement('video');
+  video.muted = true;
+  video.srcObject = new MediaStream([track]);
+  video.onplaying = function () {
+    var canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    video.srcObject = null;
+    canvas.toBlob(send, 'image/jpeg', 0.92);
+  };
+  video.play();
 }
 
 // What it looks at through the camera, with a scanning sweep while it thinks about it;

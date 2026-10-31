@@ -6,8 +6,17 @@ Two ways, so it only looks when needed:
 - For the rest («is my tie straight?»), Claude may open FRAME, the image at the
   moment of the question, with its Read tool: only that file (llm/permissions.py).
 
+To read («read this», «what does it say?»; locale commands.read) the video is
+too small on some devices (320×240): the device takes a full-resolution photo
+instead (photo()), and the video frame is used only if it doesn't arrive in time.
+
 Nothing leaves the Mac unless it looks; only the latest image is kept, in .build/eyes.
 """
+
+import asyncio
+import io
+import itertools
+import logging
 
 from pathlib import Path
 
@@ -15,6 +24,7 @@ import i18n
 import settings
 from text import words
 
+log = logging.getLogger("eyes")
 FRAME = Path(__file__).resolve().parent.parent / ".build" / "eyes" / "now.jpg"
 INSTRUCTIONS = """
 You can see through the camera of the device the user talks to. When a question
@@ -24,6 +34,11 @@ of the question. Describe only what matters, briefly, for speech. If there is no
 image or no file, the camera isn't available: say so."""
 
 source = lambda: None  # noqa: E731 — the current device's camera as JPEG; set by main.py
+ask_device = lambda message: False  # noqa: E731 — sends to the device; set by main.py
+PHOTO_WAIT = 4  # seconds for the device's photo
+PHOTO_SIDE = 1568  # longest side sent to the LLM (more only costs time)
+_waiting: dict[int, asyncio.Future] = {}
+_ids = itertools.count(1)
 
 
 def enabled() -> bool:
@@ -32,6 +47,53 @@ def enabled() -> bool:
 
 def wants_to_look(text: str) -> bool:
     return bool(set(words(text)) & set(i18n.L.list("commands.look")))
+
+
+def wants_to_read(text: str) -> bool:
+    return bool(set(words(text)) & set(i18n.L.list("commands.read")))
+
+
+async def photo() -> bytes | None:
+    """A full-resolution photo from the device, resized for the LLM; None if it doesn't come."""
+    if not enabled():
+        return None
+    number = next(_ids)
+    future = _waiting[number] = asyncio.get_running_loop().create_future()
+    try:
+        if not ask_device({"type": "photo", "id": number}):
+            return None
+        image = await asyncio.wait_for(future, PHOTO_WAIT)
+    except asyncio.TimeoutError:
+        return None
+    finally:
+        _waiting.pop(number, None)
+    image = _resize(image)
+    FRAME.parent.mkdir(parents=True, exist_ok=True)
+    FRAME.write_bytes(image)
+    return image
+
+
+def photo_arrived(number: int, image: bytes, how: str = "?"):
+    from PIL import Image
+
+    try:
+        size = "%d×%d" % Image.open(io.BytesIO(image)).size
+    except Exception:
+        size = "unreadable"
+    log.info("photo from the device: %s (%s, %d KB)", size, how, len(image) // 1024)
+    future = _waiting.get(number)
+    if future and not future.done():
+        future.set_result(image)
+
+
+def _resize(image: bytes) -> bytes:
+    from PIL import Image, ImageOps
+
+    picture = ImageOps.exif_transpose(Image.open(io.BytesIO(image))).convert("RGB")
+    picture.thumbnail((PHOTO_SIDE, PHOTO_SIDE))
+    out = io.BytesIO()
+    picture.save(out, format="JPEG", quality=85)
+    return out.getvalue()
 
 
 def capture() -> bytes | None:
