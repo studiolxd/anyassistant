@@ -13,6 +13,19 @@
   de git, o la copia de la app); el paso de registro de la voz (`@installer.device`)
   cuando exista ese plugin.
 
+## Varios dispositivos, lo siguiente
+
+- [ ] **Saber desde dónde le hablas**: el LLM no sabe por qué dispositivo ni en qué
+  habitación está la conversación. Con eso, «aquí» tiene sentido («enciende la luz de
+  aquí», «¿qué temporizadores hay aquí?») y los mensajes dicen solos desde dónde vienen.
+- [ ] **Una conversación por dispositivo**: hoy, una a la vez (el LLM es uno: un proceso
+  de Claude); si hablan dos personas en dos habitaciones, la segunda corta la primera.
+  Un LLM por conversación, con su coste.
+- [ ] **El menú de la app con varios**: dice «hay un dispositivo conectado»; cuántos y
+  cuáles.
+- [ ] **Afinar quién contesta**: el margen (1,5 s) y la comparación por volumen, con más
+  uso real (el log dice `heard it louder` / `not woken`).
+
 ## Skins
 
 - [ ] **Un mejor comprobador de skins**: hoy `skin check` comprueba en concreto el
@@ -66,7 +79,8 @@
 
 ## Hecho
 
-- [x] **Varios dispositivos a la vez** (`hub.py`, `devices`): contesta el que te oyó y, si
+- [x] **Varios dispositivos a la vez** (1 nov, probado con el iPad y la tablet) (`hub.py`,
+  `devices`): contesta el que te oyó y, si
   te oyen dos, el que lo oyó más fuerte; una conversación a la vez; cada uno con nombre y
   habitación (por voz o en la ventana «Dispositivos» de la app). Alarmas, temporizadores y
   recordatorios suenan donde se pusieron (`alarm_rings`) o en todos, «… en la cocina» por
@@ -74,7 +88,11 @@
   («dile a la cocina que bajo ya», `tell_device`): se dicen allí, sin tono.
 - [x] **HTTPS en local** (`https`): una autoridad propia que cada dispositivo instala una
   vez (`/https/ca.crt`, el QR de la app); la página en https://anyassistant.local, sin
-  puerto (443) y sin el flag de Chrome; http://anyassistant.local (80) lleva a ella.
+  puerto (443) y sin el flag de Chrome; http://anyassistant.local (80) lleva a ella, y la
+  página por HTTP desde otro dispositivo (la tablet por su IP) también. Los permisos de
+  micrófono y cámara se piden antes de la pantalla completa (en ella, Safari del iPad no
+  los muestra).
+- [x] **Los ajustes de la app, traducidos también en sus opciones** (`choices.<opción>`).
 - [x] **Cada plugin trae sus propios textos** (31 oct): su nombre, descripción,
   opciones, pasos del instalador, lo que dice y sus palabras, en su `locales/`; el
   núcleo se queda solo con los suyos y lo compartido. Un test comprueba que el español
