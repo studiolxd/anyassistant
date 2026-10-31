@@ -61,16 +61,25 @@ body[data-look="awake"] .pulse { transform: scale(calc(1 + var(--voice, 0) * 0.1
 
 /* ===================== The orb ===================== */
 
-.orb { position: relative; width: 40vmin; height: 40vmin; margin: 3vmin; }
+/* One flat colour per state (--tone): the sphere, its spinning ring and its waves. */
+.orb { --tone: var(--green); position: relative; width: 40vmin; height: 40vmin; margin: 3vmin; }
+body[data-look="hearing"] .orb { --tone: #7ff0c2; }
+body[data-look="thinking"] .orb { --tone: var(--amber); }
+body[data-look="looking"] .orb { --tone: #cfd8dc; }
+body[data-look="speaking"] .orb { --tone: var(--blue); }
+body[data-look="question"] .orb { --tone: var(--violet); }
+body[data-look="alarm"] .orb { --tone: #ff7a45; }
+body[data-look="error"] .orb { --tone: var(--red); }
+
 .core, .wave, .ring { position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 50%; }
-.core { background: radial-gradient(circle at 38% 32%, #b6f7df, var(--green) 45%, #13604a 100%); transition: opacity 0.4s; }
-.wave { border: 0.6vmin solid var(--blue); opacity: 0; }
+.core { background: var(--tone); transition: opacity 0.4s, background 0.4s; }
+.wave { border: 0.6vmin solid var(--tone); opacity: 0; }
 .ring {
   display: none;
   top: -3vmin; right: -3vmin; bottom: -3vmin; left: -3vmin;
   border: 0.8vmin solid transparent;
-  border-top-color: var(--amber);
-  border-right-color: var(--amber);
+  border-top-color: var(--tone);
+  border-right-color: var(--tone);
   animation: spin 1.1s linear infinite;
 }
 .orb .question-mark { top: 50%; left: 50%; margin: -8vmin 0 0 -3.5vmin; color: #fff; }
@@ -79,17 +88,8 @@ body[data-look="awake"] .pulse { transform: scale(calc(1 + var(--voice, 0) * 0.1
 body[data-look="speaking"] .pulse { transform: scale(calc(1 + var(--speech, 0) * 0.2)); }
 body[data-look="asleep"] .orb { transform: scale(0.55); }
 body[data-look="asleep"] .core { animation: breathe 5s ease-in-out infinite; }
-body[data-look="hearing"] .core { background: radial-gradient(circle at 38% 32%, #d8fff0, #7ff0c2 45%, #1f8a66 100%); }
-body[data-look="thinking"] .core { background: radial-gradient(circle at 38% 32%, #fbe6b0, #e0b54a 45%, #6b4f12 100%); }
-body[data-look="thinking"] .ring { display: block; }
-body[data-look="looking"] .core { background: radial-gradient(circle at 38% 32%, #ffffff, #cfd8dc 45%, #455a64 100%); }
+body[data-look="thinking"] .ring,
 body[data-look="looking"] .ring { display: block; }
-body[data-look="alarm"] .core {
-  background: radial-gradient(circle at 38% 32%, #ffe0d0, #ff7a45 45%, #7a2a0c 100%);
-  animation: ring 0.6s ease-in-out infinite;
-}
-body[data-look="speaking"] .core { background: radial-gradient(circle at 38% 32%, #d4f3ff, #5bc6e8 45%, #155c78 100%); }
+body[data-look="alarm"] .core { animation: ring 0.6s ease-in-out infinite; }
 body[data-look="speaking"] .wave { animation: wave 1.6s ease-out infinite; }
 body[data-look="speaking"] .wave.second { animation-delay: 0.8s; }
-body[data-look="question"] .core { background: radial-gradient(circle at 38% 32%, #e6dcff, #a98cf0 45%, #43307a 100%); }
-body[data-look="error"] .core { background: radial-gradient(circle at 38% 32%, #ffd0d0, #e05555 45%, #6b1616 100%); }
