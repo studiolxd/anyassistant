@@ -9,6 +9,7 @@
 #   --data <folder> --cache <folder>   your data and what can be rebuilt
 #   --set key=value                an answer given in advance (e.g. --set llm=apple)
 #   --no-setup                     only the program and its Python (the app asks the questions)
+#   --force                        install even an older version than the installed one
 #   --update                       only the program, its packages, bridges and models, then
 #                                  restart (what bin/anyassistant update runs)
 #
@@ -25,6 +26,7 @@ SETUP=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-setup) SETUP=0; shift ;;
+    --force) FORCE=1; shift ;;
     --update) UPDATE=1; shift ;;
     --to) TO="$2"; shift 2 ;;
     --data) DATA="$2"; shift 2 ;;
@@ -58,6 +60,14 @@ if [ -d "$SOURCE/.git" ]; then
   echo "$(git -C "$SOURCE" rev-list --count HEAD)-$(git -C "$SOURCE" rev-parse --short HEAD)" > "$FRESH/VERSION"
 else
   (cd "$SOURCE" && tar -cf - --exclude .venv --exclude .build --exclude install.env .) | tar -x -C "$FRESH"
+fi
+# Never back to an older version (an app bringing an old copy, another checkout) unless --force.
+number() { [ -f "$1" ] && cut -d- -f1 "$1" | tr -dc '0-9' || echo 0; }
+NEW=$(number "$FRESH/VERSION"); OLD=$(number "$TO/VERSION")
+if [ "${FORCE:-0}" != 1 ] && [ -n "$NEW" ] && [ -n "$OLD" ] && [ "$NEW" -lt "$OLD" ] 2>/dev/null; then
+  say "The installed version ($(cat "$TO/VERSION")) is newer than this one ($(cat "$FRESH/VERSION")): left as it is (--force to install it anyway)."
+  rm -rf "$FRESH"
+  exit 0
 fi
 # What a new version removed goes too; its Python, its place and its bridges stay.
 rsync -a --delete --exclude .venv --exclude install.env --exclude native "$FRESH/" "$TO/"
