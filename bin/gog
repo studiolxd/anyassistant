@@ -15,8 +15,10 @@ import json
 import os
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ME = os.path.join(ROOT, "bin", "gog")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "server"))
+import paths  # noqa: E402 — where your permissions and Google's token are
+
+ME = str(paths.BIN / "gog")
 
 READ = [
     "gmail.search", "gmail.get", "gmail.labels.list",
@@ -50,7 +52,7 @@ for that reason, ask them and, if they say yes, repeat exactly the same call."""
 
 def policy():
     try:
-        with open(os.path.join(ROOT, "permissions.json")) as f:
+        with open(paths.PERMISSIONS) as f:
             commands = json.load(f).get("commands", {})
     except (OSError, ValueError):
         return "read"
@@ -87,7 +89,7 @@ def main():
     command = next((a for a in args if not a.startswith("-")), "")
     if command in NEVER:
         sys.exit(f"bin/gog doesn't allow «{command}»")
-    os.environ["GOG_HOME"] = os.path.join(ROOT, ".gog")
+    os.environ["GOG_HOME"] = str(paths.GOG)
     os.execvp("gog", ["gog", *options(pol), *args])
 
 

@@ -21,11 +21,12 @@ import logging
 from pathlib import Path
 
 import i18n
+import paths
 import settings
 from text import words
 
 log = logging.getLogger("eyes")
-FRAME = Path(__file__).resolve().parent.parent / ".build" / "eyes" / "now.jpg"
+FRAME = paths.EYES / "now.jpg"
 INSTRUCTIONS = """
 You can see through the camera of the device the user talks to. When a question
 comes with an image, that is what the camera sees right now. If one needs sight and

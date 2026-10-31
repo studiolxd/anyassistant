@@ -8,7 +8,7 @@ import time
 import pytest
 
 from brain import assistant
-from conftest import load_script
+from conftest import ROOT, load_script
 
 hook = load_script("jarvis-confirm")
 
@@ -31,7 +31,7 @@ def test_writing_is_described():
 
 def call(project, tool, tool_input):
     data = json.dumps({"tool_name": tool, "tool_input": tool_input})
-    return subprocess.run([sys.executable, project / "bin" / "jarvis-confirm"], input=data,
+    return subprocess.run([sys.executable, ROOT / "bin" / "jarvis-confirm"], input=data,
                           capture_output=True, text=True)
 
 
@@ -64,7 +64,9 @@ class Fake:
 
 @pytest.fixture
 def confirm(tmp_path, monkeypatch, en):
-    monkeypatch.setattr(assistant, "CONFIRM", tmp_path)
+    import paths
+
+    monkeypatch.setattr(paths, "CONFIRM", tmp_path)
 
     def pending(**extra):
         (tmp_path / "pending.json").write_text(json.dumps({"signature": "abc", "action": "x", **extra}))

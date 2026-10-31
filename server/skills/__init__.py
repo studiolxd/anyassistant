@@ -13,6 +13,7 @@ import logging
 import time
 
 import i18n
+import paths
 import settings
 from skills import timers
 from skills.calc import calculate, spoken
@@ -146,11 +147,9 @@ async def ring_on_mac(item: dict):
     """No device connected: it rings on the Mac (afplay and say)."""
     import asyncio
     import wave
-    from pathlib import Path
-
     from audio import RATE, alarm_tone
 
-    path = Path(__file__).resolve().parents[2] / ".build" / "alarm.wav"
+    path = paths.CACHE / "alarm.wav"
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         with wave.open(str(path), "wb") as f:

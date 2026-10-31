@@ -29,6 +29,7 @@ import i18n
 import llm
 import mcp_server
 import pairing
+import paths
 import settings
 import skills
 import skins
@@ -41,7 +42,7 @@ from brain import assistant, transcriber
 from brain.parrot import Parrot
 from transport import Session
 
-WEB = Path(__file__).resolve().parent.parent / "web"
+WEB = paths.WEB
 sessions: dict[str, Session] = {}
 brain_factory = Parrot  # set by main() according to --mode
 close_on_exit = []  # coroutines to await when stopping (plugin processes)

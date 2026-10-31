@@ -4,9 +4,11 @@ import logging
 import subprocess
 from pathlib import Path
 
+import paths
+
 log = logging.getLogger("swift")
 
-BUILD = Path(__file__).resolve().parent.parent / ".build"
+BUILD = paths.CACHE
 
 
 def build(source: Path, name: str) -> Path:

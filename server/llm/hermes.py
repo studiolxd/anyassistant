@@ -20,6 +20,7 @@ import time
 import uuid
 from pathlib import Path
 
+import confirmation
 import i18n
 import settings
 from llm import LLM, instructions, register
@@ -29,7 +30,6 @@ log = logging.getLogger("llm")
 URL = os.environ.get("HERMES_API_URL", "http://127.0.0.1:8642")
 ENV = Path.home() / ".hermes" / ".env"
 # Same files as Claude's confirmation (bin/jarvis-confirm, brain/assistant.py).
-CONFIRM = Path(__file__).resolve().parents[2] / ".build" / "confirm"
 
 
 def api_key() -> str:
@@ -133,29 +133,21 @@ class Hermes(LLM):
         run_id = data.get("run_id", "")
         action = data.get("description") or data.get("reason") or data.get("command") or "?"
         log.info("Hermes asks for approval (%s): %s", run_id, settings.private(action))
-        CONFIRM.mkdir(parents=True, exist_ok=True)
         # «consume»: the «yes» or «no» is for Hermes, not a new message to it.
-        (CONFIRM / "pending.json").write_text(json.dumps(
-            {"signature": run_id, "action": action, "at": time.time(), "consume": True}, ensure_ascii=False))
+        confirmation.ask(run_id, action, consume=True)
         asyncio.ensure_future(self._await_answer(run_id))
         return " " + i18n.L("speech.hermes_approval", action=action)
 
     async def _await_answer(self, run_id: str):
-        pending, confirmed = CONFIRM / "pending.json", CONFIRM / "confirmed.json"
-        deadline = time.time() + settings.get("confirm_wait", 120)  # then it is denied
+        deadline = time.time() + settings.get("confirm_wait", confirmation.WAIT)  # then it is denied
         choice = "deny"
         while time.time() < deadline:
             await asyncio.sleep(0.2)
-            try:
-                if json.loads(confirmed.read_text()).get("signature") == run_id:
-                    confirmed.unlink(missing_ok=True)
-                    choice = "once"
-                    break
-            except (OSError, ValueError):
-                pass
-            if not pending.exists():
+            if confirmation.confirmed(run_id):
+                choice = "once"
+                break
+            if not confirmation.waiting(run_id):
                 break  # the answer wasn't «yes»
-        pending.unlink(missing_ok=True)
         log.info("Hermes approval (%s): %s", run_id, choice)
         http = await self._client()
         async with http.post(f"/v1/runs/{run_id}/approval", json={"choice": choice}) as r:

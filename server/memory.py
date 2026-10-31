@@ -11,7 +11,7 @@ memory.json in the project (not in git), readable and editable:
   tool results, which could carry instructions) and a one-line summary of it.
 
 Each conversation starts with the facts and the recent summaries in its
-instructions, as notes, not as orders. $JARVIS_MEMORY points elsewhere (tests).
+instructions, as notes, not as orders.
 """
 
 import json
@@ -22,9 +22,10 @@ import time
 from pathlib import Path
 
 import i18n
+import paths
 import settings
 
-PATH = Path(os.environ.get("JARVIS_MEMORY") or Path(__file__).resolve().parent.parent / "memory.json")
+PATH = paths.MEMORY
 # Limits (settings memory_facts, memory_conversations, memory_days): beyond
 # max_facts() the LLM compacts the facts to ~70 %; the oldest go only if it can't.
 

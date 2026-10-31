@@ -29,11 +29,14 @@ limited terminal and, with «eyes» in the settings, Read for the camera's image
 import json
 import logging
 import re
+import shlex
 import subprocess
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import eyes
+import paths
 import settings
 
 log = logging.getLogger("llm")
@@ -60,11 +63,16 @@ def command_help(command: Path) -> str:
     return output.strip()
 
 
-def load(root: Path, servers: Path) -> Permissions:
-    path = root / "permissions.json"
+def load(root: Path | None = None, servers: Path | None = None) -> Permissions:
+    """What Claude may use, from your permissions.json and .mcp.json (paths.py's places;
+    root: one folder with everything, for tests)."""
+    home, app = root or paths.HOME, root or paths.APP
+    cache = root / ".build" if root else paths.CACHE
+    servers = servers or paths.MCP
+    path = home / "permissions.json"
     config = json.loads(path.read_text()) if path.exists() else {}
     allowed = config.get("allowed", {})
-    commands = [root / c for c in config.get("commands", [])]  # list or {path: policy}
+    commands = [app / c for c in config.get("commands", [])]  # list or {path: policy}
 
     args = ["--strict-mcp-config", "--setting-sources", ""]
     allow, deny = [], []
@@ -75,7 +83,7 @@ def load(root: Path, servers: Path) -> Permissions:
         names.update(json.loads(servers.read_text()).get("mcpServers", {}))
     if "jarvis" in allowed:  # its own tools (server/tools.py), served by the server itself
         own = {"type": "http", "url": f"http://127.0.0.1:{settings.get('port', 8080)}/mcp"}
-        path = root / ".build" / "jarvis-mcp.json"
+        path = cache / "jarvis-mcp.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"mcpServers": {"jarvis": own}}))
         configs.append(str(path))
@@ -106,7 +114,7 @@ def load(root: Path, servers: Path) -> Permissions:
                 log.warning("permissions.json allows %s, which doesn't exist", command)
                 continue
             allow.append(f"Bash({command}:*)")
-            relative = str(command.relative_to(root))
+            relative = str(command.relative_to(app))
             # The relative path («bin/gog») becomes the full one, unless it already is.
             texts.append(re.sub(rf"(?<![\w/]){re.escape(relative)}", str(command), command_help(command)))
         instructions = (
@@ -116,10 +124,13 @@ def load(root: Path, servers: Path) -> Permissions:
     args += ["--tools", ",".join(tools)]
 
     if allow and config.get("confirm", True):
-        hooks = root / ".build" / "claude-settings.json"
+        hooks = cache / "claude-settings.json"
+        hooks.parent.mkdir(parents=True, exist_ok=True)
+        # With Jarvis's own Python, not whatever python3 the system has.
+        hook = f"{shlex.quote(sys.executable)} {shlex.quote(str(app / 'bin' / 'jarvis-confirm'))}"
         hooks.write_text(json.dumps({"hooks": {"PreToolUse": [{
             "matcher": "Bash|mcp__.*",
-            "hooks": [{"type": "command", "command": str(root / "bin" / "jarvis-confirm")}],
+            "hooks": [{"type": "command", "command": hook}],
         }]}}))
         args += ["--settings", str(hooks)]
         log.info("actions that write ask for confirmation")

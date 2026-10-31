@@ -7,11 +7,11 @@ connected device (brain/assistant.py), or on the Mac if there is none.
 """
 
 import json
-import os
 import time
-from pathlib import Path
 
-PATH = Path(os.environ.get("JARVIS_TIMERS") or Path(__file__).resolve().parents[2] / "timers.json")
+import paths
+
+PATH = paths.TIMERS
 KINDS = ("timer", "alarm", "reminder")
 changed = lambda: None  # noqa: E731 — called when the list changes (the page shows them); set by main.py
 

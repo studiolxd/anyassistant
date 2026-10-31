@@ -6,13 +6,13 @@
 Keys are the server's options with underscores instead of dashes (language,
 llm_model, echo_guard, follow_up…); options on the command line win. «voice»
 can be one voice or one per language. Jarvis writes it too (tools.py, «speak
-English»), and the server applies it after each answer. $JARVIS_SETTINGS points elsewhere (tests).
+English»), and the server applies it after each answer.
 """
 
 import json
 import logging
-import os
-from pathlib import Path
+
+import paths
 
 # The options in effect (command line > settings.json > defaults), set by main.py.
 active: dict = {}
@@ -32,7 +32,7 @@ def get(key: str, default=None):
     return active.get(key, default)
 
 
-PATH = Path(os.environ.get("JARVIS_SETTINGS") or Path(__file__).resolve().parent.parent / "settings.json")
+PATH = paths.SETTINGS
 log = logging.getLogger("settings")
 
 

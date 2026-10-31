@@ -20,9 +20,10 @@ import random
 import re
 import subprocess
 import time
-from pathlib import Path
 
-LOCALES = Path(__file__).resolve().parent.parent / "locales"
+import paths
+
+LOCALES = paths.LOCALES
 log = logging.getLogger("i18n")
 
 

@@ -2,7 +2,7 @@
 
 `bin/jarvis pair` asks the server (from the Mac itself) for a 6-digit code, valid
 for a few minutes and a few attempts. The device that enters it gets a cookie
-that it sends from then on; the server keeps only its hash, in .build/paired.json.
+that it sends from then on; the server keeps only its hash, in paired.json.
 The Mac itself never needs one. `bin/jarvis unpair` forgets every device.
 """
 
@@ -14,9 +14,10 @@ import secrets
 import time
 from pathlib import Path
 
+import paths
 import settings
 
-FILE = Path(os.environ.get("JARVIS_PAIRED") or Path(__file__).resolve().parent.parent / ".build" / "paired.json")
+FILE = paths.PAIRED
 COOKIE = "jarvis_device"
 CODE_LIFETIME = 300  # seconds
 CODE_ATTEMPTS = 5
@@ -30,7 +31,17 @@ def _hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+def _moved():
+    """Paired devices used to live in the cache folder (.build/paired.json): they are data."""
+    old = paths.CACHE / "paired.json"
+    if old.exists() and not FILE.exists():
+        FILE.parent.mkdir(parents=True, exist_ok=True)
+        old.rename(FILE)
+        log.info("paired devices moved to %s", FILE)
+
+
 def _devices() -> list[dict]:
+    _moved()
     try:
         return json.loads(FILE.read_text())["devices"]
     except (OSError, ValueError, KeyError):

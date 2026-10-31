@@ -41,10 +41,19 @@ def load_script(name: str, root: Path = ROOT):
 
 
 @pytest.fixture
-def project(tmp_path):
-    """A throwaway copy of bin/ so scripts that write next to the project write here."""
-    shutil.copytree(ROOT / "bin", tmp_path / "bin")
-    (tmp_path / ".build").mkdir()
+def project(tmp_path, monkeypatch):
+    """A folder of its own as the data and cache folders (for permissions and bin/ scripts,
+    which get it through $JARVIS_HOME / $JARVIS_CACHE), with a copy of bin/ for commands."""
+    import paths
+
+    shutil.copytree(ROOT / "bin", tmp_path / "bin", ignore=shutil.ignore_patterns("__pycache__"))
+    cache = tmp_path / ".build"
+    cache.mkdir()
+    for name, value in (("HOME", tmp_path), ("CACHE", cache), ("PERMISSIONS", tmp_path / "permissions.json"),
+                        ("CONFIRM", cache / "confirm"), ("GOG", tmp_path / ".gog"), ("MCP", tmp_path / ".mcp.json")):
+        monkeypatch.setattr(paths, name, value)
+    monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
+    monkeypatch.setenv("JARVIS_CACHE", str(cache))
     return tmp_path
 
 
@@ -56,6 +65,7 @@ def isolated(tmp_path, monkeypatch):
     import eyes
     import memory
     import pairing
+    import paths
     import settings
     import tools
     from skills import timers
@@ -68,5 +78,7 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(memory, "PATH", data / "memory.json")
     monkeypatch.setattr(pairing, "FILE", data / "paired.json")
     monkeypatch.setattr(eyes, "FRAME", data / "eyes" / "now.jpg")
-    monkeypatch.setattr(tools, "CONFIRM", data / "confirm")
+    monkeypatch.setattr(paths, "CACHE", data / "cache")
+    monkeypatch.setattr(paths, "CONFIRM", data / "cache" / "confirm")
+    monkeypatch.setattr(paths, "PERMISSIONS", data / "permissions.json")
     monkeypatch.setattr(tools, "confirmation_on", lambda: False)

@@ -11,8 +11,8 @@ A skin is a folder:
       sounds/          optional: wake.wav, sleep.wav, alarm.wav
       preview.png      optional
 
-System skins live in skins/; yours in «skins_dir» (skins.local/ by default, not
-in git; the installer will decide where). Jarvis fills the blocks; the skin
+System skins live in skins/; yours in «skins_dir» (paths.SKINS by default:
+skins.local/ while developing, not in git). Jarvis fills the blocks; the skin
 styles them with CSS, from body[data-state] / [data-look] and live CSS variables
 (--voice, --speech, --bar-1…5). The skin's HTML is cleaned: no scripts, no on…
 attributes, nothing loaded from outside (and the page forbids it too): the page
@@ -32,8 +32,9 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parent.parent
-SYSTEM = ROOT / "skins"
+import paths
+
+SYSTEM = paths.SYSTEM_SKINS
 DEFAULT = "eyes"
 BLOCKS = {"face", "status", "captions", "heard", "answer", "clock", "time", "date", "timers", "photo",
           "camera", "stats"}
@@ -45,8 +46,8 @@ ASSETS = {".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".woff", ".w
 def folders() -> list[Path]:
     import settings
 
-    user = Path(settings.get("skins_dir") or ROOT / "skins.local")
-    return [SYSTEM, user if user.is_absolute() else ROOT / user]
+    user = Path(settings.get("skins_dir") or paths.SKINS)
+    return [SYSTEM, user if user.is_absolute() else paths.HOME / user]
 
 
 def available() -> dict[str, Path]:

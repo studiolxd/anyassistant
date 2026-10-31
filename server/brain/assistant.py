@@ -8,14 +8,13 @@ arrives. While it speaks it doesn't listen; tapping the screen stops it.
 """
 
 import asyncio
-import json
 import logging
 import os
 import re
 import signal
 import time
-from pathlib import Path
 
+import confirmation
 import eyes
 import i18n
 import memory
@@ -44,9 +43,6 @@ ECHO_MAX_WORDS = 5  # an echo is a short piece of what it just said
 # promotional ones») usually starts later: only what starts within this margin counts.
 ECHO_WINDOW = 2.5
 
-# Confirming actions that write: bin/jarvis-confirm records the pending one; if the
-# user says «yes», this authorizes that same action for a while (--confirm-wait, --confirm-valid).
-CONFIRM = Path(__file__).resolve().parents[2] / ".build" / "confirm"
 END_OF_SENTENCE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
 
 
@@ -161,12 +157,8 @@ class Assistant(Transcriber):
         """The resting state, or «question» if an action awaits your «yes» (the face shows it)."""
         if self.ringing:
             return "alarm"
-        try:
-            pending = json.loads((CONFIRM / "pending.json").read_text())
-            if time.time() - pending.get("at", 0) < settings.get("confirm_wait", 120):
-                return "question"
-        except (OSError, ValueError):
-            pass
+        if confirmation.pending(settings.get("confirm_wait") or confirmation.WAIT):
+            return "question"
         return self.ear.idle_state
 
     def _deaf(self) -> bool:
@@ -397,22 +389,14 @@ class Assistant(Transcriber):
         Returns True if the sentence was only for that and must not go to the LLM
         («consume»: approvals the plugin resolves itself, like Hermes's).
         """
-        pending_json = CONFIRM / "pending.json"
-        try:
-            pending = json.loads(pending_json.read_text())
-        except (OSError, ValueError):
+        if not confirmation.pending(settings.get("confirm_wait") or confirmation.WAIT):
             return False
-        if time.time() - pending.get("at", 0) > settings.get("confirm_wait", 120):
-            pending_json.unlink(missing_ok=True)
-            return False
-        if is_yes(text):
-            (CONFIRM / "confirmed.json").write_text(
-                json.dumps({"signature": pending["signature"], "until": time.time() + settings.get("confirm_valid", 60)})
-            )
+        yes = is_yes(text)
+        pending = confirmation.answer(yes, settings.get("confirm_valid") or confirmation.VALID)
+        if yes:
             log.info("confirmed: %s", settings.private(pending.get("action", "")))
         else:
             log.info("not confirmed («%s»): %s", settings.private(text), settings.private(pending.get("action", "")))
-        pending_json.unlink(missing_ok=True)
         return bool(pending.get("consume"))
 
     async def _answer(self, text: str):

@@ -13,17 +13,13 @@ Claude cannot forge it: it has no tools to write files and its terminal only
 runs the allowed commands.
 """
 
-import hashlib
 import json
 import os
 import shlex
 import sys
-import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FOLDER = os.path.join(ROOT, ".build", "confirm")
-PENDING = os.path.join(FOLDER, "pending.json")
-CONFIRMED = os.path.join(FOLDER, "confirmed.json")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "server"))
+import confirmation  # noqa: E402 — the same «yes» as Jarvis's own tools
 
 # gog commands that only read (service, command); anything else counts as writing.
 GOG_READ = {
@@ -76,14 +72,6 @@ def describe(tool, tool_input):
     return None
 
 
-def read(path):
-    try:
-        with open(path) as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return None
-
-
 def main():
     data = json.load(sys.stdin)
     tool, tool_input = data.get("tool_name", ""), data.get("tool_input", {})
@@ -91,15 +79,10 @@ def main():
     if action is None:
         sys.exit(0)
 
-    signature = hashlib.sha256(json.dumps([tool, tool_input], sort_keys=True).encode()).hexdigest()
-    confirmed = read(CONFIRMED)
-    if confirmed and confirmed.get("signature") == signature and confirmed.get("until", 0) > time.time():
-        os.remove(CONFIRMED)  # good for one use only
-        sys.exit(0)
-
-    os.makedirs(FOLDER, exist_ok=True)
-    with open(PENDING, "w") as f:
-        json.dump({"signature": signature, "action": action, "at": time.time()}, f, ensure_ascii=False)
+    sign = confirmation.signature(tool, tool_input)
+    if confirmation.confirmed(sign):
+        sys.exit(0)  # good for one use only
+    confirmation.ask(sign, action)
     print(
         "This action changes data and needs the user's confirmation. Don't assume it: ask "
         "them in one short sentence whether to do it (say what you are going to do). If they "

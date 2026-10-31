@@ -39,8 +39,10 @@ def speech(tmp_path, text, voice) -> np.ndarray:
 
 @pytest.fixture
 def server(tmp_path):
-    """Starts server/main.py with the given options; returns its URL."""
+    """Starts server/main.py with the given options and tmp_path as its data folder; returns its URL."""
     processes = []
+    # What Claude may use there: Jarvis's own tools only.
+    (tmp_path / "permissions.json").write_text(json.dumps({"allowed": {"jarvis": "all"}, "confirm": True}))
 
     def start(*options):
         with socket.socket() as s:
@@ -49,9 +51,9 @@ def server(tmp_path):
         log = open(tmp_path / "server.log", "w")
         process = subprocess.Popen(
             [sys.executable, ROOT / "server" / "main.py", "--host", "127.0.0.1", "--port", str(port), *options],
-            cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONUNBUFFERED": "1", "JARVIS_SETTINGS": str(tmp_path / "settings.json"),
-                 "JARVIS_PAIRED": str(tmp_path / "paired.json"), "JARVIS_MEMORY": str(tmp_path / "memory.json"),
-                 "JARVIS_TIMERS": str(tmp_path / "timers.json")},
+            cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
+            # Its own data folder: nothing of the running Jarvis is touched.
+            env={**os.environ, "PYTHONUNBUFFERED": "1", "JARVIS_HOME": str(tmp_path)},
         )
         processes.append(process)
         url = f"http://127.0.0.1:{port}"
@@ -186,7 +188,7 @@ def test_bad_settings_stop_it(tmp_path):
     (tmp_path / "settings.json").write_text(json.dumps({"skin": "smiley"}))
     result = subprocess.run([sys.executable, ROOT / "server" / "main.py", "--mode", "parrot"], cwd=ROOT,
                             capture_output=True, text=True, timeout=60,
-                            env={**os.environ, "JARVIS_SETTINGS": str(tmp_path / "settings.json")})
+                            env={**os.environ, "JARVIS_HOME": str(tmp_path)})
     assert result.returncode != 0 and "smiley" in result.stderr
 
 

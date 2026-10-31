@@ -3,21 +3,22 @@
 # "bin/gog": "read" → read-only permissions; anything else → full permissions.
 #   bin/gog-authorize you@gmail.com
 # First: download the OAuth client's JSON (Desktop app) from Google Cloud as
-# google-client.json in the project's root.
+# google-client.json in your data folder (the project's root while developing).
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-export GOG_HOME="$ROOT/.gog"
+HOME_DIR="${JARVIS_HOME:-$ROOT}"  # your data (server/paths.py)
+export GOG_HOME="$HOME_DIR/.gog"
 [ -n "$1" ] || { echo "Usage: $0 you@gmail.com" >&2; exit 2; }
-[ -f "$ROOT/google-client.json" ] || { echo "Missing $ROOT/google-client.json" >&2; exit 2; }
+[ -f "$HOME_DIR/google-client.json" ] || { echo "Missing $HOME_DIR/google-client.json" >&2; exit 2; }
 POLICY=$(/usr/bin/python3 -c "
 import json
-try: c = json.load(open('$ROOT/permissions.json')).get('commands', {})
+try: c = json.load(open('$HOME_DIR/permissions.json')).get('commands', {})
 except Exception: c = {}
 p = c.get('bin/gog', 'read') if isinstance(c, dict) else 'read'
 print('read' if p == 'read' else 'write')")
 READONLY=""
 [ "$POLICY" = "read" ] && READONLY="--readonly"
 echo "Permissions requested from Google: $POLICY"
-gog --client jarvis auth credentials set "$ROOT/google-client.json"
+gog --client jarvis auth credentials set "$HOME_DIR/google-client.json"
 gog --client jarvis auth add "$1" --services gmail,calendar,drive,docs,sheets $READONLY --force-consent
 gog --client jarvis auth doctor --check

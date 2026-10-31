@@ -11,11 +11,13 @@ import asyncio
 import base64
 import json
 import logging
+import os
 import time
 from pathlib import Path
 
 import i18n
 import eyes
+import paths
 import settings
 from llm import LLM, instructions, permissions, register
 
@@ -38,16 +40,14 @@ that, telling you to reload the tools is enough."""
 
 FILLER_AFTER = 1.2  # seconds a tool may take before a filler is said
 
-ROOT = Path(__file__).resolve().parents[2]
 # An empty folder as cwd: that way it loads no project's CLAUDE.md.
-EMPTY = ROOT / ".build" / "claude-empty"
-MCP_JSON = ROOT / ".mcp.json"
+EMPTY = paths.CACHE / "claude-empty"
 
 
 @register("claude")
 class Claude(LLM):
     def __init__(self, model=None, mcp=None):
-        super().__init__(model or "sonnet", mcp or str(MCP_JSON))
+        super().__init__(model or "sonnet", mcp or str(paths.MCP))
         EMPTY.mkdir(parents=True, exist_ok=True)
         self._load_permissions()
         self._process = None
@@ -82,6 +82,7 @@ class Claude(LLM):
             "--no-session-persistence",
             *self._permissions.arguments,
             cwd=EMPTY,
+            env={**os.environ, **paths.environment()},  # its hook and bin/gog: the same places
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -114,7 +115,7 @@ class Claude(LLM):
 
     def _load_permissions(self):
         """Reads .mcp.json and permissions.json: on every conversation, to pick up changes."""
-        self._permissions = permissions.load(ROOT, Path(self.mcp))
+        self._permissions = permissions.load(servers=Path(self.mcp))
         self._instructions = instructions() + CLAUDE_INSTRUCTIONS + eyes.instructions()
         if self._permissions.tools:
             self._instructions += TOOL_INSTRUCTIONS + self._permissions.instructions

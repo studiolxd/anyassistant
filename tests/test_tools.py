@@ -142,10 +142,9 @@ def asking(monkeypatch):
 
 def say_yes():
     """What the voice server writes when the user says «yes» (brain/assistant.py)."""
-    pending = json.loads((tools.CONFIRM / "pending.json").read_text())
-    (tools.CONFIRM / "confirmed.json").write_text(json.dumps({"signature": pending["signature"],
-                                                              "until": time.time() + 60}))
-    return pending
+    import confirmation
+
+    return confirmation.answer(True)
 
 
 def test_changes_wait_for_your_yes_for_any_llm(env, asking):
@@ -172,4 +171,6 @@ def test_what_doesnt_change_anything_doesnt_ask(env, asking):
     tools.call("set_skin", {"skin": "orb"})
     tools.call("set_detail", {"level": "concise"})
     tools.call("set_timer", {"seconds": 60})
-    assert not (tools.CONFIRM / "pending.json").exists()
+    import confirmation
+
+    assert confirmation.pending() is None

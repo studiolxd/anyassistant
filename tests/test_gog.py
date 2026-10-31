@@ -6,20 +6,20 @@ import sys
 
 import pytest
 
-from conftest import load_script
+from conftest import ROOT, load_script
 
 
 def gog(project, policy):
     (project / "permissions.json").write_text(json.dumps({"commands": {"bin/gog": policy}}))
-    return load_script("gog", project)
+    return load_script("gog")
 
 
 def run(project, *args):
-    return subprocess.run([sys.executable, project / "bin" / "gog", *args], capture_output=True, text=True)
+    return subprocess.run([sys.executable, ROOT / "bin" / "gog", *args], capture_output=True, text=True)
 
 
 def test_without_permissions_it_only_reads(project):
-    module = load_script("gog", project)
+    module = load_script("gog")
     assert module.policy() == "read"
     options = module.options("read")
     assert "--readonly" in options and "--gmail-no-send" in options
