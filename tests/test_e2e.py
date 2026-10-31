@@ -135,7 +135,9 @@ def final_texts(messages, author=None):
 
 def test_page_and_texts(server):
     url = server("--mode", "parrot", "--lang", "es")
-    assert b'id="face"' in urllib.request.urlopen(url + "/").read()
+    html = urllib.request.urlopen(url + "/").read().decode()
+    assert 'id="face"' in html and '<html lang="es"' in html
+    assert '<html lang="es"' in urllib.request.urlopen(url + "/monitor").read().decode()
     texts = json.load(urllib.request.urlopen(url + "/i18n"))
     assert texts["lang"] == "es" and texts["ui"]["start"]
 

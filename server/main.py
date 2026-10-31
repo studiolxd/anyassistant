@@ -80,12 +80,18 @@ async def texts(request: web.Request) -> web.Response:
     return web.json_response({"lang": i18n.L.code, "ui": i18n.L.data["ui"]})
 
 
-async def index(request: web.Request) -> web.FileResponse:
-    return web.FileResponse(WEB / "index.html")
+def page(name: str) -> web.Response:
+    """An HTML page declaring the active language (lang="…") from the start."""
+    html = (WEB / name).read_text().replace('<html lang="en"', f'<html lang="{i18n.L.code}"', 1)
+    return web.Response(text=html, content_type="text/html")
 
 
-async def monitor(request: web.Request) -> web.FileResponse:
-    return web.FileResponse(WEB / "monitor.html")
+async def index(request: web.Request) -> web.Response:
+    return page("index.html")
+
+
+async def monitor(request: web.Request) -> web.Response:
+    return page("monitor.html")
 
 
 @web.middleware
