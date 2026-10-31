@@ -24,6 +24,23 @@ body[data-look="asleep"] .clock { display: block; }
   background: #ffffff;
   transform: scale(calc(0.8 + var(--voice, 0) * 0.5 + var(--speech, 0) * 0.5));
   transition: background 0.3s;
+  position: relative;
+}
+/* A pulse around the light while something happens (not asleep, awake or error). */
+.light::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;  /* no `inset` in Chrome 81 */
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0;
+}
+body:not([data-look="asleep"]):not([data-look="awake"]):not([data-look="error"]) .light::after {
+  animation: pulse 1.6s ease-out infinite;
+}
+@keyframes pulse {
+  from { transform: scale(1); opacity: 0.6; }
+  to { transform: scale(2); opacity: 0; }
 }
 body[data-look="asleep"] .light { background: #444; }
 body[data-look="hearing"] .light { background: #00e676; }
@@ -37,7 +54,7 @@ body[data-look="error"] .light { background: #ff1744; }
 .status { font-size: 9vmin; font-weight: bold; margin: 4vmin 0; }
 .heard { font-size: 6vmin; margin: 0 0 2vmin; opacity: 0.75; }
 .answer { font-size: 7vmin; margin: 0; }
-.timers { font-size: 7vmin; }
+.timers { margin-top: 3vmin; font-size: 7vmin; }
 .timers p { margin: 0 0 1vmin; }
 .stats { font-size: 3vmin; opacity: 0.5; }
 body[data-look="asleep"] .heard,
