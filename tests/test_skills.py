@@ -29,6 +29,16 @@ def store(tmp_path, monkeypatch):
     return tmp_path / "timers.json"
 
 
+@pytest.fixture
+def noon(monkeypatch):
+    """Today at midday: «in 20 minutes» is still today, whenever the tests run (near midnight it wasn't)."""
+    now = time.localtime()
+    fixed = time.mktime((now.tm_year, now.tm_mon, now.tm_mday, 12, 0, 0, 0, 0, -1))
+    localtime = time.localtime
+    monkeypatch.setattr(time, "time", lambda: fixed)
+    monkeypatch.setattr(time, "localtime", lambda at=None: localtime(fixed if at is None else at))
+
+
 @pytest.mark.parametrize("text, seconds", [
     ("pon un temporizador de 10 minutos", 600), ("temporizador de media hora", 1800), ("un cuarto de hora", 900),
     ("hora y media", 5400), ("1 hora y 20 minutos", 4800), ("treinta y cinco segundos", 35),
@@ -117,7 +127,7 @@ def test_time_es(store, es):
     ("Recuérdame en 20 minutos que saque la ropa", "Te lo recordaré hoy"), ("Cuánto es 23 por 47", "Son 1081"),
     ("Cuántos kilómetros son 5 millas", "5 millas son 8,05 kilómetros"), ("Pon el volumen al 70", "Volumen al 70"),
 ])
-def test_quick_es(store, es, text, starts):
+def test_quick_es(store, es, noon, text, starts):
     assert skills.quick(text).startswith(starts)
 
 
