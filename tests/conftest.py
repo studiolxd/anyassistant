@@ -84,4 +84,4 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(paths, "CACHE", data / "cache")
     monkeypatch.setattr(paths, "CONFIRM", data / "cache" / "confirm")
     monkeypatch.setattr(paths, "PERMISSIONS", data / "permissions.json")
-    monkeypatch.setattr(tools, "confirmation_on", lambda: False)
+    (data / "permissions.json").write_text('{"confirm": false}')  # no «yes» asked (test_tools: it is)

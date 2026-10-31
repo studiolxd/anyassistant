@@ -5,7 +5,7 @@ Claude Code runs it before every tool, with {tool_name, tool_input} on stdin. If
 the action writes (a bin/gog call that isn't a read, or an MCP
 tool that isn't get_/list_/search_…) and the user hasn't confirmed it, it blocks it (exit code 2:
 the message reaches Claude) and records it in .build/confirm/pending.json. When
-the user says «yes», the voice server (brain/assistant.py) writes confirmed.json
+the user says «yes», the plugin «confirmation» writes confirmed.json
 with the same signature, and the same call, repeated within a minute, goes
 through once.
 
@@ -18,8 +18,11 @@ import os
 import shlex
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "server"))
-import confirmation  # noqa: E402 — the same «yes» as Jarvis's own tools
+APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(APP, "server"))
+sys.path.insert(0, os.path.join(APP, "plugins", "confirmation"))
+import paths  # noqa: E402
+import store as confirmation  # noqa: E402 — the plugin «confirmation»: the same «yes» as Jarvis's own tools
 
 # gog commands that only read (service, command); anything else counts as writing.
 GOG_READ = {
@@ -72,11 +75,20 @@ def describe(tool, tool_input):
     return None
 
 
+def turned_off():
+    """The plugin «confirmation» turned off in settings.json: nothing asks."""
+    try:
+        with open(paths.SETTINGS) as f:
+            return json.load(f).get("plugins", {}).get("confirmation") is False
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
 def main():
     data = json.load(sys.stdin)
     tool, tool_input = data.get("tool_name", ""), data.get("tool_input", {})
     action = describe(tool, tool_input)
-    if action is None:
+    if action is None or turned_off():
         sys.exit(0)
 
     sign = confirmation.signature(tool, tool_input)

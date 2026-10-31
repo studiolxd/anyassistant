@@ -20,8 +20,8 @@ import time
 import uuid
 from pathlib import Path
 
-import confirmation
 import i18n
+import kernel
 import settings
 from llm import LLM, instructions, register
 
@@ -29,7 +29,6 @@ log = logging.getLogger("llm")
 
 URL = os.environ.get("HERMES_API_URL", "http://127.0.0.1:8642")
 ENV = Path.home() / ".hermes" / ".env"
-# Same files as Claude's confirmation (bin/jarvis-confirm, brain/assistant.py).
 
 
 def api_key() -> str:
@@ -145,21 +144,30 @@ class Hermes(LLM):
         run_id = data.get("run_id", "")
         action = data.get("description") or data.get("reason") or data.get("command") or "?"
         log.info("Hermes asks for approval (%s): %s", run_id, settings.private(action))
+        confirmation = kernel.module("confirmation")
+        if confirmation is None:  # turned off: nothing asks
+            asyncio.ensure_future(self._approve(run_id, "once"))
+            return ""
         # «consume»: the «yes» or «no» is for Hermes, not a new message to it.
-        confirmation.ask(run_id, action, consume=True)
+        confirmation.store.ask(run_id, action, consume=True)
         asyncio.ensure_future(self._await_answer(run_id))
         return " " + i18n.L("speech.hermes_approval", action=action)
 
     async def _await_answer(self, run_id: str):
-        deadline = time.time() + settings.get("confirm_wait", confirmation.WAIT)  # then it is denied
+        """Your answer, through the plugin «confirmation» (the same «yes» as everything else)."""
+        store = kernel.module("confirmation").store
+        deadline = time.time() + (settings.get("confirm_wait") or store.WAIT)  # then it is denied
         choice = "deny"
         while time.time() < deadline:
             await asyncio.sleep(0.2)
-            if confirmation.confirmed(run_id):
+            if store.confirmed(run_id):
                 choice = "once"
                 break
-            if not confirmation.waiting(run_id):
+            if not store.waiting(run_id):
                 break  # the answer wasn't «yes»
+        await self._approve(run_id, choice)
+
+    async def _approve(self, run_id: str, choice: str):
         log.info("Hermes approval (%s): %s", run_id, choice)
         http = await self._client()
         async with http.post(f"/v1/runs/{run_id}/approval", json={"choice": choice}) as r:

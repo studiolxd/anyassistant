@@ -2,7 +2,10 @@
 
 import pytest
 
-from brain.assistant import is_yes, split
+import kernel
+from brain.assistant import split
+
+is_yes = kernel.load("confirmation").is_yes
 from plugins.skill_restart import command as system_command
 from brain.ear import is_sleep_command
 

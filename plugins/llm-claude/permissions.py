@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import eyes
+import kernel
 import paths
 import settings
 
@@ -123,7 +124,7 @@ def load(root: Path | None = None, servers: Path | None = None) -> Permissions:
         )
     args += ["--tools", ",".join(tools)]
 
-    if allow and config.get("confirm", True):
+    if allow and config.get("confirm", True) and kernel.enabled("confirmation"):
         hooks = cache / "claude-settings.json"
         hooks.parent.mkdir(parents=True, exist_ok=True)
         # With Jarvis's own Python, not whatever python3 the system has.

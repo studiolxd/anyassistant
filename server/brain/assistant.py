@@ -16,13 +16,11 @@ import time
 
 import numpy as np
 
-import confirmation
 import eyes
 import i18n
 import memory
 import settings
 import skills
-import skins
 import tools
 from audio import louder, normalize
 from brain.transcriber import Transcriber, volume
@@ -45,13 +43,6 @@ ECHO_MAX_WORDS = 5  # an echo is a short piece of what it just said
 ECHO_WINDOW = 2.5
 
 END_OF_SENTENCE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
-
-
-def is_yes(text: str) -> bool:
-    """«Yes», «Sure, do it»… but not «No, wait» nor long sentences."""
-    heard = set(words(text))
-    return (0 < len(heard) <= 6 and not heard & set(i18n.L.list("commands.no"))
-            and bool(heard & set(i18n.L.list("commands.yes"))))
 
 
 def create(stt, llm, tts=None, wake=None, ear=None, guard=GUARD):
@@ -96,7 +87,8 @@ class Assistant(Transcriber):
         """The resting state, or «question» if an action awaits your «yes» (the face shows it)."""
         if self.ringing:
             return "alarm"
-        if confirmation.pending(settings.get("confirm_wait") or confirmation.WAIT):
+        confirmation = kernel.module("confirmation")
+        if confirmation and confirmation.waiting():
             return "question"
         return self.ear.idle_state
 
@@ -207,10 +199,6 @@ class Assistant(Transcriber):
         if self._is_echo(text, timings):
             log.info("echo dropped: «%s»", settings.private(text))
             return
-        if self._confirm(text):
-            # It was the answer to an approval the LLM itself asked for (Hermes): not a new message.
-            Transcriber._heard(self, text, timings)
-            return
         self._timings = timings
         if skills.hear(text, self):  # time, timers, the camera, «speak English»…: without the LLM
             return
@@ -272,22 +260,6 @@ class Assistant(Transcriber):
             self.sentences.put_nowait((self.number, None))
         else:
             self._state(self._idle_state())
-
-    def _confirm(self, text: str) -> bool:
-        """If an action awaits the user's «yes», authorizes or cancels it.
-
-        Returns True if the sentence was only for that and must not go to the LLM
-        («consume»: approvals the plugin resolves itself, like Hermes's).
-        """
-        if not confirmation.pending(settings.get("confirm_wait") or confirmation.WAIT):
-            return False
-        yes = is_yes(text)
-        pending = confirmation.answer(yes, settings.get("confirm_valid") or confirmation.VALID)
-        if yes:
-            log.info("confirmed: %s", settings.private(pending.get("action", "")))
-        else:
-            log.info("not confirmed («%s»): %s", settings.private(text), settings.private(pending.get("action", "")))
-        return bool(pending.get("consume"))
 
     async def _answer(self, text: str):
         async with self.turn:

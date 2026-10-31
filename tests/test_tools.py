@@ -5,6 +5,7 @@ import time
 
 import pytest
 
+import kernel
 import memory
 import mcp_server
 import settings
@@ -138,15 +139,15 @@ def test_llm_switch_needs_your_yes():
 
 
 @pytest.fixture
-def asking(monkeypatch):
-    monkeypatch.setattr(tools, "confirmation_on", lambda: True)
+def asking():
+    import paths
+
+    paths.PERMISSIONS.unlink()  # «confirm» on by default
 
 
 def say_yes():
-    """What the voice server writes when the user says «yes» (brain/assistant.py)."""
-    import confirmation
-
-    return confirmation.answer(True)
+    """What the plugin «confirmation» writes when the user says «yes»."""
+    return kernel.load("confirmation").store.answer(True)
 
 
 def test_changes_wait_for_your_yes_for_any_llm(env, asking):
@@ -173,6 +174,4 @@ def test_what_doesnt_change_anything_doesnt_ask(env, asking):
     tools.call("set_skin", {"skin": "orb"})
     tools.call("set_detail", {"level": "concise"})
     tools.call("set_timer", {"seconds": 60})
-    import confirmation
-
-    assert confirmation.pending() is None
+    assert kernel.load("confirmation").store.pending() is None

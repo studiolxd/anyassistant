@@ -167,9 +167,9 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 
 | Option | Default | |
 |---|---|---|
+| `log_transcripts` | `false` | write what it hears and says to the log (to debug); otherwise only lengths |
 | `confirm_wait` | `120` | seconds to answer «yes» to an action that changes something |
 | `confirm_valid` | `60` | seconds a «yes» stays valid |
-| `log_transcripts` | `false` | write what it hears and says to the log (to debug); otherwise only lengths |
 
 **The server**
 
@@ -634,6 +634,8 @@ see `permissions.example.json`):
   If you say «yes» (or «sure», «go ahead»…; «yes, but…» doesn't count), the server
   authorizes **that same call**, once and for one minute; any other answer cancels
   it. Claude can't get around it: it can't write files or run anything else.
+  It is the plugin `confirmation` (a security one: only turned off by hand, with
+  `"plugins": {"confirmation": false}`; then nothing asks, for any LLM).
 
 Without `permissions.json` it uses nothing. When it uses a tool it says «One
 moment, let me check».
@@ -779,7 +781,8 @@ so they need no account or network; they run on a free port, next to a running J
 - `server/memory.py` — memory across conversations (`memory.json`).
 - `server/skills/` — what a skill is (`@skill`), how things are said, and the helpers they share (`parse.py`,
   `timers.py`, `interpreter.py`).
-- `server/paths.py`, `server/options.py`, `server/confirmation.py` — where things live, every option, the «yes».
+- `server/paths.py`, `server/options.py` — where things live, every option.
+- `plugins/confirmation/` — the «yes» before actions that change something (any LLM).
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
 - `web/` — the phone's page (plain JS, old Chrome): `app.js` (connection, blocks), `skin.js` (applies a
   skin, its states and live variables), `system.css`; the monitor and the skins lab.

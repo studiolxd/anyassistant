@@ -1,7 +1,7 @@
 """Your «yes» before actions that change something: one mechanism for everyone.
 
 An action that needs it is left pending (pending.json: its signature, what it
-is, when). When you answer, the voice server (brain/assistant.py) either writes
+is, when). When you answer, the plugin (its skill Answer, in __init__.py) either writes
 confirmed.json with that signature, valid for a while and for one use, or
 cancels it. Whoever asked (Jarvis's own tools, Claude Code's hook
 bin/jarvis-confirm, Hermes's approvals) checks it with confirmed(). Files in

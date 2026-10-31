@@ -1,0 +1,6 @@
+{
+  "name": "Confirmation",
+  "description": "Actions that change something wait for your «yes» by voice, whichever LLM asks (Jarvis's tools, Claude's hook, Hermes's approvals).",
+  "kind": "feature",
+  "security": true
+}

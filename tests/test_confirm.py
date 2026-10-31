@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from brain import assistant
+import kernel
 from conftest import ROOT, load_script
 
 hook = load_script("jarvis-confirm")
@@ -57,9 +57,9 @@ def test_confirming_another_action_does_not_help(project):
     assert call(project, "mcp__holded__create_invoice", {"total": 5000}).returncode == 2
 
 
-class Fake:
-    """Just enough of Assistant to try _confirm."""
-    _confirm = assistant.Assistant._confirm
+def answer(text):
+    """What the plugin does with your sentence while an action waits."""
+    return kernel.load("confirmation").answer(text)
 
 
 @pytest.fixture
@@ -77,7 +77,7 @@ def confirm(tmp_path, monkeypatch, en):
 def test_yes_authorizes_for_a_minute(confirm):
     folder, pending = confirm
     pending(at=time.time())
-    assert Fake()._confirm("Yes, do it") is False  # the sentence still goes to the LLM
+    assert answer("Yes, do it") is False  # the sentence still goes to the LLM
     confirmed = json.loads((folder / "confirmed.json").read_text())
     assert confirmed["signature"] == "abc" and confirmed["until"] > time.time() + 50
     assert not (folder / "pending.json").exists()
@@ -86,7 +86,7 @@ def test_yes_authorizes_for_a_minute(confirm):
 def test_anything_else_cancels(confirm):
     folder, pending = confirm
     pending(at=time.time(), consume=True)
-    assert Fake()._confirm("No, wait") is True  # resolved by the plugin: not for the LLM
+    assert answer("No, wait") is True  # resolved by the plugin: not for the LLM
     assert not (folder / "confirmed.json").exists()
     assert not (folder / "pending.json").exists()
 
@@ -94,5 +94,29 @@ def test_anything_else_cancels(confirm):
 def test_old_questions_expire(confirm):
     folder, pending = confirm
     pending(at=time.time() - 300)
-    assert Fake()._confirm("Yes") is False
+    assert not answer("Yes")  # nothing waits any more
     assert not (folder / "confirmed.json").exists()
+
+
+def test_off_the_hook_lets_everything_through(project):
+    (project / "settings.json").write_text(json.dumps({"plugins": {"confirmation": False}}))
+    assert call(project, "mcp__holded__create_invoice", {"total": 5}).returncode == 0
+
+
+def test_off_jarvis_tools_dont_ask(monkeypatch):
+    import settings
+    import tools
+
+    import paths
+
+    paths.PERMISSIONS.unlink()  # «confirm» on
+    monkeypatch.setattr(settings, "active", {"plugins": {"confirmation": False}})
+    tools.call("set_name", {"name": "Viernes"})  # no «yes» needed
+    assert kernel.load("confirmation").store.pending() is None
+
+
+def test_a_waiting_question_shows_on_the_face(confirm):
+    _, pending = confirm
+    assert kernel.load("confirmation").waiting() is None
+    pending(at=time.time())
+    assert kernel.load("confirmation").waiting()["action"] == "x"

@@ -11,24 +11,20 @@ Only what it may touch: its look, voice, name, language, memory, the camera on t
 screen, its timers, which LLM it uses (among the installed ones), reloading its
 tools and restarting. Never the permissions, the confirmation times, the port or
 your instructions, so it cannot lift its own safeguards. Tools that change
-something ask for your «yes» themselves (confirmation.py), so it holds for any LLM.
+something wait for your «yes» (the plugin «confirmation», through gate()), so it holds
+for any LLM.
 """
 
 import inspect
-import json
 import typing
 from dataclasses import dataclass
 
-import confirmation
 import hub
 import kernel
-import paths
 
 session = hub.current  # the connected device's Session
 requested: set[str] = set()  # «reload», «restart»: for when the answer ends
-ASK = ("This action changes data and needs the user's confirmation. Don't assume it: ask them in one "
-       "short sentence whether to do it (say what you are going to do). If they answer yes, repeat "
-       "exactly the same call; if not, don't do it.")
+GATES = []  # (function, plugin): may refuse a call to a tool that changes something (confirmation…)
 
 
 class ToolError(Exception):
@@ -71,21 +67,11 @@ def tool(description: str, needs_yes: bool = False, name: str = "", choices: dic
     return register
 
 
-def confirmation_on() -> bool:
-    try:
-        permissions = json.loads(paths.PERMISSIONS.read_text())
-    except (OSError, ValueError):
-        permissions = {}
-    return permissions.get("confirm", True) is not False
-
-
-def confirmed(name: str, arguments: dict) -> bool:
-    """Whether the user said «yes» to exactly this call (once); if not, it is left pending for them."""
-    sign = confirmation.signature("jarvis", name, arguments)
-    if confirmation.confirmed(sign):
-        return True
-    confirmation.ask(sign, f"jarvis: {name} {json.dumps(arguments, ensure_ascii=False)}")
-    return False
+def gate(function):
+    """function(name, arguments) raises ToolError to refuse a needs_yes call (the plugin «confirmation»)."""
+    plugin = kernel.current()
+    GATES[:] = [g for g in GATES if (g[0].__qualname__, g[1]) != (function.__qualname__, plugin)] + [(function, plugin)]
+    return function
 
 
 def available() -> dict[str, Tool]:
@@ -98,8 +84,10 @@ def available() -> dict[str, Tool]:
 def call(name: str, arguments: dict) -> str:
     if name not in available():
         raise ToolError(f"unknown tool {name}")
-    if name in NEEDS_YES and confirmation_on() and not confirmed(name, arguments):
-        raise ToolError(ASK)
+    if name in NEEDS_YES:
+        for function, plugin in GATES:
+            if kernel.enabled(plugin):
+                function(name, arguments)
     try:
         return TOOLS[name].function(**arguments)
     except TypeError as e:

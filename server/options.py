@@ -9,7 +9,7 @@ are all made from OPTIONS.
 import argparse
 import json
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
@@ -125,9 +125,6 @@ OPTIONS = [
     Option("clock", "auto", "12 or 24 hours (auto: the language's)", "screen", "choice", ["auto", "12", "24"],
            live=True, screen=True),
     # Privacy and security
-    Option("confirm_wait", 120, "seconds to answer «yes» to an action that changes something", "security",
-           "float", live=True),
-    Option("confirm_valid", 60, "seconds a «yes» stays valid", "security", "float", live=True),
     Option("log_transcripts", False, "write what it hears and says to the log (to debug); otherwise only lengths",
            "security", "bool", live=True),
     # The server
@@ -142,6 +139,7 @@ def add(option: Option):
     """A plugin's own option (call it when the plugin loads)."""
     if option.name not in {o.name for o in OPTIONS}:
         OPTIONS.append(option)
+        BY_NAME[option.name] = option
         if option.live:
             LIVE.add(option.name)
         if option.screen:
