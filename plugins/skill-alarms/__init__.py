@@ -21,7 +21,8 @@ from options import Option
 from tools import ToolError, tool
 
 log = logging.getLogger("skills")
-options.add(Option("ring_seconds", 60, "how long an alarm rings if nobody stops it", "skills", "int", live=True))
+options.add(Option("ring_seconds", 60, "how long an alarm rings if nobody stops it, in seconds; 0: until someone "
+                   "stops it (at most 30 minutes)", "skills", "int", live=True))
 options.add(Option("snooze_minutes", 5, "«snooze» without saying how long", "skills", "int", live=True))
 ALARM = Path(__file__).parent / "sounds" / "alarm.wav"  # three quick high notes
 

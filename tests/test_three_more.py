@@ -128,3 +128,11 @@ def test_weather_sentence(es):
 def test_without_a_city_it_asks_for_one(es, monkeypatch):
     monkeypatch.setattr(settings, "active", {})
     assert "ciudad" in kernel.load("skill-weather").answer()
+
+
+def test_an_alarm_rings_until_stopped_with_zero():
+    from plugins.brain_assistant import RING_MAX, ring_for
+
+    assert ring_for(None) == 60 and ring_for(45) == 45
+    assert ring_for(0) == RING_MAX == 30 * 60  # «until someone stops it», but not forever
+    assert ring_for(10_000) == RING_MAX

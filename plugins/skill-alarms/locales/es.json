@@ -6,7 +6,7 @@
     ]
   },
   "options": {
-    "ring_seconds": "cuánto suena una alarma si nadie la para",
+    "ring_seconds": "cuánto suena una alarma si nadie la para, en segundos; 0: hasta que alguien la pare (como mucho 30 minutos)",
     "snooze_minutes": "«pospón» sin decir cuánto"
   },
   "speech": {

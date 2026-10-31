@@ -57,6 +57,17 @@ def create(stt, model, voice=None, wake=None, ear=None, guard=GUARD):
     return brain
 
 
+RING_MAX = 30 * 60  # «until someone stops it» (ring_seconds 0) still ends: nobody may be home
+
+
+def ring_for(seconds) -> float:
+    """How long an alarm rings: ring_seconds; 0, until someone stops it (at most RING_MAX)."""
+    if seconds is None or seconds == "":
+        return 60
+    seconds = float(seconds)
+    return RING_MAX if seconds <= 0 else min(seconds, RING_MAX)
+
+
 def split(text: str) -> tuple[list[str], str]:
     """Complete sentences and the unfinished rest: «Hi. How a» → (["Hi."], "How a")."""
     pieces = END_OF_SENTENCE.split(text)
@@ -154,7 +165,7 @@ class Assistant(Transcriber):
         self._state("alarm")
         pcm = alarms.alarm_sound(getattr(self, "skin", None) or settings.get("skin")) if alarms else None
         tone = louder(pcm, volume()) if pcm is not None else np.zeros(0, np.int16)
-        until = time.time() + (settings.get("ring_seconds") or 60)
+        until = time.time() + ring_for(settings.get("ring_seconds"))
         said = False
         while self.ringing is item and time.time() < until:
             self.toning_until = time.time() + len(tone) / 48000 + 0.1

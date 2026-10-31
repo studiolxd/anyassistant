@@ -176,7 +176,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 |---|---|---|
 | `skills` | `true` | time, date, timers, alarms, reminders, sums, units and volume, without the LLM |
 | `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name |
-| `ring_seconds` | `60` | how long an alarm rings if nobody stops it |
+| `ring_seconds` | `60` | how long an alarm rings if nobody stops it, in seconds; 0: until someone stops it (at most 30 minutes) |
 | `snooze_minutes` | `5` | «snooze» without saying how long |
 | `location` | — | your city, for the weather (e.g. Valencia) |
 
