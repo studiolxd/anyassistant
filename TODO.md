@@ -13,8 +13,6 @@
   de git, o la copia de la app); el paso de registro de la voz (`@installer.device`)
   cuando exista ese plugin.
 
-## Apps y dispositivos
-
 ## Skins
 
 - [ ] **Un mejor comprobador de skins**: hoy `skin check` comprueba en concreto el
