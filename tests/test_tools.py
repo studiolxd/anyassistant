@@ -1,6 +1,7 @@
 """Jarvis's own tools over MCP: what they change, what they refuse, and the protocol."""
 
 import json
+import time
 
 import pytest
 
@@ -107,13 +108,11 @@ def test_claude_gets_the_jarvis_server_only_if_allowed(env, project):
     assert "mcp__jarvis" not in load(project, project / ".mcp.json").arguments
 
 
-def test_confirmation_for_changes_but_not_for_the_camera():
+def test_the_hook_leaves_jarvis_tools_to_the_server():
     hook = load_script("jarvis-confirm")
     assert hook.describe("mcp__jarvis__get_settings", {}) is None
     assert hook.describe("mcp__jarvis__camera", {"on": True}) is None
-    assert hook.describe("mcp__jarvis__set_face", {"face": "orb"}) == 'jarvis: set_face {"face": "orb"}'
-    assert hook.describe("mcp__jarvis__remember", {"fact": "x"})
-    assert hook.describe("mcp__jarvis__update", {"number": 1, "fact": "x"})
+    assert hook.describe("mcp__jarvis__set_face", {"face": "orb"}) is None  # the server asks itself
 
 
 def test_remember_points_to_update():
@@ -133,6 +132,43 @@ def test_switching_llm(env, monkeypatch):
 
 
 def test_llm_switch_needs_your_yes():
-    hook = load_script("jarvis-confirm")
-    assert hook.describe("mcp__jarvis__get_llms", {}) is None
-    assert hook.describe("mcp__jarvis__set_llm", {"llm": "hermes"})
+    assert "set_llm" in tools.NEEDS_YES and "get_llms" not in tools.NEEDS_YES
+
+
+@pytest.fixture
+def asking(monkeypatch):
+    monkeypatch.setattr(tools, "confirmation_on", lambda: True)
+
+
+def say_yes():
+    """What the voice server writes when the user says «yes» (brain/assistant.py)."""
+    pending = json.loads((tools.CONFIRM / "pending.json").read_text())
+    (tools.CONFIRM / "confirmed.json").write_text(json.dumps({"signature": pending["signature"],
+                                                              "until": time.time() + 60}))
+    return pending
+
+
+def test_changes_wait_for_your_yes_for_any_llm(env, asking):
+    with pytest.raises(tools.ToolError, match="confirmation"):
+        tools.call("set_face", {"face": "orb"})
+    assert not (env / "settings.json").exists()
+    assert say_yes()["action"] == 'jarvis: set_face {"face": "orb"}'
+    tools.call("set_face", {"face": "orb"})
+    assert saved(env)["face"] == "orb"
+    with pytest.raises(tools.ToolError):  # good for one use only
+        tools.call("set_face", {"face": "orb"})
+
+
+def test_a_yes_for_one_call_is_not_for_another(env, asking):
+    with pytest.raises(tools.ToolError):
+        tools.call("set_face", {"face": "orb"})
+    say_yes()
+    with pytest.raises(tools.ToolError):
+        tools.call("set_name", {"name": "Viernes"})
+
+
+def test_what_doesnt_change_anything_doesnt_ask(env, asking):
+    tools.call("get_settings", {})
+    tools.call("set_detail", {"level": "concise"})
+    tools.call("set_timer", {"seconds": 60})
+    assert not (tools.CONFIRM / "pending.json").exists()

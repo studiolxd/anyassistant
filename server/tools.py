@@ -13,9 +13,12 @@ restarting also wait for the answer to end: doing it in the middle would cut
 off the LLM while it is still using the tool.
 """
 
+import hashlib
+import json
 import platform
 import re
 import time
+from pathlib import Path
 import shutil
 import subprocess
 import urllib.request
@@ -27,6 +30,17 @@ import settings
 FACES = ["eyes", "orb"]
 session = lambda: None  # noqa: E731 — the connected device's Session; set by main.py
 requested: set[str] = set()  # «reload», «restart»: for when the answer ends
+
+
+# Tools that change something need the user's «yes», asked by the server itself, so
+# it holds for any LLM using them (Claude, Hermes…): the same files as
+# bin/jarvis-confirm, so the «yes» works the same (brain/assistant.py writes it).
+NEEDS_YES = {"set_face", "set_voice", "set_name", "set_language", "remember", "update", "forget",
+             "reload_tools", "restart", "set_llm", "add_detail_level", "remove_detail_level"}
+CONFIRM = Path(__file__).resolve().parent.parent / ".build" / "confirm"
+ASK = ("This action changes data and needs the user's confirmation. Don't assume it: ask them in one "
+       "short sentence whether to do it (say what you are going to do). If they answer yes, repeat "
+       "exactly the same call; if not, don't do it.")
 
 
 class ToolError(Exception):
@@ -368,9 +382,36 @@ TOOLS = {
 }
 
 
+def confirmation_on() -> bool:
+    try:
+        permissions = json.loads((Path(__file__).resolve().parent.parent / "permissions.json").read_text())
+    except (OSError, ValueError):
+        permissions = {}
+    return permissions.get("confirm", True) is not False
+
+
+def confirmed(name: str, arguments: dict) -> bool:
+    """Whether the user said «yes» to exactly this call (once); if not, it is left pending for them."""
+    signature = hashlib.sha256(json.dumps(["jarvis", name, arguments], sort_keys=True).encode()).hexdigest()
+    try:
+        yes = json.loads((CONFIRM / "confirmed.json").read_text())
+    except (OSError, ValueError):
+        yes = {}
+    if yes.get("signature") == signature and yes.get("until", 0) > time.time():
+        (CONFIRM / "confirmed.json").unlink(missing_ok=True)  # good for one use only
+        return True
+    CONFIRM.mkdir(parents=True, exist_ok=True)
+    action = f"jarvis: {name} {json.dumps(arguments, ensure_ascii=False)}"
+    (CONFIRM / "pending.json").write_text(json.dumps({"signature": signature, "action": action, "at": time.time()},
+                                                     ensure_ascii=False))
+    return False
+
+
 def call(name: str, arguments: dict) -> str:
     if name not in TOOLS:
         raise ToolError(f"unknown tool {name}")
+    if name in NEEDS_YES and confirmation_on() and not confirmed(name, arguments):
+        raise ToolError(ASK)
     function = TOOLS[name][0]
     try:
         return function(**arguments)

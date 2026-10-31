@@ -42,10 +42,9 @@ GOG_READ = {
     ("tasks", "list"), ("tasks", "lists"),
 }
 MCP_READ = ("get_", "list_", "search_", "find_", "preview_", "download_")
-# Jarvis's own tools that only change the screen, how it talks or its timers.
-NO_CONFIRMATION = {"mcp__jarvis__camera", "mcp__jarvis__set_detail", "mcp__jarvis__set_timer",
-                   "mcp__jarvis__set_alarm", "mcp__jarvis__set_reminder", "mcp__jarvis__cancel_timers",
-                   "mcp__jarvis__set_volume"}
+# Jarvis's own tools ask for the «yes» themselves (server/tools.py), for any LLM:
+# here, asking again would make you say it twice.
+OWN = "mcp__jarvis__"
 
 
 def describe_command(command):
@@ -71,7 +70,7 @@ def describe(tool, tool_input):
         return describe_command(tool_input.get("command", ""))
     if tool.startswith("mcp__"):
         name = tool.split("__")[-1]
-        if name.startswith(MCP_READ) or tool in NO_CONFIRMATION:
+        if name.startswith(MCP_READ) or tool.startswith(OWN):
             return None
         return f"{tool.split('__')[1]}: {name} {json.dumps(tool_input, ensure_ascii=False)}"
     return None

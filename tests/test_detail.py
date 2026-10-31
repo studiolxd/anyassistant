@@ -80,6 +80,4 @@ def test_bad_levels(active, name, instruction):
 
 
 def test_creating_a_level_needs_your_yes():
-    hook = load_script("jarvis-confirm")
-    assert hook.describe("mcp__jarvis__add_detail_level", {"name": "x", "instruction": "y"})
-    assert hook.describe("mcp__jarvis__remove_detail_level", {"name": "x"})
+    assert {"add_detail_level", "remove_detail_level"} <= tools.NEEDS_YES and "set_detail" not in tools.NEEDS_YES

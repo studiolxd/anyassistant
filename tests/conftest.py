@@ -46,3 +46,12 @@ def project(tmp_path):
     shutil.copytree(ROOT / "bin", tmp_path / "bin")
     (tmp_path / ".build").mkdir()
     return tmp_path
+
+
+@pytest.fixture(autouse=True)
+def no_confirmation(tmp_path, monkeypatch):
+    """Jarvis's tools don't ask for a «yes» in tests (test_confirmation checks that they do)."""
+    import tools
+
+    monkeypatch.setattr(tools, "CONFIRM", tmp_path / "confirm")
+    monkeypatch.setattr(tools, "confirmation_on", lambda: False)
