@@ -59,10 +59,10 @@ def _ask_first(name: str, arguments: dict):
     """A tool that changes something: only with your «yes» to exactly this call (once)."""
     if not asking():
         return
-    sign = store.signature("jarvis", name, arguments)
+    sign = store.signature("anyassistant", name, arguments)
     if store.confirmed(sign):
         return
-    store.ask(sign, f"jarvis: {name} {json.dumps(arguments, ensure_ascii=False)}")
+    store.ask(sign, f"anyassistant: {name} {json.dumps(arguments, ensure_ascii=False)}")
     raise ToolError(ASK)
 
 

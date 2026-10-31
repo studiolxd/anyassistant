@@ -157,7 +157,7 @@ var media = null;
 var retry = null;
 
 // A single connected tab: when one starts, the others shut down.
-var tabs = 'BroadcastChannel' in window ? new BroadcastChannel('jarvis') : null;
+var tabs = 'BroadcastChannel' in window ? new BroadcastChannel('anyassistant') : null;
 var shutDown = false;
 if (tabs) tabs.onmessage = function (ev) {
   if (ev.data !== 'starting' || !media) return;

@@ -43,7 +43,7 @@ GOG_READ = {
 MCP_READ = ("get_", "list_", "search_", "find_", "preview_", "download_")
 # Jarvis's own tools ask for the «yes» themselves (server/tools.py), for any LLM:
 # here, asking again would make you say it twice.
-OWN = "mcp__jarvis__"
+OWN = "mcp__anyassistant__"
 
 
 def describe_command(command):

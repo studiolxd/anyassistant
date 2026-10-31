@@ -246,9 +246,9 @@ finishes speaking. Options given on the command line don't change.
 
 ## Its own tools (MCP)
 
-The server is also an MCP server, `jarvis`, at `/mcp` (only from the Mac itself:
+The server is also an MCP server, `anyassistant`, at `/mcp` (only from the Mac itself:
 no device on the network, paired or not). Allowed like any other in
-`permissions.json` (`"allowed": {"jarvis": "all"}`, or a list of tools), Claude
+`permissions.json` (`"allowed": {"anyassistant": "all"}`, or a list of tools), Claude
 can manage Jarvis in your own words («show me what you see», «use the round
 skin», «what do you know about me?»):
 
@@ -274,11 +274,11 @@ LLM), so it holds for any LLM: with Claude, Hermes or another MCP client.
 ```yaml
 # ~/.hermes/config.yaml
 mcp_servers:
-  jarvis:
+  anyassistant:
     url: http://127.0.0.1:8080/mcp
 ```
 
-(`hermes mcp add jarvis --url http://127.0.0.1:8080/mcp` does the same, asking in
+(`hermes mcp add anyassistant --url http://127.0.0.1:8080/mcp` does the same, asking in
 the terminal which tools to enable; then `hermes gateway restart`.)
 
 Nothing to lift its own safeguards: no tool touches the permissions, the

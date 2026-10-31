@@ -6,7 +6,7 @@
 - permissions.json:
 
     {
-      "allowed": {"holded": "all", "other": ["get_x", "list_y"], "jarvis": "all"},
+      "allowed": {"holded": "all", "other": ["get_x", "list_y"], "anyassistant": "all"},
       "commands": {"bin/gog": "all"},
       "confirm": true
     }
@@ -81,13 +81,13 @@ def load(root: Path | None = None, servers: Path | None = None) -> Permissions:
     if servers.exists():
         configs.append(str(servers))
         names.update(json.loads(servers.read_text()).get("mcpServers", {}))
-    if "jarvis" in allowed:  # its own tools (server/tools.py), served by the server itself
+    if "anyassistant" in allowed:  # its own tools (server/tools.py), served by the server itself
         own = {"type": "http", "url": f"http://127.0.0.1:{settings.get('port', 8080)}/mcp"}
-        path = cache / "jarvis-mcp.json"
+        path = cache / "anyassistant-mcp.json"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"mcpServers": {"jarvis": own}}))
+        path.write_text(json.dumps({"mcpServers": {"anyassistant": own}}))
         configs.append(str(path))
-        names["jarvis"] = own
+        names["anyassistant"] = own
     if configs and allowed:
         args += ["--mcp-config", *configs]
         for server in names:

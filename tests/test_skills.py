@@ -201,7 +201,7 @@ def test_tools_without_confirmation(store, es):
     assert tools.call("cancel_timers", {"kind": "all"}) == "Cancelado."
     hook = load_script("anyassistant-confirm")
     for name in ("set_timer", "set_alarm", "set_reminder", "cancel_timers", "set_volume"):
-        assert hook.describe(f"mcp__jarvis__{name}", {}) is None
+        assert hook.describe(f"mcp__anyassistant__{name}", {}) is None
 
 
 def test_spoken_durations(es):

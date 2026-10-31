@@ -15,7 +15,7 @@ import web
 
 log = logging.getLogger("mcp")
 LOCAL = {"127.0.0.1", "::1"}  # only from the Mac itself
-NAME = "jarvis"
+NAME = "anyassistant"
 
 
 def _result(id_, result):

@@ -44,7 +44,7 @@ def test_set_detail_by_voice_without_confirmation(active):
     assert settings.load()["detail"] == "concise"
     with pytest.raises(tools.ToolError):
         tools.call("set_detail", {"level": "verbose"})
-    assert load_script("anyassistant-confirm").describe("mcp__jarvis__set_detail", {"level": "concise"}) is None
+    assert load_script("anyassistant-confirm").describe("mcp__anyassistant__set_detail", {"level": "concise"}) is None
 
 
 def test_a_change_mid_conversation_reaches_the_llm(active):

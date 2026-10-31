@@ -94,7 +94,7 @@ def test_reload_and_restart_wait_for_the_answer(env):
 def test_mcp_protocol(env):
     init = mcp_server.handle({"jsonrpc": "2.0", "id": 1, "method": "initialize",
                               "params": {"protocolVersion": "2025-06-18"}})
-    assert init["result"]["serverInfo"]["name"] == "jarvis"
+    assert init["result"]["serverInfo"]["name"] == "anyassistant"
     assert mcp_server.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None
     listed = mcp_server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})["result"]["tools"]
     assert {t["name"] for t in listed} == set(tools.available())
@@ -105,20 +105,20 @@ def test_mcp_protocol(env):
 
 
 def test_claude_gets_the_jarvis_server_only_if_allowed(env, project):
-    (project / "permissions.json").write_text(json.dumps({"allowed": {"jarvis": "all"}}))
+    (project / "permissions.json").write_text(json.dumps({"allowed": {"anyassistant": "all"}}))
     args = load(project, project / ".mcp.json").arguments
-    config = json.loads((project / ".build" / "jarvis-mcp.json").read_text())
-    assert config["mcpServers"]["jarvis"]["url"] == "http://127.0.0.1:8080/mcp"
-    assert "mcp__jarvis" in args
+    config = json.loads((project / ".build" / "anyassistant-mcp.json").read_text())
+    assert config["mcpServers"]["anyassistant"]["url"] == "http://127.0.0.1:8080/mcp"
+    assert "mcp__anyassistant" in args
     (project / "permissions.json").write_text(json.dumps({"allowed": {}}))
-    assert "mcp__jarvis" not in load(project, project / ".mcp.json").arguments
+    assert "mcp__anyassistant" not in load(project, project / ".mcp.json").arguments
 
 
 def test_the_hook_leaves_jarvis_tools_to_the_server():
     hook = load_script("anyassistant-confirm")
-    assert hook.describe("mcp__jarvis__get_settings", {}) is None
-    assert hook.describe("mcp__jarvis__camera", {"on": True}) is None
-    assert hook.describe("mcp__jarvis__set_name", {"name": "Viernes"}) is None  # the server asks itself
+    assert hook.describe("mcp__anyassistant__get_settings", {}) is None
+    assert hook.describe("mcp__anyassistant__camera", {"on": True}) is None
+    assert hook.describe("mcp__anyassistant__set_name", {"name": "Viernes"}) is None  # the server asks itself
 
 
 def test_remember_points_to_update():
@@ -159,7 +159,7 @@ def test_changes_wait_for_your_yes_for_any_llm(env, asking):
     with pytest.raises(tools.ToolError, match="confirmation"):
         tools.call("set_name", {"name": "Viernes"})
     assert not (env / "settings.json").exists()
-    assert say_yes()["action"] == 'jarvis: set_name {"name": "Viernes"}'
+    assert say_yes()["action"] == 'anyassistant: set_name {"name": "Viernes"}'
     tools.call("set_name", {"name": "Viernes"})
     assert saved(env)["name"] == "Viernes"
     with pytest.raises(tools.ToolError):  # good for one use only

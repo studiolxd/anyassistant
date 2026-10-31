@@ -1,7 +1,7 @@
 {
   "allowed": {
     "holded": "all",
-    "jarvis": "all"
+    "anyassistant": "all"
   },
   "commands": {
     "bin/gog": "read"

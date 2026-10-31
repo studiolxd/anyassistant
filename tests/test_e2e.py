@@ -42,7 +42,7 @@ def server(tmp_path):
     """Starts server/main.py with the given options and tmp_path as its data folder; returns its URL."""
     processes = []
     # What Claude may use there: Jarvis's own tools only.
-    (tmp_path / "permissions.json").write_text(json.dumps({"allowed": {"jarvis": "all"}, "confirm": True}))
+    (tmp_path / "permissions.json").write_text(json.dumps({"allowed": {"anyassistant": "all"}, "confirm": True}))
 
     def start(*options):
         with socket.socket() as s:
