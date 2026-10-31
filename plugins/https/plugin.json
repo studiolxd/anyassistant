@@ -1,0 +1,6 @@
+{
+  "name": "HTTPS",
+  "description": "The page over HTTPS with a certificate authority of its own: secure in any browser (microphone, camera) once the device installs the authority, without Chrome's flag.",
+  "kind": "feature",
+  "default": false
+}
