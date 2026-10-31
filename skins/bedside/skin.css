@@ -32,6 +32,6 @@ body[data-look="error"] .ember { background: #7f1d1d; }
 .status { margin: 0; font-size: 4vmin; opacity: 0.5; }
 body[data-look="asleep"] .status { opacity: 0.2; }
 .answer { width: 80%; text-align: center; font-size: 5vmin; opacity: 0.7; }
-.timers { font-size: 5vmin; opacity: 0.6; }
+.timers { margin-top: 3vmin; font-size: 5vmin; opacity: 0.6; }
 .timers p { margin: 0; }
 body[data-look="asleep"] .answer { display: none; }
