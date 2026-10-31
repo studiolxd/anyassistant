@@ -153,6 +153,39 @@ def set_detail(level: str) -> str:
     return "Saved: from your next answer on."
 
 
+def add_detail_level(name: str, instruction: str) -> str:
+    import llm
+
+    name, instruction = name.strip().lower(), instruction.strip()
+    if not re.fullmatch(r"[^\W_][\w -]{0,29}", name):
+        raise ToolError("a level's name is a word or two (up to 30 characters)")
+    if not 10 <= len(instruction) <= 500:
+        raise ToolError("the instruction must be a sentence or two (10 to 500 characters)")
+    levels = settings.load().get("detail_levels") or {}
+    settings.save(detail_levels={**levels, name: instruction})
+    verb = "Changed" if name in llm.detail_levels() else "Added"
+    return f"{verb}: the level «{name}». To use it: set_detail."
+
+
+def remove_detail_level(name: str) -> str:
+    import llm
+
+    name = name.strip().lower()
+    levels = settings.load().get("detail_levels") or {}
+    if name not in levels:
+        if name in llm.DETAIL_LEVELS:
+            raise ToolError(f"«{name}» is built in and can't be removed")
+        raise ToolError(f"no level «{name}»; levels: {', '.join(llm.detail_levels())}")
+    del levels[name]
+    changes = {"detail_levels": levels}
+    if settings.get("detail") == name and name not in llm.DETAIL_LEVELS:
+        changes["detail"] = "neutral"  # it was in use
+    settings.save(**changes)
+    if name in llm.DETAIL_LEVELS:
+        return f"Removed your text for «{name}»: it is back to the built-in one."
+    return "Removed." + (" Back to neutral." if "detail" in changes else "")
+
+
 def _memory_on():
     if memory.mode() == "off":
         raise ToolError("memory is off («memory» in settings.json)")
@@ -243,6 +276,14 @@ TOOLS = {
     "set_detail": (set_detail, "How much you say in your answers: concise, neutral, detailed (or another level "
                    "from get_settings), when the user asks you to be briefer or to give more detail.",
                    _schema(level={"type": "string"})),
+    "add_detail_level": (add_detail_level, "Create a detail level, or change one's instruction, when the user "
+                         "asks for a new way of answering («a teacher mode that explains step by step»). The "
+                         "instruction is added to your prompt: write it in English, one or two sentences, about "
+                         "how much and how to answer (it is spoken: no lists). When asking for confirmation, "
+                         "say it in the user's language.",
+                         _schema(name={"type": "string"}, instruction={"type": "string"})),
+    "remove_detail_level": (remove_detail_level, "Remove a detail level the user created (built-in ones go back "
+                            "to their text).", _schema(name={"type": "string"})),
     "get_llms": (get_llms, "The LLMs Jarvis can use, which one is in use and whether each is available.", _schema()),
     "set_llm": (set_llm, "Switch to another LLM (claude, apple, hermes), optionally with a model (for Claude: "
                 "sonnet, opus, haiku…; empty for the default). Apple's can't use tools: to come back, the user "

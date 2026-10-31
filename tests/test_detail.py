@@ -51,3 +51,35 @@ def test_a_change_mid_conversation_reaches_the_llm(active):
     active["detail"] = "concise"
     assert a._with_detail("And tomorrow?").startswith("(From now on: Answer in one short sentence")
     assert a._with_detail("Thanks") == "Thanks"  # said once
+
+
+def test_jarvis_creates_and_removes_levels(active):
+    tools.call("add_detail_level", {"name": "Teacher", "instruction": "Explain it step by step with an example."})
+    assert settings.load()["detail_levels"] == {"teacher": "Explain it step by step with an example."}
+    active["detail_levels"] = settings.load()["detail_levels"]
+    tools.call("set_detail", {"level": "teacher"})
+    active["detail"] = "teacher"
+    assert "step by step" in llm.instructions()
+    tools.call("remove_detail_level", {"name": "teacher"})
+    assert settings.load()["detail"] == "neutral"  # it was in use
+    assert settings.load()["detail_levels"] == {}
+
+
+def test_built_in_levels(active):
+    tools.call("add_detail_level", {"name": "neutral", "instruction": "Two sentences at most."})
+    assert "back to the built-in" in tools.call("remove_detail_level", {"name": "neutral"})
+    with pytest.raises(tools.ToolError):
+        tools.call("remove_detail_level", {"name": "concise"})
+
+
+@pytest.mark.parametrize("name, instruction", [("", "Explain it well."), ("a" * 40, "Explain it well."),
+                                               ("ok", "short"), ("../x", "Explain it step by step.")])
+def test_bad_levels(active, name, instruction):
+    with pytest.raises(tools.ToolError):
+        tools.call("add_detail_level", {"name": name, "instruction": instruction})
+
+
+def test_creating_a_level_needs_your_yes():
+    hook = load_script("jarvis-confirm")
+    assert hook.describe("mcp__jarvis__add_detail_level", {"name": "x", "instruction": "y"})
+    assert hook.describe("mcp__jarvis__remove_detail_level", {"name": "x"})

@@ -101,10 +101,22 @@ the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear'
 
 **How much it says**: `detail` is `concise` (one short sentence), `neutral` (one
 to three; the default) or `detailed` (a paragraph or two). Each level is an
-instruction added to the prompt; `detail_levels` adds levels or changes those
-texts: `{"telegraphic": "Answer in five words or fewer."}`. By voice too («be
-briefer», «give me more detail»), without asking for your «yes»: if it changes
-mid-conversation, the LLM hears it with the next question.
+instruction added to the prompt (the built-in ones: `DETAIL_LEVELS` in
+`server/llm/__init__.py`, inserted into `INSTRUCTIONS` there). `detail_levels`
+adds levels or changes those texts; write them in English, like the rest of the
+prompt:
+
+```json
+{"detail": "teacher",
+ "detail_levels": {"telegraphic": "Answer in five words or fewer.",
+                   "teacher": "Explain it step by step, as a patient teacher would, with an everyday example."}}
+```
+
+By voice too: choosing one («be briefer», «give me more detail», «use the teacher
+mode») doesn't ask for your «yes»; creating or changing one («make a teacher mode
+that explains step by step») does, since its text goes into its instructions:
+Jarvis says what it will save first. If the level changes mid-conversation, the
+LLM hears it with the next question.
 
 **The screen**: `show_time`, `show_date` and `show_hint` («Say Hey Jarvis») while
 asleep; `show_status` («Listening», «Thinking…»), `show_heard` (what you said),
@@ -146,6 +158,7 @@ face», «what do you know about me?»):
 | `remember`, `forget` | memory facts | yes |
 | `camera` | shows or hides the live camera on the screen | no: it only changes the screen |
 | `set_detail` | how much it says: concise, neutral, detailed or your own levels | no: it only changes how it talks |
+| `add_detail_level`, `remove_detail_level` | create, change or remove a detail level | yes: its text goes into the prompt |
 | `get_llms`, `set_llm` | the LLMs it can use (and whether each is available); switch to another, with a model | `set_llm`: yes |
 | `reload_tools`, `restart` | after the answer, so the LLM isn't cut off while using it | yes |
 
