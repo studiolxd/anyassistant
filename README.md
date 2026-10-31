@@ -48,6 +48,11 @@ bin/anyassistant status
 bin/anyassistant log               # live log (.build/anyassistant.log)
 ```
 
+Installed, these are `~/Applications/AnyAssistant/bin/anyassistant …` (launchd starts it
+with the Mac). In the project folder, the same commands run a development copy with
+its own `settings.json` (not in git): keep another `port` (8081) so it doesn't clash
+with the installed one, and your real data stays in the installation.
+
 Or in the foreground, to see the log directly:
 
 ```
