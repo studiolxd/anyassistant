@@ -40,7 +40,7 @@ body[data-look="asleep"] .clock { display: block; }
 .captions p { margin: 0.3em 0; font-size: 1.1em; color: #fff; opacity: 0.6; }
 .captions p:last-child { font-size: 1.5em; opacity: 1; }
 /* What Jarvis says: the eyes' colour (older lines, fainter). */
-.captions p.assistant { color: var(--accent); opacity: 0.6; font-style: italic; }
+.captions p.assistant { color: var(--accent); opacity: 0.6; }
 .captions p.assistant:last-child { opacity: 1; }
 body[data-look="asleep"] .captions,
 body[data-look="asleep"] .stats { display: none; }
