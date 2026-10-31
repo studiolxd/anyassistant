@@ -448,6 +448,10 @@ understands). Starting and pairing aren't blocks: they always work.
   own) and `--bar-1` … `--bar-5` (its own as five moving bars), e.g.
   `transform: scale(calc(1 + var(--voice) * .2))`.
 - Its `options` as variables: `--accent`, changeable with `skin_options`.
+- The timers' lines with their kind as a class (`.timers p.timer`, `.alarm`,
+  `.reminder`): Jarvis puts no icon, so a skin that wants one adds it, e.g.
+  `.timers p.alarm::before { content: "⏰ "; }` (and `body[data-state=alarm] .status::before`
+  while one rings). Android 4.4's font lacks some emoji (⏱).
 
 **The lab**: `http://<mac>:8080/lab?skin=mine` shows every state at once, with a
 simulated voice and timer, and reloads when you save. **The check**: `bin/jarvis

@@ -360,10 +360,10 @@ function videoFrame(track, send) {
   video.play();
 }
 
-// Running timers, alarms and reminders, with a countdown (settings show_timers).
+// Running timers, alarms and reminders, with a countdown (settings show_timers). Each line
+// carries its kind as a class (timer, alarm, reminder): an icon, if any, is the skin's.
 var alarmLabel = '';
 var timerItems = [];
-var ICONS = { timer: '⌛', alarm: '⏰', reminder: '🔔' };  // ⏱ isn't in Android 4.4's font
 function showTimers(items) {
   timerItems = items || [];
   drawTimers();
@@ -382,12 +382,13 @@ function drawTimers() {
     } else {
       when = new Date(i.at * 1000).toLocaleTimeString(document.documentElement.lang, { hour: 'numeric', minute: '2-digit' });
     }
-    return ICONS[i.kind] + ' ' + when + (i.label ? ' · ' + i.label : '');
+    return { kind: i.kind, text: when + (i.label ? ' · ' + i.label : '') };
   });
   box.textContent = '';
   lines.forEach(function (line) {
     var p = document.createElement('p');
-    p.textContent = line;
+    p.className = line.kind;
+    p.textContent = line.text;
     box.appendChild(p);
   });
 }
