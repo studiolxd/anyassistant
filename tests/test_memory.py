@@ -2,9 +2,6 @@
 
 import asyncio
 import json
-import os
-import subprocess
-import sys
 import time
 
 import pytest
@@ -86,28 +83,3 @@ def test_review_in_auto_only_and_with_something_you_said(mem):
 def test_a_broken_review_never_breaks_anything(mem):
     asyncio.run(memory.review(FakeLLM("no json here"), [("user", "Hi.")]))
     assert not mem.exists()
-
-
-@pytest.fixture
-def run(project):
-    def run(*args, mode="auto", policy="all"):
-        (project / "permissions.json").write_text(json.dumps({"commands": {"bin/memory": policy}}))
-        (project / "settings.json").write_text(json.dumps({"memory": mode}))
-        env = {**os.environ, "JARVIS_SETTINGS": str(project / "settings.json"),
-               "JARVIS_MEMORY": str(project / "memory.json")}
-        return subprocess.run([sys.executable, project / "bin" / "memory", *args], capture_output=True, text=True, env=env)
-    return run
-
-
-def test_memory_command(run, project):
-    assert run("remember", "Invoices with Holded.").returncode == 0
-    run("remember", "Has a dog.")
-    assert "1. Invoices with Holded." in run("show").stdout
-    run("forget", "1")
-    assert json.loads((project / "memory.json").read_text())["facts"] == ["Has a dog."]
-
-
-def test_memory_command_respects_mode_and_policy(run):
-    assert "memory is off" in run("remember", "x", mode="off").stderr
-    assert "not allowed" in run("remember", "x", policy="read").stderr
-    assert "remember 'fact'" not in run("help", policy="read").stdout

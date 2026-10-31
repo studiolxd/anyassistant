@@ -6,13 +6,14 @@
 - permissions.json:
 
     {
-      "allowed": {"holded": "all", "other": ["get_x", "list_y"]},
+      "allowed": {"holded": "all", "other": ["get_x", "list_y"], "jarvis": "all"},
       "commands": {"bin/gog": "all"},
       "confirm": true
     }
 
   "allowed": tools of each .mcp.json server ("all" or a list; it sees the server's
   other tools, but they are denied). A server that isn't listed is denied entirely.
+  «jarvis» is its own MCP server (server/tools.py: face, voice, memory, camera…).
   "commands": programs (paths relative to the project) it may run, and nothing
   else: it gets Claude Code's terminal limited to them, plus the output of
   `<command> help` in the prompt so it knows how to use them. Each value is the
@@ -33,6 +34,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import eyes
+import settings
 
 log = logging.getLogger("llm")
 
@@ -67,9 +69,19 @@ def load(root: Path, servers: Path) -> Permissions:
     args = ["--strict-mcp-config", "--setting-sources", ""]
     allow, deny = [], []
 
-    if servers.exists() and allowed:
-        names = json.loads(servers.read_text()).get("mcpServers", {})
-        args += ["--mcp-config", str(servers)]
+    configs, names = [], {}
+    if servers.exists():
+        configs.append(str(servers))
+        names.update(json.loads(servers.read_text()).get("mcpServers", {}))
+    if "jarvis" in allowed:  # its own tools (server/tools.py), served by the server itself
+        own = {"type": "http", "url": f"http://127.0.0.1:{settings.get('port', 8080)}/mcp"}
+        path = root / ".build" / "jarvis-mcp.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"mcpServers": {"jarvis": own}}))
+        configs.append(str(path))
+        names["jarvis"] = own
+    if configs and allowed:
+        args += ["--mcp-config", *configs]
         for server in names:
             tools = allowed.get(server)
             if tools is None:
@@ -104,12 +116,12 @@ def load(root: Path, servers: Path) -> Permissions:
     args += ["--tools", ",".join(tools)]
 
     if allow and config.get("confirm", True):
-        settings = root / ".build" / "claude-settings.json"
-        settings.write_text(json.dumps({"hooks": {"PreToolUse": [{
+        hooks = root / ".build" / "claude-settings.json"
+        hooks.write_text(json.dumps({"hooks": {"PreToolUse": [{
             "matcher": "Bash|mcp__.*",
             "hooks": [{"type": "command", "command": str(root / "bin" / "jarvis-confirm")}],
         }]}}))
-        args += ["--settings", str(settings)]
+        args += ["--settings", str(hooks)]
         log.info("actions that write ask for confirmation")
     if allow:
         args += ["--allowedTools", *allow]

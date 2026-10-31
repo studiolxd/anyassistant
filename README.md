@@ -109,14 +109,31 @@ its hash in `.build/paired.json`). Unpaired devices can't connect, see the camer
 forgets them all.
 
 **By voice**: «Use the orb face», «Change your voice to Mónica», «From now on your
-name is …». Claude does it with `bin/settings` (allowed in `permissions.json`:
-`"bin/settings": "all"`, or a list of keys) and, as with anything that writes,
-asks for your «yes» first. It can only touch `face`, `voice` and `name`: never your
-`instructions`, the permissions, the confirmation times, the port or the LLM.
-After every answer the server reads `settings.json` again (also when you edit it
-by hand): the face changes on the screen at once, and anything else (voice,
-name…) restarts it when it finishes speaking. Options given on the command line
-don't change.
+name is …», with Jarvis's own tools (below). After every answer the server reads
+`settings.json` again (also when you edit it by hand): the face changes on the
+screen at once, and anything else (voice, name, language…) restarts it when it
+finishes speaking. Options given on the command line don't change.
+
+## Its own tools (MCP)
+
+The server is also an MCP server, `jarvis`, at `/mcp` (only from the Mac itself:
+no device on the network, paired or not). Allowed like any other in
+`permissions.json` (`"allowed": {"jarvis": "all"}`, or a list of tools), Claude
+can manage Jarvis in your own words («show me what you see», «use the round
+face», «what do you know about me?»):
+
+| Tool | | Your «yes» |
+|---|---|---|
+| `get_status`, `get_settings`, `get_memory` | device and camera, language, LLM, eyes, memory; name, face, voice; what it remembers | no |
+| `set_face`, `set_voice`, `set_name`, `set_language` | saved to `settings.json`, applied after the answer | yes |
+| `remember`, `forget` | memory facts | yes |
+| `camera` | shows or hides the live camera on the screen | no: it only changes the screen |
+| `reload_tools`, `restart` | after the answer, so the LLM isn't cut off while using it | yes |
+
+Nothing to lift its own safeguards: no tool touches the permissions, the
+confirmation times, the port, the LLM or your `instructions`. The fixed voice
+commands («activa la cámara», «para», «habla en inglés»…) stay: they need no LLM,
+so they answer at once; the tools are for everything else.
 
 ## Memory
 
@@ -128,9 +145,9 @@ don't change.
 ```
 
 - **explicit**: only what you ask: «remember that I invoice with Holded», «what do
-  you know about me?», «forget that». Claude does it with `bin/memory` (allowed in
-  `permissions.json`: `"bin/memory": "all"`, or `"read"`), with your «yes» first:
-  it repeats what it will keep, so a misheard word («oldev») is caught.
+  you know about me?», «forget that». Claude does it with its own tools
+  (`remember`, `forget`, `get_memory`), with your «yes» first: it repeats what it
+  will keep, so a misheard word («oldev») is caught.
 - **auto**: also, when it falls asleep, the LLM reviews the conversation in the
   background and keeps durable facts about you and a one-line summary of it (the
   last 10, for 30 days: «what did I ask you yesterday?»). Only with Claude.
@@ -456,8 +473,8 @@ so they need no account or network; they run on a free port, next to a running J
   `server/swift.py`, builds the plugins' Swift bridges.
 - `bin/jarvis` — starts and stops the server.
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
-- `bin/settings` — what Claude may change in `settings.json` (face, voice, name).
-- `bin/memory` — what Claude remembers about you (`memory.json`).
+- `server/tools.py`, `server/mcp_server.py` — Jarvis's own tools, as the `jarvis` MCP server.
+- `server/memory.py` — memory across conversations (`memory.json`).
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
 - `web/` — the phone's page (plain JS, old Chrome) and the monitor.
 - `tests/` — pytest; `test_e2e.py` drives the real server.

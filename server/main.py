@@ -26,9 +26,11 @@ from aiohttp import web
 import eyes
 import i18n
 import llm
+import mcp_server
 import pairing
 import settings
 import stt
+import tools
 import tts
 import wake
 from brain import assistant, transcriber
@@ -223,7 +225,6 @@ def main():
         action.dest for action in parser._actions
         if any(arg == option or arg.startswith(option + "=") for option in action.option_strings for arg in sys.argv[1:])
     }
-    os.environ["JARVIS_LANGUAGE"] = i18n.L.code  # for bin/settings, run by the LLM
 
     global brain_factory
     ear = {"record": args.record, "silence": args.silence, "idle_timeout": args.idle_timeout}
@@ -259,6 +260,7 @@ def main():
         brain_factory = Parrot
 
     eyes.source = lambda: (session := current_session()) and session.jpeg()
+    tools.session = current_session
     app = web.Application(middlewares=[no_cache])
     app.router.add_get("/", index)
     app.router.add_get("/monitor", monitor)
@@ -267,6 +269,7 @@ def main():
     app.router.add_get("/status", status)
     app.router.add_get("/config", config)
     app.router.add_get("/eyes.jpg", eyes_image)
+    app.router.add_route("*", "/mcp", mcp_server.endpoint)
     app.router.add_post("/pairing", new_pairing_code)
     app.router.add_post("/pair", pair)
     app.router.add_static("/web/", WEB)

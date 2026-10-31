@@ -20,6 +20,7 @@ import eyes
 import i18n
 import memory
 import settings
+import tools
 from audio import normalize
 from brain.transcriber import Transcriber
 from text import words
@@ -319,13 +320,16 @@ class Assistant(Transcriber):
             await self._apply_settings()
 
     async def _apply_settings(self):
-        """After an answer (in which the LLM may have used bin/settings): what changed in
+        """After an answer (in which the LLM may have used its own tools): what changed in
         settings.json goes to the page now, or restarts the server when it can't change live."""
         changed = settings.refresh()
         if changed & {"face", "video"}:
             self.send({"type": "config"})  # the page reads /config again
-        if changed - settings.LIVE:
+        asked, tools.requested = set(tools.requested), set()  # by its own tools, during the answer
+        if changed - settings.LIVE or "restart" in asked:
             await self._restart(i18n.L("speech.restarting"))
+        elif "reload" in asked:
+            await self.llm.reload()
 
     def _looked(self):
         """It looks through the camera: the face says so and the screen shows the photo."""

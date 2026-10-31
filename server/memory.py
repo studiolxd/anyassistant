@@ -4,8 +4,8 @@ memory.json in the project (not in git), readable and editable:
 
     {"facts": ["Invoices with Holded.", …], "conversations": [{"at": 1793…, "summary": "…"}, …]}
 
-- explicit: only what you ask it to remember («remember that…»), through bin/memory
-  and with your «yes».
+- explicit: only what you ask it to remember («remember that…»), through its own
+  tools (tools.py) and with your «yes».
 - auto: also, when it falls asleep, the LLM reviews the conversation and keeps
   durable facts about you (only from what *you* said: never from emails or other
   tool results, which could carry instructions) and a one-line summary of it.

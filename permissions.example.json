@@ -1,11 +1,10 @@
 {
   "allowed": {
-    "holded": "all"
+    "holded": "all",
+    "jarvis": "all"
   },
   "commands": {
-    "bin/gog": "read",
-    "bin/settings": "all",
-    "bin/memory": "all"
+    "bin/gog": "read"
   },
   "confirm": true
 }

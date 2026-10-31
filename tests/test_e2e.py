@@ -328,3 +328,21 @@ def test_camera_on_the_screen_by_voice(server, tmp_path):
     messages, _ = asyncio.run(talk(url, pcm, until=lambda m: len(cameras(m)) >= 2, timeout=20))
     assert cameras(messages) == [True, False]
     assert "asleep" not in states(messages)  # «apaga» is not «apágate»
+
+
+@pytest.mark.skipif(not shutil.which("claude"), reason="needs Claude Code signed in")
+def test_its_own_tools_with_claude(server, tmp_path):
+    """In its own words: a setting (with your «yes») and the camera (without)."""
+    from PIL import Image
+
+    (tmp_path / "settings.json").write_text(json.dumps({"log_transcripts": True}))
+    url = server("--mode", "assistant", "--lang", "es", "--wake", "none", "--llm", "claude", "--tts", "none")
+    say = lambda text: speech(tmp_path, text, "Mónica")  # noqa: E731
+    pause = np.zeros(RATE * 12, np.int16)
+    pcm = np.concatenate([say("Pon la cara redonda, la del orbe."), pause, say("Sí."), pause,
+                          say("Enséñame en la pantalla lo que estás viendo.")])
+    camera = lambda m: [x for x in m if x.get("type") == "camera"]  # noqa: E731
+    messages, _ = asyncio.run(talk(url, pcm, until=camera, timeout=40, image=Image.new("RGB", (320, 240), "gray")))
+    assert json.loads((tmp_path / "settings.json").read_text())["face"] == "orb"
+    assert {"type": "config"} in messages  # the page changed its face at once
+    assert camera(messages) == [{"type": "camera", "on": True}]

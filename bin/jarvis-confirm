@@ -2,7 +2,7 @@
 """Claude Code PreToolUse hook: actions that write need the user's «yes».
 
 Claude Code runs it before every tool, with {tool_name, tool_input} on stdin. If
-the action writes (a bin/gog, bin/settings or bin/memory call that isn't a read, or an MCP
+the action writes (a bin/gog call that isn't a read, or an MCP
 tool that isn't get_/list_/search_…) and the user hasn't confirmed it, it blocks it (exit code 2:
 the message reaches Claude) and records it in .build/confirm/pending.json. When
 the user says «yes», the voice server (brain/assistant.py) writes confirmed.json
@@ -42,13 +42,12 @@ GOG_READ = {
     ("tasks", "list"), ("tasks", "lists"),
 }
 MCP_READ = ("get_", "list_", "search_", "find_", "preview_", "download_")
-
-
-SETTINGS_READ = {"help", "show"}
+# Jarvis's own tools that only change what the screen shows.
+NO_CONFIRMATION = {"mcp__jarvis__camera"}
 
 
 def describe_command(command):
-    """The bin/gog or bin/settings action in words, or None if it only reads."""
+    """The bin/gog action in words, or None if it only reads."""
     try:
         parts = shlex.split(command)
     except ValueError:
@@ -56,9 +55,6 @@ def describe_command(command):
     if not parts:
         return None
     found = [p for p in parts[1:] if not p.startswith("-")]
-    for name in ("settings", "memory"):
-        if parts[0].endswith("bin/" + name):
-            return None if not found or found[0] in SETTINGS_READ else name + " " + " ".join(parts[1:])
     if not parts[0].endswith("bin/gog"):
         return None
     if found[:1] == ["help"] or "--help" in parts or "-h" in parts:
@@ -73,7 +69,7 @@ def describe(tool, tool_input):
         return describe_command(tool_input.get("command", ""))
     if tool.startswith("mcp__"):
         name = tool.split("__")[-1]
-        if name.startswith(MCP_READ):
+        if name.startswith(MCP_READ) or tool in NO_CONFIRMATION:
             return None
         return f"{tool.split('__')[1]}: {name} {json.dumps(tool_input, ensure_ascii=False)}"
     return None

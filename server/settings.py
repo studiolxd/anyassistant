@@ -1,12 +1,12 @@
 """Preferences: settings.json in the project, so nothing has to be typed when starting.
 
     {"language": "es", "name": "Jarvis", "llm": "claude", "voice": {"es": "Mónica", "en": "Daniel"},
-     "instructions": ["I invoice with Holded."], "face": "orb"}
+     "instructions": ["I invoice with Holded."], "face": "orb", "memory": "auto"}
 
 Keys are the server's options with underscores instead of dashes (language,
 llm_model, echo_guard, idle_timeout…); options on the command line win. «voice»
-can be one voice or one per language. Jarvis writes it too: «speak English»
-saves the language here and restarts. $JARVIS_SETTINGS points elsewhere (tests).
+can be one voice or one per language. Jarvis writes it too (tools.py, «speak
+English»), and the server applies it after each answer. $JARVIS_SETTINGS points elsewhere (tests).
 """
 
 import json
@@ -17,7 +17,7 @@ from pathlib import Path
 # The options in effect (command line > settings.json > defaults), set by main.py.
 active: dict = {}
 fixed: set = set()  # the ones given on the command line: settings.json doesn't change them
-# What can change without restarting (read again after every answer: bin/settings,
+# What can change without restarting (read again after every answer: its own tools,
 # or settings.json edited by hand). Anything else restarts the server.
 LIVE = {"instructions", "face", "video", "confirm_wait", "confirm_valid", "log_transcripts", "eyes", "memory"}
 

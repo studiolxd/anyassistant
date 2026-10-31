@@ -10,6 +10,8 @@
   system, settings and pairing from its own window. What launchd would have done
   belongs to its installer.
 
+- [ ] **Hermes with Jarvis's tools**: add the `jarvis` MCP server to Hermes's (not tried yet).
+
 ## Conversation quality
 
 - [ ] **Wake word**: watch false positives and negatives; maybe a name in the
@@ -21,7 +23,7 @@
 
 ## Done
 
-- [x] **Memory**: `"memory": "explicit"|"auto"`; `memory.json`, `bin/memory`, a review
+- [x] **Memory**: `"memory": "explicit"|"auto"`; `memory.json`, a review
   of each conversation when it falls asleep (auto).
 - [x] **Eyes (Phase 4)**: `"eyes": true`; with Claude, by words («what do you see?»,
   «read this») or by its own decision (Read on the image of the moment).
@@ -33,7 +35,9 @@
   Transcripts in the log only with `log_transcripts`.
 - [x] **Face**: «eyes» and «orb», chosen with `face`.
 - [x] **Languages**: English base and Spanish in `locales/`; `language` or by voice.
-- [x] **Settings**: `settings.json`; face, voice and name also by voice with your «yes» (`bin/settings`).
+- [x] **Settings**: `settings.json`; face, voice, name, language also by voice with your «yes».
+- [x] **Its own tools (MCP)**: the server is the `jarvis` MCP server (settings, memory,
+  camera, reload, restart), used by Claude.
 - [x] **Automated tests**: pytest in `tests/` (`uv run pytest`; `-m e2e` for the real server).
 
 ## Postponed
