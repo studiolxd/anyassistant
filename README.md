@@ -719,7 +719,8 @@ so they need no account or network; they run on a free port, next to a running J
 
 ## Layout
 
-- `server/main.py` — HTTP, signaling (`/offer`), texts and settings for the page (`/config`), monitor (`/video.mjpg`, `/status`).
+- `server/main.py` — options, plugins and running it; `server/web.py`, HTTP (the page, `/config`, `/offer`,
+  `/mcp`, the monitor…); `server/hub.py`, the device connected now.
 - `server/i18n.py` and `locales/` — languages; `server/settings.py`, `settings.json`.
 - `server/transport.py` — WebRTC session: tracks, `control` DataChannel, last frame.
 - `server/audio.py` — 48 kHz mono PCM; `Speaker` is the outgoing track.

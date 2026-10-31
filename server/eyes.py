@@ -20,6 +20,7 @@ import logging
 
 from pathlib import Path
 
+import hub
 import i18n
 import paths
 import settings
@@ -34,8 +35,8 @@ has no image, read {frame} with the Read tool: it is the camera's view at the mo
 of the question. Describe only what matters, briefly, for speech. If there is no
 image or no file, the camera isn't available: say so."""
 
-source = lambda: None  # noqa: E731 — the current device's camera as JPEG; set by main.py
-ask_device = lambda message: False  # noqa: E731 — sends to the device; set by main.py
+source = hub.jpeg  # the connected device's camera, as JPEG
+ask_device = hub.send  # a message to its page
 PHOTO_WAIT = 4  # seconds for the device's photo
 PHOTO_SIDE = 1568  # longest side sent to the LLM (more only costs time)
 _waiting: dict[int, asyncio.Future] = {}

@@ -9,11 +9,12 @@ connected device (brain/assistant.py), or on the Mac if there is none.
 import json
 import time
 
+import hub
 import paths
 
 PATH = paths.TIMERS
 KINDS = ("timer", "alarm", "reminder")
-changed = lambda: None  # noqa: E731 — called when the list changes (the page shows them); set by main.py
+changed = hub.timers_changed  # the page shows them
 
 
 def load() -> list[dict]:

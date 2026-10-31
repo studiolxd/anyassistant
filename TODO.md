@@ -7,6 +7,11 @@
   belongs to its installer.
 
 
+- [ ] **Swift bridges on macOS 27**: `LanguageModelSession.GenerationError` is deprecated
+  (apple_bridge.swift); AVSpeech's synthesizer warns about the main actor.
+- [ ] **A flaky end-to-end test**: once, the wake word heard nothing in 35 s with the
+  synthetic voice (test_memory_with_claude); passed when repeated.
+
 ## Conversation quality
 
 - [ ] **Wake word**: keep watching false positives and negatives (31 Oct: 28 wake-ups,

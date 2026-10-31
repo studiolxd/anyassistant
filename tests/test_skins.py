@@ -103,14 +103,14 @@ def test_sounds(mine):
 def test_the_page_forbids_outside_resources_and_scripts():
     import asyncio
 
-    import main
+    import web
 
     async def handler(request):
         from aiohttp import web
         return web.Response(text="x")
 
     request = type("Request", (), {"path": "/"})()
-    response = asyncio.run(main.no_cache(request, handler))
+    response = asyncio.run(web.no_cache(request, handler))
     policy = response.headers["Content-Security-Policy"]
     assert "script-src 'self'" in policy and "default-src 'self'" in policy
 

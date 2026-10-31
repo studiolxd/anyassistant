@@ -20,9 +20,10 @@ import typing
 from dataclasses import dataclass
 
 import confirmation
+import hub
 import paths
 
-session = lambda: None  # noqa: E731 — the connected device's Session; set by main.py
+session = hub.current  # the connected device's Session
 requested: set[str] = set()  # «reload», «restart»: for when the answer ends
 ASK = ("This action changes data and needs the user's confirmation. Don't assume it: ask them in one "
        "short sentence whether to do it (say what you are going to do). If they answer yes, repeat "
