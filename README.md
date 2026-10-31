@@ -15,6 +15,28 @@ cancellation) over Wi-Fi.
    `http://192.168.1.137:8080` → *Enabled* → Relaunch.
 4. Settings → Battery → optimization: Chrome *not optimized*.
 
+
+## Installing
+
+```sh
+./install.sh              # asks each step; Enter keeps what comes
+./install.sh --defaults   # everything as it comes
+```
+
+It copies the program to `~/Applications/AnyAssistant`, gets its own Python (uv,
+no administrator rights), keeps your data in `~/Library/Application Support/AnyAssistant`
+and what can be rebuilt in `~/Library/Caches/AnyAssistant`, and then goes through
+`bin/jarvis setup`: this computer, the plugins' packages, language, name, LLM, the
+Swift bridges, the speech models, pairing, memory, eyes, starting with the Mac
+(launchd) and the address (and code) for your tablet. Run again, it updates the
+program and keeps your data.
+
+The steps come from the core (`server/install_steps.py`) and from the plugins
+(`@installer.question`, `@installer.task`, `@installer.device` for something done on
+the device), so a plugin brings its own. Any of them again later:
+`bin/jarvis setup memory`. For the app's window: `bin/jarvis setup --list --json`
+(the questions) and `bin/jarvis setup --json --set llm=apple …` (one event per line).
+
 ## Running it
 
 ```

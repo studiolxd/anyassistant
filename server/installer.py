@@ -141,7 +141,7 @@ class Terminal:
         print(f"\r      {bar}  {text[:70]:70}", end="", flush=True)
 
     def done(self, step, text):
-        print(f"\r      ✓ {(text or 'done')[:74]:74}")
+        print(f"\r      ✓ {text or 'done'}" + " " * 10)
 
     def skipped(self, step, text):
         print(f"      – {text}")
@@ -205,6 +205,9 @@ def run(view, answers: dict, only: list[str] | None = None) -> list[str]:
                 if options and value not in [o["value"] for o in options]:
                     raise ValueError(f"«{value}» isn't one of {', '.join(str(o['value']) for o in options)}")
                 result = step.function(value)
+                if not isinstance(result, str):
+                    label = {True: "yes", False: "no"}.get(value, value) if isinstance(value, bool) else value
+                    result = str(label)
             else:
                 result = step.function(progress)
             view.done(step, result if isinstance(result, str) else "")

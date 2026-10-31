@@ -2,9 +2,12 @@
 
 ## Next
 
-- [ ] **The server as a packaged app** (the Mac first): install, start with the
-  system, settings and pairing from its own window. What launchd would have done
-  belongs to its installer.
+- [ ] **AnyAssistant, the Mac app**: a menu bar app (SwiftUI, .dmg) on top of
+  `bin/jarvis setup --list/--json`: «install with what comes» or step by step,
+  settings, plugins, pairing (QR + code), log, update. Signing and notarizing.
+- [ ] **Installer, next**: `bin/jarvis update` and `uninstall`; a release tarball
+  (install.sh copies the git checkout for now); the voice enrolment step
+  (`@installer.device`) when that plugin exists.
 
 
 - [ ] **Swift bridges on macOS 27**: `LanguageModelSession.GenerationError` is deprecated
@@ -19,6 +22,9 @@
   app's new name (`name`).
 
 ## Done
+
+- [x] **Installer (terminal)**: install.sh + `bin/jarvis setup`, steps from the core and
+  the plugins, launchd; tried in a clean folder (31 Oct).
 
 - [x] **Everything is a plugin** (31 Oct): the core only finds, loads and joins them
   (kernel, web hooks, events, kinds). Pairing, confirmation, memory, eyes, the page
