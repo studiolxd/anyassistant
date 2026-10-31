@@ -92,7 +92,8 @@ case "$1" in
     curl -s -m 3 -X POST "http://127.0.0.1:$PORT/pairing" | /usr/bin/python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-print(f"Code: {d[\"code\"]}  (valid {d[\"seconds\"] // 60} minutes; type it on the device)")
+code, minutes = d["code"], d["seconds"] // 60
+print("Code: %s  (valid %d minutes; type it on the device)" % (code, minutes))
 if not d["pairing"]:
     print("Note: pairing is off, so any device can connect anyway. Turn it on with \"pairing\": true in settings.json.")
 '
