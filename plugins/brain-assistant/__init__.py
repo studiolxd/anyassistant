@@ -300,7 +300,11 @@ class Assistant(Transcriber):
                 self._state("looking")
                 image = await eyes.photo() or image
             look = image if image and (eyes.wants_to_look(text) or eyes.wants_to_read(text)) else None
-            self.llm.on_tool = lambda name: self._looked() if name == "Read" and image else None
+            # It looks only if Claude opens the camera's image: Read also opens other files (a long
+            # tool result Claude Code saved, like a list of invoices), which isn't looking.
+            frame = str(eyes.FRAME) if eyes else None
+            self.llm.on_tool = lambda name, arguments=None: self._looked() if (
+                name == "Read" and image and frame and frame in str((arguments or {}).get("file_path", ""))) else None
             if look:
                 self._looked()
             else:

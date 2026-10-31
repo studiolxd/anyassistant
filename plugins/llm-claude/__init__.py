@@ -206,10 +206,14 @@ class Claude(LLM):
                         yield " "
                     elif block.get("type") == "tool_use":
                         log.info("tool: %s", block.get("name"))
-                        self.on_tool(block.get("name"))
+                        self.on_tool(block.get("name"))  # its arguments come with the whole message
                         if not said and settings.get("fillers", True):
                             # Asking for it in the prompt isn't enough: it almost never does it.
                             filler_at = time.time() + FILLER_AFTER
+                elif event.get("type") == "assistant":  # the whole message: the tools' arguments too
+                    for part in event.get("message", {}).get("content", []):
+                        if part.get("type") == "tool_use":
+                            self.on_tool(part.get("name"), part.get("input") or {})
                 elif event.get("type") == "user":  # a tool's result: it finished
                     filler_at = None
                 elif event.get("type") == "result":

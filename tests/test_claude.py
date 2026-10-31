@@ -81,7 +81,7 @@ END = {"type": "result"}
 def answer(monkeypatch, lines):
     monkeypatch.setattr(claude, "FILLER_AFTER", 0.2)
     model = object.__new__(claude.Claude)
-    model._turn, model.on_tool = asyncio.Lock(), lambda name: None
+    model._turn, model.on_tool = asyncio.Lock(), lambda name, arguments=None: None
     stdin = type("Stdin", (), {"write": lambda self, b: None, "drain": lambda self: asyncio.sleep(0)})()
     model._process = type("Process", (), {"returncode": None, "stdin": stdin, "stdout": Stdout(lines)})()
 
@@ -99,3 +99,21 @@ def test_a_quick_tool_or_a_confirmation_does_not(monkeypatch, es):
     said = answer(monkeypatch, [(0, tool_use("mcp__jarvis__set_skin")), (0.05, TOOL_RESULT),
                                 (0.4, text("¿Cambio la cara?")), (0, END)])
     assert said == "¿Cambio la cara?"
+
+
+def test_tools_are_reported_with_their_arguments(monkeypatch, es):
+    """Reading the camera's image is looking; reading a saved tool result (invoices) isn't."""
+    seen = []
+    monkeypatch.setattr(claude, "FILLER_AFTER", 5)
+    model = object.__new__(claude.Claude)
+    model._turn, model.on_tool = asyncio.Lock(), lambda name, arguments=None: seen.append((name, arguments))
+    whole = {"type": "assistant", "message": {"content": [
+        {"type": "tool_use", "name": "Read", "input": {"file_path": "/tmp/tool-results/invoices.txt"}}]}}
+    lines = [(0, tool_use("Read")), (0, whole), (0, TOOL_RESULT), (0, text("Unos 46.000.")), (0, END)]
+    stdin = type("Stdin", (), {"write": lambda self, b: None, "drain": lambda self: asyncio.sleep(0)})()
+    model._process = type("Process", (), {"returncode": None, "stdin": stdin, "stdout": Stdout(lines)})()
+
+    async def collect():
+        return [piece async for piece in model.answer("hi")]
+    asyncio.run(collect())
+    assert seen == [("Read", None), ("Read", {"file_path": "/tmp/tool-results/invoices.txt"})]
