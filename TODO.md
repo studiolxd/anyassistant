@@ -26,7 +26,8 @@
 - [x] **Face**: «eyes» (default) and «orb» (`?face=orb`), clock while asleep,
   «question» state; `?demo` cycles through the states without connecting. One
   still has to be chosen.
-- [ ] **Native Android app**: start at boot, screen off (Phase 6).
+- [ ] **Native apps** (later, once we know what they should be like): Android, Android TV,
+  iOS, macOS and Windows, with the same features on all of them.
 - [x] **Languages**: English base and Spanish in `locales/`; detected from the Mac.
 
 ## Maintenance
@@ -35,8 +36,12 @@
 
 ## To do by hand
 
-- [ ] Re-authorize **Holded**: `claude` in the project folder → `/mcp` → holded.
-- [ ] **Publish the Google app** (Google Auth Platform → Audience) so the
-  authorization doesn't expire every 7 days; then `bin/gog-authorize` again.
-- [ ] **Fixed IP for the Mac** (Wi-Fi → Details → Private address: Fixed, or a DHCP
-  reservation on the router).
+- [x] Re-authorize **Holded**.
+
+## Postponed
+
+- **Publish the Google app** (Google Auth Platform → Audience) so the authorization
+  doesn't expire every 7 days; then `bin/gog-authorize` again. Re-authorize meanwhile.
+- **Fixed IP for the Mac**: for now, update the tablet's URL when it changes.
+- **The app's name**: a new one is coming (instead of «Jarvis»); the folder will be
+  renamed then, not to «jarvis».
