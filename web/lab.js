@@ -1,7 +1,7 @@
 // The skins lab: every state of a skin at once (each view is the page in ?demo=<state>),
 // reloading them when the skin's files change. Open it on the Mac while you design one.
 
-var STATES = ['asleep', 'awake', 'hearing', 'thinking', 'looking', 'speaking', 'question', 'alarm', 'error'];
+var STATES = ['asleep', 'awake', 'hearing', 'transcribing', 'thinking', 'looking', 'speaking', 'question', 'alarm', 'error'];
 var select = document.getElementById('skin');
 var version = null;
 

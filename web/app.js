@@ -468,7 +468,7 @@ function fail(message) {
 
 // ?demo: without connecting, cycles through every state to see the skin (?demo&skin=orb);
 // ?demo=thinking stays in one (the skins lab shows them all at once).
-var DEMO_STATES = ['asleep', 'awake', 'hearing', 'looking', 'thinking', 'speaking', 'question', 'alarm', 'error'];
+var DEMO_STATES = ['asleep', 'awake', 'hearing', 'transcribing', 'looking', 'thinking', 'speaking', 'question', 'alarm', 'error'];
 function demo() {
   document.getElementById('screen').hidden = false;
   var fixed = new URLSearchParams(location.search).get('demo');

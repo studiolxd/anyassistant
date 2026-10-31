@@ -2,6 +2,6 @@
   "name": "Eyes",
   "author": "Jarvis",
   "version": "1",
-  "description": "Two blinking eyes and a mouth that follows its voice.",
-  "options": {"accent": "#3ddc97", "background": "#000"}
+  "description": "Two blue robot eyes that change shape to say how it feels.",
+  "options": {"accent": "#34aff7", "background": "#000"}
 }
