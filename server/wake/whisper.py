@@ -135,8 +135,18 @@ class WhisperWakeWord(WakeWord):
         i, span = position
         return text[tokens[i + span - 1].end() :].lstrip(" ,.!:;-")
 
+    def is_prompt(self, text: str) -> bool:
+        """Whisper giving back its own prompt («El asistente se llama Jarvis.») or a piece
+        of it: it does so with noise or a voice it doesn't understand. Only the name
+        alone («Jarvis.») is not, since that is what you say."""
+        found, prompt = " ".join(words(text)), " ".join(words(self.prompt))
+        return bool(found) and words(text) != self.keys and f" {found} " in f" {prompt} "
+
     def _search(self, audio: np.ndarray) -> bool:
         text = self._transcribe(audio, self.model, i18n.L.stt_language, self.prompt)
+        if self.is_prompt(text):
+            log.debug("whisper gave back its prompt (noise?): «%s»", text)
+            return False
         found = words(text)
         position = self._position(found)
         if position is None:
