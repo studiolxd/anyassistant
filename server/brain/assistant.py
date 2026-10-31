@@ -264,7 +264,11 @@ class Assistant(Transcriber):
             message = {"type": "text", "author": "assistant", "id": number}
             image = eyes.capture()  # also for Claude's Read tool, if it decides to look
             look = image if image and eyes.wants_to_look(text) else None
-            self._state("looking" if look else "thinking")
+            self.llm.on_tool = lambda name: self._looked() if name == "Read" and image else None
+            if look:
+                self._looked()
+            else:
+                self._state("thinking")
             self.saying = []
             start = time.time()
             first = None
@@ -304,6 +308,11 @@ class Assistant(Transcriber):
             self.send({"type": "config"})  # the page reads /config again
         if changed - settings.LIVE:
             await self._restart(i18n.L("speech.restarting"))
+
+    def _looked(self):
+        """It looks through the camera: the face says so and the screen shows the photo."""
+        self._state("looking")
+        self.send({"type": "look", "at": time.time()})
 
     async def _mouth(self):
         """Says the sentences in order as they arrive; synthesizes one while the previous plays."""

@@ -47,6 +47,7 @@ class LLM:
     def __init__(self, model: str | None = None, mcp: str | None = None):
         self.model = model
         self.mcp = mcp  # path to .mcp.json; only plugins that support MCP use it
+        self.on_tool = lambda name: None  # called when the model uses a tool (the face shows it)
 
     async def new(self):
         raise NotImplementedError

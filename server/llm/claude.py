@@ -179,6 +179,7 @@ class Claude(LLM):
                         yield " "
                     elif block.get("type") == "tool_use":
                         log.info("tool: %s", block.get("name"))
+                        self.on_tool(block.get("name"))
                         if not said:
                             # So there is no silence while the tool runs (asking for it
                             # in the prompt isn't enough: it almost never does it).

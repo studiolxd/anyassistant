@@ -92,6 +92,13 @@ async def status(request: web.Request) -> web.Response:
     })
 
 
+async def eyes_image(request: web.Request) -> web.StreamResponse:
+    """The photo it just looked at, for the screen (paired devices only)."""
+    if not is_allowed(request) or not eyes.enabled() or not eyes.FRAME.exists():
+        return web.Response(status=404)
+    return web.FileResponse(eyes.FRAME)
+
+
 async def config(request: web.Request) -> web.Response:
     """What the page needs: its texts in the active language (locale «ui») and the settings."""
     return web.json_response({
@@ -259,6 +266,7 @@ def main():
     app.router.add_get("/video.mjpg", video_mjpeg)
     app.router.add_get("/status", status)
     app.router.add_get("/config", config)
+    app.router.add_get("/eyes.jpg", eyes_image)
     app.router.add_post("/pairing", new_pairing_code)
     app.router.add_post("/pair", pair)
     app.router.add_static("/web/", WEB)

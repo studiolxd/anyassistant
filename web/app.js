@@ -214,6 +214,7 @@ function ping() {
 function showState(state, wakePhrase) {
   statusLine.textContent = state === 'asleep' ? text('asleep', { wake: wakePhrase || 'Hey Jarvis' }) : text(state);
   Face.state(state);
+  photoFollows(state);
 }
 
 function message(m) {
@@ -221,6 +222,21 @@ function message(m) {
   else if (m.type === 'state') showState(m.state, m.wake_phrase);
   else if (m.type === 'text') caption(m);
   else if (m.type === 'config') loadTexts();  // the settings changed
+  else if (m.type === 'look') showPhoto(m.at);
+}
+
+// What it looks at through the camera, with a scanning sweep while it thinks about it;
+// it fades out once it starts answering.
+var photo = document.getElementById('photo');
+function showPhoto(at) {
+  var img = photo.querySelector('img');
+  img.onload = function () { photo.hidden = false; photo.className = 'scanning'; };
+  img.src = '/eyes.jpg?t=' + at;
+}
+function photoFollows(state) {
+  if (photo.hidden || state === 'looking' || state === 'thinking') return;
+  photo.className = 'done';
+  setTimeout(function () { if (photo.className === 'done') photo.hidden = true; }, 1500);
 }
 
 // Answers arrive in pieces with the same id: the same paragraph is updated.
@@ -276,11 +292,12 @@ function fail(message) {
 // ?demo: without connecting, cycles through every state to see the face (?demo&face=orb).
 function demo() {
   document.getElementById('screen').hidden = false;
-  var STATES = ['asleep', 'awake', 'hearing', 'thinking', 'speaking', 'question', 'error'];
+  var STATES = ['asleep', 'awake', 'hearing', 'looking', 'thinking', 'speaking', 'question', 'error'];
   var step = 0;
   var next = function () {
     var state = STATES[step++ % STATES.length];
     showState(state);
+    if (state === 'looking') showPhoto(Date.now());  // the last photo, if there is one
     stats.textContent = 'demo: ' + state;
   };
   setInterval(function () {  // simulated voice while «hearing»
