@@ -6,7 +6,6 @@
   system, settings and pairing from its own window. What launchd would have done
   belongs to its installer.
 
-- [ ] **Hermes with Jarvis's tools**: add the `jarvis` MCP server to Hermes's (not tried yet).
 
 ## Conversation quality
 
@@ -19,6 +18,8 @@
 
 ## Done
 
+- [x] **Hermes with Jarvis's tools**: `jarvis` in Hermes's MCP servers; the «yes» is asked
+  by the server itself, so it holds for Hermes too.
 - [x] **Skills without an LLM**: time, date, timers, alarms, reminders, sums, units and
   volume; Apple's model as an optional interpreter; also as the LLM's tools.
 - [x] **Eyes, second step**: a full-resolution photo to read (1200×1600 on the tablet);

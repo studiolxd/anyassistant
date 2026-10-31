@@ -162,6 +162,21 @@ face», «what do you know about me?»):
 | `get_llms`, `set_llm` | the LLMs it can use (and whether each is available); switch to another, with a model | `set_llm`: yes |
 | `reload_tools`, `restart` | after the answer, so the LLM isn't cut off while using it | yes |
 
+Tools that change something ask for your «yes» themselves (the server, not the
+LLM), so it holds for any LLM: with Claude, Hermes or another MCP client.
+
+**With Hermes**: add it to Hermes's MCP servers and restart its gateway:
+
+```yaml
+# ~/.hermes/config.yaml
+mcp_servers:
+  jarvis:
+    url: http://127.0.0.1:8080/mcp
+```
+
+(`hermes mcp add jarvis --url http://127.0.0.1:8080/mcp` does the same, asking in
+the terminal which tools to enable; then `hermes gateway restart`.)
+
 Nothing to lift its own safeguards: no tool touches the permissions, the
 confirmation times, the port or your `instructions`; the LLM only among the
 installed ones and with your «yes». The fixed voice
