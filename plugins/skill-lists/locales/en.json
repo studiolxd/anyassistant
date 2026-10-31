@@ -1,0 +1,47 @@
+{
+  "lists": {
+    "default": "shopping",
+    "names": {
+      "shopping": [
+        "shopping",
+        "groceries",
+        "grocery"
+      ],
+      "tasks": [
+        "tasks",
+        "to do",
+        "todo",
+        "things to do"
+      ]
+    },
+    "add": "^(?:(?:please|hey) )?(?:add|put|write|include) (?P<items>.+?) (?:to|on|in) (?:the|my) (?:(?P<list>.+?) )?list$",
+    "remove": "^(?:remove|take|delete|cross off|cross) (?P<items>.+?) (?:from|off) (?:the|my) (?:(?P<list>.+?) )?list$",
+    "read": "^(?:what s|whats|what is|read|read me|tell me) (?:on |in )?(?:the|my) (?:(?P<list>.+?) )?list$",
+    "clear": "^(?:clear|empty|delete) (?:the|my) (?:(?P<list>.+?) )?list$",
+    "note": "^(?:take a note|make a note|note|write down)(?: that)? (?P<text>.+)$",
+    "notes": "^(?:what are my notes|read my notes|read me my notes|what did i note)$",
+    "clear_notes": "^(?:delete|clear) (?:all )?(?:my |the )?notes$",
+    "and": [
+      " and ",
+      ", "
+    ],
+    "display": {
+      "shopping": "shopping",
+      "tasks": "tasks"
+    }
+  },
+  "speech": {
+    "list_added": "On the {list} list: {items}.",
+    "list_already": "It was already on the {list} list.",
+    "list_removed": "Off the {list} list: {items}.",
+    "list_not_there": "It wasn't on the {list} list.",
+    "list_read": "On the {list} list: {items}.",
+    "list_empty": "The {list} list is empty.",
+    "list_cleared": "I've emptied the {list} list.",
+    "note_taken": "Noted.",
+    "notes_read": "You have {count} notes: {notes}.",
+    "note_read": "You have one note: {notes}.",
+    "notes_empty": "You have no notes.",
+    "notes_cleared": "I've deleted the notes."
+  }
+}

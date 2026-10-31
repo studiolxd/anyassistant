@@ -954,6 +954,10 @@
     "always-on": [
       "Always on",
       "It never falls asleep by itself: no need to say its name between sentences. «Go to sleep» still works."
+    ],
+    "skill-lists": [
+      "Lists and notes",
+      "«Add milk to the shopping list», «what's on my list?», «take a note that…»: without the LLM."
     ]
   },
   "installer": {

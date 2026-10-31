@@ -1,0 +1,47 @@
+{
+  "lists": {
+    "default": "compra",
+    "names": {
+      "compra": [
+        "compra",
+        "super",
+        "supermercado",
+        "mercado"
+      ],
+      "tareas": [
+        "tareas",
+        "pendientes",
+        "cosas que hacer"
+      ]
+    },
+    "add": "^(?:(?:por favor|oye) )?(?:anade|anadir|apunta|apuntame|pon|ponme|mete|agrega|incluye) (?P<items>.+?) (?:a|en) (?:la|mi) lista(?: de(?: la| las| los)? (?P<list>.+))?$",
+    "remove": "^(?:quita|quitame|borra|elimina|saca|tacha) (?P<items>.+?) de (?:la|mi) lista(?: de(?: la| las| los)? (?P<list>.+))?$",
+    "read": "^(?:que (?:hay|tengo|queda|pone) en|leeme|dime|lee) (?:la|mi) lista(?: de(?: la| las| los)? (?P<list>.+))?$",
+    "clear": "^(?:vacia|borra|limpia) (?:toda )?(?:la|mi) lista(?: de(?: la| las| los)? (?P<list>.+))?$",
+    "note": "^(?:toma nota|anota|apunta)(?: de)?(?: que)? (?P<text>.+)$",
+    "notes": "^(?:que notas tengo|leeme las notas|dime las notas|que he apuntado|lee las notas)$",
+    "clear_notes": "^(?:borra|elimina) (?:todas )?las notas$",
+    "and": [
+      " y ",
+      ", "
+    ],
+    "display": {
+      "compra": "la compra",
+      "tareas": "tareas"
+    }
+  },
+  "speech": {
+    "list_added": "Apuntado en la lista de {list}: {items}.",
+    "list_already": "Ya estaba en la lista de {list}.",
+    "list_removed": "Quitado de la lista de {list}: {items}.",
+    "list_not_there": "No lo tenía en la lista de {list}.",
+    "list_read": "En la lista de {list} hay {items}.",
+    "list_empty": "La lista de {list} está vacía.",
+    "list_cleared": "He vaciado la lista de {list}.",
+    "note_taken": "Anotado.",
+    "notes_read": "Tienes {count} notas: {notes}.",
+    "note_read": "Tienes una nota: {notes}.",
+    "notes_empty": "No tienes notas.",
+    "notes_cleared": "He borrado las notas."
+  }
+}

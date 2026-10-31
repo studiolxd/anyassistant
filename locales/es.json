@@ -1010,6 +1010,10 @@
     "always-on": [
       "Siempre encendido",
       "No se duerme solo: no hace falta decir su nombre entre frases. «A dormir» sigue funcionando."
+    ],
+    "skill-lists": [
+      "Listas y notas",
+      "«Añade leche a la lista de la compra», «¿qué hay en la lista?», «toma nota de que…»: sin el LLM."
     ]
   },
   "installer": {
