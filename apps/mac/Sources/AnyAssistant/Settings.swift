@@ -96,12 +96,21 @@ final class Admin: ObservableObject {
     }
 
     func load() async {
+        await loadSettings()
+        await loadPlugins()
+    }
+
+    func loadSettings() async {
         if let answer = await call("settings") {
             groups = (answer["groups"] as? [[String: Any]] ?? []).map {
                 (id: $0["id"] as? String ?? "", title: $0["title"] as? String ?? "")
             }
             options = (answer["options"] as? [[String: Any]] ?? []).map(OptionItem.init)
         }
+    }
+
+    /// The plugins as they are now: they change by voice too («desactiva…»).
+    func loadPlugins() async {
         if let answer = await call("plugins") {
             plugins = (answer["plugins"] as? [[String: Any]] ?? []).map {
                 PluginItem(id: $0["id"] as? String ?? "", name: $0["name"] as? String ?? "",
@@ -178,6 +187,14 @@ struct SettingsView: View {
             }
         }
         .task { await admin.load() }
+        // Kept up to date: the plugins every few seconds (they change by voice too); the
+        // options when you come back to the window (not while you type in one).
+        .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
+            Task { await admin.loadPlugins() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            Task { await admin.load() }
+        }
     }
 }
 
