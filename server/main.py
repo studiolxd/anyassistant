@@ -24,6 +24,7 @@ from aiohttp import web
 
 import i18n
 import llm
+import settings
 import stt
 import tts
 import wake
@@ -113,7 +114,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)
-    parser.add_argument("--lang", default=None, help=f"language: {', '.join(i18n.available())} (default: the Mac's)")
+    parser.add_argument("--lang", dest="language", default=None, help=f"language: {', '.join(i18n.available())} (default: settings.json or the Mac's)")
     parser.add_argument("--mode", choices=["parrot", "transcribe", "assistant"], default="assistant")
     parser.add_argument("--stt", default="parakeet", help=f"plugin: {', '.join(stt.available())}")
     parser.add_argument("--stt-model", default=None)
@@ -130,11 +131,17 @@ def main():
     parser.add_argument("--record", default=None, help="saves everything that arrives to a WAV (debugging)")
     parser.add_argument("--silence", type=float, default=0.6, help="seconds of silence that end a sentence")
     parser.add_argument("--idle-timeout", type=float, default=120, help="seconds without speech before sleeping")
+    preferences = settings.load()
+    known = {a.dest for a in parser._actions}
+    for key in preferences.keys() - known:
+        print(f"settings.json: unknown key «{key}» (ignored)", file=sys.stderr)
+    parser.set_defaults(**{k: v for k, v in preferences.items() if k in known})
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     logging.getLogger("aioice").setLevel(logging.WARNING)
-    i18n.use(args.lang or i18n.detect())  # before the plugins: they take its language and voice
+    i18n.use(args.language or i18n.detect())  # before the plugins: they take its language and voice
+    args.voice = settings.voice_for(args.voice, i18n.L.code)
 
     global brain_factory
     ear = {"record": args.record, "silence": args.silence, "idle_timeout": args.idle_timeout}
@@ -192,7 +199,10 @@ def main():
     web.run_app(app, host=args.host, port=args.port, shutdown_timeout=3)
     if restart:
         logging.info("restarting…")
-        os.execv(sys.executable, [sys.executable, *sys.argv])
+        argv = sys.argv
+        if settings.load().get("language", i18n.L.code) != i18n.L.code:
+            argv = settings.without_option(argv, "--lang")  # changed by voice: settings.json wins
+        os.execv(sys.executable, [sys.executable, *argv])
 
 
 if __name__ == "__main__":

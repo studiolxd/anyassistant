@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 
 import i18n
+import settings
 from audio import normalize
 from brain.transcriber import Transcriber
 from text import words
@@ -48,6 +49,30 @@ def system_command(text: str) -> str | None:
         return "reload"
     if set(heard) & set(i18n.L.list("commands.restart")):
         return "restart"
+    return None
+
+
+def language_command(text: str) -> str | None:
+    """«Speak Spanish», «Háblame en inglés» → "es", "en". Understood in any language.
+
+    A verb of some locale's commands.language first, a language's name in some
+    locale's «languages» and nothing else but short linking words («to», «en»…):
+    «¿Quién habla inglés en Suiza?» or «Pasa el correo a inglés» are not commands.
+    Any language because Parakeet may well write «Speak Spanish» while in Spanish.
+    """
+    heard = [w for w in words(text) if w != "jarvis"]
+    if not 0 < len(heard) <= 6:
+        return None
+    locales = [i18n.Locale(code) for code in i18n.available()]
+    if not any(heard[0] in locale.list("commands.language") for locale in locales):
+        return None
+    for locale in locales:
+        for code, name in locale.data["languages"].items():
+            name = words(name)
+            for i in range(1, len(heard) - len(name) + 1):
+                rest = heard[1:i] + heard[i + len(name):]
+                if heard[i:i + len(name)] == name and code in i18n.available() and all(len(w) <= 3 for w in rest):
+                    return code
     return None
 
 
@@ -135,7 +160,8 @@ class Assistant(Transcriber):
             # It was the answer to an approval the LLM itself asked for (Hermes): not a new message.
             Transcriber._heard(self, text, timings)
             return
-        command = system_command(text)
+        language = language_command(text)
+        command = f"language:{language}" if language else system_command(text)
         if command:
             Transcriber._heard(self, text, timings)  # shown on screen, but not sent to the LLM
             asyncio.ensure_future(self._command(command))
@@ -148,11 +174,27 @@ class Assistant(Transcriber):
             log.info("reloading tools")
             await self.llm.reload()
             self._say(i18n.L("speech.reloaded"))
+        elif command.startswith("language:"):
+            code = command.split(":")[1]
+            name = i18n.L.data["languages"].get(code, code)
+            if code == i18n.L.code:
+                self._say(i18n.L("speech.language_same", language=name))
+                return
+            log.info("switching to %s", code)
+            settings.save(language=code)
+            await self._restart(i18n.L("speech.language_changing", language=name))
         else:
-            log.info("restarting the server")
-            self._say(i18n.L("speech.restarting"))
-            await asyncio.sleep(3)  # time to say it
-            os.kill(os.getpid(), signal.SIGHUP)  # main.py treats it as «restart»
+            await self._restart(i18n.L("speech.restarting"))
+
+    async def _restart(self, sentence: str):
+        log.info("restarting the server")
+        self._say(sentence)
+        await asyncio.sleep(2)  # time to synthesize it and start
+        for _ in range(40):  # and to say it all
+            if not self.speaker.speaking:
+                break
+            await asyncio.sleep(0.25)
+        os.kill(os.getpid(), signal.SIGHUP)  # main.py treats it as «restart»
 
     def _say(self, text: str):
         """A fixed system sentence: to the screen and, if there is a voice, to the speaker."""

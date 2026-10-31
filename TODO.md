@@ -28,7 +28,9 @@
   still has to be chosen.
 - [ ] **Native apps** (later, once we know what they should be like): Android, Android TV,
   iOS, macOS and Windows, with the same features on all of them.
-- [x] **Languages**: English base and Spanish in `locales/`; detected from the Mac.
+- [x] **Languages**: English base and Spanish in `locales/`; detected from the Mac,
+  chosen in `settings.json` or by voice («speak English»).
+- [ ] **Bilingual at once**: answer in the language each sentence is spoken in.
 
 ## Maintenance
 

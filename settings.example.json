@@ -1,0 +1,7 @@
+{
+  "language": "es",
+  "llm": "claude",
+  "voice": {"es": "Mónica", "en": "Samantha"},
+  "silence": 0.6,
+  "idle_timeout": 120
+}

@@ -15,11 +15,17 @@ function text(key, values) {
   return s;
 }
 
+// The texts of the server's language; again after reconnecting, in case it changed («speak English»).
+function loadTexts() {
+  return fetch('/i18n').then(function (r) { return r.json(); }).then(function (data) {
+    T = data.ui;
+    document.documentElement.lang = data.lang;
+    Face.language(data.lang);
+  });
+}
+
 // Loads the texts and then shows the start button (or the demo).
-fetch('/i18n').then(function (r) { return r.json(); }).then(function (data) {
-  T = data.ui;
-  document.documentElement.lang = data.lang;
-  Face.language(data.lang);
+loadTexts().then(function () {
   var start = document.getElementById('start');
   start.textContent = text('start');
   statusLine.textContent = text('connecting');
@@ -142,6 +148,7 @@ async function connect() {
   };
 
   try {
+    await loadTexts();  // before the states arrive, which show them
     await pc.setLocalDescription(await pc.createOffer());
     await iceGathered(pc);
     var abort = new AbortController();

@@ -6,5 +6,6 @@ __pycache__/
 # Local configuration and secrets
 .mcp.json
 permissions.json
+settings.json
 google-client.json
 .gog/

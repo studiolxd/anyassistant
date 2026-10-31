@@ -51,12 +51,29 @@ falls back to it, so **adding a language means adding a file**. Even how the
 date and time are said aloud is set there (`calendar.now_style`: `ampm` or
 `periods`, with its format).
 
-The language is the Mac's preferred one when there is a locale for it (Spanish
-here), or `--lang`:
+The language is, in this order: `--lang`, `settings.json`'s `language`, or the
+Mac's preferred one when there is a locale for it.
 
+**By voice**: «Speak English», «Switch to Spanish», «Háblame en inglés», «Cambia a
+español»… (understood in any language). Jarvis says so, saves it in
+`settings.json` and restarts in the new language; the page picks up its texts when
+it reconnects. Only short commands that start with the verb count: «¿Quién habla
+inglés en Suiza?» goes to the LLM. Each locale lists the verbs
+(`commands.language`) and the languages' names (`languages`): a new language needs
+its name added to the others.
+
+## Settings
+
+`settings.json` in the project (not in git; see `settings.example.json`) holds
+the preferences, so `bin/jarvis start` needs no options:
+
+```json
+{"language": "es", "llm": "claude", "voice": {"es": "Mónica", "en": "Samantha"}, "silence": 0.6}
 ```
-uv run server/main.py --lang en
-```
+
+Keys are the server's options with underscores instead of dashes (`llm_model`,
+`echo_guard`, `idle_timeout`…); `voice` can be one voice or one per language.
+Options on the command line win over it.
 
 The LLM gets English instructions plus «Always reply in {language}».
 
@@ -340,7 +357,7 @@ so they need no account or network; they run on a free port, next to a running J
 ## Layout
 
 - `server/main.py` — HTTP, signaling (`/offer`), texts (`/i18n`), monitor (`/video.mjpg`, `/status`).
-- `server/i18n.py` and `locales/` — languages.
+- `server/i18n.py` and `locales/` — languages; `server/settings.py`, `settings.json`.
 - `server/transport.py` — WebRTC session: tracks, `control` DataChannel, last frame.
 - `server/audio.py` — 48 kHz mono PCM; `Speaker` is the outgoing track.
 - `server/brain/` — `parrot.py` (Phase 1), `ear.py` (VAD + STT), `transcriber.py` (Phase 2), `assistant.py` (Phase 3).

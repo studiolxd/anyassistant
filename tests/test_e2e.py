@@ -47,7 +47,7 @@ def server(tmp_path):
         log = open(tmp_path / "server.log", "w")
         process = subprocess.Popen(
             [sys.executable, ROOT / "server" / "main.py", "--host", "127.0.0.1", "--port", str(port), *options],
-            cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONUNBUFFERED": "1"},
+            cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONUNBUFFERED": "1", "JARVIS_SETTINGS": str(tmp_path / "settings.json")},
         )
         processes.append(process)
         url = f"http://127.0.0.1:{port}"
@@ -176,3 +176,20 @@ def test_assistant_answers_out_loud(server, tmp_path):
     assert answer
     assert "thinking" in states(messages) and "speaking" in states(messages)
     assert max(loudest, default=0) > 1500
+
+
+def test_switch_language_by_voice(server, tmp_path):
+    url = server("--mode", "assistant", "--lang", "en", "--wake", "none", "--llm", "apple")
+    messages, _ = asyncio.run(talk(url, speech(tmp_path, "Switch to Spanish", "Samantha"),
+                                   until=lambda m: final_texts(m, "assistant"), timeout=30))
+    assert "Spanish" in " ".join(final_texts(messages, "assistant"))
+    assert json.loads((tmp_path / "settings.json").read_text())["language"] == "es"
+    # It restarts by itself, in Spanish despite --lang en.
+    for _ in range(120):
+        try:
+            if json.load(urllib.request.urlopen(url + "/i18n", timeout=1))["lang"] == "es":
+                return
+        except OSError:
+            pass
+        time.sleep(1)
+    pytest.fail("it didn't come back in Spanish")

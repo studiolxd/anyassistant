@@ -1,0 +1,65 @@
+import json
+
+import pytest
+
+import settings
+from brain.assistant import language_command
+
+
+@pytest.fixture
+def file(tmp_path, monkeypatch):
+    path = tmp_path / "settings.json"
+    monkeypatch.setattr(settings, "PATH", path)
+    return path
+
+
+def test_no_file_no_settings(file):
+    assert settings.load() == {}
+
+
+def test_broken_file_is_ignored(file):
+    file.write_text("{oops")
+    assert settings.load() == {}
+
+
+def test_save_keeps_the_rest(file):
+    file.write_text(json.dumps({"llm": "apple", "voice": {"es": "Mónica"}}))
+    settings.save(language="en")
+    assert settings.load() == {"llm": "apple", "voice": {"es": "Mónica"}, "language": "en"}
+    assert "Mónica" in file.read_text()  # readable, not \\u00f3
+
+
+def test_voice_for_each_language():
+    assert settings.voice_for("Eddy", "es") == "Eddy"
+    assert settings.voice_for({"es": "Mónica", "en": "Daniel"}, "en") == "Daniel"
+    assert settings.voice_for({"es": "Mónica"}, "en") is None  # the language's default
+    assert settings.voice_for(None, "en") is None
+
+
+def test_restart_drops_the_language_option():
+    argv = ["server/main.py", "--lang", "es", "--llm", "apple", "--lang=en"]
+    assert settings.without_option(argv, "--lang") == ["server/main.py", "--llm", "apple"]
+
+
+@pytest.mark.parametrize("text, code", [
+    ("Speak Spanish", "es"),
+    ("Switch to English.", "en"),
+    ("Talk to me in Spanish", "es"),
+    ("Háblame en inglés", "en"),
+    ("Jarvis, habla en español", "es"),
+    ("Cambia a inglés", "en"),
+    ("Speak English", "en"),  # as Parakeet may write it while in Spanish
+])
+def test_language_command(lang, text, code):
+    assert language_command(text) == code
+
+
+@pytest.mark.parametrize("text", [
+    "¿Quién habla inglés en Suiza?",
+    "Pasa el correo a inglés",
+    "How do you say hello in Spanish?",
+    "Speak louder",
+    "Spanish",
+])
+def test_not_a_language_command(lang, text):
+    assert language_command(text) is None

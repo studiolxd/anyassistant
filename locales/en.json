@@ -3,6 +3,10 @@
   "stt_language": "en",
   "tts_voice": "Samantha",
   "tts_language": "en-US",
+  "languages": {
+    "en": "English",
+    "es": "Spanish"
+  },
   "speech": {
     "warm_up": "Hello.",
     "wait": "One moment, let me check.",
@@ -14,7 +18,9 @@
     "no_login": "I'm not signed in to Claude: run slash login in Claude Code.",
     "guardrail": "I'd rather not answer that.",
     "hermes_down": "I can't reach Hermes: is its gateway running?",
-    "hermes_approval": "Hermes wants to do this: {action}. Shall I go ahead?"
+    "hermes_approval": "Hermes wants to do this: {action}. Shall I go ahead?",
+    "language_changing": "Okay, switching to {language}. I'll be back in a few seconds.",
+    "language_same": "I'm already speaking {language}."
   },
   "commands": {
     "sleep": [
@@ -27,6 +33,12 @@
     "restart": [
       "restart",
       "reboot"
+    ],
+    "language": [
+      "speak",
+      "talk",
+      "switch",
+      "change"
     ],
     "yes": [
       "yes",

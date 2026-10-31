@@ -3,6 +3,10 @@
   "stt_language": "es",
   "tts_voice": "Mónica",
   "tts_language": "es-ES",
+  "languages": {
+    "en": "inglés",
+    "es": "español"
+  },
   "speech": {
     "warm_up": "Hola.",
     "wait": "Un momento, lo miro.",
@@ -14,7 +18,9 @@
     "no_login": "No tengo sesión en Claude: hay que ejecutar barra login en Claude Code.",
     "guardrail": "Prefiero no responder a eso.",
     "hermes_down": "No puedo hablar con Hermes: ¿está en marcha su gateway?",
-    "hermes_approval": "Hermes quiere hacer esto: {action}. ¿Lo hago?"
+    "hermes_approval": "Hermes quiere hacer esto: {action}. ¿Lo hago?",
+    "language_changing": "Vale, cambio a {language}. Vuelvo en unos segundos.",
+    "language_same": "Ya estoy hablando en {language}."
   },
   "commands": {
     "sleep": [
@@ -29,6 +35,15 @@
       "reinicia",
       "reiniciar",
       "reinicio"
+    ],
+    "language": [
+      "habla",
+      "hablame",
+      "hablemos",
+      "cambia",
+      "cambiate",
+      "pasa",
+      "pasate"
     ],
     "yes": [
       "si",
