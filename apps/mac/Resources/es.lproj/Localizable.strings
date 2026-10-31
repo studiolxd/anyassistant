@@ -69,3 +69,6 @@
 "2. The page" = "2. La página";
 "Once per device: open this to download the certificate. If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)." = "Una vez por dispositivo: abre esto para descargar el certificado. Si no se instala solo, en Android: Ajustes → Seguridad → Instalar desde almacenamiento → AnyAssistant.crt (como «VPN y aplicaciones»).";
 "Done: the page" = "Hecho: la página";
+"On the tablet or phone, scan it or open" = "En la tablet o el móvil, escanéalo o abre";
+"The QR pairs it by itself; or type the code" = "El QR lo empareja solo; o escribe el código";
+"An old device (it doesn't open .local names): use the address" = "Un dispositivo antiguo (no abre nombres .local): usar la dirección";

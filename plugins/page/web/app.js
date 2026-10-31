@@ -91,20 +91,27 @@ loadTexts().then(function () {
 // Pairing (the plugin «pairing»): the code that «bin/anyassistant pair» shows on the Mac.
 function askForCode() {
   var form = document.getElementById('pair');
+  var input = document.getElementById('pair-code');
   document.getElementById('pair-prompt').textContent = text('pair_prompt');
   document.getElementById('pair-button').textContent = text('pair_button');
   form.hidden = false;
   form.onsubmit = function (ev) {
-    ev.preventDefault();
+    if (ev) ev.preventDefault();
     fetch('/pair', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: document.getElementById('pair-code').value })
+      body: JSON.stringify({ code: input.value })
     }).then(function (r) {
-      if (r.ok) location.reload();
+      if (r.ok) location.replace(location.pathname);  // paired: the page, without the code
       else document.getElementById('pair-error').textContent = text('pair_wrong');
     });
   };
+  // The Mac app's QR brings the code (?code=…): it pairs by itself, nothing to type.
+  var given = new URLSearchParams(location.search).get('code');
+  if (given) {
+    input.value = given;
+    form.onsubmit();
+  }
 }
 
 document.getElementById('start').onclick = function () {
