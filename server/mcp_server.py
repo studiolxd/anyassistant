@@ -38,7 +38,7 @@ def handle(message: dict) -> dict | None:
         return _result(id_, {})
     if method == "tools/list":
         return _result(id_, {"tools": [{"name": name, "description": t.description, "inputSchema": t.schema}
-                                       for name, t in tools.TOOLS.items()]})
+                                       for name, t in tools.available().items()]})
     if method == "tools/call":
         params = message.get("params", {})
         name = params.get("name", "")

@@ -3,7 +3,7 @@ import json
 import pytest
 
 import settings
-from skills.language import command as language_command
+from plugins.skill_language import command as language_command
 
 
 @pytest.fixture

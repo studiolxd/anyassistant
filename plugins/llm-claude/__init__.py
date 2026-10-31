@@ -20,7 +20,9 @@ import i18n
 import eyes
 import paths
 import settings
-from llm import LLM, instructions, permissions, register
+from llm import LLM, instructions, register
+
+from . import permissions
 
 log = logging.getLogger("llm")
 

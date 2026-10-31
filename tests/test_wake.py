@@ -4,7 +4,7 @@ import pytest
 
 import i18n
 
-from wake.whisper import SIMILARITY, WhisperWakeWord, phonetic, similarity
+from plugins.wake_whisper import SIMILARITY, WhisperWakeWord, phonetic, similarity
 
 
 @pytest.mark.parametrize("heard", ["Jarvis", "Yarvis", "Harvis", "Llarvis", "Jarbis"])

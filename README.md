@@ -83,6 +83,12 @@ command line win over it (`uv run server/main.py --help` lists them all). They a
 all defined in `server/options.py`; most apply at once, the rest restart it.
 
 <!-- options: made by `python server/options.py markdown`; a test checks it is current -->
+**Plugins**
+
+| Option | Default | |
+|---|---|---|
+| `plugins` | — | which plugins are on or off, if not as they come: {"memory": false, "eyes": true} |
+
 **The assistant**
 
 | Option | Default | |
@@ -484,6 +490,35 @@ language in `locales/*.json` → `commands`):
   listens for its name, so it can be interrupted; «Jarvis, and tomorrow?» stops it
   and asks. Its own voice saying its name doesn't count. Tapping the screen works too.
 
+## Plugins
+
+Everything Jarvis does is a plugin; the core (`server/kernel.py`) only finds them,
+loads them and says which are on. They live in `plugins/` (the system's) and in
+your data folder (`plugins.local/` while developing): **one of yours with the same
+name replaces the system's**, to customize it.
+
+Everything comes on. To turn one off, `"plugins": {"skill-arithmetic": false}` in
+`settings.json`, or by voice («desactiva las cuentas», «¿qué plugins tienes?»),
+with your «yes» to turn one off. Security plugins (and the plugin manager) can
+only be turned off by hand, and an engine in use only after choosing another.
+Skills and tools turn on and off at once; engines when chosen.
+
+A plugin is a folder:
+
+```
+plugins.local/skill-weather/
+  plugin.json    {"name": "Weather", "description": "…", "kind": "skill",
+                  "requires": ["…"], "security": false, "default": true}
+  __init__.py    its code: what it brings registers itself (@skill, @tool,
+                 @register("…") for an engine, options.add(…))
+  locales/es.json  its texts, joined to Jarvis's
+```
+
+`kind`: `stt`, `wake`, `llm`, `tts`, `vad` (engines: the settings choose one),
+`skill` or `feature`. Plugins import each other as `plugins.<id with underscores>`
+(`from plugins.stt_mlx_whisper import transcribe_mlx`). Loading must be cheap:
+heavy libraries only inside its classes.
+
 ## Skills without an LLM
 
 Time and date, timers, alarms, reminders, sums, unit conversions and volume are
@@ -517,7 +552,7 @@ name (`apple`, `claude`…). And the
 LLM has them as tools (`set_timer`, `set_alarm`, `set_reminder`, `list_timers`,
 `cancel_timers`, `set_volume`), without asking for your «yes».
 
-**Adding a skill** is adding a module to `server/skills/`:
+**Adding a skill** is adding a plugin (`plugins.local/skill-weather/`, kind `skill`):
 
 ```python
 from skills import Skill, skill
@@ -727,16 +762,17 @@ so they need no account or network; they run on a free port, next to a running J
 - `server/transport.py` — WebRTC session: tracks, `control` DataChannel, last frame.
 - `server/audio.py` — 48 kHz mono PCM; `Speaker` is the outgoing track.
 - `server/brain/` — `parrot.py` (Phase 1), `ear.py` (VAD + STT), `transcriber.py` (Phase 2), `assistant.py` (Phase 3).
-- `server/stt/`, `server/wake/`, `server/llm/`, `server/tts/`, `server/vad/` — plugins; `llm/permissions.py`, which MCP servers and commands Claude may use.
+- `server/kernel.py`, `server/registry.py` — the core: plugins found, loaded, on or off; engines' registry.
+- `plugins/` — every plugin: engines (`stt-*`, `wake-*`, `llm-*`, `tts-*`, `vad-*`), skills (`skill-*`),
+  `tools-system`, `plugin-manager`… `server/stt/`, `wake/`, `llm/`, `tts/`, `vad/` keep only what each kind is.
 - `server/plugins.py` — shared plugin registry; `server/text.py`, text utilities;
   `server/swift.py`, builds the plugins' Swift bridges.
 - `bin/jarvis` — starts and stops the server.
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
 - `server/tools/`, `server/mcp_server.py` — Jarvis's own tools (`@tool`, next to what each does), as the `jarvis` MCP server.
 - `server/memory.py` — memory across conversations (`memory.json`).
-- `server/skills/` — skills: one module each (`clock`, `alarms`, `arithmetic`, `conversion`, `volume`,
-  `camera`, `language`, `choose_llm`, `restart`, `ringing`), registered with `@skill`; and their helpers
-  (`parse.py`, `calc.py`, `units.py`, `timers.py`, `interpreter.py`).
+- `server/skills/` — what a skill is (`@skill`), how things are said, and the helpers they share (`parse.py`,
+  `timers.py`, `interpreter.py`).
 - `server/paths.py`, `server/options.py`, `server/confirmation.py` — where things live, every option, the «yes».
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
 - `web/` — the phone's page (plain JS, old Chrome): `app.js` (connection, blocks), `skin.js` (applies a

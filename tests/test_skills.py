@@ -11,9 +11,10 @@ import skills
 import tools
 from conftest import load_script
 from skills import interpreter, timers
-from skills.calc import calculate, spoken
+from plugins.skill_arithmetic.calc import calculate
+from skills import spoken_number as spoken
 from skills.parse import Clock, clock, duration, resolve, tokens
-from skills.units import convert
+from plugins.skill_conversion.units import convert
 
 
 @pytest.fixture
@@ -208,7 +209,7 @@ def test_spoken_durations(es):
 
 
 def test_only_meant_words_stop_the_alarm(es):
-    from skills.ringing import stops_it
+    from plugins.skill_ringing import stops_it
 
     assert stops_it("Para") and stops_it("Apaga la alarma") and stops_it("Vale")
     assert not stops_it("Kimbo.")  # its own tone, transcribed

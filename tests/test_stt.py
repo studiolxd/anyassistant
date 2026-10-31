@@ -1,6 +1,6 @@
 import pytest
 
-from stt.parakeet import wrong_language
+from plugins.stt_parakeet import wrong_language
 
 
 @pytest.mark.parametrize("text", ["That's true.", "Koda is a very good idea", "tři"])

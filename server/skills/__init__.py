@@ -1,5 +1,5 @@
 """Skills: what Jarvis does by itself when it hears something, before (or instead of)
-the LLM. Each is a module of this package with a class like this:
+the LLM. Each is a plugin (plugins/skill-*, kind "skill") with a class like this:
 
     @skill
     class Clock(Skill):
@@ -22,18 +22,16 @@ settings «skills»; when one is said in an unusual way, interpreter.py may stil
 find it with Apple's local model.
 """
 
-import importlib
 import logging
-import pkgutil
 import time
 
 import i18n
+import kernel
 import settings
 from skills.parse import Token, tokens, vocabulary, words
 
 log = logging.getLogger("skills")
 _skills: list["Skill"] = []
-_loaded = False
 
 
 class Skill:
@@ -55,20 +53,17 @@ class Skill:
 
 
 def skill(cls):
-    """Registers a skill (one instance, in the order they listen)."""
+    """Registers a skill (one instance, in the order they listen), as part of the plugin loading it."""
     cls.name = cls.__name__.lower()
+    cls.plugin = kernel.current()
     _skills.append(cls())
     _skills.sort(key=lambda s: s.order)
     return cls
 
 
 def load():
-    """Imports every module of the package: the skills register themselves."""
-    global _loaded
-    if not _loaded:
-        _loaded = True
-        for module in pkgutil.iter_modules(__path__):
-            importlib.import_module(f"{__name__}.{module.name}")
+    """Loads the skill plugins (kernel.py): they register themselves."""
+    kernel.load_all("skill")
 
 
 def enabled() -> bool:
@@ -77,7 +72,7 @@ def enabled() -> bool:
 
 def ordered() -> list[Skill]:
     load()
-    return [s for s in _skills if enabled() or not s.local]
+    return [s for s in _skills if kernel.enabled(s.plugin) and (enabled() or not s.local)]
 
 
 def hear(text: str, jarvis) -> bool:
@@ -136,3 +131,15 @@ def spoken_when(at: float) -> str:
 def spoken_list(parts: list[str]) -> str:
     joiner = i18n.L("speech.list_and")
     return parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + joiner + parts[-1]
+
+
+def spoken_number(value: float) -> str:
+    """«1081», «3,5» (the language's decimal sign), at most 2 decimals."""
+    import math
+
+    if math.isinf(value):
+        return "∞"
+    text = f"{value:.2f}".rstrip("0").rstrip(".")
+    if text in ("-0", ""):
+        text = "0"
+    return text.replace(".", "," if "coma" in vocabulary()["decimal"] else ".")

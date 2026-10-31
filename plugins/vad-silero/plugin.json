@@ -1,0 +1,5 @@
+{
+  "name": "Silero VAD",
+  "description": "Voice activity detection with Silero (PyTorch).",
+  "kind": "vad"
+}

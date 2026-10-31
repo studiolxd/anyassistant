@@ -21,6 +21,7 @@ from dataclasses import dataclass
 
 import confirmation
 import hub
+import kernel
 import paths
 
 session = hub.current  # the connected device's Session
@@ -40,6 +41,7 @@ class Tool:
     description: str
     schema: dict
     needs_yes: bool
+    plugin: str | None = None  # the plugin it belongs to: off, the tool isn't there
 
 
 TOOLS: dict[str, Tool] = {}
@@ -62,7 +64,7 @@ def tool(description: str, needs_yes: bool = False, name: str = "", choices: dic
                 required.append(parameter.name)
         called = name or function.__name__
         TOOLS[called] = Tool(function, description, {"type": "object", "properties": properties, "required": required},
-                             needs_yes)
+                             needs_yes, kernel.current())
         if needs_yes:
             NEEDS_YES.add(called)
         return function
@@ -86,8 +88,15 @@ def confirmed(name: str, arguments: dict) -> bool:
     return False
 
 
+def available() -> dict[str, Tool]:
+    """The tools whose plugin is on (the plugins are loaded the first time, not on import:
+    loading them while another module is half imported would break theirs)."""
+    kernel.load_all()
+    return {name: t for name, t in TOOLS.items() if kernel.enabled(t.plugin)}
+
+
 def call(name: str, arguments: dict) -> str:
-    if name not in TOOLS:
+    if name not in available():
         raise ToolError(f"unknown tool {name}")
     if name in NEEDS_YES and confirmation_on() and not confirmed(name, arguments):
         raise ToolError(ASK)
@@ -97,10 +106,6 @@ def call(name: str, arguments: dict) -> str:
         raise ToolError(f"wrong arguments: {e}") from None
 
 
-# The modules that declare tools (each next to what it does).
-import tools.system  # noqa: E402,F401
+# The core's modules that declare tools (the plugins' load with them, in available()).
 import memory  # noqa: E402,F401
 import skins  # noqa: E402,F401
-import skills  # noqa: E402
-
-skills.load()

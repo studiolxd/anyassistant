@@ -1,0 +1,5 @@
+{
+  "name": "say voice",
+  "description": "macOS voices through the say command.",
+  "kind": "tts"
+}

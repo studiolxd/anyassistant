@@ -18,11 +18,11 @@ word from the transcribed text.
 
 import numpy as np
 
-from plugins import Registry
+from registry import Registry
 
 RATE = 16000
 
-_registry = Registry(__name__, __path__, "wake word")
+_registry = Registry("wake", "wake word")
 register = _registry.register
 create = _registry.create
 available = _registry.available

@@ -6,6 +6,7 @@ eval, no expressions: anything else goes to the LLM.
 
 import math
 
+from skills import spoken_number as spoken  # noqa: F401 — «1081», «3,5»
 from skills.parse import Token, number, vocabulary, words
 
 SQUARED = {"cuadrado": 2, "squared": 2, "cubo": 3, "cubed": 3}
@@ -54,13 +55,3 @@ def calculate(toks: list[Token]) -> float | None:
 
 def _only_fillers(toks: list[Token], i: int) -> bool:
     return all(t.plain in {"por", "favor", "please"} for t in toks[i:])
-
-
-def spoken(value: float) -> str:
-    """«1081», «3,5» (the language's decimal sign), at most 2 decimals."""
-    if math.isinf(value):
-        return "∞"
-    text = f"{value:.2f}".rstrip("0").rstrip(".")
-    if text in ("-0", ""):
-        text = "0"
-    return text.replace(".", "," if "coma" in vocabulary()["decimal"] else ".")

@@ -57,6 +57,14 @@ class Locale:
         data = json.loads((LOCALES / "en.json").read_text())
         if code != "en":
             data = _merge(data, json.loads((LOCALES / f"{code}.json").read_text()))
+        import kernel
+
+        for language in dict.fromkeys(("en", code)):  # the plugins' texts (English, then this language)
+            for path in kernel.locale_files(language):
+                try:
+                    data = _merge(data, json.loads(path.read_text()))
+                except ValueError:
+                    log.warning("%s isn't valid JSON", path)
         self.code = code
         self.data = data
         self._last = {}  # key → the variant said last time

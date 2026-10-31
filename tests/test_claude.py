@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from llm import claude
+import plugins.llm_claude as claude
 
 
 class Process:

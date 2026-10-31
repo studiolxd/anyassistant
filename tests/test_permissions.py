@@ -2,7 +2,7 @@
 
 import json
 
-from llm.permissions import load, prefix
+from plugins.llm_claude.permissions import load, prefix
 
 
 def setup(root, permissions, servers=("holded", "other")):

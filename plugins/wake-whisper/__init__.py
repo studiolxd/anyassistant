@@ -54,7 +54,7 @@ class WhisperWakeWord(WakeWord):
     def __init__(self, word=None, threshold=SIMILARITY, model="mlx-community/whisper-base-mlx"):
         super().__init__(word or settings.get("name", "Jarvis").lower(), threshold)
         import vad
-        from stt.mlx_whisper import transcribe_mlx
+        from plugins.stt_mlx_whisper import transcribe_mlx
 
         self._transcribe = transcribe_mlx
         self.model = model

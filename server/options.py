@@ -51,6 +51,9 @@ def _detail_levels():
 
 
 OPTIONS = [
+    # The plugins
+    Option("plugins", None, 'which plugins are on or off, if not as they come: {"memory": false, "eyes": true}',
+           "plugins", "json", live=True),
     # The assistant
     Option("name", "Jarvis", "the assistant's name: its wake word, the page's title, what the LLM calls itself", "assistant"),
     Option("language", None, "en, es…: what it speaks and understands (default: the Mac's)", "assistant",
@@ -137,10 +140,20 @@ OPTIONS = [
     Option("record", None, "saves everything that arrives to a WAV (to debug)", "server"),
 ]
 
+def add(option: Option):
+    """A plugin's own option (call it when the plugin loads)."""
+    if option.name not in {o.name for o in OPTIONS}:
+        OPTIONS.append(option)
+        if option.live:
+            LIVE.add(option.name)
+        if option.screen:
+            SCREEN.add(option.name)
+
+
 BY_NAME = {o.name: o for o in OPTIONS}
 LIVE = {o.name for o in OPTIONS if o.live}
 SCREEN = {o.name for o in OPTIONS if o.screen}
-GROUPS = {"assistant": "The assistant", "memory": "Memory", "voice": "Listening and speaking", "skills": "Skills",
+GROUPS = {"plugins": "Plugins", "assistant": "The assistant", "memory": "Memory", "voice": "Listening and speaking", "skills": "Skills",
           "screen": "The screen", "security": "Privacy and security", "server": "The server"}
 
 
@@ -210,6 +223,9 @@ def describe() -> list[dict]:
 
 if __name__ == "__main__":
     sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
+    import kernel
+
+    kernel.load_all()  # plugins may bring options of their own
     if sys.argv[1:] == ["markdown"]:
         print(markdown(), end="")
     elif sys.argv[1:] == ["json"]:

@@ -26,7 +26,8 @@ from audio import alarm_tone, louder, normalize
 from brain.transcriber import Transcriber, volume
 from llm import SILENCE
 from llm import detail as llm_detail
-from skills import alarms, interpreter, timers
+import kernel
+from skills import interpreter, timers
 from text import words
 
 log = logging.getLogger("assistant")
@@ -131,7 +132,8 @@ class Assistant(Transcriber):
         self.ringing = self.rang = item
         if self.ear.wake and not self.ear.awake:
             self.ear._wake_up()  # so it hears «stop» or «snooze» without its name
-        sentence = alarms.ring_sentence(item)
+        alarms = kernel.module("skill-alarms")
+        sentence = alarms.ring_sentence(item) if alarms else ""
         self.send({"type": "alarm", "label": item.get("label") or sentence})
         self._state("alarm")
         own = skins.sound(getattr(self, "skin", None) or settings.get("skin"), "alarm")  # the skin's, if it has one

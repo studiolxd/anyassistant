@@ -18,7 +18,7 @@ import paths
 import settings
 import skins
 from brain.parrot import Parrot
-from skills import alarms
+import kernel
 from skills import timers as skill_timers
 from transport import Session
 
@@ -186,9 +186,10 @@ async def ring_when_due(app: web.Application):
             try:
                 for item in skill_timers.due():
                     session = hub.connected()
+                    alarms = kernel.module("skill-alarms")
                     if session and hasattr(session.brain, "ring"):
                         asyncio.ensure_future(session.brain.ring(item))
-                    else:
+                    elif alarms:
                         asyncio.ensure_future(alarms.ring_on_mac(item))
             except Exception as e:
                 logging.warning("timers: %r", e)

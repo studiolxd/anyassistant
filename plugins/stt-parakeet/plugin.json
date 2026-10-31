@@ -1,0 +1,8 @@
+{
+  "name": "Parakeet",
+  "description": "NVIDIA's Parakeet TDT v3 on MLX: multilingual speech recognition, fast on short sentences.",
+  "kind": "stt",
+  "requires": [
+    "stt-mlx-whisper"
+  ]
+}

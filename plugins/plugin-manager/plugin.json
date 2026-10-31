@@ -1,0 +1,6 @@
+{
+  "name": "Plugin manager",
+  "description": "Lets Jarvis list, turn on and turn off its plugins, by voice.",
+  "kind": "feature",
+  "security": true
+}

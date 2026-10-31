@@ -1,0 +1,5 @@
+{
+  "name": "Wake word (openWakeWord)",
+  "description": "openWakeWord's trained models (hey_jarvis, alexa…).",
+  "kind": "wake"
+}

@@ -1,0 +1,5 @@
+{
+  "name": "Whisper (MLX)",
+  "description": "OpenAI's Whisper on MLX: speech recognition, and the fallback when Parakeet drifts into another language.",
+  "kind": "stt"
+}

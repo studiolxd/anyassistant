@@ -1,0 +1,8 @@
+{
+  "name": "While it rings",
+  "description": "«Pospón», and only words meant to stop an alarm stop it.",
+  "kind": "skill",
+  "requires": [
+    "skill-alarms"
+  ]
+}

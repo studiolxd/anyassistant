@@ -2,8 +2,9 @@
 
 import i18n
 from skills import Skill, skill
-from skills.calc import spoken
-from skills.units import convert, name
+from skills import spoken_number as spoken
+
+from .units import convert, name
 
 
 @skill

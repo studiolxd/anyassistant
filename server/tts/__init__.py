@@ -13,11 +13,11 @@ voice comes from the active locale (tts_voice).
 import numpy as np
 
 import i18n
-from plugins import Registry
+from registry import Registry
 
 RATE = 48000  # what the Speaker expects
 
-_registry = Registry(__name__, __path__, "TTS")
+_registry = Registry("tts", "TTS")
 register = _registry.register
 create = _registry.create
 available = _registry.available

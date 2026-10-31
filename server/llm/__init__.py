@@ -20,9 +20,9 @@ from collections.abc import AsyncIterator
 import i18n
 import memory
 import settings
-from plugins import Registry
+from registry import Registry
 
-_registry = Registry(__name__, __path__, "LLM")
+_registry = Registry("llm", "LLM")
 register = _registry.register
 create = _registry.create
 available = _registry.available

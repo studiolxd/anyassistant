@@ -14,12 +14,12 @@ settings «vad»; each listener gets its own instance (they keep state).
 import numpy as np
 
 import settings
-from plugins import Registry
+from registry import Registry
 
 RATE = 16000
 WINDOW = 512  # samples (32 ms)
 
-_registry = Registry(__name__, __path__, "VAD")
+_registry = Registry("vad", "VAD")
 register = _registry.register
 available = _registry.available
 

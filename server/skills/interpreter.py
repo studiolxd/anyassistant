@@ -17,8 +17,9 @@ import time
 
 import i18n
 import settings
+import kernel
 import skills
-from skills import alarms, clock, parse, units, volume
+from skills import parse
 
 log = logging.getLogger("skills")
 _model = None
@@ -79,8 +80,14 @@ async def interpret(text: str) -> str | None:
 
 
 def execute(data: dict) -> str | None:
-    """Runs a skill from the interpreter's data (or anyone's); None if it isn't one or lacks something."""
+    """Runs a skill from the interpreter's data (or anyone's); None if it isn't one, lacks something,
+    or its plugin is off."""
+    alarms, clock, volume = (kernel.module(p) for p in ("skill-alarms", "skill-clock", "skill-volume"))
     skill = data.get("skill")
+    if skill in ("alarm", "reminder", "timer", "cancel", "remaining", "list") and not alarms:
+        return None
+    if (skill in ("time", "date") and not clock) or (skill == "volume" and not volume):
+        return None
     number = lambda key: float(data[key]) if isinstance(data.get(key), (int, float)) else None  # noqa: E731
     seconds, hour = number("seconds"), number("hour")
     if skill in ("alarm", "reminder"):
@@ -120,5 +127,3 @@ def execute(data: dict) -> str | None:
     return None
 
 
-def known_units() -> list[str]:
-    return [u for d in units.FACTORS.values() for u in d]

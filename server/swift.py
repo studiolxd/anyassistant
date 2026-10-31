@@ -16,8 +16,8 @@ log = logging.getLogger("swift")
 
 NATIVE = paths.APP / "native"  # built in advance, inside the app
 BRIDGES = {  # name: source
-    "fm-bridge": paths.APP / "server" / "llm" / "apple_bridge.swift",
-    "avspeech-bridge": paths.APP / "server" / "tts" / "avspeech_bridge.swift",
+    "fm-bridge": paths.PLUGINS / "llm-apple" / "apple_bridge.swift",
+    "avspeech-bridge": paths.PLUGINS / "tts-avspeech" / "avspeech_bridge.swift",
 }
 
 

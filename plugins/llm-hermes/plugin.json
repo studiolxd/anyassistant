@@ -1,0 +1,5 @@
+{
+  "name": "Hermes",
+  "description": "Hermes Agent through its API gateway, with its own tools and memory.",
+  "kind": "llm"
+}

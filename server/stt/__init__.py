@@ -11,14 +11,14 @@ import threading
 
 import numpy as np
 
-from plugins import Registry
+from registry import Registry
 
 RATE = 16000  # every plugin receives float32 mono at 16 kHz
 
 # The MLX plugins (and the Whisper wake word) share the GPU: one at a time.
 GPU = threading.Lock()
 
-_registry = Registry(__name__, __path__, "STT")
+_registry = Registry("stt", "STT")
 register = _registry.register
 create = _registry.create
 available = _registry.available

@@ -1,0 +1,5 @@
+{
+  "name": "Jarvis's settings as tools",
+  "description": "Status, name, voice, language, LLM, detail level, reload and restart, for the LLM.",
+  "kind": "feature"
+}

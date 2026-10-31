@@ -13,5 +13,6 @@ memory.json
 timers.json
 paired.json
 skins.local/
+plugins.local/
 google-client.json
 .gog/

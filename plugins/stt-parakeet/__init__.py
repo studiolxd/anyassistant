@@ -74,6 +74,6 @@ class Parakeet(Transcriber):
         return text
 
     def _fallback(self, audio: np.ndarray) -> str:
-        from stt.mlx_whisper import transcribe_mlx
+        from plugins.stt_mlx_whisper import transcribe_mlx
 
         return transcribe_mlx(audio, FALLBACK, self.language)

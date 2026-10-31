@@ -29,6 +29,10 @@ SKINS = HOME / ("skins.local" if HOME == APP else "skins")  # yours; settings «
 GOOGLE_CLIENT = HOME / "google-client.json"
 GOG = HOME / ".gog"
 
+# Plugins: the system's, and yours (one of yours with the same name replaces the system's)
+PLUGINS = APP / "plugins"
+USER_PLUGINS = HOME / ("plugins.local" if HOME == APP else "plugins")
+
 # The program
 WEB = APP / "web"
 LOCALES = APP / "locales"

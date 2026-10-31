@@ -1,0 +1,5 @@
+{
+  "name": "AVSpeech voice",
+  "description": "macOS voices through AVSpeechSynthesizer, always loaded (~50 ms per sentence).",
+  "kind": "tts"
+}

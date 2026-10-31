@@ -8,6 +8,9 @@ from pathlib import Path
 import pytest
 
 import i18n
+import kernel
+
+kernel.load_all()  # every plugin, so tests can import them as plugins.<id>
 
 ROOT = Path(__file__).resolve().parent.parent
 

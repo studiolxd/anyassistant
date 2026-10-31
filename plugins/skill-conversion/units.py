@@ -4,7 +4,7 @@ Unit names per language in locale skills.units; the factors (to meters, kilos,
 liters) here.
 """
 
-from skills.calc import spoken
+from skills import spoken_number as spoken
 from skills.parse import Token, number, vocabulary, words
 
 FACTORS = {

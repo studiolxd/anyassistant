@@ -10,7 +10,7 @@ import mcp_server
 import settings
 import tools
 from conftest import load_script
-from llm.permissions import load
+from plugins.llm_claude.permissions import load
 
 
 @pytest.fixture

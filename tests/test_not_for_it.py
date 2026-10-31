@@ -79,7 +79,7 @@ def test_after_a_dubious_wake_up_the_first_sentence_carries_the_doubt(monkeypatc
 
 
 def test_dubious_wake_ups(monkeypatch):
-    from wake.whisper import WhisperWakeWord
+    from plugins.wake_whisper import WhisperWakeWord
 
     word = object.__new__(WhisperWakeWord)
     word.keys, word.threshold, word.prompt = ["jarvis"], 0.85, "The assistant's name is Jarvis."

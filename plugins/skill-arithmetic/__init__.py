@@ -2,7 +2,9 @@
 
 import i18n
 from skills import Skill, skill
-from skills.calc import calculate, spoken
+from skills import spoken_number as spoken
+
+from .calc import calculate
 
 
 @skill

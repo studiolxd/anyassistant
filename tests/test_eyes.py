@@ -4,7 +4,7 @@ import pytest
 
 import eyes
 import settings
-from llm.permissions import load
+from plugins.llm_claude.permissions import load
 
 
 @pytest.fixture
@@ -79,7 +79,7 @@ def test_no_photo_in_time(seeing, monkeypatch):
 
 
 def test_hermes_gets_the_image():
-    from llm.hermes import Hermes
+    from plugins.llm_hermes import Hermes
 
     content = Hermes._content("What's this?", b"jpeg")
     assert content[1]["image_url"]["url"].startswith("data:image/jpeg;base64,")
