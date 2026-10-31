@@ -5,6 +5,8 @@ name and a room, kept in devices.json by the page's own id.
   knows yet.
 - The LLM changes them for the device you're talking to («this is the kitchen's», «call
   this one the bedside»), and sees which ones there are and which are connected.
+- A message to another one («dile a la cocina que bajo ya»): said aloud there and shown on
+  its screen, nothing more (tell_device).
 - From the Mac itself, for the Mac app: GET /devices lists them; POST /devices {"id", "name",
   "room"} changes one, {"id", "forget": true} forgets it (it gets a new name if it comes back).
 """
@@ -21,6 +23,7 @@ import hub
 import paths
 import tools
 import web
+from skills.tokens import tokens
 from tools import ToolError, tool
 
 FILE = paths.HOME / "devices.json"
@@ -81,6 +84,24 @@ def _connected(session):
     log.info("[%s] is %s", session.id, describe(session.device))
 
 
+def matches(device: str | None, where: str) -> bool:
+    """Whether that device is the room or the name «where» (as said: «Cocina», «la cocina»…)."""
+    found = load().get(device or "", {})
+    wanted = [t.plain for t in tokens(where)]
+    for name in (found.get("room"), found.get("name")):
+        if name:
+            have = [t.plain for t in tokens(name)]
+            if wanted == have or (len(wanted) > len(have) and wanted[-len(have):] == have):  # «la cocina»
+                return True
+    return False
+
+
+def connected(where: str, but=None) -> list:
+    """The connected devices that are «where» («all»: every one but `but`)."""
+    found = [s for s in hub.all() if s.pc.connectionState == "connected" and s is not but]
+    return found if where.strip().lower() == "all" else [s for s in found if matches(s.device, where)]
+
+
 def _listing() -> list[dict]:
     connected = {s.device for s in hub.all() if s.pc.connectionState == "connected"}
     current = hub.current()
@@ -126,6 +147,24 @@ def set_device(name: str = "", room: str = "") -> str:
         raise ToolError("give a name or a room")
     change(session.device, name, room or None, session.agent)
     return f"this device is now {describe(session.device)}"
+
+
+@tool("Say a message aloud on another device and show it on its screen, nothing more (not a reminder: "
+      "no tone): «dile a la cocina que bajo ya». where: a room or a device's name (get_devices), or «all» for "
+      "every other device. text: what is heard there, in the user's language, saying who sends it if it "
+      "helps (e.g. «Desde el salón: bajo ya»).", name="tell_device")
+def tell_device(where: str, text: str) -> str:
+    text = text.strip()
+    if not text:
+        raise ToolError("what should it say?")
+    here = tools.session()
+    found = [s for s in connected(where, but=here) if hasattr(s.brain, "say")]
+    if not found:
+        raise ToolError(f"no other connected device is «{where}»; the devices: {get_devices()}")
+    for session in found:
+        session.brain.say(text)
+    log.info("message to %s", ", ".join(describe(s.device) for s in found))
+    return "said on " + ", ".join(describe(s.device) for s in found)
 
 
 # --- For the Mac app ---

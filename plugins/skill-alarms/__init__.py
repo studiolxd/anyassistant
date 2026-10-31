@@ -112,11 +112,9 @@ def place(toks: list[Token]) -> tuple[str, set[int]]:
 
 
 def _is(device: str | None, where: str) -> bool:
-    """Whether that device is the room or the name «where»."""
+    """Whether that device is the room or the name «where» (the plugin «devices»)."""
     devices = kernel.module("devices")
-    found = devices.load().get(device or "", {}) if devices else {}
-    wanted = [t.plain for t in tokens(where)]
-    return any(name and [t.plain for t in tokens(name)] == wanted for name in (found.get("room"), found.get("name")))
+    return bool(devices and devices.matches(device, where))
 
 
 def targets(item: dict) -> list:
@@ -270,7 +268,8 @@ def alarm_tool(hour: int | None = None, minute: int = 0, day: int | None = None,
     return set_alarm(_at(hour, minute, day, seconds), where=where.strip())
 
 
-@tool("A reminder that says text aloud at hour:minute (24 h; day as for alarms) or in some seconds." + WHERE,
+@tool("A reminder that says text aloud at hour:minute (24 h; day as for alarms) or in some seconds (a message "
+      "to another device now isn't one: tell_device)." + WHERE,
       name="set_reminder")
 def reminder_tool(text: str, hour: int | None = None, minute: int = 0, day: int | None = None,
                   seconds: float = 0, where: str = "") -> str:

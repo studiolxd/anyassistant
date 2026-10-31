@@ -242,3 +242,17 @@ def test_stopped_on_one_it_stops_on_all(monkeypatch):
     one.brain.ringing = other.brain.ringing = item
     one.brain._stop_ringing()
     assert other.brain.ringing is None and {"type": "alarm", "off": True} in other.brain.sent
+
+
+def test_a_message_to_another_device_is_only_said_there(house, monkeypatch):
+    kitchen, bedroom = house
+    said = {}
+    for session in house:
+        session.brain.say = lambda text, s=session: said.setdefault(s.id, []).append(text)
+    answer = devices.tell_device("la cocina", "Desde el dormitorio: bajo ya")
+    assert said == {"a": ["Desde el dormitorio: bajo ya"]} and "cocina" in answer
+    assert timers.pending() == []  # not a reminder
+    devices.tell_device("all", "A cenar")
+    assert said["a"][-1] == "A cenar" and "b" not in said  # every other one, not the one you talk to
+    with pytest.raises(devices.ToolError):
+        devices.tell_device("garaje", "Hola")

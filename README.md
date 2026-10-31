@@ -259,7 +259,8 @@ camera and screen are the ones used; another one in a conversation goes to sleep
 two hear the same «Jarvis» (within 1.5 s), the one that heard it louder answers; while one
 speaks, its voice saying its name doesn't wake another. The plugin `devices` gives each a
 name (from what it is: iPad, Android tablet…) and a room, in `devices.json`: «this is the
-kitchen's» (the LLM's `set_device`), «which devices are there?» (`get_devices`);
+kitchen's» (the LLM's `set_device`), «which devices are there?» (`get_devices`), «dile a la
+cocina que bajo ya» (`tell_device`: said aloud there and shown on its screen, nothing more);
 `GET /devices` from the Mac lists them.
 
 **By voice**: «Use the orb skin», «Change your voice to Mónica», «From now on your

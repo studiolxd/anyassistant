@@ -15,9 +15,6 @@
 
 ## Apps y dispositivos
 
-- [ ] **Más de un dispositivo** (fases 1 y 2 hechas, falta probarlas con dos de verdad):
-  hablar de una habitación a otra («dile a la cocina que bajo ya»).
-
 ## Skins
 
 - [ ] **Un mejor comprobador de skins**: hoy `skin check` comprueba en concreto el
@@ -75,7 +72,8 @@
   te oyen dos, el que lo oyó más fuerte; una conversación a la vez; cada uno con nombre y
   habitación (por voz o en la ventana «Dispositivos» de la app). Alarmas, temporizadores y
   recordatorios suenan donde se pusieron (`alarm_rings`) o en todos, «… en la cocina» por
-  voz; si ese no está, en todos; se paran en cualquiera.
+  voz; si ese no está, en todos; se paran en cualquiera. Mensajes de una habitación a otra
+  («dile a la cocina que bajo ya», `tell_device`): se dicen allí, sin tono.
 - [x] **HTTPS en local** (`https`): una autoridad propia que cada dispositivo instala una
   vez (`/https/ca.crt`, el QR de la app); la página en https://anyassistant.local, sin
   puerto (443) y sin el flag de Chrome; http://anyassistant.local (80) lleva a ella.
