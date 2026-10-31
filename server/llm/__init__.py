@@ -5,8 +5,8 @@ A plugin is a module of this package with a class registered like this:
     @register("name")
     class MyLLM(LLM):
         async def new(self): ...                # starts a conversation (forgets the last one)
-        async def answer(self, text):           # async generator of text pieces
-            yield "Hello"
+        async def answer(self, text, image=None):  # async generator of text pieces;
+            yield "Hello"                       # image: JPEG from the camera, if it can see
         async def close(self): ...              # optional, when the server stops
 """
 
@@ -46,7 +46,7 @@ class LLM:
     async def new(self):
         raise NotImplementedError
 
-    def answer(self, text: str) -> AsyncIterator[str]:
+    def answer(self, text: str, image: bytes | None = None) -> AsyncIterator[str]:
         raise NotImplementedError
 
     async def reload(self):

@@ -22,7 +22,7 @@
 
 Claude starts only with the .mcp.json servers (--strict-mcp-config: no claude.ai
 connectors, no plugins) and without its own tools (Bash, Edit…) other than that
-limited terminal.
+limited terminal and, with «eyes» in the settings, Read for the camera's image only.
 """
 
 import json
@@ -31,6 +31,8 @@ import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+
+import eyes
 
 log = logging.getLogger("llm")
 
@@ -80,8 +82,12 @@ def load(root: Path, servers: Path) -> Permissions:
             log.warning("permissions.json allows «%s», which isn't in .mcp.json", server)
 
     instructions = ""
+    tools = []  # Claude Code's own tools, each limited by `allow`
+    if eyes.enabled():  # the camera's image, and no other file
+        tools.append("Read")
+        allow.append(f"Read(/{eyes.FRAME})")
     if commands:
-        args += ["--tools", "Bash"]
+        tools.append("Bash")
         texts = []
         for command in commands:
             if not command.exists():
@@ -95,8 +101,7 @@ def load(root: Path, servers: Path) -> Permissions:
             "\nIn the terminal you may run only these commands, with their full path, "
             "one at a time and without pipes or redirections:\n\n" + "\n\n".join(texts)
         )
-    else:
-        args += ["--tools", ""]
+    args += ["--tools", ",".join(tools)]
 
     if allow and config.get("confirm", True):
         settings = root / ".build" / "claude-settings.json"

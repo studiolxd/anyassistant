@@ -38,6 +38,19 @@
       "chitón",
       "chiton"
     ],
+    "look": [
+      "ves",
+      "ver",
+      "mira",
+      "miras",
+      "mirar",
+      "viendo",
+      "lee",
+      "leer",
+      "leeme",
+      "enseno",
+      "muestro"
+    ],
     "reload": [
       "recarg"
     ],
@@ -164,6 +177,7 @@
     "pair_prompt": "Escribe el código que muestra «bin/jarvis pair» en el Mac",
     "pair_button": "Emparejar",
     "pair_wrong": "Código incorrecto o caducado",
-    "pair_needed": "Este aparato no está emparejado: recarga la página"
+    "pair_needed": "Este aparato no está emparejado: recarga la página",
+    "looking": "Mirando…"
   }
 }

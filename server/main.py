@@ -23,6 +23,7 @@ from pathlib import Path
 
 from aiohttp import web
 
+import eyes
 import i18n
 import llm
 import pairing
@@ -165,6 +166,8 @@ def main():
     parser.add_argument("--face", choices=["eyes", "orb"], default="eyes", help="the page's face (?face= wins)")
     parser.add_argument("--video", choices=["auto", "normal", "low", "off"], default="auto",
                         help="camera quality; auto: each device by its memory (?video= wins)")
+    parser.add_argument("--eyes", action=argparse.BooleanOptionalAction, default=False,
+                        help="it may look through the device's camera (with Claude)")
     parser.add_argument("--pairing", action=argparse.BooleanOptionalAction, default=False,
                         help="only devices paired with a code (bin/jarvis pair) may connect")
     parser.add_argument("--log-transcripts", action=argparse.BooleanOptionalAction, default=False,
@@ -246,6 +249,7 @@ def main():
     else:
         brain_factory = Parrot
 
+    eyes.source = lambda: (session := current_session()) and session.jpeg()
     app = web.Application(middlewares=[no_cache])
     app.router.add_get("/", index)
     app.router.add_get("/monitor", monitor)

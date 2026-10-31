@@ -56,7 +56,7 @@ class Apple(LLM):
             await self._send({"type": "new", "instructions": instructions() + DATE_TIME_TOOL})
             await self._read()
 
-    async def answer(self, text: str):
+    async def answer(self, text: str, image: bytes | None = None):  # it can't see: no image
         async with self._turn:
             await self._start()
             await self._send({"type": "ask", "text": text, "now": i18n.L.now_spoken()})

@@ -8,11 +8,13 @@ it, none. Requires `claude` installed and signed in.
 """
 
 import asyncio
+import base64
 import json
 import logging
 from pathlib import Path
 
 import i18n
+import eyes
 from llm import LLM, instructions, permissions, register
 
 log = logging.getLogger("llm")
@@ -109,7 +111,7 @@ class Claude(LLM):
     def _load_permissions(self):
         """Reads .mcp.json and permissions.json: on every conversation, to pick up changes."""
         self._permissions = permissions.load(ROOT, Path(self.mcp))
-        self._instructions = instructions() + CLAUDE_INSTRUCTIONS
+        self._instructions = instructions() + CLAUDE_INSTRUCTIONS + eyes.instructions()
         if self._permissions.tools:
             self._instructions += TOOL_INSTRUCTIONS + self._permissions.instructions
 
@@ -119,13 +121,20 @@ class Claude(LLM):
             self._load_permissions()
             await self._start()
 
-    async def answer(self, text: str):
+    async def answer(self, text: str, image: bytes | None = None):
         async with self._turn:
             if not self._process or self._process.returncode is not None:
                 await self._start()
+            content = f"<now>{i18n.L.now_spoken()}</now>\n{text}"
+            if image:
+                content = [
+                    {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
+                                                 "data": base64.b64encode(image).decode()}},
+                    {"type": "text", "text": content},
+                ]
             message = {
                 "type": "user",
-                "message": {"role": "user", "content": f"<now>{i18n.L.now_spoken()}</now>\n{text}"},
+                "message": {"role": "user", "content": content},
             }
             self._process.stdin.write(json.dumps(message).encode() + b"\n")
             await self._process.stdin.drain()

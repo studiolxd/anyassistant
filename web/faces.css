@@ -75,6 +75,8 @@ body[data-state="hearing"] .face-eyes .eye { background: #7ff0c2; }
 body[data-state="thinking"] .face-eyes .eyes { transform: translate(-4vmin, -3vmin); }
 body[data-state="thinking"] .face-eyes .eye { height: 17vmin; background: var(--amber); }
 body[data-state="thinking"] .face-eyes .dots { display: flex; }
+/* Looking through the camera: wide open, straight ahead. */
+body[data-state="looking"] .face-eyes .eye { height: 30vmin; width: 15vmin; background: #fff; }
 /* Speaking: relaxed eyes and a mouth that follows its voice. */
 body[data-state="speaking"] .face-eyes .eye { height: 20vmin; background: var(--blue); }
 body[data-state="speaking"] .face-eyes .mouth { display: flex; }
@@ -117,6 +119,10 @@ body[data-state="thinking"] .face-orb .core {
   background: radial-gradient(circle at 38% 32%, #fbe6b0, #e0b54a 45%, #6b4f12 100%);
 }
 body[data-state="thinking"] .face-orb .ring { display: block; }
+body[data-state="looking"] .face-orb .core {
+  background: radial-gradient(circle at 38% 32%, #ffffff, #cfd8dc 45%, #455a64 100%);
+}
+body[data-state="looking"] .face-orb .ring { display: block; }
 body[data-state="speaking"] .face-orb .core {
   background: radial-gradient(circle at 38% 32%, #d4f3ff, #5bc6e8 45%, #155c78 100%);
 }

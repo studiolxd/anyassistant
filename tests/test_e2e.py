@@ -8,6 +8,7 @@ import asyncio
 import fractions
 import json
 import os
+import shutil
 import socket
 import subprocess
 import sys
@@ -72,8 +73,10 @@ def server(tmp_path):
             process.kill()
 
 
-async def talk(url, pcm, until, timeout=60):
+async def talk(url, pcm, until, timeout=60, image=None):
     """Plays `pcm` as the phone's microphone; returns (messages, sound that came back).
+
+    With `image` (a PIL image), the phone's camera shows it.
 
     Waits until until(messages) is true (or the timeout) after the audio ends.
     """
@@ -98,8 +101,26 @@ async def talk(url, pcm, until, timeout=60):
             self.pts += 960
             return frame
 
+    class Camera(MediaStreamTrack):
+        kind = "video"
+
+        def __init__(self):
+            super().__init__()
+            self.pts = 0
+
+        async def recv(self):
+            from av import VideoFrame
+
+            await asyncio.sleep(0.1)
+            frame = VideoFrame.from_image(image)
+            frame.pts, frame.time_base = self.pts, fractions.Fraction(1, 90000)
+            self.pts += 9000
+            return frame
+
     pc = RTCPeerConnection()
     pc.addTrack(Microphone())
+    if image is not None:
+        pc.addTrack(Camera())
     channel = pc.createDataChannel("control")
     messages, loudest = [], []
     channel.on("message", lambda m: messages.append(json.loads(m)))
@@ -262,3 +283,21 @@ def test_pairing(server, tmp_path):
 
     request(local + "/pairing?forget=1", {})
     assert request(remote + "/status", cookie=cookie)[0] == 403
+
+
+@pytest.mark.skipif(not shutil.which("claude"), reason="needs Claude Code signed in")
+def test_eyes_with_claude(server, tmp_path):
+    """It reads what the camera shows: asked to («read this») and on its own (no such word)."""
+    from PIL import Image, ImageDraw, ImageFont
+
+    image = Image.new("RGB", (640, 480), "white")
+    ImageDraw.Draw(image).text((150, 200), "MILK  BREAD  42", fill="black", font=ImageFont.load_default(size=44))
+    (tmp_path / "settings.json").write_text(json.dumps({"eyes": True}))
+    url = server("--mode", "assistant", "--lang", "en", "--wake", "none", "--llm", "claude", "--tts", "none")
+    done = lambda m: len(final_texts(m, "assistant")) >= 2  # noqa: E731
+    pcm = np.concatenate([speech(tmp_path, "Read what I'm holding.", "Samantha"), np.zeros(RATE * 12, np.int16),
+                          speech(tmp_path, "What number is on the paper?", "Samantha")])
+    messages, _ = asyncio.run(talk(url, pcm, until=done, timeout=60, image=image))
+    first, second = final_texts(messages, "assistant")[:2]
+    assert "looking" in states(messages)
+    assert "MILK" in first.upper() and "42" in second

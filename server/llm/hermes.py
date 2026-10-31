@@ -69,7 +69,7 @@ class Hermes(LLM):
         if self._http and not self._http.closed:
             await self._http.close()
 
-    async def answer(self, text: str):
+    async def answer(self, text: str, image: bytes | None = None):  # it can't see: no image
         import aiohttp
 
         async with self._turn:

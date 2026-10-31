@@ -2,7 +2,8 @@
 
 ## Next
 
-- [ ] **Eyes (Phase 4)**: look through the camera when asked («what do you see?», «read this»).
+- [ ] **Eyes, second step**: a high-resolution photo when asked to read (the video
+  is 320×240 on small devices); with Hermes too if its model takes images.
 - [ ] **Memory across conversations** with Claude (Hermes already has it). For now,
   what you ask it to remember goes to `instructions` in `settings.json` (`bin/settings`).
 - [ ] **The server as a packaged app** (the Mac first): install, start with the
@@ -20,6 +21,8 @@
 
 ## Done
 
+- [x] **Eyes (Phase 4)**: `"eyes": true`; with Claude, by words («what do you see?»,
+  «read this») or by its own decision (Read on the image of the moment).
 - [x] **Pairing** (optional: `"pairing": true`; `bin/jarvis pair|unpair`).
 - [x] **Interrupt by voice**: «Jarvis, stop» or «Jarvis, and tomorrow?» while it speaks.
 - [x] **Latency**: a spare Claude process always ready (~1.5 s to the first word

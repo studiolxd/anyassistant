@@ -92,6 +92,7 @@ the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear'
 | `face` | `eyes` | `eyes` or `orb`; a device's `?face=` wins |
 | `video` | `auto` | `normal`, `low` or `off`; `auto` lets each device choose (low with ≤ 1 GB of RAM); a device's `?video=` wins |
 | `port` | `8080` | `bin/jarvis` uses it too |
+| `eyes` | `false` | it may look through the device's camera, with Claude (below) |
 | `pairing` | `false` | only devices paired with a code may connect (below) |
 | `log_transcripts` | `false` | write what it hears and says to the log (to debug); otherwise only lengths |
 | `confirm_wait` | `120` | seconds to answer «yes» to an action that writes |
@@ -361,6 +362,21 @@ class MyLLM(LLM):
 ```
 
 and `--llm my-llm [--llm-model …]`.
+
+## Eyes (Phase 4)
+
+With `"eyes": true` and Claude, Jarvis sees through the device's camera:
+
+- A question with words like «see», «look», «read» («¿qué ves?», «léeme esto»;
+  locale `commands.look`) carries the camera's image at that moment (~1.5 s).
+- For the rest («what number is on this paper?») Claude may open the image of the
+  moment of the question with its Read tool (~4 s), and only that file:
+  `.build/eyes/now.jpg`. Any other file is denied.
+
+The face opens its eyes wide while it looks («looking»). Nothing leaves the Mac
+unless it looks, and only the latest image is kept. To read small text, the
+camera's `video` quality matters: `low` (320×240, the default on devices with
+≤ 1 GB of RAM) is enough to see, not always to read.
 
 ## Voice (TTS)
 

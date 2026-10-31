@@ -35,6 +35,15 @@
       "shush",
       "hush"
     ],
+    "look": [
+      "see",
+      "look",
+      "looking",
+      "read",
+      "watch",
+      "showing",
+      "show"
+    ],
     "reload": [
       "reload"
     ],
@@ -133,6 +142,7 @@
     "pair_prompt": "Type the code that «bin/jarvis pair» shows on the Mac",
     "pair_button": "Pair",
     "pair_wrong": "Wrong or expired code",
-    "pair_needed": "This device isn't paired: reload the page"
+    "pair_needed": "This device isn't paired: reload the page",
+    "looking": "Looking…"
   }
 }

@@ -16,6 +16,7 @@ import signal
 import time
 from pathlib import Path
 
+import eyes
 import i18n
 import settings
 from audio import normalize
@@ -247,13 +248,15 @@ class Assistant(Transcriber):
             self.number += 1
             number = self.number
             message = {"type": "text", "author": "assistant", "id": number}
-            self._state("thinking")
+            image = eyes.capture()  # also for Claude's Read tool, if it decides to look
+            look = image if image and eyes.wants_to_look(text) else None
+            self._state("looking" if look else "thinking")
             self.saying = []
             start = time.time()
             first = None
             answer = rest = ""
             # Even if cut off, the whole answer is read: the plugin has to finish it.
-            async for piece in self.llm.answer(text):
+            async for piece in self.llm.answer(text, image=look):
                 if self.cut == number:
                     continue
                 first = first or time.time() - start
