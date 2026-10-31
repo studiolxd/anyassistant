@@ -5,7 +5,10 @@ import pytest
 import llm
 import settings
 import tools
-from brain.assistant import Assistant
+import kernel
+
+kernel.load_all()  # plugins.* importable
+from plugins.brain_assistant import Assistant
 from conftest import load_script
 
 

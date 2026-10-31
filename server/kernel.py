@@ -21,7 +21,7 @@ What it needs to be installed, in plugin.json «needs» (what the installer read
 One that doesn't fit this computer or lacks its packages is off, whatever the settings
 say (unfit() tells why); a missing command is only reported, as PATH may differ.
 
-«kind» is what it is: stt, wake, llm, tts, vad (engines: the settings choose one),
+«kind» is what it is: brain (settings «mode» chooses one), stt, wake, llm, tts, vad (engines: the settings choose one),
 skill, or feature. Every plugin found is loaded (importing one must be cheap:
 heavy libraries only inside its classes); whether it is ON is checked when it is
 used, from settings «plugins» ({"memory": false}) or its manifest's «default»
@@ -44,7 +44,7 @@ from pathlib import Path
 import paths
 
 log = logging.getLogger("kernel")
-KINDS = ("stt", "wake", "llm", "tts", "vad", "skill", "feature")
+KINDS = ("brain", "stt", "wake", "llm", "tts", "vad", "skill", "feature")
 
 
 @dataclass

@@ -1,7 +1,10 @@
 """The plugin «tap-to-wake»: asleep, a tap wakes it up; off, or awake, nothing changes."""
 
 import settings
-from brain.transcriber import Transcriber
+import kernel
+
+kernel.load_all()  # plugins.* importable
+from plugins.brain_transcriber import Transcriber
 
 
 class Wake:

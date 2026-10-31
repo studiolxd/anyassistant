@@ -7,7 +7,7 @@ A plugin is a module of this package with a class registered like this:
         def probability(self, window): ...   # float32 mono 16 kHz, WINDOW samples → 0–1
         def reset(self): ...                 # a new stream: forget what it heard
 
-The ear (brain/ear.py) and the whisper wake word cut sentences with it. Chosen with
+The ear (plugins/brain-transcriber/ear.py) and the whisper wake word cut sentences with it. Chosen with
 settings «vad»; each listener gets its own instance (they keep state).
 """
 

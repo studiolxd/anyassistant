@@ -20,15 +20,10 @@ import sys
 from aiohttp import web as aiohttp_web
 
 import i18n
-import llm
 import options
 import settings
-import stt
-import tts
-import wake
 import web
-from brain import assistant, transcriber
-from brain.parrot import Parrot
+import brain
 
 restart = False  # SIGHUP («restart» by voice): stop cleanly and start again
 
@@ -60,37 +55,7 @@ def main():
         if any(arg == option or arg.startswith(option + "=") for option in action.option_strings for arg in sys.argv[1:])
     }
 
-    ear = {"record": args.record, "silence": args.silence, "follow_up": args.follow_up}
-    if args.mode in ("transcribe", "assistant"):
-        engine = stt.create(args.stt, language=i18n.L.stt_language, model=args.stt_model)
-        logging.info("loading STT %s (%s)…", engine.name, engine.model)
-        engine.warm_up()
-        wake_factory = None
-        if args.wake != "none":
-            wake_options = {"word": args.wake_word}
-            if args.threshold is not None:
-                wake_options["threshold"] = args.threshold
-            logging.info("wake word: %s", wake.create(args.wake, **wake_options).phrase)
-            wake_factory = lambda: wake.create(args.wake, **wake_options)  # noqa: E731
-        if args.mode == "assistant":
-            model = llm.create(args.llm, model=args.llm_model, mcp=args.mcp)
-            logging.info("LLM: %s (%s)", model.name, model.model)
-            voice = None
-            if args.tts != "none":
-                voice = tts.create(args.tts, voice=args.voice, rate=args.rate)
-                logging.info("voice: %s (%s)", voice.name, voice.voice)
-                voice.warm_up()
-
-                async def close_voice():
-                    voice.close()
-
-                web.close_on_exit.append(close_voice)
-            web.brain = assistant.create(engine, model, voice, wake_factory, ear, args.echo_guard)
-            web.close_on_exit.append(model.close)
-        else:
-            web.brain = transcriber.create(engine, wake_factory, ear)
-    else:
-        web.brain = Parrot
+    web.brain = brain.create(args.mode, args)  # the plugin of that kind builds its engines
 
     app = web.application()
 

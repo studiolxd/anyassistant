@@ -7,8 +7,11 @@ import pytest
 
 import llm
 import settings
-from brain.assistant import Assistant
-from brain.ear import Ear
+import kernel
+
+kernel.load_all()  # plugins.* importable
+from plugins.brain_assistant import Assistant
+from plugins.brain_transcriber.ear import Ear
 
 
 class FakeLLM:
@@ -103,7 +106,7 @@ class Clock:
 def test_follow_up_window(monkeypatch):
     """It goes back to sleep after follow_up seconds without speech, but not while busy."""
     clock = Clock()
-    monkeypatch.setattr("brain.ear.time.time", clock)
+    monkeypatch.setattr("plugins.brain_transcriber.ear.time.time", clock)
     monkeypatch.setattr(settings, "active", {"follow_up": 20})
     slept = []
     ear = object.__new__(Ear)

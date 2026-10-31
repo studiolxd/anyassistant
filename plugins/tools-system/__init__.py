@@ -2,7 +2,7 @@
 level, reloading and restarting.
 
 Settings are saved to settings.json and applied after the answer
-(brain/assistant.py): some at once, voice, name and language with a restart.
+(plugins/brain-assistant): some at once, voice, name and language with a restart.
 Reloading and restarting also wait for the answer to end: doing it in the middle
 would cut off the LLM while it is still using the tool.
 """

@@ -1,0 +1,7 @@
+{
+  "name": "Assistant",
+  "description": "«mode»: «assistant». The voice assistant: skills, the LLM, its voice, timers ringing.",
+  "kind": "brain",
+  "requires": ["brain-transcriber"],
+  "locked": true
+}

@@ -9,6 +9,7 @@ import time
 import numpy as np
 
 from audio import RATE
+from brain import register
 
 THRESHOLD = 600  # RMS from which it counts as speech
 SILENCE = 0.8  # seconds of silence that end the sentence
@@ -16,7 +17,12 @@ MAXIMUM = 10  # maximum seconds recorded
 GUARD = 0.7  # seconds without listening after repeating (latency + reverb)
 
 
+@register("parrot")
 class Parrot:
+    @classmethod
+    def create(cls, args):
+        return cls  # Parrot(speaker, send)
+
     def __init__(self, speaker, send):
         self.speaker = speaker
         self.send = send

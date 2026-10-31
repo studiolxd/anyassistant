@@ -2,7 +2,10 @@
 
 import time
 
-from brain.assistant import ECHO_WINDOW, Assistant
+import kernel
+
+kernel.load_all()  # plugins.* importable
+from plugins.brain_assistant import ECHO_WINDOW, Assistant
 
 
 class Speaker:

@@ -3,11 +3,11 @@
 import pytest
 
 import kernel
-from brain.assistant import split
+split = kernel.load("brain-assistant").split
 
 is_yes = kernel.load("confirmation").is_yes
 from plugins.skill_restart import command as system_command
-from brain.ear import is_sleep_command
+is_sleep_command = kernel.load("skill-sleep").is_sleep_command
 
 CASES = {
     "en": {
@@ -59,7 +59,7 @@ def test_split_into_sentences():
 
 
 def test_stop(lang):
-    from brain.ear import is_stop_command
+    is_stop_command = kernel.load("skill-stop").is_stop_command
 
     stop, other = {"en": ("Stop!", "Stop the music in the kitchen"), "es": ("¡Para!", "Para qué sirve esto")}[lang.code]
     assert is_stop_command(stop)

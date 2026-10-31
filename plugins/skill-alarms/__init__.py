@@ -1,7 +1,7 @@
 """Timers, alarms and reminders: «pon un temporizador de 10 minutos», «despiértame
 mañana a las 7», «recuérdame en 20 minutos que saque la ropa», «¿cuánto queda?»,
 «¿qué alarmas tengo?», «cancela las alarmas». Kept in timers.py; they ring on the
-device (brain/assistant.py) or on the Mac.
+device (plugins/brain-assistant) or on the Mac.
 """
 
 import asyncio

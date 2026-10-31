@@ -1,37 +1,55 @@
-"""Phase 2: listens and shows what you say on the phone's screen."""
+"""«transcribe»: listens and shows what you say on the device's screen. Its Ear
+(ear.py: wake word, VAD, speech recognition) is how the assistant listens too."""
+
+import logging
 
 import events
 import i18n
 import kernel
 import settings
+import stt
+import wake
 from audio import louder
+from brain import register
+
+log = logging.getLogger("brain")
 
 
 def volume() -> float:
     """Settings «volume» (5–100 %) as a factor."""
     return max(5, min(100, settings.get("volume") or 100)) / 100
-from brain.ear import Ear
 
 
-def create(stt, wake=None, ear=None):
-    """Returns the brain(speaker, send) factory that Session expects.
+def listening(args):
+    """What it listens with, from the settings: the STT engine (warmed up), a function that makes a
+    wake word for each session (it keeps state; None: no wake word) and the Ear's options."""
+    engine = stt.create(args.stt, language=i18n.L.stt_language, model=args.stt_model)
+    log.info("loading STT %s (%s)…", engine.name, engine.model)
+    engine.warm_up()
+    wake_factory = None
+    if args.wake != "none":
+        wake_options = {"word": args.wake_word}
+        if args.threshold is not None:
+            wake_options["threshold"] = args.threshold
+        log.info("wake word: %s", wake.create(args.wake, **wake_options).phrase)
+        wake_factory = lambda: wake.create(args.wake, **wake_options)  # noqa: E731
+    ear = {"record": args.record, "silence": args.silence, "follow_up": args.follow_up}
+    return engine, wake_factory, ear
 
-    wake is a function that creates a new WakeWord (one per session, since it
-    keeps state) or None to listen without a wake word. ear holds options for
-    Ear: record, silence, follow_up.
-    """
 
-    def brain(speaker, send):
-        return Transcriber(stt, wake() if wake else None, speaker, send, ear)
-
-    return brain
-
-
+@register("transcribe")
 class Transcriber:
-    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None, on_interrupt=None, on_stop=None, busy=None):
+    @classmethod
+    def create(cls, args):
+        engine, wake_factory, ear = listening(args)
+        return lambda speaker, send: cls(engine, wake_factory() if wake_factory else None, speaker, send, ear)
+
+    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None, on_interrupt=None, busy=None):
         self.send = send
         self.speaker = speaker
         self.wake = wake
+        from .ear import Ear
+
         self.ear = Ear(
             stt,
             on_state=self._state,
@@ -41,7 +59,6 @@ class Transcriber:
             on_sleep=self._fell_asleep,
             deaf=deaf,
             on_interrupt=on_interrupt,
-            on_stop=on_stop,
             busy=busy,
             **(ear or {}),
         )

@@ -7,7 +7,7 @@ import kernel
 import settings
 from tools import ToolError, tool
 
-ENGINES = {"stt": "stt", "wake": "wake", "llm": "llm", "tts": "tts", "vad": "vad"}  # kind: the setting choosing one
+ENGINES = {"brain": "mode", "stt": "stt", "wake": "wake", "llm": "llm", "tts": "tts", "vad": "vad"}  # kind: the setting choosing one
 
 
 def _in_use(found) -> bool:

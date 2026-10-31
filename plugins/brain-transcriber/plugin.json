@@ -1,0 +1,5 @@
+{
+  "name": "Transcriber",
+  "description": "«mode»: «transcribe». Listens (wake word, VAD, speech recognition) and shows what you say; the assistant listens with it too.",
+  "kind": "brain"
+}

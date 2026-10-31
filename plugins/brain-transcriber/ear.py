@@ -18,7 +18,6 @@ import logging
 import time
 import wave
 from concurrent.futures import ThreadPoolExecutor
-from difflib import SequenceMatcher
 
 import numpy as np
 from scipy.signal import resample_poly
@@ -27,7 +26,6 @@ import i18n
 import vad
 import settings
 from stt import RATE
-from text import words
 
 log = logging.getLogger("ear")
 
@@ -39,32 +37,14 @@ MINIMUM = 0.2  # minimum seconds of speech to transcribe (a «hola» is ~0.3)
 MAXIMUM = 15  # maximum seconds of a sentence
 PRE_ROLL = 0.3  # audio kept from before speech is detected (so the start isn't lost)
 FOLLOW_UP = 20  # seconds without speech (since it spoke or heard you) before sleeping (--follow-up)
-SLEEP_SIMILARITY = 0.75  # Parakeet writes «Apparaté», «Aparate»…
 
 _thread = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stt")
-
-
-def is_sleep_command(text: str) -> bool:
-    """A short command with the sleep word or something close (not «how do I turn off the oven?»)."""
-    found = words(text)
-    return len(found) <= 4 and any(
-        SequenceMatcher(None, w, command).ratio() >= SLEEP_SIMILARITY
-        for w in found
-        if w not in i18n.L.list("commands.not_sleep")  # «apaga (la cámara)» is not «apágate»
-        for command in i18n.L.list("commands.sleep")
-    )
-
-
-def is_stop_command(text: str) -> bool:
-    """«Stop», «Quiet!», «Para»: only to stop it talking, nothing to answer."""
-    found = words(text)
-    return 0 < len(found) <= 2 and bool(set(found) & set(i18n.L.list("commands.stop")))
 
 
 class Ear:
     def __init__(
         self, stt, on_state, on_heard, wake=None, on_wake=None, on_sleep=None,
-        deaf=None, record=None, silence=SILENCE, follow_up=FOLLOW_UP, on_interrupt=None, on_stop=None,
+        deaf=None, record=None, silence=SILENCE, follow_up=FOLLOW_UP, on_interrupt=None,
         busy=None,
     ):
         self.stt = stt
@@ -90,7 +70,6 @@ class Ear:
         # says whether to stop (False: it was its own voice saying its name).
         self.deaf = deaf or (lambda: False)
         self.on_interrupt = on_interrupt
-        self.on_stop = on_stop or (lambda: None)  # «stop» said on its own: e.g. an alarm ringing
         self.interruptible = False  # the wake word is listening while it speaks
         self.recording = None  # WAV with everything that arrives, for debugging
         if record:
@@ -164,6 +143,10 @@ class Ear:
         self.last_activity = time.time()
         self.on_state("awake")
         self.on_wake()
+
+    def sleep(self, reason: str):
+        """Goes to sleep because it was told to («go to sleep»: the plugin skill-sleep)."""
+        self._sleep(reason, by_command=True)
 
     def _sleep(self, reason: str, by_command: bool = False):
         if not self.wake or not self.awake:
@@ -240,13 +223,6 @@ class Ear:
             if not text:  # only the wake word was said
                 self.on_state(self.idle_state)
                 return
-        if text and is_stop_command(text):  # «(Jarvis,) stop»: it already stopped talking
-            self.on_stop()
-            self.on_state(self.idle_state)
-            return
-        if text and is_sleep_command(text):
-            self._sleep(f"«{settings.private(text)}»", by_command=True)
-            return
         if not text or any(h in text.lower() for h in i18n.L.list("stt.hallucinations")):
             log.info("dropped: «%s» %s", settings.private(text), timings)
             self.on_state(self.idle_state)

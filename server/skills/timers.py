@@ -3,7 +3,7 @@
     [{"id": 3, "kind": "timer" | "alarm" | "reminder", "at": 1793…, "label": "call mom", "set": 1793…}]
 
 The server checks them every half second (main.py) and rings the due ones on the
-connected device (brain/assistant.py), or on the Mac if there is none.
+connected device (plugins/brain-assistant), or on the Mac if there is none.
 """
 
 import json

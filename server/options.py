@@ -97,7 +97,7 @@ OPTIONS = [
     Option("host", "0.0.0.0", "the address it listens on", "server"),
     Option("port", 8080, "the port (bin/jarvis reads it too)", "server", "int"),
     Option("mode", "assistant", "assistant, transcribe (only shows what it hears) or parrot (repeats it)", "server",
-           "choice", ["parrot", "transcribe", "assistant"]),
+           "choice", _plugins("brain")),
     Option("record", None, "saves everything that arrives to a WAV (to debug)", "server"),
 ]
 

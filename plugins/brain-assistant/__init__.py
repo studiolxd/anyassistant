@@ -22,7 +22,11 @@ import settings
 import skills
 import tools
 from audio import louder, normalize
-from brain.transcriber import Transcriber, volume
+import llm
+import tts
+import web
+from brain import register
+from plugins.brain_transcriber import Transcriber, listening, volume
 from llm import SILENCE
 from llm import detail as llm_detail
 import kernel
@@ -44,11 +48,11 @@ ECHO_WINDOW = 2.5
 END_OF_SENTENCE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
 
 
-def create(stt, llm, tts=None, wake=None, ear=None, guard=GUARD):
-    """Returns the brain(speaker, send) factory that Session expects."""
+def create(stt, model, voice=None, wake=None, ear=None, guard=GUARD):
+    """The brain(speaker, send) factory that Session expects, with these engines."""
 
     def brain(speaker, send):
-        return Assistant(stt, wake() if wake else None, llm, tts, speaker, send, ear, guard)
+        return Assistant(stt, wake() if wake else None, model, voice, speaker, send, ear, guard)
 
     return brain
 
@@ -59,10 +63,30 @@ def split(text: str) -> tuple[list[str], str]:
     return [p.strip() for p in pieces[:-1] if p.strip()], pieces[-1]
 
 
+@register("assistant")
 class Assistant(Transcriber):
+    @classmethod
+    def create(cls, args):
+        """Its engines from the settings: how it listens, the LLM and the voice."""
+        engine, wake_factory, ear = listening(args)
+        model = llm.create(args.llm, model=args.llm_model, mcp=args.mcp)
+        log.info("LLM: %s (%s)", model.name, model.model)
+        voice = None
+        if args.tts != "none":
+            voice = tts.create(args.tts, voice=args.voice, rate=args.rate)
+            log.info("voice: %s (%s)", voice.name, voice.voice)
+            voice.warm_up()
+
+            async def close_voice():
+                voice.close()
+
+            web.close_on_exit.append(close_voice)
+        web.close_on_exit.append(model.close)
+        return create(engine, model, voice, wake_factory, ear, args.echo_guard)
+
     def __init__(self, stt, wake, llm, tts, speaker, send, ear=None, guard=GUARD):
         super().__init__(stt, wake, speaker, send, ear, deaf=self._deaf, on_interrupt=self._interrupt,
-                         on_stop=self._stopped, busy=lambda: self.turn.locked() or bool(self.ringing))
+                         busy=lambda: self.turn.locked() or bool(self.ringing))
         self.doubt = False  # the first sentence after a dubious wake-up
         self.ringing = None  # the timer, alarm or reminder ringing now
         self.toning_until = 0.0  # while its tone plays it still listens: a tone isn't speech
@@ -155,8 +179,8 @@ class Assistant(Transcriber):
             state = "alarm"
         super()._state(state)
 
-    def _stopped(self):
-        """«Stop» said on its own: an alarm ringing, or an answer it is still thinking or saying."""
+    def hush(self):
+        """«Stop» said on its own (skill-stop): an alarm ringing, or an answer it is still thinking or saying."""
         if self.ringing or self.turn.locked() or self.speaker.speaking:
             self.stop()
 
@@ -243,6 +267,10 @@ class Assistant(Transcriber):
 
     def say(self, sentence: str):
         self._say(sentence)
+
+    def sleep(self, text: str):
+        """«Go to sleep» (skill-sleep)."""
+        self.ear.sleep(f"«{settings.private(text)}»")
 
     def later(self, coroutine):
         asyncio.ensure_future(coroutine)

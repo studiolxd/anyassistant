@@ -32,7 +32,7 @@ def test_a_skins_own_sound_wins():
 
 
 def test_off_it_wakes_in_silence(monkeypatch):
-    from brain.transcriber import Transcriber
+    from plugins.brain_transcriber import Transcriber
 
     ear = Transcriber.__new__(Transcriber)
     ear.speaker = Speaker()

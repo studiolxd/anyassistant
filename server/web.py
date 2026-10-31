@@ -11,11 +11,10 @@ from aiohttp import web
 import hub
 import i18n
 import settings
-from brain.parrot import Parrot
 import kernel
 from transport import Session
 
-brain = Parrot  # what each connection talks to; main.py chooses it (--mode)
+brain = None  # brain(speaker, send): what each connection talks to; main.py chooses it (--mode)
 close_on_exit = []  # coroutines to await when stopping (plugin processes)
 
 

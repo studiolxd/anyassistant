@@ -12,8 +12,8 @@ the LLM. Each is a plugin (plugins/skill-*, kind "skill") with a class like this
         def hear(self, text, jarvis) -> bool:   # True if it took the sentence
             jarvis.show_heard(text); jarvis.send({...}); jarvis.say("…")
 
-`jarvis` is the assistant (brain/assistant.py): show_heard, reply, say, send,
-later, restart, stop, ringing, rang, llm. A skill's tools for the LLM go in its
+`jarvis` is the assistant (plugins/brain-assistant): show_heard, reply, say, send,
+later, restart, stop, hush (stop only if busy), sleep, ringing, rang, llm. A skill's tools for the LLM go in its
 module with @tool (tools/). Their words are in the locale («skills», «commands»),
 so another language is another file.
 
