@@ -44,13 +44,13 @@ final class Setup: ObservableObject {
     /// The program and its Python, before any question.
     func prepare() async -> Bool {
         phase = .preparing
-        note = L("Copying the program and preparing Python…", "Copiando el programa y preparando Python…")
+        note = T("Copying the program and preparing Python…")
         let code = await server.run(server.bundled.appending(path: "install.sh"),
                                     ["--to", server.program.path, "--data", server.data.path,
                                      "--cache", server.cache.path, "--no-setup", "--json"]) { [weak self] line in
             if let event = Setup.decode(line), let text = event["text"] as? String { self?.note = text }
         }
-        if code != 0 { failed = true; note = L("It couldn't prepare the program.", "No se pudo preparar el programa.") }
+        if code != 0 { failed = true; note = T("It couldn't prepare the program.") }
         return code == 0
     }
 
@@ -141,7 +141,7 @@ final class Setup: ObservableObject {
 
     static func label(_ value: Any?) -> String {
         switch value {
-        case let text as String where text == "True": return L("Yes", "Sí")
+        case let text as String where text == "True": return T("Yes")
         case let text as String where text == "False": return "No"
         case let text as String: return text
         default: return "\(value ?? "")"

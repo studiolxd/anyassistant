@@ -996,6 +996,10 @@
     "wake-whisper": [
       "Palabra de activación (Whisper)",
       "Cualquier palabra como palabra de activación, oída con un Whisper pequeño."
+    ],
+    "admin": [
+      "Admin",
+      "Los ajustes y los plugins para la app de AnyAssistant (/admin/…), solo desde el Mac."
     ]
   },
   "installer": {

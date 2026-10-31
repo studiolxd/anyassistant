@@ -23,7 +23,11 @@ struct AnyAssistantApp: App {
                 .frame(width: 520, height: 480)
         }
         .windowResizability(.contentSize)
-        Window(L("Pair a device", "Emparejar un dispositivo"), id: "pair") {
+        Window(T("Settings"), id: "settings") {
+            SettingsView()
+                .frame(minWidth: 760, minHeight: 520)
+        }
+        Window(T("Pair a device"), id: "pair") {
             PairView(server: server)
                 .frame(width: 380, height: 460)
         }
@@ -80,31 +84,33 @@ struct MenuView: View {
         if let busy = server.busy { Text(busy) }
         Divider()
         if server.state == .notInstalled {
-            Button(L("Install…", "Instalar…")) { open("setup") }
+            Button(T("Install…")) { open("setup") }
         } else {
-            Button(L("Open on this Mac", "Abrir en este Mac")) {
+            Button(T("Open on this Mac")) {
                 NSWorkspace.shared.open(URL(string: "http://127.0.0.1:\(server.port)")!)
             }
-            Button(L("Pair a device…", "Emparejar un dispositivo…")) { open("pair") }
+            Button(T("Pair a device…")) { open("pair") }
             Divider()
             if server.state == .stopped {
-                Button(L("Start", "Arrancar")) { server.start() }
+                Button(T("Start")) { server.start() }
             } else {
-                Button(L("Restart", "Reiniciar")) { server.restart() }
-                Button(L("Stop", "Parar")) { server.stop() }
+                Button(T("Restart")) { server.restart() }
+                Button(T("Stop")) { server.stop() }
             }
-            Button(L("Show the log", "Ver el registro")) {
+            Button(T("Show the log")) {
                 NSWorkspace.shared.open([server.log], withApplicationAt: URL(fileURLWithPath: "/System/Applications/Utilities/Console.app"),
                                         configuration: NSWorkspace.OpenConfiguration())
             }
-            Button(L("Settings and steps again…", "Ajustes y pasos de nuevo…")) { open("setup") }
-            Toggle(L("Open at login", "Abrir al iniciar sesión"), isOn: $login)
+            Button(T("Settings…")) { open("settings") }
+                .keyboardShortcut(",")
+            Button(T("Install steps again…")) { open("setup") }
+            Toggle(T("Open at login"), isOn: $login)
                 .onChange(of: login) { _, on in
                     if on { try? SMAppService.mainApp.register() } else { try? SMAppService.mainApp.unregister() }
                 }
         }
         Divider()
-        Button(L("Quit AnyAssistant", "Salir de AnyAssistant")) { NSApp.terminate(nil) }
+        Button(T("Quit AnyAssistant")) { NSApp.terminate(nil) }
             .keyboardShortcut("q")
             .onReceive(NotificationCenter.default.publisher(for: .open)) { note in
                 if let id = note.object as? String { openWindow(id: id) }
@@ -113,11 +119,11 @@ struct MenuView: View {
 
     var status: String {
         switch server.state {
-        case .notInstalled: L("Not installed yet", "Aún no está instalado")
-        case .stopped: L("Stopped", "Parado")
-        case .starting: L("Starting…", "Arrancando…")
-        case .running: server.connected ? L("Running · a device connected", "En marcha · un dispositivo conectado")
-                                         : L("Running · no device", "En marcha · ningún dispositivo")
+        case .notInstalled: T("Not installed yet")
+        case .stopped: T("Stopped")
+        case .starting: T("Starting…")
+        case .running: server.connected ? T("Running · a device connected")
+                                         : T("Running · no device")
         case .failed(let why): why
         }
     }
@@ -153,26 +159,24 @@ struct SetupView: View {
     var welcome: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("AnyAssistant").font(.largeTitle.bold())
-            Text(L("A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears.",
-                   "Un asistente de voz en este Mac, con un móvil o una tablet vieja como ojos, boca y oídos."))
+            Text(T("A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears."))
                 .foregroundStyle(.secondary)
             Spacer()
             Button {
                 Task { await setup.installWithDefaults() }
             } label: {
-                Label(L("Install with what comes", "Instalar con lo de serie"), systemImage: "bolt.fill")
+                Label(T("Install with what comes"), systemImage: "bolt.fill")
                     .frame(maxWidth: .infinity)
             }
             .controlSize(.large).buttonStyle(.borderedProminent)
             Button {
                 Task { await setup.askQuestions() }
             } label: {
-                Label(L("Set it up step by step", "Configurarlo paso a paso"), systemImage: "list.number")
+                Label(T("Set it up step by step"), systemImage: "list.number")
                     .frame(maxWidth: .infinity)
             }
             .controlSize(.large)
-            Text(L("You can change everything later. The speech models download once (a few hundred MB).",
-                   "Podrás cambiarlo todo después. Los modelos de voz se descargan una vez (unos cientos de MB)."))
+            Text(T("You can change everything later. The speech models download once (a few hundred MB)."))
                 .font(.footnote).foregroundStyle(.secondary)
         }
     }
@@ -189,7 +193,7 @@ struct SetupView: View {
 
     var form: some View {
         VStack(alignment: .leading) {
-            Text(L("Step by step", "Paso a paso")).font(.title2.bold())
+            Text(T("Step by step")).font(.title2.bold())
             Form {
                 ForEach($setup.questions) { $question in
                     Section {
@@ -205,19 +209,19 @@ struct SetupView: View {
                         if !question.help.isEmpty { Text(question.help).font(.footnote).foregroundStyle(.secondary) }
                     }
                 }
-                Toggle(L("Open AnyAssistant at login", "Abrir AnyAssistant al iniciar sesión"), isOn: $setup.startAtLogin)
+                Toggle(T("Open AnyAssistant at login"), isOn: $setup.startAtLogin)
             }
             .formStyle(.grouped)
-            Button(L("Install", "Instalar")) { Task { await setup.installWithAnswers() } }
+            Button(T("Install")) { Task { await setup.installWithAnswers() } }
                 .buttonStyle(.borderedProminent).frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 
     var progress: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(setup.phase == .finished ? (setup.failed ? L("Installed, with problems", "Instalado, con problemas")
-                                                          : L("Installed", "Instalado"))
-                                          : L("Installing…", "Instalando…"))
+            Text(setup.phase == .finished ? (setup.failed ? T("Installed, with problems")
+                                                          : T("Installed"))
+                                          : T("Installing…"))
                 .font(.title2.bold())
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
@@ -236,7 +240,7 @@ struct SetupView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             if setup.phase == .finished {
-                Button(L("Pair your tablet or phone", "Emparejar tu tablet o móvil")) {
+                Button(T("Pair your tablet or phone")) {
                     dismissWindow(id: "setup")
                     NSApp.activate(ignoringOtherApps: true)
                     openWindow(id: "pair")
@@ -265,21 +269,21 @@ struct PairView: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            Text(L("On the tablet or phone, open", "En la tablet o el móvil, abre")).foregroundStyle(.secondary)
+            Text(T("On the tablet or phone, open")).foregroundStyle(.secondary)
             Text(server.url).font(.title2.monospaced()).textSelection(.enabled)
             if let image = qr(server.url) {
                 Image(nsImage: image).interpolation(.none).resizable().frame(width: 200, height: 200)
             }
             if let code {
-                Text(L("and type the code", "y escribe el código")).foregroundStyle(.secondary)
+                Text(T("and type the code")).foregroundStyle(.secondary)
                 Text(code).font(.system(size: 40, weight: .bold, design: .monospaced)).textSelection(.enabled)
-                Text(L("Valid for 5 minutes, for one device.", "Vale 5 minutos, para un dispositivo."))
+                Text(T("Valid for 5 minutes, for one device."))
                     .font(.footnote).foregroundStyle(.secondary)
             } else if asked {
-                Text(L("No code needed: pairing is off.", "No hace falta código: el emparejamiento está apagado."))
+                Text(T("No code needed: pairing is off."))
                     .font(.footnote).foregroundStyle(.secondary)
             }
-            Button(L("Another code", "Otro código")) { Task { await ask() } }
+            Button(T("Another code")) { Task { await ask() } }
         }
         .padding(24)
         .task { await ask() }

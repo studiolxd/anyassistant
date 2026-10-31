@@ -5,9 +5,9 @@
 import AppKit
 import Foundation
 
-/// Spanish if the Mac prefers it; English otherwise (proper localization later).
-func L(_ en: String, _ es: String) -> String {
-    (Locale.preferredLanguages.first ?? "en").hasPrefix("es") ? es : en
+/// A text in the Mac's language: the English one is the key (Resources/<lang>.lproj/Localizable.strings).
+func T(_ english: String) -> String {
+    NSLocalizedString(english, comment: "")
 }
 
 enum ServerState: Equatable {
@@ -140,7 +140,7 @@ final class Server: ObservableObject {
         if stopping {
             state = .stopped
         } else {  // it fell: back in a moment, as launchd would
-            state = .failed(L("It stopped; starting it again…", "Se ha parado; lo vuelvo a arrancar…"))
+            state = .failed(T("It stopped; starting it again…"))
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) { Server.shared.start() }
         }
     }
@@ -176,7 +176,7 @@ final class Server: ObservableObject {
         let agent = home.appending(path: "Library/LaunchAgents/com.anyassistant.server.plist")
         guard let plist = try? String(contentsOf: agent, encoding: .utf8),
               plist.contains("\(program.path)/bin/anyassistant") else { return }
-        busy = L("Taking over from launchd…", "Tomando el relevo a launchd…")
+        busy = T("Taking over from launchd…")
         _ = await run(program.appending(path: "bin/anyassistant"), ["setup", "service", "--set", "service=false"])
         busy = nil
     }
@@ -194,7 +194,7 @@ final class Server: ObservableObject {
     }
 
     func update() async {
-        busy = L("Updating…", "Actualizando…")
+        busy = T("Updating…")
         _ = await run(bundled.appending(path: "install.sh"),
                       ["--to", program.path, "--data", data.path, "--cache", cache.path, "--update"])
         busy = nil

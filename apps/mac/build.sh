@@ -3,7 +3,9 @@
 # the program (the committed version, its Swift bridges already built) and uv inside.
 #
 #   apps/mac/build.sh            signed for this Mac only (ad hoc)
-#   SIGN="Developer ID Application: …" apps/mac/build.sh    to share it (then notarize)
+#   SIGN="Developer ID Application: Name (TEAMID)" NOTARY=anyassistant apps/mac/build.sh
+#                                to share it: signed with your Developer ID and notarized by Apple
+#                                (NOTARY: a profile made once with `xcrun notarytool store-credentials`)
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
@@ -21,6 +23,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>CFBundleName</key><string>AnyAssistant</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleLocalizations</key><array><string>en</string><string>es</string></array>
   <key>CFBundleDisplayName</key><string>AnyAssistant</string>
   <key>CFBundleIdentifier</key><string>com.anyassistant.app</string>
   <key>CFBundleExecutable</key><string>AnyAssistant</string>
@@ -34,6 +38,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </dict></plist>
 PLIST
 
+cp -R "$HERE/Resources/"*.lproj "$APP/Contents/Resources/"  # its texts in each language
+
 echo "Adding the program ($VERSION)…"
 PROGRAM="$APP/Contents/Resources/program"
 mkdir -p "$PROGRAM"
@@ -45,7 +51,14 @@ UV_BIN="$(command -v uv || echo "$HOME/.local/bin/uv")"
 cp "$UV_BIN" "$APP/Contents/Resources/uv"
 
 echo "Signing…"
-codesign --force --deep --options runtime --sign "${SIGN:--}" "$APP"
+IDENTITY="${SIGN:--}"
+STAMP=""; [ "$IDENTITY" != "-" ] && STAMP="--timestamp"
+# What it carries inside first (Apple notarizes only if every binary is signed), then the app.
+for binary in "$APP/Contents/Resources/uv" "$PROGRAM/native/"*; do
+  codesign --force --options runtime $STAMP --sign "$IDENTITY" "$binary"
+done
+codesign --force --options runtime $STAMP --sign "$IDENTITY" "$APP"
+codesign --verify --strict "$APP"
 
 echo "Making the .dmg…"
 STAGE="$OUT/dmg"
@@ -54,4 +67,12 @@ cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
 hdiutil create -volname AnyAssistant -srcfolder "$STAGE" -ov -format UDZO "$OUT/AnyAssistant.dmg" > /dev/null
 rm -rf "$STAGE"
+if [ "$IDENTITY" != "-" ]; then
+  codesign --force $STAMP --sign "$IDENTITY" "$OUT/AnyAssistant.dmg"
+  if [ -n "$NOTARY" ]; then
+    echo "Notarizing (Apple checks it; a few minutes)…"
+    xcrun notarytool submit "$OUT/AnyAssistant.dmg" --keychain-profile "$NOTARY" --wait
+    xcrun stapler staple "$OUT/AnyAssistant.dmg"
+  fi
+fi
 echo "Done: $OUT/AnyAssistant.dmg ($(du -h "$OUT/AnyAssistant.dmg" | cut -f1))"
