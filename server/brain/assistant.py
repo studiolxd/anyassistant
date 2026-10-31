@@ -26,6 +26,7 @@ from audio import alarm_tone, louder, normalize
 from brain.transcriber import volume
 from skills import interpreter, timers
 from skills.parse import duration, tokens
+import llm as llm_plugins
 from llm import SILENCE
 from llm import detail as llm_detail
 from brain.transcriber import Transcriber
@@ -77,7 +78,7 @@ def llm_command(text: str) -> str | None:
     if not 0 < len(heard) <= 5 or heard[0] not in i18n.L.list("commands.switch"):
         return None
     rest = heard[1:]
-    for name, spoken in tools.LLM_NAMES.items():
+    for name, spoken in llm_plugins.spoken_names().items():
         if any(w in spoken for w in rest) and all(w in spoken or len(w) <= 3 or w in i18n.L.list("commands.llm_words")
                                                  for w in rest):
             return name

@@ -28,6 +28,11 @@ class Registry:
         self._discover()
         return sorted(self._plugins)
 
+    def get(self, name: str):
+        """The plugin's class (to ask it things without creating one), or None."""
+        self._discover()
+        return self._plugins.get(name)
+
     def create(self, name: str, **options):
         self._discover()
         if name not in self._plugins:

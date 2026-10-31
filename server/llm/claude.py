@@ -12,6 +12,7 @@ import base64
 import json
 import logging
 import os
+import shutil
 import time
 from pathlib import Path
 
@@ -46,6 +47,12 @@ EMPTY = paths.CACHE / "claude-empty"
 
 @register("claude")
 class Claude(LLM):
+    spoken = ["claude", "claud", "clod", "cloud"]
+
+    @classmethod
+    def ready(cls):
+        return None if shutil.which("claude") else "Claude Code isn't installed"
+
     def __init__(self, model=None, mcp=None):
         super().__init__(model or "sonnet", mcp or str(paths.MCP))
         EMPTY.mkdir(parents=True, exist_ok=True)

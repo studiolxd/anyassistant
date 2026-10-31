@@ -10,6 +10,9 @@ A plugin is a module of this package with a class registered like this:
         async def complete(self, prompt): ...   # optional: one answer, outside the conversation
         async def prepare(self): ...            # optional: get ready for the next conversation
         async def close(self): ...              # optional, when the server stops
+        spoken = ["myllm"]                      # how its name is said («use myllm»)
+        @classmethod
+        def ready(cls): ...                     # None if usable here; otherwise why not
 """
 
 from collections.abc import AsyncIterator
@@ -23,6 +26,17 @@ _registry = Registry(__name__, __path__, "LLM")
 register = _registry.register
 create = _registry.create
 available = _registry.available
+get = _registry.get
+
+
+def ready(name: str) -> str | None:
+    """None if the LLM can be used here; otherwise why not."""
+    plugin = get(name)
+    return plugin.ready() if plugin else f"there is no LLM «{name}»"
+
+
+def spoken_names() -> dict[str, list[str]]:
+    return {name: get(name).spoken or [name] for name in available()}
 
 INSTRUCTIONS = """You are {name}, a voice assistant. Always reply in {language}.
 What you receive is what the user said out loud, transcribed automatically: it
@@ -72,6 +86,12 @@ def instructions() -> str:
 
 class LLM:
     name = "?"
+    spoken: list[str] = []  # how its name is said (and misheard): «use Claude», «cambia a Hermes»
+
+    @classmethod
+    def ready(cls) -> str | None:
+        """None if it can be used on this Mac; otherwise why not (said to the user)."""
+        return None
 
     def __init__(self, model: str | None = None, mcp: str | None = None):
         self.model = model

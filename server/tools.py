@@ -14,12 +14,9 @@ off the LLM while it is still using the tool.
 """
 
 import json
-import platform
 import re
 import time
-import shutil
 import subprocess
-import urllib.request
 
 import confirmation
 import i18n
@@ -118,27 +115,10 @@ def set_language(language: str) -> str:
     return "Saved: it restarts in that language when you finish answering."
 
 
-# How each LLM is said aloud (and how speech recognition tends to write it).
-LLM_NAMES = {"claude": ["claude", "claud", "clod", "cloud"], "apple": ["apple", "apel", "manzana"],
-             "hermes": ["hermes"]}
-
-
 def llm_ready(name: str) -> str | None:
-    """None if the LLM can be used on this Mac; otherwise why not."""
-    if name == "claude":
-        return None if shutil.which("claude") else "Claude Code isn't installed"
-    if name == "apple":
-        major = int((platform.mac_ver()[0] or "0").split(".")[0])
-        return None if major >= 26 else "it needs macOS 26 with Apple Intelligence"
-    if name == "hermes":
-        from llm.hermes import URL
+    import llm
 
-        try:
-            urllib.request.urlopen(URL + "/health", timeout=1)
-            return None
-        except OSError:
-            return "Hermes's gateway isn't running"
-    return None
+    return llm.ready(name)
 
 
 def get_llms() -> str:

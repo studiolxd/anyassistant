@@ -7,6 +7,7 @@ Requires macOS 26+ with Apple Intelligence enabled.
 import asyncio
 import json
 import logging
+import platform
 import subprocess
 from pathlib import Path
 
@@ -22,6 +23,13 @@ DATE_TIME_TOOL = "\nIf asked for the date or the time, look them up with the dat
 
 @register("apple")
 class Apple(LLM):
+    spoken = ["apple", "apel", "manzana"]
+
+    @classmethod
+    def ready(cls):
+        major = int((platform.mac_ver()[0] or "0").split(".")[0])
+        return None if major >= 26 else "it needs macOS 26 with Apple Intelligence"
+
     def __init__(self, model=None, mcp=None):
         super().__init__(model or "SystemLanguageModel.default", mcp)
         self._binary = build(Path(__file__).with_name("apple_bridge.swift"), "fm-bridge")

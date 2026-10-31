@@ -46,6 +46,18 @@ def api_key() -> str:
 
 @register("hermes")
 class Hermes(LLM):
+    spoken = ["hermes"]
+
+    @classmethod
+    def ready(cls):
+        import urllib.request
+
+        try:
+            urllib.request.urlopen(URL + "/health", timeout=1)
+            return None
+        except OSError:
+            return "Hermes's gateway isn't running"
+
     def __init__(self, model=None, mcp=None):
         super().__init__(model or "hermes-agent", mcp)
         self._key = api_key()
