@@ -104,6 +104,12 @@ body[data-look="asleep"] .stats { display: none; }
   border-radius: 50%;
   background: var(--eye);
   border: 0 solid var(--eye);
+  /* Safari (iPad, iPhone) let the background show past a rounded border, and softened the
+     edges of these rotated, moving ovals into a halo: the background stops at the border,
+     and each eye is drawn as a crisp layer of its own. */
+  background-clip: padding-box;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   transition: height 0.2s, width 0.2s, transform 0.15s, background 0.3s;
 }
 .eye.left { transform: rotate(-7deg); }
@@ -115,6 +121,8 @@ body[data-look="asleep"] .stats { display: none; }
   top: -130%;
   height: 100%;
   background: var(--background);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   transition: top 0.2s;
 }
 
