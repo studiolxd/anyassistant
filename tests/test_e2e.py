@@ -167,7 +167,8 @@ def final_texts(messages, author=None):
 
 
 def test_page_and_settings(server, tmp_path):
-    (tmp_path / "settings.json").write_text(json.dumps({"name": "Viernes", "face": "orb", "video": "low"}))
+    (tmp_path / "settings.json").write_text(json.dumps({"name": "Viernes", "face": "orb", "video": "low",
+                                                        "show_time": False, "history": 0}))
     url = server("--mode", "parrot", "--lang", "es")
     html = urllib.request.urlopen(url + "/").read().decode()
     assert 'id="face"' in html and '<html lang="es"' in html and "<title>Viernes</title>" in html
@@ -175,6 +176,8 @@ def test_page_and_settings(server, tmp_path):
     config = json.load(urllib.request.urlopen(url + "/config"))
     assert config["lang"] == "es" and config["ui"]["start"]
     assert (config["name"], config["face"], config["video"]) == ("Viernes", "orb", "low")
+    assert config["screen"]["show_time"] is False and config["screen"]["history"] == 0
+    assert config["screen"]["show_date"] is True  # the default
 
 
 def test_bad_settings_stop_it(tmp_path):

@@ -114,6 +114,7 @@ async def config(request: web.Request) -> web.Response:
     return web.json_response({
         "lang": i18n.L.code, "ui": i18n.L.data["ui"],
         "name": settings.get("name"), "face": settings.get("face"), "video": settings.get("video"),
+        "screen": {key: settings.get(key) for key in settings.SCREEN},
         "paired": is_allowed(request),
     })
 
@@ -193,6 +194,25 @@ def main():
                         help="write what it hears and says to the log (to debug); off: only lengths")
     parser.add_argument("--confirm-wait", type=float, default=120, help="seconds to answer «yes» to an action")
     parser.add_argument("--confirm-valid", type=float, default=60, help="seconds a «yes» stays valid")
+    # The screen
+    parser.add_argument("--show-time", action=argparse.BooleanOptionalAction, default=True, help="the time while asleep")
+    parser.add_argument("--show-date", action=argparse.BooleanOptionalAction, default=True, help="the date while asleep")
+    parser.add_argument("--show-hint", action=argparse.BooleanOptionalAction, default=True, help="«Say Hey Jarvis» while asleep")
+    parser.add_argument("--show-status", action=argparse.BooleanOptionalAction, default=True, help="«Listening», «Thinking…» while awake")
+    parser.add_argument("--show-heard", action=argparse.BooleanOptionalAction, default=True, help="what you said")
+    parser.add_argument("--show-answer", action=argparse.BooleanOptionalAction, default=True, help="what it answers")
+    parser.add_argument("--history", type=int, default=2, help="earlier sentences kept on screen")
+    parser.add_argument("--show-stats", action=argparse.BooleanOptionalAction, default=False, help="the connection's RTT, jitter and losses")
+    parser.add_argument("--clock", choices=["auto", "12", "24"], default="auto", help="12 or 24 hours (auto: the language's)")
+    # Sounds and behavior
+    parser.add_argument("--beeps", action=argparse.BooleanOptionalAction, default=True, help="a beep when it wakes up and when it falls asleep")
+    parser.add_argument("--fillers", action=argparse.BooleanOptionalAction, default=True, help="«One moment, let me check» when a tool is slow")
+    parser.add_argument("--voice-interrupt", action=argparse.BooleanOptionalAction, default=True, help="«Jarvis, stop» while it speaks")
+    parser.add_argument("--tap-to-stop", action=argparse.BooleanOptionalAction, default=True, help="tapping the screen stops it talking")
+    parser.add_argument("--read-photo", action=argparse.BooleanOptionalAction, default=True, help="a full-resolution photo when asked to read")
+    parser.add_argument("--memory-facts", type=int, default=50, help="facts before the LLM compacts them")
+    parser.add_argument("--memory-conversations", type=int, default=10, help="conversation summaries kept")
+    parser.add_argument("--memory-days", type=int, default=30, help="days a conversation summary is kept")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--lang", dest="language", default=None, help=f"language: {', '.join(i18n.available())} (default: settings.json or the Mac's)")

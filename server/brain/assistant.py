@@ -170,7 +170,8 @@ class Assistant(Transcriber):
         asyncio.ensure_future(self.llm.new())
 
     def on_message(self, data: dict):
-        if data.get("type") == "tap" and (self.turn.locked() or self.speaker.speaking):
+        if data.get("type") == "tap" and settings.get("tap_to_stop", True) and (
+                self.turn.locked() or self.speaker.speaking):
             self.stop()
 
     def _interrupt(self, text: str) -> bool:
@@ -308,7 +309,7 @@ class Assistant(Transcriber):
             number = self.number
             message = {"type": "text", "author": "assistant", "id": number}
             image = eyes.capture()  # also for Claude's Read tool, if it decides to look
-            if image and eyes.wants_to_read(text):  # small text: a full-resolution photo
+            if image and settings.get("read_photo", True) and eyes.wants_to_read(text):  # small text
                 self._state("looking")
                 image = await eyes.photo() or image
             look = image if image and (eyes.wants_to_look(text) or eyes.wants_to_read(text)) else None
@@ -352,7 +353,7 @@ class Assistant(Transcriber):
         """After an answer (in which the LLM may have used its own tools): what changed in
         settings.json goes to the page now, or restarts the server when it can't change live."""
         changed = settings.refresh()
-        if changed & {"face", "video"}:
+        if changed & ({"face", "video"} | settings.SCREEN):
             self.send({"type": "config"})  # the page reads /config again
         asked, tools.requested = set(tools.requested), set()  # by its own tools, during the answer
         if changed - settings.LIVE or "restart" in asked:

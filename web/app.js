@@ -25,7 +25,17 @@ function loadTexts() {
     document.title = data.name;
     Face.language(data.lang);
     Face.kind(data.face);
+    showScreen(data.screen || {});
   });
+}
+
+// What the screen shows (settings show_time, show_date, show_stats, clock…).
+var screen = {};
+function showScreen(s) {
+  screen = s;
+  var hide = { 'hide-time': s.show_time === false, 'hide-date': s.show_date === false, 'hide-stats': !s.show_stats };
+  for (var name in hide) document.body.classList.toggle(name, hide[name]);
+  Face.clock(s.clock);
 }
 
 // Loads the texts and then shows the start button (or the demo, or the pairing form).
@@ -212,7 +222,11 @@ function ping() {
 }
 
 function showState(state, wakePhrase) {
-  statusLine.textContent = state === 'asleep' ? text('asleep', { wake: wakePhrase || 'Hey Jarvis' }) : text(state);
+  if (state === 'asleep') {
+    statusLine.textContent = screen.show_hint === false ? '' : text('asleep', { wake: wakePhrase || 'Hey Jarvis' });
+  } else {
+    statusLine.textContent = screen.show_status === false && state !== 'error' ? '' : text(state);
+  }
   Face.state(state);
   photoFollows(state);
   if (state === 'asleep' && !camera.hidden) showCamera(false);
@@ -311,6 +325,7 @@ function photoFollows(state) {
 
 // Answers arrive in pieces with the same id: the same paragraph is updated.
 function caption(m) {
+  if (m.author === 'assistant' ? screen.show_answer === false : screen.show_heard === false) return;
   var list = document.getElementById('captions');
   var p = m.id && document.getElementById('answer-' + m.id);
   if (p) {
@@ -322,11 +337,12 @@ function caption(m) {
   if (m.id) p.id = 'answer-' + m.id;
   if (m.author === 'assistant') p.className = 'assistant';
   list.appendChild(p);
-  while (list.children.length > 3) list.removeChild(list.firstChild);
+  var history = screen.history === undefined ? 2 : screen.history;
+  while (list.children.length > history + 1) list.removeChild(list.firstChild);
 }
 
 async function collectStats() {
-  if (!pc) return;
+  if (!pc || !screen.show_stats) return;
   var report = await pc.getStats();
   var jitter = null, lost = null;
   report.forEach(function (s) {

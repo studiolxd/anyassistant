@@ -117,10 +117,11 @@ var Face = (function () {
 
   // --- Clock for when it is asleep, in the active language ---
   var lang = 'en';
+  var hour12;  // settings «clock»: 12, 24 or (undefined) the language's
   function clock() {
     var now = new Date();
     document.getElementById('time').textContent =
-      now.toLocaleTimeString(lang, { hour: 'numeric', minute: '2-digit' });
+      now.toLocaleTimeString(lang, { hour: 'numeric', minute: '2-digit', hour12: hour12 });
     document.getElementById('date').textContent =
       now.toLocaleDateString(lang, { weekday: 'long', day: 'numeric', month: 'long' });
   }
@@ -132,6 +133,7 @@ var Face = (function () {
     speaker: speaker,
     current: function () { return current; },
     kind: setKind,
-    language: function (code) { lang = code; clock(); }
+    language: function (code) { lang = code; clock(); },
+    clock: function (format) { hour12 = format === '12' ? true : format === '24' ? false : undefined; clock(); }
   };
 })();

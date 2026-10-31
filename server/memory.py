@@ -25,11 +25,16 @@ import i18n
 import settings
 
 PATH = Path(os.environ.get("JARVIS_MEMORY") or Path(__file__).resolve().parent.parent / "memory.json")
-MAX_FACTS = 50  # beyond this, the LLM compacts them (COMPACT_TO); the oldest go only if it can't
-COMPACT_TO = 35
-HARD_LIMIT = 2 * MAX_FACTS  # never more in the instructions, even before compacting
-MAX_CONVERSATIONS = 10
-CONVERSATION_DAYS = 30
+# Limits (settings memory_facts, memory_conversations, memory_days): beyond
+# max_facts() the LLM compacts the facts to ~70 %; the oldest go only if it can't.
+
+
+def max_facts() -> int:
+    return settings.get("memory_facts") or 50
+
+
+def hard_limit() -> int:
+    return 2 * max_facts()  # never more in the instructions, even before compacting
 log = logging.getLogger("memory")
 
 INSTRUCTIONS = """
@@ -99,7 +104,8 @@ def instructions() -> str:
         return ""
     data = load()
     facts = "\n".join(f"- {f}" for f in data["facts"]) or "- (none yet)"
-    recent = [c for c in data["conversations"] if time.time() - c["at"] < CONVERSATION_DAYS * 86400]
+    days = settings.get("memory_days") or 30
+    recent = [c for c in data["conversations"] if time.time() - c["at"] < days * 86400]
     conversations = ""
     if recent and mode() == "auto":
         conversations = "\n\nRecent conversations:\n" + "\n".join(
@@ -138,9 +144,9 @@ def apply_review(answer: str) -> dict:
     remove = {int(n) for n in review.get("remove", []) if str(n).isdigit()}
     data["facts"] = [f for i, f in enumerate(data["facts"], 1) if i not in remove]
     added = [f.strip() for f in review.get("add", []) if isinstance(f, str) and f.strip() and f.strip() not in data["facts"]]
-    data["facts"] = (data["facts"] + added)[-HARD_LIMIT:]
+    data["facts"] = (data["facts"] + added)[-hard_limit():]
     if review.get("summary"):
-        data["conversations"] = (data["conversations"] + [{"at": time.time(), "summary": review["summary"]}])[-MAX_CONVERSATIONS:]
+        data["conversations"] = (data["conversations"] + [{"at": time.time(), "summary": review["summary"]}])[-(settings.get("memory_conversations") or 10):]
     save(data)
     return {"updated": updated, "added": len(added), "removed": len(remove)}
 
@@ -149,7 +155,7 @@ def apply_compaction(answer: str):
     """The LLM's compacted list replaces the facts, if it is a sensible one."""
     match = re.search(r"\[.*\]", answer, re.S)
     facts = json.loads(match.group()) if match else None
-    if not (isinstance(facts, list) and 0 < len(facts) <= MAX_FACTS and all(isinstance(f, str) for f in facts)):
+    if not (isinstance(facts, list) and 0 < len(facts) <= max_facts() and all(isinstance(f, str) for f in facts)):
         raise ValueError(f"not a usable list: {answer[:200]!r}")
     data = load()
     before = len(data["facts"])
@@ -161,15 +167,16 @@ def apply_compaction(answer: str):
 async def compact(llm):
     """Too many facts: the LLM merges and shortens them; if it can't, the oldest go."""
     facts = load()["facts"]
-    if mode() == "off" or len(facts) <= MAX_FACTS:
+    if mode() == "off" or len(facts) <= max_facts():
         return
     try:
         numbered = "\n".join(f"- {f}" for f in facts)
-        apply_compaction(await llm.complete(COMPACT.format(target=COMPACT_TO, language=i18n.L.name, facts=numbered)))
+        target = int(max_facts() * 0.7)
+        apply_compaction(await llm.complete(COMPACT.format(target=target, language=i18n.L.name, facts=numbered)))
     except Exception as e:  # NotImplementedError too: then, the oldest go
-        log.warning("couldn't compact the memory (%r): keeping the newest %d facts", e, MAX_FACTS)
+        log.warning("couldn't compact the memory (%r): keeping the newest %d facts", e, max_facts())
         data = load()
-        data["facts"] = data["facts"][-MAX_FACTS:]
+        data["facts"] = data["facts"][-max_facts():]
         save(data)
 
 

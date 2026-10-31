@@ -159,7 +159,7 @@ def remember(fact: str) -> str:
     _memory_on()
     data = memory.load()
     if fact.strip() and fact.strip() not in data["facts"]:
-        data["facts"] = (data["facts"] + [fact.strip()])[-memory.HARD_LIMIT:]  # compacted when it sleeps
+        data["facts"] = (data["facts"] + [fact.strip()])[-memory.hard_limit():]  # compacted when it sleeps
         memory.save(data)
     return "Remembered."
 

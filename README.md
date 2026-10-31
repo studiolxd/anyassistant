@@ -99,6 +99,16 @@ the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear'
 | `confirm_wait` | `120` | seconds to answer «yes» to an action that writes |
 | `confirm_valid` | `60` | seconds a «yes» stays valid |
 
+**The screen**: `show_time`, `show_date` and `show_hint` («Say Hey Jarvis») while
+asleep; `show_status` («Listening», «Thinking…»), `show_heard` (what you said),
+`show_answer` (its answer) and `history` (earlier sentences kept, 2) while awake;
+`show_stats` (the connection's RTT, jitter and losses; off) and `clock` (`auto`,
+`12`, `24`). **Sounds and behavior**: `beeps` (on waking up and falling asleep),
+`fillers` («One moment, let me check» when a tool is slow), `voice_interrupt`
+(«Jarvis, stop»), `tap_to_stop`, `read_photo` (a full-resolution photo to read).
+**Memory**: `memory_facts` (50, then compacted), `memory_conversations` (10),
+`memory_days` (30). All apply without restarting: the page changes at once.
+
 A wrong value (`"face": "smiley"`) stops the server with the reason.
 
 **Pairing**: with `"pairing": true`, a device must enter a code before using

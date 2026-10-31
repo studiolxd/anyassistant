@@ -108,7 +108,7 @@ class Hermes(LLM):
                             yield self._approval(data)
                         elif event == "hermes.tool.progress":
                             log.info("Hermes tool: %s", data.get("tool") or data.get("name"))
-                            if not said:
+                            if not said and settings.get("fillers", True):
                                 said = True
                                 yield i18n.L("speech.wait") + " "
                         elif event is None:

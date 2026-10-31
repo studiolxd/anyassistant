@@ -16,6 +16,7 @@ from pathlib import Path
 
 import i18n
 import eyes
+import settings
 from llm import LLM, instructions, permissions, register
 
 log = logging.getLogger("llm")
@@ -195,7 +196,7 @@ class Claude(LLM):
                     elif block.get("type") == "tool_use":
                         log.info("tool: %s", block.get("name"))
                         self.on_tool(block.get("name"))
-                        if not said:
+                        if not said and settings.get("fillers", True):
                             # Asking for it in the prompt isn't enough: it almost never does it.
                             filler_at = time.time() + FILLER_AFTER
                 elif event.get("type") == "user":  # a tool's result: it finished

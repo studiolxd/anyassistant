@@ -131,7 +131,7 @@ class Ear:
                         self.wake.heard_sentence = None
                         asyncio.ensure_future(self._transcribe(sentence))
                 return
-        elif self.wake and self.awake and self.on_interrupt:
+        elif self.wake and self.awake and self.on_interrupt and settings.get("voice_interrupt", True):
             if self.deaf():
                 self.interruptible = True
                 if self.wake.listen(audio):

@@ -93,16 +93,16 @@ def test_the_review_is_told_to_prefer_updating(mem):
 
 
 def test_too_many_facts_are_compacted_by_the_llm(mem, monkeypatch):
-    monkeypatch.setattr(memory, "MAX_FACTS", 3)
+    settings.active["memory_facts"] = 3
     mem.write_text(json.dumps({"facts": ["Has a dog.", "The dog is called Toby.", "Lives in Madrid.", "Likes jazz."]}))
     llm = FakeLLM('["Has a dog called Toby.", "Lives in Madrid.", "Likes jazz."]')
     asyncio.run(memory.compact(llm))
     assert json.loads(mem.read_text())["facts"] == ["Has a dog called Toby.", "Lives in Madrid.", "Likes jazz."]
-    assert "at most 35" in llm.prompts[0]
+    assert "at most 2 " in llm.prompts[0]  # 70 % of the limit
 
 
 def test_if_it_cant_compact_the_oldest_go(mem, monkeypatch):
-    monkeypatch.setattr(memory, "MAX_FACTS", 2)
+    settings.active["memory_facts"] = 2
     mem.write_text(json.dumps({"facts": ["a", "b", "c"]}))
     asyncio.run(memory.compact(FakeLLM("I'd rather not.")))
     assert json.loads(mem.read_text())["facts"] == ["b", "c"]

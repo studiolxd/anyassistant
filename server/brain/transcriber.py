@@ -1,6 +1,7 @@
 """Phase 2: listens and shows what you say on the phone's screen."""
 
 import i18n
+import settings
 from audio import beep
 from brain.ear import Ear
 
@@ -40,10 +41,12 @@ class Transcriber:
         self.send({"type": "text", "text": text, "timings": timings})
 
     def _woke_up(self):
-        self.speaker.play(beep())
+        if settings.get("beeps", True):
+            self.speaker.play(beep())
 
     def _fell_asleep(self, by_command: bool):
-        self.speaker.play(beep(falling=True))
+        if settings.get("beeps", True):
+            self.speaker.play(beep(falling=True))
         if by_command:
             self.send({"type": "text", "text": i18n.L("speech.goodbye"), "author": "assistant"})
 

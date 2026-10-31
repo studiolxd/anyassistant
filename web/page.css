@@ -138,5 +138,9 @@ html, body {
 #time { margin: 0; font-size: 24vmin; font-weight: 200; line-height: 1; }
 #date { margin: 1vmin 0 4vmin; font-size: 5vmin; }
 body[data-state="asleep"] #clock { display: block; }
+/* Settings show_time, show_date, show_stats. */
+body.hide-time #time,
+body.hide-date #date,
+body.hide-stats #stats { display: none; }
 body[data-state="asleep"] #captions,
 body[data-state="asleep"] #stats { display: none; }
