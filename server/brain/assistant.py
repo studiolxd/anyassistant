@@ -189,9 +189,11 @@ class Assistant(Transcriber):
     async def _restart(self, sentence: str):
         log.info("restarting the server")
         self._say(sentence)
-        await asyncio.sleep(2)  # time to synthesize it and start
-        for _ in range(40):  # and to say it all
-            if not self.speaker.speaking:
+        await asyncio.sleep(1)  # time to synthesize it and start
+        quiet = 0
+        for _ in range(120):  # until everything is said (quiet for a while: there are gaps between sentences)
+            quiet = quiet + 1 if self.sentences.empty() and not self.speaker.speaking else 0
+            if quiet >= 3:
                 break
             await asyncio.sleep(0.25)
         os.kill(os.getpid(), signal.SIGHUP)  # main.py treats it as «restart»
@@ -263,6 +265,16 @@ class Assistant(Transcriber):
             self.said = words(answer)
             if not self.tts and self.cut != number:
                 self._state(self._idle_state())
+            await self._apply_settings()
+
+    async def _apply_settings(self):
+        """After an answer (in which the LLM may have used bin/settings): what changed in
+        settings.json goes to the page now, or restarts the server when it can't change live."""
+        changed = settings.refresh()
+        if changed & {"face", "video"}:
+            self.send({"type": "config"})  # the page reads /config again
+        if changed - settings.LIVE:
+            await self._restart(i18n.L("speech.restarting"))
 
     async def _mouth(self):
         """Says the sentences in order as they arrive; synthesizes one while the previous plays."""

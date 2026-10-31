@@ -195,6 +195,7 @@ function message(m) {
   if (m.type === 'pong') rtt = Math.round(performance.now() - m.t);
   else if (m.type === 'state') showState(m.state, m.wake_phrase);
   else if (m.type === 'text') caption(m);
+  else if (m.type === 'config') loadTexts();  // the settings changed
 }
 
 // Answers arrive in pieces with the same id: the same paragraph is updated.

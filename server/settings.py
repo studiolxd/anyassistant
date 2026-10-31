@@ -16,6 +16,10 @@ from pathlib import Path
 
 # The options in effect (command line > settings.json > defaults), set by main.py.
 active: dict = {}
+fixed: set = set()  # the ones given on the command line: settings.json doesn't change them
+# What can change without restarting (read again after every answer: bin/settings,
+# or settings.json edited by hand). Anything else restarts the server.
+LIVE = {"instructions", "face", "video", "confirm_wait", "confirm_valid"}
 
 
 def get(key: str, default=None):
@@ -39,6 +43,31 @@ def load() -> dict:
 def save(**changes):
     """Changes some keys and keeps the rest (and the file's order)."""
     PATH.write_text(json.dumps({**load(), **changes}, ensure_ascii=False, indent=2) + "\n")
+
+
+def effective(key: str, value, language: str):
+    """A settings.json value as the server uses it: the language's voice, instructions as text."""
+    if key == "voice":
+        return voice_for(value, language)
+    if key == "instructions" and isinstance(value, list):
+        return "\n".join(value)
+    return value
+
+
+def refresh() -> set[str]:
+    """Reads settings.json again; returns the keys whose value changed (and applies the live ones)."""
+    changed = set()
+    language = active.get("language")
+    for key, value in load().items():
+        if key in active and key not in fixed:
+            value = effective(key, value, language)
+            if value != active[key]:
+                changed.add(key)
+                if key in LIVE:
+                    active[key] = value
+    if changed:
+        log.info("settings.json changed: %s", ", ".join(sorted(changed)))
+    return changed
 
 
 def voice_for(voice, language: str) -> str | None:

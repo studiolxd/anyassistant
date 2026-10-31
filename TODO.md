@@ -22,7 +22,8 @@
 ## Features
 
 - [ ] **Eyes (Phase 4)**: look through the camera when asked («what do you see?», «read this»).
-- [ ] **Memory across conversations** with Claude (Hermes already has it).
+- [ ] **Memory across conversations** with Claude (Hermes already has it). For now,
+  what you ask it to remember goes to `instructions` in `settings.json` (`bin/settings`).
 - [x] **Face**: «eyes» (default) and «orb» (`?face=orb`), clock while asleep,
   «question» state; `?demo` cycles through the states without connecting. Chosen
   with `face` in `settings.json`.

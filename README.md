@@ -97,6 +97,17 @@ the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear'
 
 A wrong value (`"face": "smiley"`) stops the server with the reason.
 
+**By voice**: «Remember that I invoice with Holded», «Forget that», «Use the orb
+face», «Change your voice to Mónica», «From now on your name is …». Claude does
+it with `bin/settings` (allowed in `permissions.json`: `"bin/settings": "all"`, or a
+list of keys) and, as with anything that writes, asks for your «yes» first. It
+can only touch `instructions`, `face`, `voice` and `name`: never the permissions,
+the confirmation times, the port or the LLM. After every answer the server reads
+`settings.json` again (also when you edit it by hand): instructions apply from the
+next conversation, the face changes on the screen at once, and anything else
+(voice, name…) restarts it when it finishes speaking. Options given on the command
+line don't change.
+
 The LLM gets English instructions plus «Always reply in {language}».
 
 ## Phase 1 · Parrot
@@ -390,6 +401,7 @@ so they need no account or network; they run on a free port, next to a running J
   `server/swift.py`, builds the plugins' Swift bridges.
 - `bin/jarvis` — starts and stops the server.
 - `bin/gog`, `bin/gog-authorize` — Google (gog) for Jarvis under its policy, and its authorization.
+- `bin/settings` — what Claude may change in `settings.json` (instructions, face, voice, name).
 - `bin/jarvis-confirm` — hook that asks for your «yes» before any action that writes.
 - `web/` — the phone's page (plain JS, old Chrome) and the monitor.
 - `tests/` — pytest; `test_e2e.py` drives the real server.

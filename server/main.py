@@ -162,10 +162,15 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     logging.getLogger("aioice").setLevel(logging.WARNING)
     i18n.use(args.language or i18n.detect())  # before the plugins: they take its language and voice
-    args.voice = settings.voice_for(args.voice, i18n.L.code)
-    if isinstance(args.instructions, list):  # in settings.json, a list of lines reads better
-        args.instructions = "\n".join(args.instructions)
+    args.language = i18n.L.code
+    args.voice = settings.effective("voice", args.voice, i18n.L.code)
+    args.instructions = settings.effective("instructions", args.instructions, i18n.L.code)
     settings.active = vars(args)
+    settings.fixed = {
+        action.dest for action in parser._actions
+        if any(arg == option or arg.startswith(option + "=") for option in action.option_strings for arg in sys.argv[1:])
+    }
+    os.environ["JARVIS_LANGUAGE"] = i18n.L.code  # for bin/settings, run by the LLM
 
     global brain_factory
     ear = {"record": args.record, "silence": args.silence, "idle_timeout": args.idle_timeout}

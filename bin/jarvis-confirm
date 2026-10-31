@@ -2,8 +2,8 @@
 """Claude Code PreToolUse hook: actions that write need the user's «yes».
 
 Claude Code runs it before every tool, with {tool_name, tool_input} on stdin. If
-the action writes (a bin/gog call that isn't a read, or an MCP tool that isn't
-get_/list_/search_…) and the user hasn't confirmed it, it blocks it (exit code 2:
+the action writes (a bin/gog or bin/settings call that isn't a read, or an MCP
+tool that isn't get_/list_/search_…) and the user hasn't confirmed it, it blocks it (exit code 2:
 the message reaches Claude) and records it in .build/confirm/pending.json. When
 the user says «yes», the voice server (brain/assistant.py) writes confirmed.json
 with the same signature, and the same call, repeated within a minute, goes
@@ -44,15 +44,22 @@ GOG_READ = {
 MCP_READ = ("get_", "list_", "search_", "find_", "preview_", "download_")
 
 
-def describe_gog(command):
-    """The bin/gog action in words, or None if it only reads."""
+SETTINGS_READ = {"help", "show"}
+
+
+def describe_command(command):
+    """The bin/gog or bin/settings action in words, or None if it only reads."""
     try:
         parts = shlex.split(command)
     except ValueError:
         return command
-    if not parts or not parts[0].endswith("bin/gog"):
+    if not parts:
         return None
     found = [p for p in parts[1:] if not p.startswith("-")]
+    if parts[0].endswith("bin/settings"):
+        return None if not found or found[0] in SETTINGS_READ else "settings " + " ".join(parts[1:])
+    if not parts[0].endswith("bin/gog"):
+        return None
     if found[:1] == ["help"] or "--help" in parts or "-h" in parts:
         return None
     if tuple(found[:2]) in GOG_READ:
@@ -62,7 +69,7 @@ def describe_gog(command):
 
 def describe(tool, tool_input):
     if tool == "Bash":
-        return describe_gog(tool_input.get("command", ""))
+        return describe_command(tool_input.get("command", ""))
     if tool.startswith("mcp__"):
         name = tool.split("__")[-1]
         if name.startswith(MCP_READ):

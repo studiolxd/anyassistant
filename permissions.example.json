@@ -3,7 +3,8 @@
     "holded": "all"
   },
   "commands": {
-    "bin/gog": "read"
+    "bin/gog": "read",
+    "bin/settings": "all"
   },
   "confirm": true
 }
