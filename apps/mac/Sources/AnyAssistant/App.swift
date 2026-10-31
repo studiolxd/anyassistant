@@ -268,6 +268,8 @@ struct PairView: View {
     @ObservedObject var server: Server
     @State private var code: String?
     @State private var asked = false
+    @State private var pairingOff = false
+    @State private var waiting = true  // until the server answers (it may be starting)
     @State private var httpsPort: Int?  // the plugin «https»: the page with its own certificate
     @State private var step = 0  // with HTTPS: 0 the certificate, 1 the page
     @State private var old = false  // an old device: the address instead of anyassistant.local
@@ -280,6 +282,12 @@ struct PairView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
+            if waiting {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text(T("Waiting for the server…")).foregroundStyle(.secondary)
+                }
+            }
             if httpsPort != nil {
                 Picker("", selection: $step) {
                     Text(T("1. The certificate")).tag(0)
@@ -307,7 +315,7 @@ struct PairView: View {
                                 .textSelection(.enabled)
                             Text(T("Valid for 5 minutes, for one device.")).foregroundStyle(.secondary)
                             Button(T("Another code")) { Task { await ask() } }
-                        } else if asked {
+                        } else if asked && pairingOff {
                             Text(T("No code needed: pairing is off.")).foregroundStyle(.secondary)
                         }
                     }
@@ -322,8 +330,11 @@ struct PairView: View {
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .task {
+            waiting = true
+            _ = await server.ready()
             httpsPort = await server.httpsPort()
             await ask()
+            waiting = false
         }
     }
 
@@ -332,7 +343,11 @@ struct PairView: View {
     }
 
     func ask() async {
-        code = await server.pairingCode()
+        switch await server.pairingCode() {
+        case .code(let found): code = found; pairingOff = false
+        case .off: code = nil; pairingOff = true
+        case .unreachable: code = nil; pairingOff = false
+        }
         asked = true
     }
 

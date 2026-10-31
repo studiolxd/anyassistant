@@ -239,13 +239,30 @@ final class Server: ObservableObject {
         return info["port"] as? Int
     }
 
-    /// A pairing code, if the plugin «pairing» is on (nil: devices need none).
-    func pairingCode() async -> String? {
+    enum Pairing: Equatable { case code(String), off, unreachable }
+
+    /// A pairing code; .off if the plugin «pairing» is off (devices need none); .unreachable if
+    /// the server doesn't answer (yet).
+    func pairingCode() async -> Pairing {
         var request = URLRequest(url: URL(string: "http://127.0.0.1:\(port)/pairing")!)
         request.httpMethod = "POST"
         guard let (raw, response) = try? await URLSession.shared.data(for: request),
-              (response as? HTTPURLResponse)?.statusCode == 200,
-              let answer = try? JSONSerialization.jsonObject(with: raw) as? [String: Any] else { return nil }
-        return answer["code"] as? String
+              let status = (response as? HTTPURLResponse)?.statusCode else { return .unreachable }
+        if status == 404 { return .off }
+        guard status == 200, let answer = try? JSONSerialization.jsonObject(with: raw) as? [String: Any],
+              let code = answer["code"] as? String else { return .unreachable }
+        return .code(code)
+    }
+
+    /// Waits until the server answers (at most `seconds`); whether it does.
+    func ready(within seconds: Double = 120) async -> Bool {
+        let until = Date().addingTimeInterval(seconds)
+        while Date() < until {
+            var request = URLRequest(url: URL(string: "http://127.0.0.1:\(port)/status")!)
+            request.timeoutInterval = 1
+            if (try? await URLSession.shared.data(for: request)) != nil { return true }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+        }
+        return false
     }
 }
