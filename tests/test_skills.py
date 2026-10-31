@@ -139,8 +139,9 @@ def test_reminder_labels(store, es):
     skills.quick("Quiero que me recuerdes a las nueve de la noche sacar la basura")
     skills.quick("Recuérdame que llame a mamá mañana a las 6")
     skills.quick("Avísame dentro de un rato largo, como tres cuartos de hora")  # no «que»: a timer
-    assert [(i["kind"], i["label"]) for i in timers.pending() if i["kind"] != "timer"] == [
-        ("reminder", "sacar la basura"), ("reminder", "llame a mamá")]
+    # As a set: after 9 pm, «a las nueve de la noche» is tomorrow and comes after «mañana a las 6».
+    assert {(i["kind"], i["label"]) for i in timers.pending() if i["kind"] != "timer"} == {
+        ("reminder", "sacar la basura"), ("reminder", "llame a mamá")}
 
 
 def test_list_remaining_cancel(store, es):

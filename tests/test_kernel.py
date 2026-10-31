@@ -43,7 +43,7 @@ def test_every_system_plugin_is_found_and_on():
     found = kernel.discover()
     assert {"llm-claude", "stt-parakeet", "skill-alarms", "vad-silero", "plugin-manager"} <= set(found)
     off = {p for p in found if not kernel.enabled(p)}
-    assert off == {"pairing", "memory", "eyes", "always-on"}  # everything comes on, but what was opt-in before plugins
+    assert off == {"pairing", "memory", "eyes", "always-on", "https"}  # everything comes on, but what was opt-in before plugins
 
 
 def test_your_plugin_works_and_can_be_turned_off(yours):
