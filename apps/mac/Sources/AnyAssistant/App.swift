@@ -29,7 +29,7 @@ struct AnyAssistantApp: App {
         }
         Window(T("Pair a device"), id: "pair") {
             PairView(server: server)
-                .frame(width: 400, height: 560)
+                .frame(width: 660, height: 380)
         }
         .windowResizability(.contentSize)
     }
@@ -279,41 +279,56 @@ struct PairView: View {
     var pageWithCode: String { code.map { "\(page)/?code=\($0)" } ?? page }
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 18) {
             if httpsPort != nil {
                 Picker("", selection: $step) {
                     Text(T("1. The certificate")).tag(0)
                     Text(T("2. The page")).tag(1)
                 }
-                .pickerStyle(.segmented).labelsHidden()
+                .pickerStyle(.segmented).labelsHidden().frame(maxWidth: 320)
             }
-            if httpsPort != nil && step == 0 {
-                Text(T("Once per device: open this to download the certificate. If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)."))
-                    .foregroundStyle(.secondary).multilineTextAlignment(.center).font(.callout)
-                qrCode(certificate)
-                Text(certificate).font(.callout.monospaced()).textSelection(.enabled)
-                Button(T("Done: the page")) { step = 1 }
-            } else {
-                Text(T("On the tablet or phone, scan it or open")).foregroundStyle(.secondary)
-                qrCode(pageWithCode)
-                Text(page).font(.title3.monospaced()).textSelection(.enabled)
-                if let code {
-                    Text(T("The QR pairs it by itself; or type the code")).font(.footnote).foregroundStyle(.secondary)
-                    Text(code).font(.system(size: 30, weight: .bold, design: .monospaced)).textSelection(.enabled)
-                    Text(T("Valid for 5 minutes, for one device.")).font(.footnote).foregroundStyle(.secondary)
-                } else if asked {
-                    Text(T("No code needed: pairing is off.")).font(.footnote).foregroundStyle(.secondary)
+            HStack(alignment: .top, spacing: 24) {
+                qrCode(httpsPort != nil && step == 0 ? certificate : pageWithCode)
+                VStack(alignment: .leading, spacing: 10) {
+                    if httpsPort != nil && step == 0 {
+                        Text(T("Install the certificate")).font(.title3.weight(.semibold))
+                        Text(T("Once per device: scan it, or open this address, to download it."))
+                        address(certificate)
+                        Text(T("If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)."))
+                            .foregroundStyle(.secondary)
+                        Button(T("Done: the page")) { step = 1 }.padding(.top, 4)
+                    } else {
+                        Text(T("Open the page")).font(.title3.weight(.semibold))
+                        Text(T("Scan it with the tablet or phone: it pairs by itself. Or open"))
+                        address(page)
+                        if let code {
+                            Text(T("and type the code")).padding(.top, 4)
+                            Text(code).font(.system(.largeTitle, design: .monospaced).weight(.semibold))
+                                .textSelection(.enabled)
+                            Text(T("Valid for 5 minutes, for one device.")).foregroundStyle(.secondary)
+                            Button(T("Another code")) { Task { await ask() } }
+                        } else if asked {
+                            Text(T("No code needed: pairing is off.")).foregroundStyle(.secondary)
+                        }
+                    }
                 }
-                Button(T("Another code")) { Task { await ask() } }
+                .font(.body)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            Spacer(minLength: 0)
             Toggle(T("An old device (it doesn't open .local names): use the address"), isOn: $old)
-                .font(.footnote).toggleStyle(.checkbox)
+                .toggleStyle(.checkbox).foregroundStyle(.secondary)
         }
         .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .task {
             httpsPort = await server.httpsPort()
             await ask()
         }
+    }
+
+    func address(_ text: String) -> some View {
+        Text(text).font(.system(.body, design: .monospaced)).textSelection(.enabled)
     }
 
     func ask() async {
@@ -323,7 +338,7 @@ struct PairView: View {
 
     @ViewBuilder func qrCode(_ text: String) -> some View {
         if let image = qr(text) {
-            Image(nsImage: image).interpolation(.none).resizable().frame(width: 190, height: 190)
+            Image(nsImage: image).interpolation(.none).resizable().frame(width: 220, height: 220)
         }
     }
 

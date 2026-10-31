@@ -72,3 +72,9 @@
 "On the tablet or phone, scan it or open" = "En la tablet o el móvil, escanéalo o abre";
 "The QR pairs it by itself; or type the code" = "El QR lo empareja solo; o escribe el código";
 "An old device (it doesn't open .local names): use the address" = "Un dispositivo antiguo (no abre nombres .local): usar la dirección";
+"Install the certificate" = "Instala el certificado";
+"Once per device: scan it, or open this address, to download it." = "Una vez por dispositivo: escanéalo, o abre esta dirección, para descargarlo.";
+"If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)." = "Si no se instala solo, en Android: Ajustes → Seguridad → Instalar desde almacenamiento → AnyAssistant.crt (como «VPN y aplicaciones»).";
+"Open the page" = "Abre la página";
+"Scan it with the tablet or phone: it pairs by itself. Or open" = "Escanéalo con la tablet o el móvil: se empareja solo. O abre";
+"and type the code" = "y escribe el código";
