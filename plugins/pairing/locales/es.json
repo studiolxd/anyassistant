@@ -7,8 +7,8 @@
   },
   "installer": {
     "pairing": [
-      "Solo dispositivos emparejados",
-      "Un dispositivo tiene que escribir un código una vez antes de usarlo (el Mac nunca lo necesita)."
+      "Pedir un código a cada dispositivo nuevo",
+      "La primera vez, cada dispositivo escribe un código. Así nadie de fuera puede usarlo. Tu Mac nunca lo necesita."
     ]
   }
 }

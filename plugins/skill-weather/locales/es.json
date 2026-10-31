@@ -69,8 +69,8 @@
   },
   "installer": {
     "location": [
-      "Tu ciudad (para el tiempo)",
-      "«¿Qué tiempo hace?» responde para ella; vacío: dices la ciudad cada vez."
+      "Tu ciudad, para el tiempo",
+      "Así «¿qué tiempo hace?» sabe de dónde hablas. Puedes dejarlo vacío y decir la ciudad cada vez."
     ]
   }
 }

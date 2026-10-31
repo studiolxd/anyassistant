@@ -13,8 +13,8 @@
   },
   "installer": {
     "memory": [
-      "Que te recuerde de una conversación a otra",
-      "explicit: solo lo que le pidas que recuerde; auto: también lo que aprenda de ti, al dormirse."
+      "Que se acuerde de ti",
+      "«Solo lo que le pida»: recuerda lo que le digas que recuerde. «También lo que aprenda»: además, al terminar cada conversación apunta lo que haya aprendido de ti."
     ]
   },
   "choices": {

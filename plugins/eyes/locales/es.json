@@ -10,8 +10,8 @@
   },
   "installer": {
     "eyes": [
-      "Que pueda mirar por la cámara del dispositivo",
-      "Solo cuando se lo pides («¿qué ves?», «léeme esto»); si no, nada sale del Mac."
+      "Que pueda mirar por la cámara",
+      "Solo cuando se lo pidas («¿qué ves?», «léeme esto»). Si no, nada sale de tu Mac."
     ]
   },
   "commands": {

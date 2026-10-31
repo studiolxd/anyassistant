@@ -58,7 +58,7 @@
     "assistant": "El asistente",
     "memory": "Memoria",
     "voice": "Escuchar y hablar",
-    "skills": "Skills",
+    "skills": "Habilidades",
     "screen": "La pantalla",
     "security": "Privacidad y seguridad",
     "server": "El servidor"
@@ -99,36 +99,36 @@
   },
   "installer": {
     "computer": [
-      "Este ordenador",
+      "Tu Mac",
       ""
     ],
     "language": [
       "Idioma",
-      "En el que habla y entiende (podrás cambiarlo después por voz)."
+      "En el que te habla y te entiende. Puedes cambiarlo luego, también por voz."
     ],
     "name": [
-      "El nombre del asistente",
-      "También su palabra de activación: «Hey …»."
+      "Cómo se llama",
+      "Es también la palabra para despertarlo: «Hey …»."
     ],
     "packages": [
-      "Lo que necesitan los plugins",
-      "Los paquetes de Python de los plugins encendidos."
+      "Lo que necesita cada parte",
+      "Se instala solo lo de las partes que tengas encendidas."
     ],
     "llm": [
-      "Qué LLM responde",
-      "Claude necesita Claude Code instalado y con sesión iniciada; el de Apple, macOS 26 con Apple Intelligence."
+      "Quién contesta",
+      "Claude necesita tener Claude Code instalado y con la sesión iniciada; el de Apple, macOS 26 con Apple Intelligence."
     ],
     "bridges": [
-      "Puentes de Swift (el modelo de Apple, la voz)",
+      "Componentes del Mac (el modelo de Apple, la voz)",
       ""
     ],
     "models": [
-      "Modelos de voz (se descargan una vez)",
-      "Reconocimiento de voz, palabra de activación y detección de voz: unos cientos de MB la primera vez."
+      "Modelos de voz",
+      "Se descargan solo la primera vez: unos cientos de MB."
     ],
     "service": [
-      "Arrancar AnyAssistant con el Mac",
-      "Funciona en segundo plano y vuelve si se para (launchd)."
+      "Encenderlo con el Mac",
+      "Se queda funcionando en segundo plano y vuelve solo si se para."
     ],
     "connect": [
       "Conecta tu tablet o móvil",
