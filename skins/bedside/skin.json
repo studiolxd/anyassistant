@@ -1,7 +1,7 @@
 {
   "name": "Bedside",
   "author": "Jarvis",
-  "version": "2",
+  "version": "3",
   "description": "For the bedside table: only a dim time while asleep, and soft sounds.",
   "options": {"glow": "#9ca3af", "background": "#000000"}
 }
