@@ -1,4 +1,5 @@
 {
   "plugins": {"https": ["HTTPS", "La página por HTTPS con una autoridad de certificación propia: segura en cualquier navegador (micrófono, cámara) una vez que el dispositivo instala la autoridad, sin el ajuste de Chrome."]},
-  "options": {"https_port": "el puerto HTTPS (la página con un certificado en el que confían los dispositivos)"}
+  "options": {"https_port": "el puerto HTTPS (la página con un certificado en el que confían los dispositivos)",
+              "https_redirect_port": "el puerto HTTP que lleva a la página HTTPS (0: ninguno)"}
 }

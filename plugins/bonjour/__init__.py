@@ -5,7 +5,7 @@ address that changes (another Wi-Fi) doesn't matter.
     dns-sd -B _anyassistant._tcp          to see it from the Mac's terminal
 
 The announcement carries the port, the assistant's name, whether pairing is on and the
-HTTPS port if the plugin «https» is on (a TXT record: name=Jarvis pairing=1 https=8443
+HTTPS port if the plugin «https» is on (a TXT record: name=Jarvis pairing=1 https=443
 version=1). It also gives the Mac the name anyassistant.local (for devices that resolve
 .local names: not old Androids, which use the address). macOS's own dns-sd does it while the
 server runs; turn the plugin off and it stops being announced.
@@ -28,7 +28,7 @@ def record() -> list[str]:
     """The TXT record: what an app wants to know before connecting."""
     found = [f"name={settings.get('name') or 'Jarvis'}", f"pairing={1 if kernel.enabled('pairing') else 0}"]
     if kernel.enabled("https"):
-        found.append(f"https={settings.get('https_port') or 8443}")
+        found.append(f"https={settings.get('https_port') or 443}")
     return found + ["version=1"]
 
 

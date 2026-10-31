@@ -275,7 +275,7 @@ struct PairView: View {
     @State private var old = false  // an old device: the address instead of anyassistant.local
 
     var host: String { old ? server.address : "anyassistant.local" }
-    var page: String { httpsPort.map { "https://\(host):\($0)" } ?? "http://\(host):\(server.port)" }
+    var page: String { httpsPort.map { $0 == 443 ? "https://\(host)" : "https://\(host):\($0)" } ?? "http://\(host):\(server.port)" }
     var certificate: String { "http://\(host):\(server.port)/https/ca.crt" }
     /// What the QR opens: the page with the code, so it pairs by itself.
     var pageWithCode: String { code.map { "\(page)/?code=\($0)" } ?? page }

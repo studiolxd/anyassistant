@@ -215,7 +215,8 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `port` | `8080` | the port (bin/anyassistant reads it too) *(restarts)* |
 | `mode` | `"assistant"` | assistant, transcribe (only shows what it hears) or parrot (repeats it) *(restarts)* |
 | `record` | `false` | saves everything that arrives to a WAV, in the cache's «recordings» (to debug) *(restarts)* |
-| `https_port` | `8443` | the HTTPS port (the page with a certificate devices trust) *(restarts)* |
+| `https_port` | `443` | the HTTPS port (the page with a certificate devices trust) *(restarts)* |
+| `https_redirect_port` | `80` | the HTTP port that sends to the HTTPS page (0: none) *(restarts)* |
 <!-- /options -->
 
 **How much it says**: `detail` is `concise` (one short sentence), `neutral` (one

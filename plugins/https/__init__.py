@@ -5,11 +5,14 @@ secure one (microphone, camera) in any browser, without Chrome's flag.
   never leaves the Mac) and, with it, a certificate for anyassistant.local, the Mac's
   .local name, its addresses on the network and localhost. When an address changes,
   the certificate is made again (the authority stays: devices keep trusting it).
-- Each device installs the authority once: http://<mac>:8080/https/ca.crt (the Mac app
-  shows its QR). On old Androids, opening it from Chrome often fails («it can't be
+- Each device installs the authority once: http://anyassistant.local/https/ca.crt (the
+  Mac app shows its QR). On old Androids, opening it from Chrome often fails («it can't be
   read»): it is in Downloads, and Settings → Security → Install from storage takes it.
-  Then https://anyassistant.local:8443 (or the address) is secure.
-- It serves the same server over HTTPS on «https_port», besides HTTP (which keeps working).
+  Then https://anyassistant.local (or the address) is secure.
+- It serves the same server over HTTPS on «https_port» (443: no port to type), besides HTTP
+  (which keeps working on «port»).
+- On «https_redirect_port» (80; 0 = off), plain http://anyassistant.local goes to the HTTPS
+  page; only the authority is served there as is, for devices that don't have it yet.
 """
 
 import asyncio
@@ -34,7 +37,9 @@ CERT, KEY = FOLDER / "server.pem", FOLDER / "server-key.pem"
 NAME = "anyassistant.local"
 DAYS = 397  # what browsers accept for a server certificate; made again before it ends
 
-options.add(Option("https_port", 8443, "the HTTPS port (the page with a certificate devices trust)", "server",
+options.add(Option("https_port", 443, "the HTTPS port (the page with a certificate devices trust)", "server",
+                   "int"))
+options.add(Option("https_redirect_port", 80, "the HTTP port that sends to the HTTPS page (0: none)", "server",
                    "int"))
 
 
@@ -151,7 +156,12 @@ def certificate():
 
 
 def port() -> int:
-    return settings.get("https_port") or 8443
+    return settings.get("https_port") or 443
+
+
+def address(host: str, path: str = "/") -> str:
+    """The HTTPS page on that host (without the port when it's 443)."""
+    return f"https://{host}{'' if port() == 443 else f':{port()}'}{path}"
 
 
 # --- The authority, for the devices (only the certificate: its key never leaves the Mac) ---
@@ -205,3 +215,28 @@ async def serve(app):
         await handler.shutdown(3)
 
     web.close_on_exit.append(stop)
+    await _redirect(host)
+
+
+async def _redirect(host: str) -> None:
+    """http://anyassistant.local → https://anyassistant.local (the authority, served as is)."""
+    redirect_port = settings.get("https_redirect_port", 80)
+    if not redirect_port or redirect_port in (port(), settings.get("port") or 8080):
+        return
+
+    async def go(request):
+        raise http.HTTPMovedPermanently(address(request.url.raw_host or NAME, request.path_qs))
+
+    app = http.Application()
+    app.router.add_get("/https/ca.crt", _authority_file)
+    app.router.add_route("*", "/{tail:.*}", go)
+    runner = http.AppRunner(app, access_log=None)
+    await runner.setup()
+    try:
+        await http.TCPSite(runner, host, redirect_port).start()
+    except OSError as e:
+        log.warning("no redirect from port %s: %r", redirect_port, e)
+        await runner.cleanup()
+        return
+    log.info("http://%s → %s", NAME, address(NAME))
+    web.close_on_exit.append(runner.cleanup)
