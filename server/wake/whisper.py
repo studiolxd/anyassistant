@@ -115,7 +115,8 @@ class WhisperWakeWord(WakeWord):
         """(index, number of words) of the wake word among the first words.
 
         Also tries joining one more word: Whisper sometimes splits it
-        («G&J Arbis» → «j» + «arbis»).
+        («G&J Arbis» → «j» + «arbis»). Only a short one (a letter or a syllable):
+        joining whole words found «Jarvis» in «llama Jarvis», as the fourth word.
         """
         key = phonetic("".join(self.keys))
         n = len(self.keys)
@@ -123,6 +124,8 @@ class WhisperWakeWord(WakeWord):
             for span in (n, n + 1):
                 if i + span > len(found):
                     break
+                if span > n and len(found[i]) > 3:
+                    continue
                 if similarity(phonetic("".join(found[i : i + span])), key) >= self.threshold:
                     return i, span
         return None
@@ -137,11 +140,20 @@ class WhisperWakeWord(WakeWord):
         return text[tokens[i + span - 1].end() :].lstrip(" ,.!:;-")
 
     def is_prompt(self, text: str) -> bool:
-        """Whisper giving back its own prompt («El asistente se llama Jarvis.») or a piece
-        of it: it does so with noise or a voice it doesn't understand. Only the name
-        alone («Jarvis.») is not, since that is what you say."""
-        found, prompt = " ".join(words(text)), " ".join(words(self.prompt))
-        return bool(found) and words(text) != self.keys and f" {found} " in f" {prompt} "
+        """Whisper giving back its own prompt («El asistente se llama Jarvis.»), a piece
+        of it or a variation («Strips se llama Jarvis.»): it does so with noise or a
+        voice it doesn't understand. Recognized by the prompt's words right before the
+        name («se llama»), which nobody says to wake it up. Only the name alone
+        («Jarvis.») is not, since that is what you say."""
+        found, prompt = words(text), words(self.prompt)
+        if not found or found == self.keys:
+            return False
+        if f" {' '.join(found)} " in f" {' '.join(prompt)} ":
+            return True
+        n = len(self.keys)
+        before = next((prompt[max(i - 2, 0):i] for i in range(len(prompt)) if prompt[i:i + n] == self.keys), [])
+        return any(found[i:i + n] == self.keys and found[max(i - 2, 0):i] == before and before
+                   for i in range(len(found)))
 
     def _search(self, audio: np.ndarray) -> bool:
         text = self._transcribe(audio, self.model, i18n.L.stt_language, self.prompt)
