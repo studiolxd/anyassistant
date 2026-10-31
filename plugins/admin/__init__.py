@@ -92,7 +92,13 @@ async def _save_settings(request):
     problems = options.check(changes)
     if problems:
         return http.json_response({"error": "; ".join(problems)}, status=400)
-    settings.save(**changes)
+    data = settings.load()
+    for key, value in changes.items():
+        if value is None:
+            data.pop(key, None)  # empty: back to its default, not «null»
+        else:
+            data[key] = value
+    settings.PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
     settings.refresh()
     restart = any(not options.BY_NAME[k].live for k in changes)
     return http.json_response({"saved": list(changes), "restart": restart})

@@ -238,6 +238,8 @@ struct OptionsView: View {
 struct OptionRow: View {
     @ObservedObject var option: OptionItem
     let admin: Admin
+    @FocusState private var editing: Bool
+    @State private var saved = ""  // what was last saved: not saved again for nothing
 
     /// Its help, as a title («La hora mientras duerme»); its name goes below.
     var label: String { option.help.prefix(1).uppercased() + option.help.dropFirst() }
@@ -258,6 +260,8 @@ struct OptionRow: View {
                 Text(label)
                 TextEditor(text: $option.text)
                     .font(.body).frame(minHeight: 110)
+                    .focused($editing)
+                    .onChange(of: editing) { _, now in if !now { save() } }
                     .overlay(alignment: .topLeading) {
                         if option.text.isEmpty {
                             Text(option.placeholder).foregroundStyle(.tertiary).padding(.top, 1).padding(.leading, 5)
@@ -270,12 +274,24 @@ struct OptionRow: View {
                     DictEditor(option: option, label: label, admin: admin)
                 } else {
                     TextField(label, text: $option.text, prompt: Text(option.placeholder))
-                        .onSubmit { Task { await admin.save(option) } }
+                        .focused($editing)
+                        .onSubmit { save() }
+                        .onChange(of: editing) { _, now in if !now { save() } }  // leaving the field saves it
                 }
             }
             Text(option.name + (option.live ? "" : " · " + T("needs a restart")))
                 .font(.caption.monospaced()).foregroundStyle(.secondary)
         }
+        .onAppear { saved = option.text }
+    }
+}
+
+extension OptionRow {
+    /// Saves the field if it changed since it was loaded or last saved.
+    func save() {
+        guard option.text != saved else { return }
+        saved = option.text
+        Task { await admin.save(option) }
     }
 }
 
