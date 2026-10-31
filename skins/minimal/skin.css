@@ -1,20 +1,23 @@
 /* Minimal: what it is doing, in words and a light, as large and clear as possible. */
 
+/* The light always at the same height (40% down); asleep, the clock sits above it
+   without moving it, and what it hears and answers goes below. */
 .screen {
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 0 6vmin;
+  justify-content: flex-start;
+  padding: 40vh 6vmin 0;
   box-sizing: border-box;
   background: var(--background);
   color: var(--text);
 }
 .screen > * { width: 100%; box-sizing: border-box; overflow-wrap: break-word; }
-.clock { display: none; }
+.clock { display: none; position: absolute; left: 6vmin; right: 6vmin; bottom: calc(60vh + 4vmin); }
 body[data-look="asleep"] .clock { display: block; }
 .clock [data-part="time"] { margin: 0; font-size: 22vmin; font-weight: bold; line-height: 1; }
-.clock [data-part="date"] { margin: 2vmin 0 6vmin; font-size: 6vmin; }
+.clock [data-part="date"] { margin: 2vmin 0 0; font-size: 6vmin; }
 
 .face { height: 14vmin; }
 .light {
