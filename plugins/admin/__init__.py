@@ -33,13 +33,22 @@ def _local(handler):
     return only_the_mac
 
 
-def _value(option):
-    value = settings.load().get(option.name, settings.get(option.name, option.default))
+def _json(value):
     try:
         json.dumps(value)
+        return value
     except TypeError:
-        value = str(value)
-    return value
+        return str(value)
+
+
+def _value(option):
+    """What settings.json says (or the default): what the field shows."""
+    return _json(settings.load().get(option.name, option.default))
+
+
+def _current(option):
+    """What the server uses now: for an empty one, what it chose (the language's voice: «Mónica»)."""
+    return _json(settings.get(option.name, option.default))
 
 
 def _choices(option):
@@ -56,7 +65,8 @@ async def _settings(request):
               if g != "plugins"]
     found = [{"name": o.name, "group": o.group, "kind": o.kind, "live": o.live,
               "help": i18n.L.text(f"options.{o.name}", o.help), "default": _value_default(o),
-              "value": _value(o), "choices": _choices(o)}
+              "value": _value(o), "current": _current(o), "choices": _choices(o),
+              "empty": i18n.L.text(f"options_empty.{o.name}", o.empty) if o.empty else ""}
              for o in options.OPTIONS if o.group != "plugins"]
     return http.json_response({"groups": groups, "options": found})
 

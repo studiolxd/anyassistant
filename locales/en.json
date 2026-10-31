@@ -88,7 +88,7 @@
     "host": "the address it listens on",
     "port": "the port (bin/anyassistant reads it too)",
     "mode": "assistant, transcribe (only shows what it hears) or parrot (repeats it)",
-    "record": "saves everything that arrives to a WAV (to debug)"
+    "record": "saves everything that arrives to a WAV, in the cache's «recordings» (to debug)"
   },
   "installer": {
     "computer": [
@@ -127,5 +127,17 @@
       "Connect your tablet or phone",
       ""
     ]
+  },
+  "options_empty": {
+    "language": "the Mac's language",
+    "llm_model": "the LLM's own",
+    "mcp": "the one in your data folder",
+    "instructions": "none",
+    "detail_levels": "only the built-in ones",
+    "stt_model": "the engine's own",
+    "voice": "the language's",
+    "rate": "the voice's own",
+    "wake_word": "its name",
+    "threshold": "the engine's own"
   }
 }

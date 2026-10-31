@@ -95,7 +95,7 @@
     "host": "la dirección en la que escucha",
     "port": "el puerto (bin/anyassistant también lo lee)",
     "mode": "assistant, transcribe (solo muestra lo que oye) o parrot (lo repite)",
-    "record": "guarda todo lo que llega en un WAV (para depurar)"
+    "record": "guarda todo lo que llega en un WAV, en «recordings» de la caché (para depurar)"
   },
   "installer": {
     "computer": [
@@ -141,5 +141,17 @@
       "false": "No"
     }
   },
-  "language_native": "Español"
+  "language_native": "Español",
+  "options_empty": {
+    "language": "el idioma del Mac",
+    "llm_model": "el del propio LLM",
+    "mcp": "el de tu carpeta de datos",
+    "instructions": "ninguna",
+    "detail_levels": "solo los que vienen",
+    "stt_model": "el del motor",
+    "voice": "la del idioma",
+    "rate": "la de la voz",
+    "wake_word": "su nombre",
+    "threshold": "la del motor"
+  }
 }

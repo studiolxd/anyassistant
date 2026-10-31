@@ -29,7 +29,8 @@ FORECAST = "https://api.open-meteo.com/v1/forecast"
 TIMEOUT = 8  # seconds
 _places: dict[tuple[str, str], tuple[float, float, str] | None] = {}
 
-options.add(Option("location", None, "your city, for the weather (e.g. Valencia)", "skills", "text", live=True))
+options.add(Option("location", None, "your city, for the weather (e.g. Valencia)", "skills", "text", live=True,
+                   empty="none: you say the city"))
 
 
 @installer.question("location", "Your city (for the weather)", order=63,

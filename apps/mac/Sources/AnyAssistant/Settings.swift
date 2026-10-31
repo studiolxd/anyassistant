@@ -3,17 +3,27 @@
 
 import SwiftUI
 
+struct Pair: Identifiable, Equatable {
+    let id = UUID()
+    var key: String
+    var value: String
+}
+
 final class OptionItem: ObservableObject, Identifiable {
     let name: String
     let group: String
-    let kind: String  // text, bool, int, float, choice, json
+    let kind: String  // text, longtext, bool, int, float, choice, json, dict
     let help: String
     let live: Bool
     let choices: [String]?
+    let placeholder: String  // what an empty one uses: «Mónica · la del idioma»
     @Published var text: String  // what the field shows
     @Published var flag: Bool
+    @Published var pairs: [Pair]  // dict (and voice set per language)
 
     var id: String { name }
+    /// Edited as name → value pairs: a dict kind, or a json one that holds a dict (one voice per language).
+    var isDict: Bool { kind == "dict" || (kind == "json" && !pairs.isEmpty) }
 
     init(_ raw: [String: Any]) {
         name = raw["name"] as? String ?? "?"
@@ -24,29 +34,42 @@ final class OptionItem: ObservableObject, Identifiable {
         choices = (raw["choices"] as? [Any])?.map { "\($0)" }
         let value = raw["value"]
         flag = value as? Bool ?? false
-        text = OptionItem.show(value, kind: kind)
+        if let dict = value as? [String: Any] {
+            pairs = dict.keys.sorted().map { Pair(key: $0, value: "\(dict[$0]!)") }
+            text = ""
+        } else {
+            pairs = []
+            text = OptionItem.show(value, kind: kind)
+        }
+        let current = OptionItem.show(raw["current"], kind: kind)
+        let empty = raw["empty"] as? String ?? ""
+        placeholder = [current, empty].filter { !$0.isEmpty && $0 != "{}" }.joined(separator: " · ")
     }
 
     static func show(_ value: Any?, kind: String) -> String {
         guard let value, !(value is NSNull) else { return "" }
-        if kind == "json", JSONSerialization.isValidJSONObject(value),
-           let data = try? JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]) {
-            return String(decoding: data, as: UTF8.self)
+        if let lines = value as? [Any] { return lines.map { "\($0)" }.joined(separator: "\n") }
+        if let dict = value as? [String: Any] {
+            return dict.keys.sorted().map { "\($0): \(dict[$0]!)" }.joined(separator: ", ")
         }
         if let number = value as? NSNumber, kind == "float" { return "\(number.doubleValue)" }
         return "\(value)"
     }
 
-    /// The value to send, of its kind (nil: leave it empty, as it comes).
-    var sent: Any? {
+    /// The value to send, of its kind (NSNull: back to empty, as it comes).
+    var sent: Any {
+        if isDict {
+            let filled = pairs.filter { !$0.key.trimmingCharacters(in: .whitespaces).isEmpty }
+            if filled.isEmpty { return NSNull() }
+            return Dictionary(filled.map { ($0.key.trimmingCharacters(in: .whitespaces), $0.value) },
+                              uniquingKeysWith: { _, last in last })
+        }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         switch kind {
         case "bool": return flag
-        case "int": return Int(text.trimmingCharacters(in: .whitespaces))
-        case "float": return Double(text.replacingOccurrences(of: ",", with: "."))
-        case "json":
-            guard !text.isEmpty else { return NSNull() }
-            return (try? JSONSerialization.jsonObject(with: Data(text.utf8), options: [.fragmentsAllowed])) ?? text
-        default: return text.isEmpty ? NSNull() : text
+        case "int": return Int(trimmed).map { $0 as Any } ?? NSNull()
+        case "float": return Double(trimmed.replacingOccurrences(of: ",", with: ".")).map { $0 as Any } ?? NSNull()
+        default: return trimmed.isEmpty ? NSNull() : (kind == "longtext" ? text : trimmed)
         }
     }
 }
@@ -123,7 +146,7 @@ final class Admin: ObservableObject {
     }
 
     func save(_ option: OptionItem) async {
-        guard let answer = await call("settings", [option.name: option.sent ?? NSNull()]) else { return }
+        guard let answer = await call("settings", [option.name: option.sent]) else { return }
         if answer["restart"] as? Bool == true { restartNeeded = true }
         note = T("Saved.")
     }
@@ -220,22 +243,67 @@ struct OptionRow: View {
     var label: String { option.help.prefix(1).uppercased() + option.help.dropFirst() }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             switch option.kind {
             case "bool":
                 Toggle(label, isOn: $option.flag)
                     .onChange(of: option.flag) { _, _ in Task { await admin.save(option) } }
             case "choice" where option.choices != nil:
                 Picker(label, selection: $option.text) {
+                    if option.text.isEmpty { Text(option.placeholder).tag("") }
                     ForEach(option.choices!, id: \.self) { Text($0).tag($0) }
                 }
                 .onChange(of: option.text) { _, _ in Task { await admin.save(option) } }
+            case "longtext":
+                Text(label)
+                TextEditor(text: $option.text)
+                    .font(.body).frame(minHeight: 110)
+                    .overlay(alignment: .topLeading) {
+                        if option.text.isEmpty {
+                            Text(option.placeholder).foregroundStyle(.tertiary).padding(.top, 1).padding(.leading, 5)
+                                .allowsHitTesting(false)
+                        }
+                    }
+                Button(T("Save")) { Task { await admin.save(option) } }
             default:
-                TextField(label, text: $option.text, axis: option.kind == "json" ? .vertical : .horizontal)
-                    .onSubmit { Task { await admin.save(option) } }
+                if option.isDict {
+                    DictEditor(option: option, label: label, admin: admin)
+                } else {
+                    TextField(label, text: $option.text, prompt: Text(option.placeholder))
+                        .onSubmit { Task { await admin.save(option) } }
+                }
             }
             Text(option.name + (option.live ? "" : " · " + T("needs a restart")))
                 .font(.caption.monospaced()).foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// Name → value pairs (detail levels, the skin's options, a voice per language): rows to edit.
+struct DictEditor: View {
+    @ObservedObject var option: OptionItem
+    let label: String
+    let admin: Admin
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+            if option.pairs.isEmpty {
+                Text(option.placeholder).foregroundStyle(.tertiary)
+            }
+            ForEach($option.pairs) { $pair in
+                HStack(alignment: .top) {
+                    TextField(T("Name"), text: $pair.key).frame(width: 140)
+                    TextField(T("Value"), text: $pair.value, axis: .vertical)
+                    Button { option.pairs.removeAll { $0.id == pair.id } } label: { Image(systemName: "minus.circle") }
+                        .buttonStyle(.borderless)
+                }
+            }
+            HStack {
+                Button { option.pairs.append(Pair(key: "", value: "")) } label: { Label(T("Add"), systemImage: "plus") }
+                Spacer()
+                Button(T("Save")) { Task { await admin.save(option) } }
+            }
         }
     }
 }

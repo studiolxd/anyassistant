@@ -2,6 +2,7 @@
 (ear.py: wake word, VAD, speech recognition) is how the assistant listens too."""
 
 import logging
+import os
 
 import events
 import i18n
@@ -33,7 +34,13 @@ def listening(args):
             wake_options["threshold"] = args.threshold
         log.info("wake word: %s", wake.create(args.wake, **wake_options).phrase)
         wake_factory = lambda: wake.create(args.wake, **wake_options)  # noqa: E731
-    ear = {"record": args.record, "silence": args.silence, "follow_up": args.follow_up}
+    record = None
+    if args.record:  # true: a WAV per session in the cache (an older path still works)
+        import paths
+
+        record = args.record if isinstance(args.record, str) else str(paths.CACHE / "recordings" / "session.wav")
+        os.makedirs(os.path.dirname(record), exist_ok=True)
+    ear = {"record": record, "silence": args.silence, "follow_up": args.follow_up}
     return engine, wake_factory, ear
 
 

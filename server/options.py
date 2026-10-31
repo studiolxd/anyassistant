@@ -24,6 +24,7 @@ class Option:
     screen: bool = False  # the page shows it (sent in /config)
     flag: str = ""  # another command-line name (--lang)
     plugin: str | None = None  # the plugin that added it (None: the core's); its texts are in its locales
+    empty: str = ""  # what happens when it isn't set («the language's voice»), for the app
 
     def options(self) -> list:
         return list(self.choices()) if callable(self.choices) else list(self.choices or [])
@@ -54,31 +55,34 @@ OPTIONS = [
     # The assistant
     Option("name", "Jarvis", "the assistant's name: its wake word, the page's title, what the LLM calls itself", "assistant"),
     Option("language", None, "en, es…: what it speaks and understands (default: the Mac's)", "assistant",
-           "choice", _languages, flag="--lang"),
+           "choice", _languages, flag="--lang", empty="the Mac's language"),
     Option("llm", "claude", "the LLM: claude, apple, hermes…", "assistant", "choice", _plugins("llm")),
-    Option("llm_model", None, "the LLM's model (for Claude: sonnet, opus, haiku…)", "assistant"),
-    Option("mcp", None, ".mcp.json with the MCP servers (default: your data folder's)", "assistant"),
+    Option("llm_model", None, "the LLM's model (for Claude: sonnet, opus, haiku…)", "assistant",
+           empty="the LLM's own"),
+    Option("mcp", None, ".mcp.json with the MCP servers (default: your data folder's)", "assistant",
+           empty="the one in your data folder"),
     Option("instructions", None, "yours, added to the LLM's (text or a list of lines): who you are, how to talk…",
-           "assistant", "json", live=True),
+           "assistant", "longtext", live=True, empty="none"),
     Option("detail", "neutral", "how much it says: concise, neutral, detailed or one of detail_levels", "assistant",
-           live=True),
+           "choice", lambda: list(__import__("llm").detail_levels()), live=True),
     Option("detail_levels", None, 'more levels, or other texts for these: {"name": "instruction for the prompt"}',
-           "assistant", "json", live=True),
+           "assistant", "dict", live=True, empty="only the built-in ones"),
     Option("ignore_others", True, "the LLM stays quiet when what it hears is clearly not for it", "assistant",
            "bool", live=True),
     # Listening and speaking
     Option("stt", "parakeet", "speech recognition: parakeet, mlx-whisper…", "voice", "choice", _plugins("stt")),
-    Option("stt_model", None, "its model", "voice"),
+    Option("stt_model", None, "its model", "voice", empty="the engine's own"),
     Option("tts", "avspeech", "its voice engine: avspeech, macos… or none", "voice", "choice",
            lambda: _plugins("tts")() + ["none"]),
     Option("voice", None, "the voice (default: the language's); one, or one per language: "
-           '{"es": "Mónica", "en": "Samantha"}', "voice", "json"),
-    Option("rate", None, "words per minute", "voice", "int"),
+           '{"es": "Mónica", "en": "Samantha"}', "voice", "json", empty="the language's"),
+    Option("rate", None, "words per minute", "voice", "int", empty="the voice's own"),
     Option("volume", 100, "its voice and sounds, 5–100 %", "voice", "int", live=True),
     Option("wake", "whisper", "the wake word engine: whisper, openwakeword… or none", "voice", "choice",
            lambda: _plugins("wake")() + ["none"]),
-    Option("wake_word", None, "the word or model (default: its name)", "voice"),
-    Option("threshold", None, "how sure the wake word must be (each engine has its own default)", "voice", "float"),
+    Option("wake_word", None, "the word or model (default: its name)", "voice", empty="its name"),
+    Option("threshold", None, "how sure the wake word must be (each engine has its own default)", "voice", "float",
+           empty="the engine's own"),
     Option("vad", "silero", "voice activity detection: silero…", "voice", "choice", _plugins("vad")),
     Option("silence", 0.6, "seconds of silence that end a sentence", "voice", "float"),
     Option("follow_up", 20, "seconds it keeps listening without its name after it last spoke or heard you",
@@ -99,7 +103,8 @@ OPTIONS = [
     Option("port", 8080, "the port (bin/anyassistant reads it too)", "server", "int"),
     Option("mode", "assistant", "assistant, transcribe (only shows what it hears) or parrot (repeats it)", "server",
            "choice", _plugins("brain")),
-    Option("record", None, "saves everything that arrives to a WAV (to debug)", "server"),
+    Option("record", False, "saves everything that arrives to a WAV, in the cache's «recordings» (to debug)",
+           "server", "bool"),
 ]
 
 def add(option: Option):
@@ -136,7 +141,7 @@ def parser() -> argparse.ArgumentParser:
             kwargs["action"] = argparse.BooleanOptionalAction
         elif o.kind in ("int", "float"):
             kwargs["type"] = int if o.kind == "int" else float
-        elif o.kind == "json":
+        elif o.kind in ("json", "dict", "longtext"):
             kwargs["type"] = _json_or_text
         made.add_argument(flag, **kwargs)
     return made
@@ -154,7 +159,7 @@ def check(values: dict) -> list[str]:
     problems = []
     for o in OPTIONS:
         value = values.get(o.name)
-        if value is None or o.kind != "choice":
+        if value is None or o.kind != "choice" or o.name == "detail":  # detail: below, with these values' levels
             continue
         allowed = o.options()
         if value not in allowed:

@@ -25,8 +25,10 @@ WEB = HERE / "web"
 for option in (
     Option("skin", skins.DEFAULT, "the screen's look: eyes, orb, minimal, bedside or yours (a device's ?skin= wins)",
            "screen", "choice", lambda: list(skins.available()), live=True),
-    Option("skin_options", None, 'the skin\'s options: {"accent": "#ff7a45"}', "screen", "json", live=True),
-    Option("skins_dir", None, "your skins (default: skins in your data folder)", "screen"),
+    Option("skin_options", None, 'the skin\'s options: {"accent": "#ff7a45"}', "screen", "dict", live=True,
+           empty="the skin's own"),
+    Option("skins_dir", None, "your skins (default: skins in your data folder)", "screen",
+           empty="skins in your data folder"),
     Option("video", "auto", "camera quality; auto: each device by its memory (a device's ?video= wins)", "screen",
            "choice", ["auto", "normal", "low", "off"], live=True),
     Option("show_time", True, "the time while asleep", "screen", "bool", live=True, screen=True),

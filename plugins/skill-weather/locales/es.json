@@ -72,5 +72,8 @@
       "Tu ciudad, para el tiempo",
       "Así «¿qué tiempo hace?» sabe de dónde hablas. Puedes dejarlo vacío y decir la ciudad cada vez."
     ]
+  },
+  "options_empty": {
+    "location": "ninguna: dices la ciudad cada vez"
   }
 }

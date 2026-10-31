@@ -99,7 +99,7 @@ def test_variants_are_picked_at_random_without_repeating(es):
 
 
 PLUGIN_TEXTS = sorted(p for p in (ROOT / "plugins").glob("*/locales/es.json"))
-META = {"plugins", "options", "installer"}  # their English is in the code (plugin.json, the Option, the step)
+META = {"plugins", "options", "installer", "options_empty"}  # their English is in the code (plugin.json, the Option, the step)
 
 
 @pytest.mark.parametrize("path", PLUGIN_TEXTS, ids=lambda p: p.parent.parent.name)

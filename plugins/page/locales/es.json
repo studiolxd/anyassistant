@@ -51,5 +51,9 @@
     "show_timers": "temporizadores, alarmas y recordatorios en marcha",
     "show_stats": "el RTT, el jitter y las pérdidas de la conexión",
     "clock": "12 o 24 horas (auto: lo del idioma)"
+  },
+  "options_empty": {
+    "skin_options": "las de la skin",
+    "skins_dir": "skins en tu carpeta de datos"
   }
 }
