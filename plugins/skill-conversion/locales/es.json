@@ -1,0 +1,183 @@
+{
+  "plugins": {
+    "skill-conversion": [
+      "Conversión de unidades",
+      "Longitud, masa, volumen y temperatura."
+    ]
+  },
+  "speech": {
+    "convert": "{value} {source} son {result} {target}."
+  },
+  "skills": {
+    "words": {
+      "convert": [
+        "convierte",
+        "pasa",
+        "cuantos",
+        "cuantas",
+        "son",
+        "es",
+        "en",
+        "a"
+      ]
+    },
+    "units": {
+      "mm": {
+        "one": "milímetro",
+        "other": "milímetros",
+        "words": [
+          "mm",
+          "milimetro",
+          "milimetros"
+        ]
+      },
+      "cm": {
+        "one": "centímetro",
+        "other": "centímetros",
+        "words": [
+          "cm",
+          "centimetro",
+          "centimetros"
+        ]
+      },
+      "m": {
+        "one": "metro",
+        "other": "metros",
+        "words": [
+          "metro",
+          "metros"
+        ]
+      },
+      "km": {
+        "one": "kilómetro",
+        "other": "kilómetros",
+        "words": [
+          "km",
+          "kilometro",
+          "kilometros"
+        ]
+      },
+      "in": {
+        "one": "pulgada",
+        "other": "pulgadas",
+        "words": [
+          "pulgada",
+          "pulgadas"
+        ]
+      },
+      "ft": {
+        "one": "pie",
+        "other": "pies",
+        "words": [
+          "pie",
+          "pies"
+        ]
+      },
+      "yd": {
+        "one": "yarda",
+        "other": "yardas",
+        "words": [
+          "yarda",
+          "yardas"
+        ]
+      },
+      "mi": {
+        "one": "milla",
+        "other": "millas",
+        "words": [
+          "milla",
+          "millas"
+        ]
+      },
+      "g": {
+        "one": "gramo",
+        "other": "gramos",
+        "words": [
+          "gramo",
+          "gramos",
+          "g"
+        ]
+      },
+      "kg": {
+        "one": "kilo",
+        "other": "kilos",
+        "words": [
+          "kilo",
+          "kilos",
+          "kilogramo",
+          "kilogramos",
+          "kg"
+        ]
+      },
+      "lb": {
+        "one": "libra",
+        "other": "libras",
+        "words": [
+          "libra",
+          "libras"
+        ]
+      },
+      "oz": {
+        "one": "onza",
+        "other": "onzas",
+        "words": [
+          "onza",
+          "onzas"
+        ]
+      },
+      "ml": {
+        "one": "mililitro",
+        "other": "mililitros",
+        "words": [
+          "ml",
+          "mililitro",
+          "mililitros"
+        ]
+      },
+      "l": {
+        "one": "litro",
+        "other": "litros",
+        "words": [
+          "litro",
+          "litros"
+        ]
+      },
+      "gal": {
+        "one": "galón",
+        "other": "galones",
+        "words": [
+          "galon",
+          "galones"
+        ]
+      },
+      "cup": {
+        "one": "taza",
+        "other": "tazas",
+        "words": [
+          "taza",
+          "tazas"
+        ]
+      },
+      "c": {
+        "one": "grado centígrado",
+        "other": "grados centígrados",
+        "words": [
+          "celsius",
+          "centigrados",
+          "centigrado"
+        ]
+      },
+      "f": {
+        "one": "grado Fahrenheit",
+        "other": "grados Fahrenheit",
+        "words": [
+          "fahrenheit"
+        ]
+      }
+    },
+    "degrees": [
+      "grado",
+      "grados"
+    ]
+  }
+}

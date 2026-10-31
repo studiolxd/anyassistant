@@ -1,0 +1,73 @@
+{
+  "plugins": {
+    "skill-alarms": [
+      "Temporizadores, alarmas y recordatorios",
+      "«Pon un temporizador de 10 minutos», «despiértame a las 7», «recuérdame…»."
+    ]
+  },
+  "options": {
+    "ring_seconds": "cuánto suena una alarma si nadie la para",
+    "snooze_minutes": "«pospón» sin decir cuánto"
+  },
+  "speech": {
+    "timer_set": "Temporizador de {duration}.",
+    "alarm_set": "Alarma para {when}.",
+    "reminder_set": "Te lo recordaré {when}: {text}.",
+    "remaining": "Quedan {duration}.",
+    "no_timers": "No hay nada en marcha.",
+    "listing": "Tienes {items}.",
+    "item_timer": "un temporizador al que le quedan {duration}",
+    "item_alarm": "una alarma {when}",
+    "item_reminder": "un recordatorio {when}: {text}",
+    "cancelled": "Cancelado.",
+    "nothing_to_cancel": "No había nada que cancelar.",
+    "timer_done": "¡Tiempo!",
+    "alarm_ring": "Son {time}.",
+    "reminder_ring": "Recordatorio: {text}."
+  },
+  "skills": {
+    "words": {
+      "cancel": [
+        "cancela",
+        "cancelar",
+        "quita",
+        "quitar",
+        "borra",
+        "borrar",
+        "elimina",
+        "eliminar",
+        "anula",
+        "anular"
+      ],
+      "remaining": [
+        "queda",
+        "quedan",
+        "falta",
+        "faltan"
+      ],
+      "list": [
+        "que",
+        "cuales",
+        "tengo",
+        "hay",
+        "dime"
+      ],
+      "all": [
+        "todos",
+        "todas",
+        "todo"
+      ],
+      "in": [
+        "en",
+        "dentro"
+      ],
+      "notify": [
+        "avisame",
+        "avisa"
+      ],
+      "connectors": [
+        "que"
+      ]
+    }
+  }
+}

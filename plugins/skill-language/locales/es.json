@@ -1,0 +1,23 @@
+{
+  "plugins": {
+    "skill-language": [
+      "Cambiar de idioma",
+      "«Habla en inglés»: guarda el idioma y se reinicia en él."
+    ]
+  },
+  "speech": {
+    "language_changing": "Vale, cambio a {language}. Vuelvo en unos segundos.",
+    "language_same": "Ya estoy hablando en {language}."
+  },
+  "commands": {
+    "language": [
+      "habla",
+      "hablame",
+      "hablemos",
+      "cambia",
+      "cambiate",
+      "pasa",
+      "pasate"
+    ]
+  }
+}

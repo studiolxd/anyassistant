@@ -1,0 +1,35 @@
+{
+  "speech": {
+    "math": "That's {result}."
+  },
+  "skills": {
+    "operators": {
+      "+": [
+        "plus",
+        "add"
+      ],
+      "-": [
+        "minus",
+        "less"
+      ],
+      "*": [
+        "times",
+        "multiplied",
+        "x"
+      ],
+      "/": [
+        "divided",
+        "over"
+      ],
+      "^": [
+        "power",
+        "squared",
+        "cubed"
+      ],
+      "%": [
+        "percent",
+        "%"
+      ]
+    }
+  }
+}

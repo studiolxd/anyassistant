@@ -1,0 +1,193 @@
+{
+  "speech": {
+    "convert": "{value} {source} is {result} {target}."
+  },
+  "skills": {
+    "words": {
+      "convert": [
+        "convert",
+        "how",
+        "many",
+        "much",
+        "is",
+        "are",
+        "in",
+        "to",
+        "into"
+      ]
+    },
+    "units": {
+      "mm": {
+        "one": "millimeter",
+        "other": "millimeters",
+        "words": [
+          "mm",
+          "millimeter",
+          "millimeters",
+          "millimetre",
+          "millimetres"
+        ]
+      },
+      "cm": {
+        "one": "centimeter",
+        "other": "centimeters",
+        "words": [
+          "cm",
+          "centimeter",
+          "centimeters",
+          "centimetre",
+          "centimetres"
+        ]
+      },
+      "m": {
+        "one": "meter",
+        "other": "meters",
+        "words": [
+          "meter",
+          "meters",
+          "metre",
+          "metres"
+        ]
+      },
+      "km": {
+        "one": "kilometer",
+        "other": "kilometers",
+        "words": [
+          "km",
+          "kilometer",
+          "kilometers",
+          "kilometre",
+          "kilometres"
+        ]
+      },
+      "in": {
+        "one": "inch",
+        "other": "inches",
+        "words": [
+          "inch",
+          "inches"
+        ]
+      },
+      "ft": {
+        "one": "foot",
+        "other": "feet",
+        "words": [
+          "foot",
+          "feet",
+          "ft"
+        ]
+      },
+      "yd": {
+        "one": "yard",
+        "other": "yards",
+        "words": [
+          "yard",
+          "yards"
+        ]
+      },
+      "mi": {
+        "one": "mile",
+        "other": "miles",
+        "words": [
+          "mile",
+          "miles"
+        ]
+      },
+      "g": {
+        "one": "gram",
+        "other": "grams",
+        "words": [
+          "gram",
+          "grams",
+          "g"
+        ]
+      },
+      "kg": {
+        "one": "kilogram",
+        "other": "kilograms",
+        "words": [
+          "kilo",
+          "kilos",
+          "kilogram",
+          "kilograms",
+          "kg"
+        ]
+      },
+      "lb": {
+        "one": "pound",
+        "other": "pounds",
+        "words": [
+          "pound",
+          "pounds",
+          "lb",
+          "lbs"
+        ]
+      },
+      "oz": {
+        "one": "ounce",
+        "other": "ounces",
+        "words": [
+          "ounce",
+          "ounces",
+          "oz"
+        ]
+      },
+      "ml": {
+        "one": "milliliter",
+        "other": "milliliters",
+        "words": [
+          "ml",
+          "milliliter",
+          "milliliters",
+          "millilitre",
+          "millilitres"
+        ]
+      },
+      "l": {
+        "one": "liter",
+        "other": "liters",
+        "words": [
+          "liter",
+          "liters",
+          "litre",
+          "litres"
+        ]
+      },
+      "gal": {
+        "one": "gallon",
+        "other": "gallons",
+        "words": [
+          "gallon",
+          "gallons"
+        ]
+      },
+      "cup": {
+        "one": "cup",
+        "other": "cups",
+        "words": [
+          "cup",
+          "cups"
+        ]
+      },
+      "c": {
+        "one": "degree Celsius",
+        "other": "degrees Celsius",
+        "words": [
+          "celsius",
+          "centigrade"
+        ]
+      },
+      "f": {
+        "one": "degree Fahrenheit",
+        "other": "degrees Fahrenheit",
+        "words": [
+          "fahrenheit"
+        ]
+      }
+    },
+    "degrees": [
+      "degree",
+      "degrees"
+    ]
+  }
+}

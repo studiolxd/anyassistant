@@ -35,7 +35,9 @@ def vocabulary() -> dict:
 
 
 def words(name: str) -> set[str]:
-    return set(vocabulary()["words"][name])
+    """A group of words («cancel», «volume»…): the core's, or the plugin's that brings them (an
+    empty set if that plugin isn't there)."""
+    return set(vocabulary()["words"].get(name, ()))
 
 
 def number(toks: list[Token], i: int) -> tuple[float, int] | None:

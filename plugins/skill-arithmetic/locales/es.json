@@ -1,0 +1,42 @@
+{
+  "plugins": {
+    "skill-arithmetic": [
+      "Cuentas",
+      "«¿Cuánto es 23 por 47?», porcentajes, potencias."
+    ]
+  },
+  "speech": {
+    "math": "Son {result}."
+  },
+  "skills": {
+    "operators": {
+      "+": [
+        "mas",
+        "sumale"
+      ],
+      "-": [
+        "menos",
+        "restale"
+      ],
+      "*": [
+        "por",
+        "x",
+        "multiplicado"
+      ],
+      "/": [
+        "entre",
+        "dividido"
+      ],
+      "^": [
+        "elevado",
+        "cuadrado",
+        "cubo"
+      ],
+      "%": [
+        "ciento",
+        "porciento",
+        "%"
+      ]
+    }
+  }
+}

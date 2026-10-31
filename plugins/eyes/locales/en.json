@@ -1,0 +1,19 @@
+{
+  "commands": {
+    "look": [
+      "see",
+      "look",
+      "looking",
+      "read",
+      "watch",
+      "showing",
+      "show"
+    ],
+    "read": [
+      "read",
+      "says",
+      "written",
+      "text"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "plugins": {
+    "skill-clock": [
+      "Hora y fecha",
+      "«¿Qué hora es?», «¿qué día es hoy?»."
+    ]
+  },
+  "speech": {
+    "time_is": "Son {time}.",
+    "time_is_one": "Es {time}.",
+    "date_is": "Hoy es {date}."
+  },
+  "skills": {
+    "words": {
+      "ask": [
+        "que",
+        "dime",
+        "a"
+      ]
+    }
+  }
+}

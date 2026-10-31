@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "vad-silero": [
+      "Silero VAD",
+      "Detección de voz con Silero (PyTorch)."
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "speech": {
+    "camera_on": "Camera on.",
+    "camera_off": "Camera off."
+  },
+  "commands": {
+    "camera": [
+      "camera",
+      "cam"
+    ],
+    "camera_on": [
+      "on",
+      "show",
+      "open",
+      "activate",
+      "start",
+      "enable"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "sounds": [
+      "Sonidos",
+      "Un sonido al despertarse y al dormirse (el de la skin, si trae el suyo)."
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "plugins": {
+    "skill-choose-llm": [
+      "Elegir el LLM",
+      "«Usa Claude», «cambia a Hermes»."
+    ]
+  },
+  "speech": {
+    "llm_changing": "Vale, cambio a {llm}. Vuelvo en unos segundos.",
+    "llm_same": "Ya estoy usando {llm}.",
+    "llm_unavailable": "{llm} no está disponible en este Mac."
+  },
+  "commands": {
+    "switch": [
+      "usa",
+      "cambia",
+      "cambiate",
+      "pasa",
+      "pasate"
+    ],
+    "llm_words": [
+      "modelo",
+      "llm",
+      "favor"
+    ]
+  }
+}

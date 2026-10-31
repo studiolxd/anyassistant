@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "wake-whisper": [
+      "Palabra de activación (Whisper)",
+      "Cualquier palabra como palabra de activación, oída con un Whisper pequeño."
+    ]
+  }
+}

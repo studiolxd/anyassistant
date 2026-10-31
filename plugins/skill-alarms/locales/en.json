@@ -1,0 +1,57 @@
+{
+  "speech": {
+    "timer_set": "Timer for {duration}.",
+    "alarm_set": "Alarm set for {when}.",
+    "reminder_set": "I'll remind you {when}: {text}.",
+    "remaining": "{duration} left.",
+    "no_timers": "There's nothing running.",
+    "listing": "You have {items}.",
+    "item_timer": "a timer with {duration} left",
+    "item_alarm": "an alarm {when}",
+    "item_reminder": "a reminder {when}: {text}",
+    "cancelled": "Cancelled.",
+    "nothing_to_cancel": "There was nothing to cancel.",
+    "timer_done": "Time's up!",
+    "alarm_ring": "It's {time}.",
+    "reminder_ring": "Reminder: {text}."
+  },
+  "skills": {
+    "words": {
+      "cancel": [
+        "cancel",
+        "delete",
+        "remove",
+        "clear",
+        "stop"
+      ],
+      "remaining": [
+        "left",
+        "remaining",
+        "remain"
+      ],
+      "list": [
+        "what",
+        "which",
+        "list",
+        "have",
+        "any"
+      ],
+      "all": [
+        "all",
+        "every"
+      ],
+      "in": [
+        "in",
+        "after"
+      ],
+      "notify": [
+        "notify",
+        "alert"
+      ],
+      "connectors": [
+        "to",
+        "that"
+      ]
+    }
+  }
+}

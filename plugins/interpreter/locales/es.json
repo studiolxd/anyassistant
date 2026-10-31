@@ -1,0 +1,11 @@
+{
+  "plugins": {
+    "interpreter": [
+      "Intérprete de skills",
+      "Cuando una skill se dice de forma rara («avísame dentro de un rato largo»), un LLM (de serie, el local de Apple) la encuentra igual."
+    ]
+  },
+  "options": {
+    "interpreter": "un LLM para skills dichas de forma rara: auto (uno local si lo hay: el de Apple) o el nombre de un LLM"
+  }
+}

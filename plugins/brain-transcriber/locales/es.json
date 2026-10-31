@@ -1,0 +1,16 @@
+{
+  "plugins": {
+    "brain-transcriber": [
+      "Transcriptor",
+      "«mode»: «transcribe». Escucha (palabra de activación, detección de voz, reconocimiento) y muestra lo que dices; el asistente escucha con él."
+    ]
+  },
+  "speech": {
+    "goodbye": [
+      "Hasta la próxima",
+      "Hasta luego",
+      "Nos vemos",
+      "Aquí estaré"
+    ]
+  }
+}

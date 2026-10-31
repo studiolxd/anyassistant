@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "plugin-manager": [
+      "Gestor de plugins",
+      "Permite al asistente listar, encender y apagar sus plugins, por voz."
+    ]
+  }
+}

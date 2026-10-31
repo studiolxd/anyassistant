@@ -96,3 +96,18 @@ def test_variants_are_picked_at_random_without_repeating(es):
     assert len(set(said)) > 2
     assert all(a != b for a, b in zip(said, said[1:]))
     assert all(s in i18n.L.list("speech.wait") for s in said)
+
+
+PLUGIN_TEXTS = sorted(p for p in (ROOT / "plugins").glob("*/locales/es.json"))
+META = {"plugins", "options", "installer"}  # their English is in the code (plugin.json, the Option, the step)
+
+
+@pytest.mark.parametrize("path", PLUGIN_TEXTS, ids=lambda p: p.parent.parent.name)
+def test_a_plugins_spanish_has_its_english(path):
+    """What a plugin says in Spanish it says in English too (in its own locales/en.json)."""
+    spanish = {k: v for k, v in json.loads(path.read_text()).items() if k not in META}
+    english_file = path.with_name("en.json")
+    english = json.loads(english_file.read_text()) if english_file.exists() else {}
+    missing = {k for k in flatten(spanish).keys() - flatten(english).keys() if not STYLE_KEYS.match(k)
+               and ".names." not in k and ".display." not in k}  # words of each language: «compra», «shopping»
+    assert not missing

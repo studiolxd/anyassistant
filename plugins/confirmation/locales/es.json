@@ -1,0 +1,24 @@
+{
+  "plugins": {
+    "confirmation": [
+      "Confirmación",
+      "Las acciones que cambian algo esperan tu «sí» de viva voz, pida el LLM que las pida (las herramientas propias, Claude, Hermes)."
+    ]
+  },
+  "options": {
+    "confirm_wait": "segundos para responder «sí» a una acción que cambia algo",
+    "confirm_valid": "segundos que vale un «sí»"
+  },
+  "commands": {
+    "no": [
+      "no",
+      "espera",
+      "cancela",
+      "cancelar",
+      "para",
+      "nada",
+      "tampoco",
+      "mejor"
+    ]
+  }
+}

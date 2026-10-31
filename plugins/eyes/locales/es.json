@@ -1,0 +1,42 @@
+{
+  "plugins": {
+    "eyes": [
+      "Ojos",
+      "Ve por la cámara del dispositivo cuando se lo pides («¿qué ves?», «léeme esto»), o cuando Claude decide mirar."
+    ]
+  },
+  "options": {
+    "read_photo": "una foto a resolución completa cuando le pides leer"
+  },
+  "installer": {
+    "eyes": [
+      "Que pueda mirar por la cámara del dispositivo",
+      "Solo cuando se lo pides («¿qué ves?», «léeme esto»); si no, nada sale del Mac."
+    ]
+  },
+  "commands": {
+    "look": [
+      "ves",
+      "ver",
+      "mira",
+      "miras",
+      "mirar",
+      "viendo",
+      "lee",
+      "leer",
+      "leeme",
+      "enseno",
+      "muestro"
+    ],
+    "read": [
+      "lee",
+      "leer",
+      "leeme",
+      "pone",
+      "escrito",
+      "texto",
+      "letra",
+      "letras"
+    ]
+  }
+}

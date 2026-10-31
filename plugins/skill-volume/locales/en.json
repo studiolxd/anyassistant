@@ -1,0 +1,34 @@
+{
+  "speech": {
+    "volume": "Volume at {percent} percent."
+  },
+  "skills": {
+    "words": {
+      "volume": [
+        "volume"
+      ],
+      "up": [
+        "up",
+        "louder",
+        "raise",
+        "increase"
+      ],
+      "down": [
+        "down",
+        "lower",
+        "quieter",
+        "decrease",
+        "reduce"
+      ],
+      "max": [
+        "max",
+        "maximum",
+        "full"
+      ],
+      "min": [
+        "min",
+        "minimum"
+      ]
+    }
+  }
+}

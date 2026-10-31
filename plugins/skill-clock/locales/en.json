@@ -1,0 +1,18 @@
+{
+  "speech": {
+    "time_is": "It's {time}.",
+    "time_is_one": "It's {time}.",
+    "date_is": "Today is {date}."
+  },
+  "skills": {
+    "words": {
+      "ask": [
+        "what",
+        "whats",
+        "tell",
+        "is",
+        "s"
+      ]
+    }
+  }
+}

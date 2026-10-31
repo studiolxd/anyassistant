@@ -1,0 +1,11 @@
+{
+  "plugins": {
+    "llm-hermes": [
+      "Hermes",
+      "Hermes Agent a través de su pasarela, con sus propias herramientas y memoria."
+    ]
+  },
+  "speech": {
+    "hermes_down": "No puedo hablar con Hermes: ¿está en marcha su gateway?"
+  }
+}

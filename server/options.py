@@ -23,6 +23,7 @@ class Option:
     live: bool = False  # applies without restarting
     screen: bool = False  # the page shows it (sent in /config)
     flag: str = ""  # another command-line name (--lang)
+    plugin: str | None = None  # the plugin that added it (None: the core's); its texts are in its locales
 
     def options(self) -> list:
         return list(self.choices()) if callable(self.choices) else list(self.choices or [])
@@ -103,6 +104,9 @@ OPTIONS = [
 
 def add(option: Option):
     """A plugin's own option (call it when the plugin loads)."""
+    import kernel
+
+    option.plugin = option.plugin or kernel.current()
     if option.name not in {o.name for o in OPTIONS}:
         OPTIONS.append(option)
         BY_NAME[option.name] = option

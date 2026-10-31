@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "mcp-server": [
+      "Servidor MCP de AnyAssistant",
+      "Las herramientas del asistente como servidor MCP «anyassistant» en /mcp, solo desde el propio Mac (Claude, Hermes)."
+    ]
+  }
+}

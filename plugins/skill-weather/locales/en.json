@@ -1,0 +1,59 @@
+{
+  "weather": {
+    "ask": "^(?:hey )?(?:what s the weather(?: like)?|whats the weather(?: like)?|how s the weather|hows the weather|what is the weather(?: like)?|(?:the )?weather|will it rain|is it going to rain|is it (?:cold|hot)|what s the temperature|whats the temperature)(?: (?:today|tomorrow|the day after tomorrow))?(?: (?:in|for) (?P<city>.+?))?(?: (?:today|tomorrow))?$",
+    "tomorrow": [
+      "tomorrow"
+    ],
+    "after_tomorrow": [
+      "day after tomorrow"
+    ],
+    "rain": [
+      "rain",
+      "raining"
+    ]
+  },
+  "speech": {
+    "weather_now": "Right now in {place} it's {temp} degrees, {sky}.",
+    "weather_day": "{when} in {place}, between {low} and {high} degrees, {sky}, with a {rain}% chance of rain.",
+    "weather_today": "Today",
+    "weather_tomorrow": "Tomorrow",
+    "weather_after": "The day after tomorrow",
+    "rain_yes": "{when} it will probably rain in {place}: {rain}%.",
+    "rain_maybe": "{when} it might rain in {place}: {rain}%.",
+    "rain_no": "{when} it doesn't look like rain in {place}: {rain}%.",
+    "weather_where": "Tell me which city: set it in the settings («location»), or ask «the weather in London».",
+    "weather_unknown_place": "I can't find {place}.",
+    "weather_failed": "I couldn't check the weather right now.",
+    "weather_rest_of_today": "Today, between {low} and {high} degrees, {sky}, with a {rain}% chance of rain."
+  },
+  "sky": {
+    "0": "clear",
+    "1": "mostly clear",
+    "2": "partly cloudy",
+    "3": "cloudy",
+    "45": "foggy",
+    "48": "foggy",
+    "51": "drizzling",
+    "53": "drizzling",
+    "55": "drizzling",
+    "56": "freezing drizzle",
+    "57": "freezing drizzle",
+    "61": "light rain",
+    "63": "raining",
+    "65": "heavy rain",
+    "66": "freezing rain",
+    "67": "freezing rain",
+    "71": "light snow",
+    "73": "snowing",
+    "75": "heavy snow",
+    "77": "snow grains",
+    "80": "showers",
+    "81": "showers",
+    "82": "heavy showers",
+    "85": "snow showers",
+    "86": "snow showers",
+    "95": "thunderstorms",
+    "96": "thunderstorms with hail",
+    "99": "thunderstorms with hail"
+  }
+}

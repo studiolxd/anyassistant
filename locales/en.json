@@ -17,63 +17,22 @@
       "Give me a moment.",
       "Let me see."
     ],
-    "goodbye": [
-      "See you soon",
-      "Bye for now",
-      "Talk to you later",
-      "Until next time"
-    ],
-    "reloaded": "Done, I've reloaded the tools.",
     "restarting": "Restarting. I'll be back in a few seconds.",
     "llm_failed": "Sorry, I couldn't answer.",
-    "connection_cut": "Sorry, I lost the connection to Claude.",
-    "no_login": "I'm not signed in to Claude: run slash login in Claude Code.",
-    "guardrail": "I'd rather not answer that.",
-    "hermes_down": "I can't reach Hermes: is its gateway running?",
     "hermes_approval": "Hermes wants to do this: {action}. Shall I go ahead?",
-    "language_changing": "Okay, switching to {language}. I'll be back in a few seconds.",
-    "language_same": "I'm already speaking {language}.",
-    "camera_on": "Camera on.",
-    "camera_off": "Camera off.",
-    "llm_changing": "Okay, switching to {llm}. I'll be back in a few seconds.",
-    "llm_same": "I'm already using {llm}.",
-    "llm_unavailable": "{llm} isn't available on this Mac.",
-    "time_is": "It's {time}.",
-    "time_is_one": "It's {time}.",
-    "date_is": "Today is {date}.",
-    "timer_set": "Timer for {duration}.",
-    "alarm_set": "Alarm set for {when}.",
-    "reminder_set": "I'll remind you {when}: {text}.",
-    "remaining": "{duration} left.",
-    "no_timers": "There's nothing running.",
-    "listing": "You have {items}.",
-    "item_timer": "a timer with {duration} left",
-    "item_alarm": "an alarm {when}",
-    "item_reminder": "a reminder {when}: {text}",
     "list_and": " and ",
-    "cancelled": "Cancelled.",
-    "nothing_to_cancel": "There was nothing to cancel.",
-    "timer_done": "Time's up!",
-    "alarm_ring": "It's {time}.",
-    "reminder_ring": "Reminder: {text}.",
-    "snoozed": "Snoozed for {duration}.",
-    "math": "That's {result}.",
-    "convert": "{value} {source} is {result} {target}.",
-    "volume": "Volume at {percent} percent.",
     "skill_failed": "I didn't get the time or the amount.",
     "when_today": "today at {time}",
     "when_tomorrow": "tomorrow at {time}",
     "when_in": "in {duration}",
     "duration_and": " and ",
-    "when_day": "on {date} at {time}",
-    "fallback": "{name} isn't answering; I'll answer with the local model."
+    "when_day": "on {date} at {time}"
   },
   "commands": {
     "sleep": [
       "sleep",
       "goodnight"
     ],
-    "not_sleep": [],
     "stop": [
       "stop",
       "quiet",
@@ -82,33 +41,6 @@
       "shush",
       "hush"
     ],
-    "look": [
-      "see",
-      "look",
-      "looking",
-      "read",
-      "watch",
-      "showing",
-      "show"
-    ],
-    "read": [
-      "read",
-      "says",
-      "written",
-      "text"
-    ],
-    "camera": [
-      "camera",
-      "cam"
-    ],
-    "camera_on": [
-      "on",
-      "show",
-      "open",
-      "activate",
-      "start",
-      "enable"
-    ],
     "camera_off": [
       "off",
       "hide",
@@ -116,29 +48,6 @@
       "stop",
       "deactivate",
       "disable"
-    ],
-    "reload": [
-      "reload"
-    ],
-    "restart": [
-      "restart",
-      "reboot"
-    ],
-    "switch": [
-      "use",
-      "switch",
-      "change"
-    ],
-    "llm_words": [
-      "model",
-      "llm",
-      "please"
-    ],
-    "language": [
-      "speak",
-      "talk",
-      "switch",
-      "change"
     ],
     "yes": [
       "yes",
@@ -151,14 +60,6 @@
       "confirmed",
       "correct",
       "absolutely"
-    ],
-    "no": [
-      "no",
-      "nope",
-      "wait",
-      "cancel",
-      "stop",
-      "dont"
     ]
   },
   "stt": {
@@ -315,29 +216,6 @@
         "notify",
         "alert"
       ],
-      "cancel": [
-        "cancel",
-        "delete",
-        "remove",
-        "clear",
-        "stop"
-      ],
-      "remaining": [
-        "left",
-        "remaining",
-        "remain"
-      ],
-      "list": [
-        "what",
-        "which",
-        "list",
-        "have",
-        "any"
-      ],
-      "all": [
-        "all",
-        "every"
-      ],
       "time": [
         "time"
       ],
@@ -345,17 +223,6 @@
         "date",
         "day",
         "today"
-      ],
-      "ask": [
-        "what",
-        "whats",
-        "tell",
-        "is",
-        "s"
-      ],
-      "in": [
-        "in",
-        "after"
       ],
       "at": [
         "at",
@@ -378,44 +245,8 @@
         "compute",
         "s"
       ],
-      "volume": [
-        "volume"
-      ],
-      "up": [
-        "up",
-        "louder",
-        "raise",
-        "increase"
-      ],
-      "down": [
-        "down",
-        "lower",
-        "quieter",
-        "decrease",
-        "reduce"
-      ],
-      "max": [
-        "max",
-        "maximum",
-        "full"
-      ],
-      "min": [
-        "min",
-        "minimum"
-      ],
       "snooze": [
         "snooze"
-      ],
-      "convert": [
-        "convert",
-        "how",
-        "many",
-        "much",
-        "is",
-        "are",
-        "in",
-        "to",
-        "into"
       ],
       "fillers": [
         "the",
@@ -432,14 +263,6 @@
         "to",
         "that",
         "is"
-      ],
-      "notify": [
-        "notify",
-        "alert"
-      ],
-      "connectors": [
-        "to",
-        "that"
       ]
     },
     "clock": {
@@ -481,207 +304,6 @@
         "midnight"
       ]
     },
-    "operators": {
-      "+": [
-        "plus",
-        "add"
-      ],
-      "-": [
-        "minus",
-        "less"
-      ],
-      "*": [
-        "times",
-        "multiplied",
-        "x"
-      ],
-      "/": [
-        "divided",
-        "over"
-      ],
-      "^": [
-        "power",
-        "squared",
-        "cubed"
-      ],
-      "%": [
-        "percent",
-        "%"
-      ]
-    },
-    "units": {
-      "mm": {
-        "one": "millimeter",
-        "other": "millimeters",
-        "words": [
-          "mm",
-          "millimeter",
-          "millimeters",
-          "millimetre",
-          "millimetres"
-        ]
-      },
-      "cm": {
-        "one": "centimeter",
-        "other": "centimeters",
-        "words": [
-          "cm",
-          "centimeter",
-          "centimeters",
-          "centimetre",
-          "centimetres"
-        ]
-      },
-      "m": {
-        "one": "meter",
-        "other": "meters",
-        "words": [
-          "meter",
-          "meters",
-          "metre",
-          "metres"
-        ]
-      },
-      "km": {
-        "one": "kilometer",
-        "other": "kilometers",
-        "words": [
-          "km",
-          "kilometer",
-          "kilometers",
-          "kilometre",
-          "kilometres"
-        ]
-      },
-      "in": {
-        "one": "inch",
-        "other": "inches",
-        "words": [
-          "inch",
-          "inches"
-        ]
-      },
-      "ft": {
-        "one": "foot",
-        "other": "feet",
-        "words": [
-          "foot",
-          "feet",
-          "ft"
-        ]
-      },
-      "yd": {
-        "one": "yard",
-        "other": "yards",
-        "words": [
-          "yard",
-          "yards"
-        ]
-      },
-      "mi": {
-        "one": "mile",
-        "other": "miles",
-        "words": [
-          "mile",
-          "miles"
-        ]
-      },
-      "g": {
-        "one": "gram",
-        "other": "grams",
-        "words": [
-          "gram",
-          "grams",
-          "g"
-        ]
-      },
-      "kg": {
-        "one": "kilogram",
-        "other": "kilograms",
-        "words": [
-          "kilo",
-          "kilos",
-          "kilogram",
-          "kilograms",
-          "kg"
-        ]
-      },
-      "lb": {
-        "one": "pound",
-        "other": "pounds",
-        "words": [
-          "pound",
-          "pounds",
-          "lb",
-          "lbs"
-        ]
-      },
-      "oz": {
-        "one": "ounce",
-        "other": "ounces",
-        "words": [
-          "ounce",
-          "ounces",
-          "oz"
-        ]
-      },
-      "ml": {
-        "one": "milliliter",
-        "other": "milliliters",
-        "words": [
-          "ml",
-          "milliliter",
-          "milliliters",
-          "millilitre",
-          "millilitres"
-        ]
-      },
-      "l": {
-        "one": "liter",
-        "other": "liters",
-        "words": [
-          "liter",
-          "liters",
-          "litre",
-          "litres"
-        ]
-      },
-      "gal": {
-        "one": "gallon",
-        "other": "gallons",
-        "words": [
-          "gallon",
-          "gallons"
-        ]
-      },
-      "cup": {
-        "one": "cup",
-        "other": "cups",
-        "words": [
-          "cup",
-          "cups"
-        ]
-      },
-      "c": {
-        "one": "degree Celsius",
-        "other": "degrees Celsius",
-        "words": [
-          "celsius",
-          "centigrade"
-        ]
-      },
-      "f": {
-        "one": "degree Fahrenheit",
-        "other": "degrees Fahrenheit",
-        "words": [
-          "fahrenheit"
-        ]
-      }
-    },
-    "degrees": [
-      "degree",
-      "degrees"
-    ],
     "duration_names": {
       "hour": [
         "hour",
@@ -706,11 +328,6 @@
     }
   },
   "choices": {
-    "memory": {
-      "off": "No",
-      "explicit": "Only what I ask",
-      "auto": "Also what it learns"
-    },
     "bool": {
       "true": "Yes",
       "false": "No"
@@ -759,220 +376,9 @@
     "host": "the address it listens on",
     "port": "the port (bin/anyassistant reads it too)",
     "mode": "assistant, transcribe (only shows what it hears) or parrot (repeats it)",
-    "record": "saves everything that arrives to a WAV (to debug)",
-    "confirm_wait": "seconds to answer «yes» to an action that changes something",
-    "confirm_valid": "seconds a «yes» stays valid",
-    "read_photo": "a full-resolution photo when asked to read",
-    "interpreter": "an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name",
-    "skin": "the screen's look: eyes, orb, minimal, bedside or yours (a device's ?skin= wins)",
-    "skin_options": "the skin's options: {\"accent\": \"#ff7a45\"}",
-    "skins_dir": "your skins (default: skins in your data folder)",
-    "video": "camera quality; auto: each device by its memory (a device's ?video= wins)",
-    "show_time": "the time while asleep",
-    "show_date": "the date while asleep",
-    "show_hint": "«Say Hey Jarvis» while asleep",
-    "show_status": "«Listening», «Thinking…» while awake",
-    "show_heard": "what you said",
-    "show_answer": "what it answers",
-    "history": "earlier sentences kept on screen",
-    "show_timers": "running timers, alarms and reminders",
-    "show_stats": "the connection's RTT, jitter and losses",
-    "clock": "12 or 24 hours (auto: the language's)",
-    "memory": "what it remembers: only when asked (explicit) or also on its own (auto)",
-    "memory_facts": "facts before the LLM compacts them",
-    "memory_conversations": "conversation summaries kept",
-    "memory_days": "days a conversation summary is kept",
-    "ring_seconds": "how long an alarm rings if nobody stops it",
-    "snooze_minutes": "«snooze» without saying how long",
-    "llm_fallback": "if the LLM can't answer, another one does: auto (Apple's local model if there is one), an LLM's name, or none"
-  },
-  "plugins": {
-    "admin": [
-      "Admin",
-      "The settings and the plugins for the AnyAssistant app (/admin/…), only from the Mac itself."
-    ],
-    "bonjour": [
-      "Bonjour",
-      "Announces the server on the network (_anyassistant._tcp), so the apps find it without typing an address."
-    ],
-    "brain-assistant": [
-      "Assistant",
-      "«mode»: «assistant». The voice assistant: skills, the LLM, its voice, timers ringing."
-    ],
-    "brain-parrot": [
-      "Parrot",
-      "«mode»: «parrot». Repeats what you say: to try the microphone, the speaker and the connection."
-    ],
-    "brain-transcriber": [
-      "Transcriber",
-      "«mode»: «transcribe». Listens (wake word, VAD, speech recognition) and shows what you say; the assistant listens with it too."
-    ],
-    "confirmation": [
-      "Confirmation",
-      "Actions that change something wait for your «yes» by voice, whichever LLM asks (Jarvis's tools, Claude's hook, Hermes's approvals)."
-    ],
-    "eyes": [
-      "Eyes",
-      "Sees through the device's camera when asked («what do you see?», «read this»), or when Claude decides to look."
-    ],
-    "interpreter": [
-      "Skills interpreter",
-      "When a skill is said in an unusual way («avísame dentro de un rato largo»), an LLM (Apple's local one by default) still finds it."
-    ],
-    "lab": [
-      "Skins lab",
-      "http://<mac>:8080/lab?skin=<name>: every state of a skin at once, reloading when its files change."
-    ],
-    "llm-apple": [
-      "Apple Intelligence",
-      "Apple's local model (Foundation Models), on macOS 26 with Apple Intelligence."
-    ],
-    "llm-claude": [
-      "Claude",
-      "Claude through the Claude Code CLI: your subscription, MCP servers and allowed commands."
-    ],
-    "llm-hermes": [
-      "Hermes",
-      "Hermes Agent through its API gateway, with its own tools and memory."
-    ],
-    "mcp-server": [
-      "AnyAssistant's MCP server",
-      "Jarvis's tools as the «anyassistant» MCP server at /mcp, only from the Mac itself (Claude, Hermes)."
-    ],
-    "memory": [
-      "Memory",
-      "Remembers you across conversations: what you ask it to (explicit) or also on its own when it falls asleep (auto)."
-    ],
-    "monitor": [
-      "Camera monitor",
-      "http://<mac>:8080/monitor: what the device's camera sees, to watch it from the Mac's browser."
-    ],
-    "page": [
-      "The device's page",
-      "The page the tablet or phone opens (http://<mac>:8080): its face, texts, camera and microphone, with skins anyone can make."
-    ],
-    "pairing": [
-      "Pairing",
-      "Only devices that entered a code (bin/anyassistant pair) may use Jarvis; the Mac always can."
-    ],
-    "plugin-manager": [
-      "Plugin manager",
-      "Lets Jarvis list, turn on and turn off its plugins, by voice."
-    ],
-    "skill-alarms": [
-      "Timers, alarms and reminders",
-      "«Pon un temporizador de 10 minutos», «despiértame a las 7», «recuérdame…»."
-    ],
-    "skill-arithmetic": [
-      "Sums",
-      "«¿Cuánto es 23 por 47?», percentages, powers."
-    ],
-    "skill-camera": [
-      "Camera on screen",
-      "«Activa la cámara»: the device's camera live on its screen."
-    ],
-    "skill-choose-llm": [
-      "Choose the LLM",
-      "«Usa Claude», «cambia a Hermes»."
-    ],
-    "skill-clock": [
-      "Time and date",
-      "«¿Qué hora es?», «¿qué día es hoy?»."
-    ],
-    "skill-conversion": [
-      "Unit conversions",
-      "Length, mass, volume and temperature."
-    ],
-    "skill-language": [
-      "Change language",
-      "«Habla en inglés»: saves the language and restarts in it."
-    ],
-    "skill-restart": [
-      "Reload and restart",
-      "«Recarga las herramientas», «reiníciate»."
-    ],
-    "skill-ringing": [
-      "While it rings",
-      "«Pospón», and only words meant to stop an alarm stop it."
-    ],
-    "skill-sleep": [
-      "Go to sleep",
-      "«Go to sleep», «apágate», «a dormir»: back to sleep until it hears its name."
-    ],
-    "skill-stop": [
-      "Stop",
-      "«Stop», «para», «calla»: stops what it is saying or thinking, or an alarm ringing."
-    ],
-    "skill-volume": [
-      "Volume",
-      "«Sube / baja el volumen», «volumen al 70»."
-    ],
-    "sounds": [
-      "Sounds",
-      "A sound when it wakes up and when it falls asleep (the skin's, if it has its own)."
-    ],
-    "stt-mlx-whisper": [
-      "Whisper (MLX)",
-      "OpenAI's Whisper on MLX: speech recognition, and the fallback when Parakeet drifts into another language."
-    ],
-    "stt-parakeet": [
-      "Parakeet",
-      "NVIDIA's Parakeet TDT v3 on MLX: multilingual speech recognition, fast on short sentences."
-    ],
-    "tap-to-wake": [
-      "Tap to wake",
-      "Asleep, tapping the screen wakes it up, as if you had said its name."
-    ],
-    "tools-system": [
-      "Jarvis's settings as tools",
-      "Status, name, voice, language, LLM, detail level, reload and restart, for the LLM."
-    ],
-    "tts-avspeech": [
-      "AVSpeech voice",
-      "macOS voices through AVSpeechSynthesizer, always loaded (~50 ms per sentence)."
-    ],
-    "tts-macos": [
-      "say voice",
-      "macOS voices through the say command."
-    ],
-    "vad-silero": [
-      "Silero VAD",
-      "Voice activity detection with Silero (PyTorch)."
-    ],
-    "wake-openwakeword": [
-      "Wake word (openWakeWord)",
-      "openWakeWord's trained models (hey_jarvis, alexa…)."
-    ],
-    "wake-whisper": [
-      "Wake word (Whisper)",
-      "Any word as the wake word, heard with a small Whisper."
-    ],
-    "llm-fallback": [
-      "Plan B",
-      "If the LLM can't answer (no network, a usage limit, signed out), another one answers, saying so: Apple's local model by default."
-    ],
-    "always-on": [
-      "Always on",
-      "It never falls asleep by itself: no need to say its name between sentences. «Go to sleep» still works."
-    ],
-    "skill-lists": [
-      "Lists and notes",
-      "«Add milk to the shopping list», «what's on my list?», «take a note that…»: without the LLM."
-    ]
+    "record": "saves everything that arrives to a WAV (to debug)"
   },
   "installer": {
-    "eyes": [
-      "Let it look through the device's camera",
-      "Only when you ask («what do you see?», «read this»); nothing leaves the Mac otherwise."
-    ],
-    "memory": [
-      "Remember you across conversations",
-      "explicit: only what you ask it to remember; auto: also what it learns about you, when it falls asleep."
-    ],
-    "pairing": [
-      "Only paired devices",
-      "A device must type a code once before using it (the Mac never needs one)."
-    ],
     "computer": [
       "This computer",
       ""

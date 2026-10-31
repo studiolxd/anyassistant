@@ -1,0 +1,16 @@
+{
+  "plugins": {
+    "skill-sleep": [
+      "A dormir",
+      "«A dormir», «apágate»: vuelve a dormir hasta que oiga su nombre."
+    ]
+  },
+  "commands": {
+    "not_sleep": [
+      "apaga",
+      "apagar",
+      "apague",
+      "apagas"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "plugins": {
+    "llm-fallback": [
+      "Plan B",
+      "Si el LLM no puede responder (sin red, un límite de uso, sin sesión), responde otro y lo dice: de serie, el modelo local de Apple."
+    ]
+  },
+  "options": {
+    "llm_fallback": "si el LLM no puede responder, responde otro: auto (el modelo local de Apple si lo hay), el nombre de un LLM o none"
+  }
+}

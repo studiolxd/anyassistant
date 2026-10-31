@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "admin": [
+      "Admin",
+      "Los ajustes y los plugins para la app de AnyAssistant (/admin/…), solo desde el Mac."
+    ]
+  }
+}

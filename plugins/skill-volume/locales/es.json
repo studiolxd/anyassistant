@@ -1,0 +1,37 @@
+{
+  "plugins": {
+    "skill-volume": [
+      "Volumen",
+      "«Sube / baja el volumen», «volumen al 70»."
+    ]
+  },
+  "speech": {
+    "volume": "Volumen al {percent} por ciento."
+  },
+  "skills": {
+    "words": {
+      "volume": [
+        "volumen"
+      ],
+      "up": [
+        "sube",
+        "subir",
+        "subelo",
+        "mas"
+      ],
+      "down": [
+        "baja",
+        "bajar",
+        "bajalo",
+        "menos"
+      ],
+      "max": [
+        "maximo",
+        "tope"
+      ],
+      "min": [
+        "minimo"
+      ]
+    }
+  }
+}

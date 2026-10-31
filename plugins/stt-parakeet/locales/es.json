@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "stt-parakeet": [
+      "Parakeet",
+      "Parakeet TDT v3 de NVIDIA en MLX: reconocimiento de voz multilingüe, rápido con frases cortas."
+    ]
+  }
+}

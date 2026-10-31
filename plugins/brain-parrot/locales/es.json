@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "brain-parrot": [
+      "Loro",
+      "«mode»: «parrot». Repite lo que dices: para probar el micrófono, el altavoz y la conexión."
+    ]
+  }
+}

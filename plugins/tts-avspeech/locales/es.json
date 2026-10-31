@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "tts-avspeech": [
+      "Voz AVSpeech",
+      "Las voces de macOS con AVSpeechSynthesizer, siempre cargadas (~50 ms por frase)."
+    ]
+  }
+}

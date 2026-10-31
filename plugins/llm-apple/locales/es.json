@@ -1,0 +1,11 @@
+{
+  "plugins": {
+    "llm-apple": [
+      "Apple Intelligence",
+      "El modelo local de Apple (Foundation Models), en macOS 26 con Apple Intelligence."
+    ]
+  },
+  "speech": {
+    "guardrail": "Prefiero no responder a eso."
+  }
+}

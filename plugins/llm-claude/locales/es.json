@@ -1,0 +1,12 @@
+{
+  "plugins": {
+    "llm-claude": [
+      "Claude",
+      "Claude a través de Claude Code: tu suscripción, tus servidores MCP y los comandos permitidos."
+    ]
+  },
+  "speech": {
+    "connection_cut": "Perdona, se me ha cortado la conexión con Claude.",
+    "no_login": "No tengo sesión en Claude: hay que ejecutar barra login en Claude Code."
+  }
+}

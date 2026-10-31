@@ -1,0 +1,14 @@
+{
+  "speech": {
+    "language_changing": "Okay, switching to {language}. I'll be back in a few seconds.",
+    "language_same": "I'm already speaking {language}."
+  },
+  "commands": {
+    "language": [
+      "speak",
+      "talk",
+      "switch",
+      "change"
+    ]
+  }
+}

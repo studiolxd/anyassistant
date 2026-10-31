@@ -17,67 +17,21 @@
       "Dame un momento.",
       "Voy a mirarlo."
     ],
-    "goodbye": [
-      "Hasta la próxima",
-      "Hasta luego",
-      "Nos vemos",
-      "Aquí estaré"
-    ],
-    "reloaded": "Listo, he recargado las herramientas.",
     "restarting": "Me reinicio. Vuelvo en unos segundos.",
     "llm_failed": "Perdona, no he podido responder.",
-    "connection_cut": "Perdona, se me ha cortado la conexión con Claude.",
-    "no_login": "No tengo sesión en Claude: hay que ejecutar barra login en Claude Code.",
-    "guardrail": "Prefiero no responder a eso.",
-    "hermes_down": "No puedo hablar con Hermes: ¿está en marcha su gateway?",
     "hermes_approval": "Hermes quiere hacer esto: {action}. ¿Lo hago?",
-    "language_changing": "Vale, cambio a {language}. Vuelvo en unos segundos.",
-    "language_same": "Ya estoy hablando en {language}.",
-    "camera_on": "Cámara activada.",
-    "camera_off": "Cámara apagada.",
-    "llm_changing": "Vale, cambio a {llm}. Vuelvo en unos segundos.",
-    "llm_same": "Ya estoy usando {llm}.",
-    "llm_unavailable": "{llm} no está disponible en este Mac.",
-    "time_is": "Son {time}.",
-    "time_is_one": "Es {time}.",
-    "date_is": "Hoy es {date}.",
-    "timer_set": "Temporizador de {duration}.",
-    "alarm_set": "Alarma para {when}.",
-    "reminder_set": "Te lo recordaré {when}: {text}.",
-    "remaining": "Quedan {duration}.",
-    "no_timers": "No hay nada en marcha.",
-    "listing": "Tienes {items}.",
-    "item_timer": "un temporizador al que le quedan {duration}",
-    "item_alarm": "una alarma {when}",
-    "item_reminder": "un recordatorio {when}: {text}",
     "list_and": " y ",
-    "cancelled": "Cancelado.",
-    "nothing_to_cancel": "No había nada que cancelar.",
-    "timer_done": "¡Tiempo!",
-    "alarm_ring": "Son {time}.",
-    "reminder_ring": "Recordatorio: {text}.",
-    "snoozed": "Pospuesto {duration}.",
-    "math": "Son {result}.",
-    "convert": "{value} {source} son {result} {target}.",
-    "volume": "Volumen al {percent} por ciento.",
     "skill_failed": "No he entendido la hora o la cantidad.",
     "when_today": "hoy a {time}",
     "when_tomorrow": "mañana a {time}",
     "when_in": "dentro de {duration}",
     "duration_and": " y ",
-    "when_day": "el {date} a {time}",
-    "fallback": "{name} no responde; te contesto con el modelo local."
+    "when_day": "el {date} a {time}"
   },
   "commands": {
     "sleep": [
       "apagate",
       "duermete"
-    ],
-    "not_sleep": [
-      "apaga",
-      "apagar",
-      "apague",
-      "apagas"
     ],
     "stop": [
       "para",
@@ -90,45 +44,6 @@
       "chitón",
       "chiton"
     ],
-    "look": [
-      "ves",
-      "ver",
-      "mira",
-      "miras",
-      "mirar",
-      "viendo",
-      "lee",
-      "leer",
-      "leeme",
-      "enseno",
-      "muestro"
-    ],
-    "read": [
-      "lee",
-      "leer",
-      "leeme",
-      "pone",
-      "escrito",
-      "texto",
-      "letra",
-      "letras"
-    ],
-    "camera": [
-      "camara"
-    ],
-    "camera_on": [
-      "activa",
-      "activar",
-      "enciende",
-      "encender",
-      "muestra",
-      "muestrame",
-      "mostrar",
-      "abre",
-      "abrir",
-      "pon",
-      "ensename"
-    ],
     "camera_off": [
       "apaga",
       "apagar",
@@ -140,36 +55,6 @@
       "ocultar",
       "desactiva",
       "desactivar"
-    ],
-    "reload": [
-      "recarg"
-    ],
-    "restart": [
-      "reiniciate",
-      "reinicia",
-      "reiniciar",
-      "reinicio"
-    ],
-    "switch": [
-      "usa",
-      "cambia",
-      "cambiate",
-      "pasa",
-      "pasate"
-    ],
-    "llm_words": [
-      "modelo",
-      "llm",
-      "favor"
-    ],
-    "language": [
-      "habla",
-      "hablame",
-      "hablemos",
-      "cambia",
-      "cambiate",
-      "pasa",
-      "pasate"
     ],
     "yes": [
       "si",
@@ -187,16 +72,6 @@
       "exacto",
       "afirmativo",
       "confirmado"
-    ],
-    "no": [
-      "no",
-      "espera",
-      "cancela",
-      "cancelar",
-      "para",
-      "nada",
-      "tampoco",
-      "mejor"
     ]
   },
   "stt": {
@@ -397,36 +272,6 @@
         "avisame",
         "avisa"
       ],
-      "cancel": [
-        "cancela",
-        "cancelar",
-        "quita",
-        "quitar",
-        "borra",
-        "borrar",
-        "elimina",
-        "eliminar",
-        "anula",
-        "anular"
-      ],
-      "remaining": [
-        "queda",
-        "quedan",
-        "falta",
-        "faltan"
-      ],
-      "list": [
-        "que",
-        "cuales",
-        "tengo",
-        "hay",
-        "dime"
-      ],
-      "all": [
-        "todos",
-        "todas",
-        "todo"
-      ],
       "time": [
         "hora"
       ],
@@ -434,15 +279,6 @@
         "dia",
         "fecha",
         "estamos"
-      ],
-      "ask": [
-        "que",
-        "dime",
-        "a"
-      ],
-      "in": [
-        "en",
-        "dentro"
       ],
       "at": [
         "a",
@@ -465,44 +301,12 @@
         "es",
         "son"
       ],
-      "volume": [
-        "volumen"
-      ],
-      "up": [
-        "sube",
-        "subir",
-        "subelo",
-        "mas"
-      ],
-      "down": [
-        "baja",
-        "bajar",
-        "bajalo",
-        "menos"
-      ],
-      "max": [
-        "maximo",
-        "tope"
-      ],
-      "min": [
-        "minimo"
-      ],
       "snooze": [
         "pospon",
         "posponer",
         "pospone",
         "aplaza",
         "aplazar"
-      ],
-      "convert": [
-        "convierte",
-        "pasa",
-        "cuantos",
-        "cuantas",
-        "son",
-        "es",
-        "en",
-        "a"
       ],
       "fillers": [
         "el",
@@ -520,13 +324,6 @@
         "de",
         "que",
         "mi"
-      ],
-      "notify": [
-        "avisame",
-        "avisa"
-      ],
-      "connectors": [
-        "que"
       ]
     },
     "clock": {
@@ -563,193 +360,6 @@
         "medianoche"
       ]
     },
-    "operators": {
-      "+": [
-        "mas",
-        "sumale"
-      ],
-      "-": [
-        "menos",
-        "restale"
-      ],
-      "*": [
-        "por",
-        "x",
-        "multiplicado"
-      ],
-      "/": [
-        "entre",
-        "dividido"
-      ],
-      "^": [
-        "elevado",
-        "cuadrado",
-        "cubo"
-      ],
-      "%": [
-        "ciento",
-        "porciento",
-        "%"
-      ]
-    },
-    "units": {
-      "mm": {
-        "one": "milímetro",
-        "other": "milímetros",
-        "words": [
-          "mm",
-          "milimetro",
-          "milimetros"
-        ]
-      },
-      "cm": {
-        "one": "centímetro",
-        "other": "centímetros",
-        "words": [
-          "cm",
-          "centimetro",
-          "centimetros"
-        ]
-      },
-      "m": {
-        "one": "metro",
-        "other": "metros",
-        "words": [
-          "metro",
-          "metros"
-        ]
-      },
-      "km": {
-        "one": "kilómetro",
-        "other": "kilómetros",
-        "words": [
-          "km",
-          "kilometro",
-          "kilometros"
-        ]
-      },
-      "in": {
-        "one": "pulgada",
-        "other": "pulgadas",
-        "words": [
-          "pulgada",
-          "pulgadas"
-        ]
-      },
-      "ft": {
-        "one": "pie",
-        "other": "pies",
-        "words": [
-          "pie",
-          "pies"
-        ]
-      },
-      "yd": {
-        "one": "yarda",
-        "other": "yardas",
-        "words": [
-          "yarda",
-          "yardas"
-        ]
-      },
-      "mi": {
-        "one": "milla",
-        "other": "millas",
-        "words": [
-          "milla",
-          "millas"
-        ]
-      },
-      "g": {
-        "one": "gramo",
-        "other": "gramos",
-        "words": [
-          "gramo",
-          "gramos",
-          "g"
-        ]
-      },
-      "kg": {
-        "one": "kilo",
-        "other": "kilos",
-        "words": [
-          "kilo",
-          "kilos",
-          "kilogramo",
-          "kilogramos",
-          "kg"
-        ]
-      },
-      "lb": {
-        "one": "libra",
-        "other": "libras",
-        "words": [
-          "libra",
-          "libras"
-        ]
-      },
-      "oz": {
-        "one": "onza",
-        "other": "onzas",
-        "words": [
-          "onza",
-          "onzas"
-        ]
-      },
-      "ml": {
-        "one": "mililitro",
-        "other": "mililitros",
-        "words": [
-          "ml",
-          "mililitro",
-          "mililitros"
-        ]
-      },
-      "l": {
-        "one": "litro",
-        "other": "litros",
-        "words": [
-          "litro",
-          "litros"
-        ]
-      },
-      "gal": {
-        "one": "galón",
-        "other": "galones",
-        "words": [
-          "galon",
-          "galones"
-        ]
-      },
-      "cup": {
-        "one": "taza",
-        "other": "tazas",
-        "words": [
-          "taza",
-          "tazas"
-        ]
-      },
-      "c": {
-        "one": "grado centígrado",
-        "other": "grados centígrados",
-        "words": [
-          "celsius",
-          "centigrados",
-          "centigrado"
-        ]
-      },
-      "f": {
-        "one": "grado Fahrenheit",
-        "other": "grados Fahrenheit",
-        "words": [
-          "fahrenheit"
-        ]
-      }
-    },
-    "degrees": [
-      "grado",
-      "grados"
-    ],
     "duration_names": {
       "hour": [
         "hora",
@@ -815,206 +425,7 @@
     "host": "la dirección en la que escucha",
     "port": "el puerto (bin/anyassistant también lo lee)",
     "mode": "assistant, transcribe (solo muestra lo que oye) o parrot (lo repite)",
-    "record": "guarda todo lo que llega en un WAV (para depurar)",
-    "confirm_wait": "segundos para responder «sí» a una acción que cambia algo",
-    "confirm_valid": "segundos que vale un «sí»",
-    "read_photo": "una foto a resolución completa cuando le pides leer",
-    "interpreter": "un LLM para skills dichas de forma rara: auto (uno local si lo hay: el de Apple) o el nombre de un LLM",
-    "skin": "el aspecto de la pantalla: eyes, orb, minimal, bedside o las tuyas (?skin= en un dispositivo manda)",
-    "skin_options": "las opciones de la skin: {\"accent\": \"#ff7a45\"}",
-    "skins_dir": "tus skins (de serie, skins en tu carpeta de datos)",
-    "video": "calidad de la cámara; auto: cada dispositivo según su memoria",
-    "show_time": "la hora mientras duerme",
-    "show_date": "la fecha mientras duerme",
-    "show_hint": "«Di Hey Jarvis» mientras duerme",
-    "show_status": "«Te escucho», «Pensando…» mientras está despierto",
-    "show_heard": "lo que has dicho",
-    "show_answer": "lo que responde",
-    "history": "frases anteriores que se quedan en pantalla",
-    "show_timers": "temporizadores, alarmas y recordatorios en marcha",
-    "show_stats": "el RTT, el jitter y las pérdidas de la conexión",
-    "clock": "12 o 24 horas (auto: lo del idioma)",
-    "memory": "qué recuerda: solo lo que le pides (explicit) o también lo que aprende (auto)",
-    "memory_facts": "datos antes de que el LLM los resuma",
-    "memory_conversations": "resúmenes de conversaciones que guarda",
-    "memory_days": "días que guarda el resumen de una conversación",
-    "ring_seconds": "cuánto suena una alarma si nadie la para",
-    "snooze_minutes": "«pospón» sin decir cuánto",
-    "llm_fallback": "si el LLM no puede responder, responde otro: auto (el modelo local de Apple si lo hay), el nombre de un LLM o none"
-  },
-  "plugins": {
-    "bonjour": [
-      "Bonjour",
-      "Anuncia el servidor en la red (_anyassistant._tcp), para que las apps lo encuentren sin escribir una dirección."
-    ],
-    "brain-assistant": [
-      "Asistente",
-      "«mode»: «assistant». El asistente de voz: skills, el LLM, su voz, las alarmas."
-    ],
-    "brain-parrot": [
-      "Loro",
-      "«mode»: «parrot». Repite lo que dices: para probar el micrófono, el altavoz y la conexión."
-    ],
-    "brain-transcriber": [
-      "Transcriptor",
-      "«mode»: «transcribe». Escucha (palabra de activación, detección de voz, reconocimiento) y muestra lo que dices; el asistente escucha con él."
-    ],
-    "confirmation": [
-      "Confirmación",
-      "Las acciones que cambian algo esperan tu «sí» de viva voz, pida el LLM que las pida (las herramientas propias, Claude, Hermes)."
-    ],
-    "eyes": [
-      "Ojos",
-      "Ve por la cámara del dispositivo cuando se lo pides («¿qué ves?», «léeme esto»), o cuando Claude decide mirar."
-    ],
-    "interpreter": [
-      "Intérprete de skills",
-      "Cuando una skill se dice de forma rara («avísame dentro de un rato largo»), un LLM (de serie, el local de Apple) la encuentra igual."
-    ],
-    "lab": [
-      "Lab de skins",
-      "http://<mac>:8080/lab?skin=<nombre>: todos los estados de una skin a la vez, recargándose al cambiarla."
-    ],
-    "llm-apple": [
-      "Apple Intelligence",
-      "El modelo local de Apple (Foundation Models), en macOS 26 con Apple Intelligence."
-    ],
-    "llm-claude": [
-      "Claude",
-      "Claude a través de Claude Code: tu suscripción, tus servidores MCP y los comandos permitidos."
-    ],
-    "llm-hermes": [
-      "Hermes",
-      "Hermes Agent a través de su pasarela, con sus propias herramientas y memoria."
-    ],
-    "mcp-server": [
-      "Servidor MCP de AnyAssistant",
-      "Las herramientas del asistente como servidor MCP «anyassistant» en /mcp, solo desde el propio Mac (Claude, Hermes)."
-    ],
-    "memory": [
-      "Memoria",
-      "Te recuerda de una conversación a otra: lo que le pides (explicit) o también lo que aprende al dormirse (auto)."
-    ],
-    "monitor": [
-      "Monitor de la cámara",
-      "http://<mac>:8080/monitor: lo que ve la cámara del dispositivo, desde el navegador del Mac."
-    ],
-    "page": [
-      "La página del dispositivo",
-      "La página que abre la tablet o el móvil (http://<mac>:8080): su cara, sus textos, cámara y micrófono, con skins que cualquiera puede hacer."
-    ],
-    "pairing": [
-      "Emparejamiento",
-      "Solo los dispositivos que escribieron un código pueden usarlo; el Mac, siempre."
-    ],
-    "plugin-manager": [
-      "Gestor de plugins",
-      "Permite al asistente listar, encender y apagar sus plugins, por voz."
-    ],
-    "skill-alarms": [
-      "Temporizadores, alarmas y recordatorios",
-      "«Pon un temporizador de 10 minutos», «despiértame a las 7», «recuérdame…»."
-    ],
-    "skill-arithmetic": [
-      "Cuentas",
-      "«¿Cuánto es 23 por 47?», porcentajes, potencias."
-    ],
-    "skill-camera": [
-      "Cámara en pantalla",
-      "«Activa la cámara»: la cámara del dispositivo en directo en su pantalla."
-    ],
-    "skill-choose-llm": [
-      "Elegir el LLM",
-      "«Usa Claude», «cambia a Hermes»."
-    ],
-    "skill-clock": [
-      "Hora y fecha",
-      "«¿Qué hora es?», «¿qué día es hoy?»."
-    ],
-    "skill-conversion": [
-      "Conversión de unidades",
-      "Longitud, masa, volumen y temperatura."
-    ],
-    "skill-language": [
-      "Cambiar de idioma",
-      "«Habla en inglés»: guarda el idioma y se reinicia en él."
-    ],
-    "skill-restart": [
-      "Recargar y reiniciar",
-      "«Recarga las herramientas», «reiníciate»."
-    ],
-    "skill-ringing": [
-      "Mientras suena",
-      "«Pospón», y solo lo que va dirigido a parar una alarma la para."
-    ],
-    "skill-sleep": [
-      "A dormir",
-      "«A dormir», «apágate»: vuelve a dormir hasta que oiga su nombre."
-    ],
-    "skill-stop": [
-      "Parar",
-      "«Para», «calla»: deja de hablar o de pensar, o para una alarma."
-    ],
-    "skill-volume": [
-      "Volumen",
-      "«Sube / baja el volumen», «volumen al 70»."
-    ],
-    "sounds": [
-      "Sonidos",
-      "Un sonido al despertarse y al dormirse (el de la skin, si trae el suyo)."
-    ],
-    "stt-mlx-whisper": [
-      "Whisper (MLX)",
-      "Whisper de OpenAI en MLX: reconocimiento de voz, y el respaldo cuando Parakeet se va a otro idioma."
-    ],
-    "stt-parakeet": [
-      "Parakeet",
-      "Parakeet TDT v3 de NVIDIA en MLX: reconocimiento de voz multilingüe, rápido con frases cortas."
-    ],
-    "tap-to-wake": [
-      "Tocar para despertar",
-      "Si duerme, tocar la pantalla lo despierta, como si dijeras su nombre."
-    ],
-    "tools-system": [
-      "Ajustes como herramientas",
-      "Estado, nombre, voz, idioma, LLM, nivel de detalle, recargar y reiniciar, para el LLM."
-    ],
-    "tts-avspeech": [
-      "Voz AVSpeech",
-      "Las voces de macOS con AVSpeechSynthesizer, siempre cargadas (~50 ms por frase)."
-    ],
-    "tts-macos": [
-      "Voz say",
-      "Las voces de macOS con el comando say."
-    ],
-    "vad-silero": [
-      "Silero VAD",
-      "Detección de voz con Silero (PyTorch)."
-    ],
-    "wake-openwakeword": [
-      "Palabra de activación (openWakeWord)",
-      "Los modelos entrenados de openWakeWord (hey_jarvis, alexa…)."
-    ],
-    "wake-whisper": [
-      "Palabra de activación (Whisper)",
-      "Cualquier palabra como palabra de activación, oída con un Whisper pequeño."
-    ],
-    "admin": [
-      "Admin",
-      "Los ajustes y los plugins para la app de AnyAssistant (/admin/…), solo desde el Mac."
-    ],
-    "llm-fallback": [
-      "Plan B",
-      "Si el LLM no puede responder (sin red, un límite de uso, sin sesión), responde otro y lo dice: de serie, el modelo local de Apple."
-    ],
-    "always-on": [
-      "Siempre encendido",
-      "No se duerme solo: no hace falta decir su nombre entre frases. «A dormir» sigue funcionando."
-    ],
-    "skill-lists": [
-      "Listas y notas",
-      "«Añade leche a la lista de la compra», «¿qué hay en la lista?», «toma nota de que…»: sin el LLM."
-    ]
+    "record": "guarda todo lo que llega en un WAV (para depurar)"
   },
   "installer": {
     "computer": [
@@ -1045,18 +456,6 @@
       "Modelos de voz (se descargan una vez)",
       "Reconocimiento de voz, palabra de activación y detección de voz: unos cientos de MB la primera vez."
     ],
-    "pairing": [
-      "Solo dispositivos emparejados",
-      "Un dispositivo tiene que escribir un código una vez antes de usarlo (el Mac nunca lo necesita)."
-    ],
-    "memory": [
-      "Que te recuerde de una conversación a otra",
-      "explicit: solo lo que le pidas que recuerde; auto: también lo que aprenda de ti, al dormirse."
-    ],
-    "eyes": [
-      "Que pueda mirar por la cámara del dispositivo",
-      "Solo cuando se lo pides («¿qué ves?», «léeme esto»); si no, nada sale del Mac."
-    ],
     "service": [
       "Arrancar AnyAssistant con el Mac",
       "Funciona en segundo plano y vuelve si se para (launchd)."
@@ -1067,11 +466,6 @@
     ]
   },
   "choices": {
-    "memory": {
-      "off": "No",
-      "explicit": "Solo lo que le pida",
-      "auto": "También lo que aprenda"
-    },
     "bool": {
       "true": "Sí",
       "false": "No"

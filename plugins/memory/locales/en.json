@@ -1,0 +1,9 @@
+{
+  "choices": {
+    "memory": {
+      "off": "No",
+      "explicit": "Only what I ask",
+      "auto": "Also what it learns"
+    }
+  }
+}

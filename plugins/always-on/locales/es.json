@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "always-on": [
+      "Siempre encendido",
+      "No se duerme solo: no hace falta decir su nombre entre frases. «A dormir» sigue funcionando."
+    ]
+  }
+}

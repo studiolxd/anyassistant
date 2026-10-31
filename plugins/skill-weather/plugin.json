@@ -1,0 +1,5 @@
+{
+  "name": "Weather",
+  "description": "«¿Qué tiempo hace?», «¿va a llover mañana?», «el tiempo en Madrid»: from Open-Meteo (free, no account), without the LLM.",
+  "kind": "skill"
+}

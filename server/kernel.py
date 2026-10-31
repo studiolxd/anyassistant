@@ -266,9 +266,10 @@ def describe() -> list[dict]:
 
 
 def locale_files(code: str) -> list[Path]:
-    """The plugins' texts for a language (only those that are on)."""
+    """The plugins' texts for a language: every plugin's, on or off (an off plugin is still listed
+    in the app's settings, with its name and description in your language)."""
     return [p.folder / "locales" / f"{code}.json" for p in discover().values()
-            if enabled(p.id) and (p.folder / "locales" / f"{code}.json").exists()]
+            if (p.folder / "locales" / f"{code}.json").exists()]
 
 
 def reset():

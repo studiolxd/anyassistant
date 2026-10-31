@@ -1,0 +1,14 @@
+{
+  "plugins": {
+    "pairing": [
+      "Emparejamiento",
+      "Solo los dispositivos que escribieron un código pueden usarlo; el Mac, siempre."
+    ]
+  },
+  "installer": {
+    "pairing": [
+      "Solo dispositivos emparejados",
+      "Un dispositivo tiene que escribir un código una vez antes de usarlo (el Mac nunca lo necesita)."
+    ]
+  }
+}

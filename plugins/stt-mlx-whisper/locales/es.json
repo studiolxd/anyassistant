@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "stt-mlx-whisper": [
+      "Whisper (MLX)",
+      "Whisper de OpenAI en MLX: reconocimiento de voz, y el respaldo cuando Parakeet se va a otro idioma."
+    ]
+  }
+}

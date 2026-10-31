@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "tools-system": [
+      "Ajustes como herramientas",
+      "Estado, nombre, voz, idioma, LLM, nivel de detalle, recargar y reiniciar, para el LLM."
+    ]
+  }
+}

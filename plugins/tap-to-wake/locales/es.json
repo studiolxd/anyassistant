@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "tap-to-wake": [
+      "Tocar para despertar",
+      "Si duerme, tocar la pantalla lo despierta, como si dijeras su nombre."
+    ]
+  }
+}

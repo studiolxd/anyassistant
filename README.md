@@ -138,6 +138,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `detail_levels` | — | more levels, or other texts for these: {"name": "instruction for the prompt"} |
 | `ignore_others` | `true` | the LLM stays quiet when what it hears is clearly not for it |
 | `read_photo` | `true` | a full-resolution photo when asked to read |
+| `llm_fallback` | `"auto"` | if the LLM can't answer, another one does: auto (Apple's local model if there is one), an LLM's name, or none |
 
 **Memory**
 
@@ -177,6 +178,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name |
 | `ring_seconds` | `60` | how long an alarm rings if nobody stops it |
 | `snooze_minutes` | `5` | «snooze» without saying how long |
+| `location` | — | your city, for the weather (e.g. Valencia) |
 
 **The screen**
 
@@ -552,7 +554,11 @@ plugins.local/skill-weather/
                   "requires": ["…"], "security": false, "default": true}
   __init__.py    its code: what it brings registers itself (@skill, @tool,
                  @register("…") for an engine, options.add(…))
-  locales/es.json  its texts, joined to Jarvis's
+  locales/es.json  its texts, joined to the rest: what it says («speech»), its words
+                 («commands», «skills»), and how it is shown in the app and the installer:
+                 {"plugins": {"<id>": ["Name", "Description"]}, "options": {"<option>": "…"},
+                  "installer": {"<step>": ["Title", "Help"]}} (in English, plugin.json and the
+                  code say it; locales/en.json only for what the code doesn't)
 ```
 
 What it needs goes in `plugin.json` too, for the installer:

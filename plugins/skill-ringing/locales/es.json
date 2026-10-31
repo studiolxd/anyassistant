@@ -1,0 +1,11 @@
+{
+  "plugins": {
+    "skill-ringing": [
+      "Mientras suena",
+      "«Pospón», y solo lo que va dirigido a parar una alarma la para."
+    ]
+  },
+  "speech": {
+    "snoozed": "Pospuesto {duration}."
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "plugins": {
+    "brain-assistant": [
+      "Asistente",
+      "«mode»: «assistant». El asistente de voz: skills, el LLM, su voz, las alarmas."
+    ]
+  },
+  "speech": {
+    "fallback": "{name} no responde; te contesto con el modelo local."
+  }
+}

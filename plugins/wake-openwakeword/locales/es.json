@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "wake-openwakeword": [
+      "Palabra de activación (openWakeWord)",
+      "Los modelos entrenados de openWakeWord (hey_jarvis, alexa…)."
+    ]
+  }
+}

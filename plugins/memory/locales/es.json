@@ -1,0 +1,27 @@
+{
+  "plugins": {
+    "memory": [
+      "Memoria",
+      "Te recuerda de una conversación a otra: lo que le pides (explicit) o también lo que aprende al dormirse (auto)."
+    ]
+  },
+  "options": {
+    "memory": "qué recuerda: solo lo que le pides (explicit) o también lo que aprende (auto)",
+    "memory_facts": "datos antes de que el LLM los resuma",
+    "memory_conversations": "resúmenes de conversaciones que guarda",
+    "memory_days": "días que guarda el resumen de una conversación"
+  },
+  "installer": {
+    "memory": [
+      "Que te recuerde de una conversación a otra",
+      "explicit: solo lo que le pidas que recuerde; auto: también lo que aprenda de ti, al dormirse."
+    ]
+  },
+  "choices": {
+    "memory": {
+      "off": "No",
+      "explicit": "Solo lo que le pida",
+      "auto": "También lo que aprenda"
+    }
+  }
+}

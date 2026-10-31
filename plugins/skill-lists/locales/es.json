@@ -43,5 +43,11 @@
     "note_read": "Tienes una nota: {notes}.",
     "notes_empty": "No tienes notas.",
     "notes_cleared": "He borrado las notas."
+  },
+  "plugins": {
+    "skill-lists": [
+      "Listas y notas",
+      "«Añade leche a la lista de la compra», «¿qué hay en la lista?», «toma nota de que…»: sin el LLM."
+    ]
   }
 }

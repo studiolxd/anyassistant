@@ -1,0 +1,12 @@
+{
+  "commands": {
+    "no": [
+      "no",
+      "nope",
+      "wait",
+      "cancel",
+      "stop",
+      "dont"
+    ]
+  }
+}

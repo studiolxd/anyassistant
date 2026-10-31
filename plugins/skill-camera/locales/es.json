@@ -1,0 +1,30 @@
+{
+  "plugins": {
+    "skill-camera": [
+      "Cámara en pantalla",
+      "«Activa la cámara»: la cámara del dispositivo en directo en su pantalla."
+    ]
+  },
+  "speech": {
+    "camera_on": "Cámara activada.",
+    "camera_off": "Cámara apagada."
+  },
+  "commands": {
+    "camera": [
+      "camara"
+    ],
+    "camera_on": [
+      "activa",
+      "activar",
+      "enciende",
+      "encender",
+      "muestra",
+      "muestrame",
+      "mostrar",
+      "abre",
+      "abrir",
+      "pon",
+      "ensename"
+    ]
+  }
+}

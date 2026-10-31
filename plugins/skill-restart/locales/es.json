@@ -1,0 +1,22 @@
+{
+  "plugins": {
+    "skill-restart": [
+      "Recargar y reiniciar",
+      "«Recarga las herramientas», «reiníciate»."
+    ]
+  },
+  "speech": {
+    "reloaded": "Listo, he recargado las herramientas."
+  },
+  "commands": {
+    "reload": [
+      "recarg"
+    ],
+    "restart": [
+      "reiniciate",
+      "reinicia",
+      "reiniciar",
+      "reinicio"
+    ]
+  }
+}

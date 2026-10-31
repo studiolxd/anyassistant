@@ -1,0 +1,76 @@
+{
+  "weather": {
+    "ask": "^(?:oye )?(?:(?:que|como) tiempo (?:hace|hara|va a hacer)|(?:que|como|que tal) (?:esta|estara|sera|va a estar) el tiempo|(?:dime )?el tiempo|(?:va a|vaya a) llover|llovera|llueve|hace (?:frio|calor)|(?:que|cuanta) temperatura (?:hace|hara)|que temperatura)(?: (?:hoy|manana|pasado manana|esta tarde|esta noche))?(?: (?:en|para) (?P<city>.+?))?(?: (?:hoy|manana|pasado manana))?$",
+    "tomorrow": [
+      "manana"
+    ],
+    "after_tomorrow": [
+      "pasado manana"
+    ],
+    "rain": [
+      "llover",
+      "llovera",
+      "llueve",
+      "lluvia"
+    ]
+  },
+  "speech": {
+    "weather_now": "Ahora en {place} hace {temp} grados, {sky}.",
+    "weather_day": "{when} en {place}, entre {low} y {high} grados, {sky}, con un {rain} % de probabilidad de lluvia.",
+    "weather_today": "Hoy",
+    "weather_tomorrow": "Mañana",
+    "weather_after": "Pasado mañana",
+    "rain_yes": "{when} es probable que llueva en {place}: un {rain} %.",
+    "rain_maybe": "{when} puede que llueva en {place}: un {rain} %.",
+    "rain_no": "{when} no parece que vaya a llover en {place}: un {rain} %.",
+    "weather_where": "Dime en qué ciudad: ponla en los ajustes («location»), o pregunta «el tiempo en Valencia».",
+    "weather_unknown_place": "No encuentro {place}.",
+    "weather_failed": "No he podido consultar el tiempo ahora.",
+    "weather_rest_of_today": "Hoy, entre {low} y {high} grados, {sky}, con un {rain} % de probabilidad de lluvia."
+  },
+  "sky": {
+    "0": "despejado",
+    "1": "casi despejado",
+    "2": "parcialmente nublado",
+    "3": "nublado",
+    "45": "con niebla",
+    "48": "con niebla",
+    "51": "con llovizna",
+    "53": "con llovizna",
+    "55": "con llovizna",
+    "56": "con llovizna helada",
+    "57": "con llovizna helada",
+    "61": "con lluvia débil",
+    "63": "con lluvia",
+    "65": "con lluvia fuerte",
+    "66": "con lluvia helada",
+    "67": "con lluvia helada",
+    "71": "con nieve débil",
+    "73": "con nieve",
+    "75": "con nieve fuerte",
+    "77": "con granizo fino",
+    "80": "con chubascos",
+    "81": "con chubascos",
+    "82": "con chubascos fuertes",
+    "85": "con chubascos de nieve",
+    "86": "con chubascos de nieve",
+    "95": "con tormenta",
+    "96": "con tormenta y granizo",
+    "99": "con tormenta y granizo"
+  },
+  "plugins": {
+    "skill-weather": [
+      "El tiempo",
+      "«¿Qué tiempo hace?», «¿va a llover mañana?», «el tiempo en Madrid»: de Open-Meteo (gratis, sin cuenta), sin el LLM."
+    ]
+  },
+  "options": {
+    "location": "tu ciudad, para el tiempo (por ejemplo, Valencia)"
+  },
+  "installer": {
+    "location": [
+      "Tu ciudad (para el tiempo)",
+      "«¿Qué tiempo hace?» responde para ella; vacío: dices la ciudad cada vez."
+    ]
+  }
+}

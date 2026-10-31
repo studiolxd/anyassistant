@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "bonjour": [
+      "Bonjour",
+      "Anuncia el servidor en la red (_anyassistant._tcp), para que las apps lo encuentren sin escribir una dirección."
+    ]
+  }
+}

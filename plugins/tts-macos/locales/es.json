@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "tts-macos": [
+      "Voz say",
+      "Las voces de macOS con el comando say."
+    ]
+  }
+}
