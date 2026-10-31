@@ -1,5 +1,6 @@
 """Phase 2: listens and shows what you say on the phone's screen."""
 
+import events
 import i18n
 import kernel
 import settings
@@ -52,6 +53,8 @@ class Transcriber:
     def on_message(self, data: dict):
         if data.get("type") == "skin" and data.get("name") in skins.available():
             self.skin = data["name"]  # this device's skin: its sounds
+        elif data.get("type") == "tap":
+            events.emit("tap", self)  # the screen was tapped (tap-to-wake…)
 
     def _beep(self, kind: str):
         """Wake or sleep: the plugin «sounds» (the skin's, or its own); silence without it."""

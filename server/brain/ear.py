@@ -150,8 +150,15 @@ class Ear:
         if sentence is not None:  # «Jarvis, and tomorrow?»: a new question
             asyncio.ensure_future(self._transcribe(sentence))
 
-    def _wake_up(self):
-        log.info("awake (%s): conversation mode", self.wake.phrase)
+    def wake_up(self, why: str) -> bool:
+        """Wakes it up as its name would (a tap…); False if it wasn't asleep."""
+        if not self.wake or self.awake:
+            return False
+        self._wake_up(why)
+        return True
+
+    def _wake_up(self, why: str | None = None):
+        log.info("awake (%s): conversation mode", why or self.wake.phrase)
         self._reset()
         self.awake = True
         self.last_activity = time.time()

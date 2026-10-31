@@ -6,8 +6,7 @@
     events.emit("asleep", jarvis, transcript)  # the core says it happened
 
 Only the handlers of plugins that are on are called; one failing doesn't stop the
-others. Events so far: «connected» (jarvis), «heard» (jarvis, text), «answered»
-(jarvis), «asleep» (jarvis, transcript), «awake» (jarvis).
+others. Events so far: «tap» (jarvis): the screen was tapped.
 """
 
 import asyncio

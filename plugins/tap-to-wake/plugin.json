@@ -1,0 +1,5 @@
+{
+  "name": "Tap to wake",
+  "description": "Asleep, tapping the screen wakes it up, as if you had said its name.",
+  "kind": "feature"
+}

@@ -359,6 +359,7 @@ It sleeps until it hears **«Hey Jarvis»**; then it beeps and enters
 word, until you say the sleep command (**«go to sleep»** / **«apágate»**) or
 **2 minutes** pass without talking to it; it beeps downwards when falling asleep
 (the plugin `sounds`: turned off, it wakes and sleeps in silence).
+Asleep, **tapping the screen** wakes it up too (the plugin `tap-to-wake`).
 «Hey Jarvis, what time is it?» in one go also works: it wakes up and transcribes
 the question.
 

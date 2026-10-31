@@ -132,8 +132,7 @@ class Assistant(Transcriber):
         """A timer, alarm or reminder is due: it rings until stopped (or ring_seconds), saying what it is."""
         log.info("ringing: %s", item["kind"])
         self.ringing = self.rang = item
-        if self.ear.wake and not self.ear.awake:
-            self.ear._wake_up()  # so it hears «stop» or «snooze» without its name
+        self.ear.wake_up("alarm")  # so it hears «stop» or «snooze» without its name
         alarms = kernel.module("skill-alarms")
         sentence = alarms.ring_sentence(item) if alarms else ""
         self.send({"type": "alarm", "label": item.get("label") or sentence})
