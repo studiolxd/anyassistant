@@ -32,7 +32,9 @@ def build(source: Path, name: str) -> Path:
         return binary
     log.info("building %s…", source.name)
     paths.CACHE.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["swiftc", "-O", str(source), "-o", str(binary)], check=True)
+    done = subprocess.run(["swiftc", "-O", str(source), "-o", str(binary)], capture_output=True, text=True)
+    if done.returncode:
+        raise RuntimeError(f"swiftc couldn't build {source.name}: {done.stderr.strip()[-500:]}")
     return binary
 
 

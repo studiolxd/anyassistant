@@ -127,7 +127,7 @@ def bridges(progress):
         try:
             swift.build(source, name)
             built.append(name)
-        except (OSError, subprocess.CalledProcessError) as e:
+        except (OSError, RuntimeError) as e:
             raise RuntimeError(f"{name} couldn't be built (are Xcode's command line tools installed?): {e}")
     if not built:
         raise Skip("none needed")
@@ -215,6 +215,8 @@ def connect(progress):
     port = settings.load().get("port", 8080)
     url = f"http://{_address()}:{port}"
     running = False
+    if not (paths.INSTALLED and os.path.exists(AGENT)):  # not ours: whatever answers there may be another copy
+        return f"start it (bin/jarvis start) and open {url} on the device"
     for _ in range(90):
         try:
             urllib.request.urlopen(f"http://127.0.0.1:{port}/status", timeout=1)

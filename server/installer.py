@@ -217,7 +217,22 @@ def run(view, answers: dict, only: list[str] | None = None) -> list[str]:
     return failed
 
 
+def _quiet():
+    """The libraries' download bars and warnings would mix with the steps' own."""
+    import logging
+    import os
+    import warnings
+
+    os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+    os.environ.setdefault("TQDM_DISABLE", "1")
+    os.environ.setdefault("HF_HUB_VERBOSITY", "error")
+    os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
+    warnings.filterwarnings("ignore")
+    logging.basicConfig(level=logging.ERROR)
+
+
 def main(argv: list[str]) -> int:
+    _quiet()
     as_json = "--json" in argv
     answers, only, i = {}, [], 0
     while i < len(argv):
