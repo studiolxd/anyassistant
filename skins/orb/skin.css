@@ -16,6 +16,7 @@
   --red: #e05555;
   --tone: var(--green);  /* one flat colour per state: the sphere, its ring, its waves, its answer */
 }
+body[data-look="asleep"] .layout { --tone: #888; }
 body[data-look="hearing"] .layout { --tone: #7ff0c2; }
 body[data-look="thinking"] .layout { --tone: var(--amber); }
 body[data-look="looking"] .layout { --tone: #cfd8dc; }
