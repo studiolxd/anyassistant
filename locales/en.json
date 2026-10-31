@@ -65,7 +65,8 @@
     "when_tomorrow": "tomorrow at {time}",
     "when_in": "in {duration}",
     "duration_and": " and ",
-    "when_day": "on {date} at {time}"
+    "when_day": "on {date} at {time}",
+    "fallback": "{name} isn't answering; I'll answer with the local model."
   },
   "commands": {
     "sleep": [
@@ -782,7 +783,8 @@
     "memory_conversations": "conversation summaries kept",
     "memory_days": "days a conversation summary is kept",
     "ring_seconds": "how long an alarm rings if nobody stops it",
-    "snooze_minutes": "«snooze» without saying how long"
+    "snooze_minutes": "«snooze» without saying how long",
+    "llm_fallback": "if the LLM can't answer, another one does: auto (Apple's local model if there is one), an LLM's name, or none"
   },
   "plugins": {
     "admin": [
@@ -944,6 +946,14 @@
     "wake-whisper": [
       "Wake word (Whisper)",
       "Any word as the wake word, heard with a small Whisper."
+    ],
+    "llm-fallback": [
+      "Plan B",
+      "If the LLM can't answer (no network, a usage limit, signed out), another one answers, saying so: Apple's local model by default."
+    ],
+    "always-on": [
+      "Always on",
+      "It never falls asleep by itself: no need to say its name between sentences. «Go to sleep» still works."
     ]
   },
   "installer": {

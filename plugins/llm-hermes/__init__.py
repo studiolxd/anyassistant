@@ -23,7 +23,7 @@ from pathlib import Path
 import i18n
 import kernel
 import settings
-from llm import LLM, instructions, register
+from llm import LLM, Unavailable, instructions, register
 
 log = logging.getLogger("llm")
 
@@ -99,8 +99,7 @@ class Hermes(LLM):
                                      headers={"X-Hermes-Session-Id": self._session}) as r:
                     if r.status != 200:
                         log.warning("Hermes answered %s: %s", r.status, (await r.text())[:300])
-                        yield i18n.L("speech.llm_failed")
-                        return
+                        raise Unavailable(i18n.L("speech.llm_failed"))
                     event = None
                     async for line in r.content:
                         line = line.decode().strip()
@@ -129,7 +128,7 @@ class Hermes(LLM):
                                 yield delta
                         event = None
             except aiohttp.ClientConnectorError:
-                yield i18n.L("speech.hermes_down")
+                raise Unavailable(i18n.L("speech.hermes_down")) from None
 
     @staticmethod
     def _content(text: str, image: bytes | None):

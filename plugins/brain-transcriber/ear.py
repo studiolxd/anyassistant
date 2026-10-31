@@ -23,6 +23,7 @@ import numpy as np
 from scipy.signal import resample_poly
 
 import i18n
+import kernel
 import vad
 import settings
 from stt import RATE
@@ -60,7 +61,7 @@ class Ear:
         self.speaking = False
         self.silence = 0.0
         self.speech = 0.0  # seconds of speech within the sentence
-        self.awake = wake is None
+        self.awake = wake is None or kernel.enabled("always-on")  # always on: awake from the start
         self.last_activity = 0.0  # to fall asleep after `follow_up`
         self.end_of_sentence = silence  # seconds of silence that end a sentence
         self.follow_up = follow_up
@@ -169,7 +170,7 @@ class Ear:
 
         if not self.speaking:
             follow_up = settings.get("follow_up") or self.follow_up
-            if self.wake and time.time() - self.last_activity > follow_up:
+            if self.wake and time.time() - self.last_activity > follow_up and not kernel.enabled("always-on"):
                 self._sleep(f"{follow_up:g} s without speech")
                 return
             self.pre_roll.append(window)

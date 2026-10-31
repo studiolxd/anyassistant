@@ -289,6 +289,26 @@ class Assistant(Transcriber):
         else:
             self._state(self._idle_state())
 
+    async def _pieces(self, text: str, look):
+        """The LLM's answer; if it can't answer (llm.Unavailable), plan B's (the plugin
+        «llm-fallback»), saying so first, or why it couldn't."""
+        try:
+            async for piece in self.llm.answer(text, image=look):
+                yield piece
+        except llm.Unavailable as e:
+            backup = kernel.module("llm-fallback")
+            other = backup.instead(self.llm) if backup else None
+            if other is None:
+                yield e.sentence
+                return
+            log.warning("%s couldn't answer (%s): %s answers", self.llm.name, e.sentence, other.name)
+            yield i18n.L("speech.fallback", name=self.llm.name.capitalize()) + " "
+            try:
+                async for piece in other.answer(text, image=None):
+                    yield piece
+            except llm.Unavailable as again:
+                yield again.sentence
+
     async def _answer(self, text: str):
         async with self.turn:
             self.number += 1
@@ -316,7 +336,7 @@ class Assistant(Transcriber):
             # Even if cut off, the whole answer is read: the plugin has to finish it.
             quiet = settings.get("ignore_others", True) is not False
             held = ""  # the start of the answer, until it is clear it isn't SILENCE
-            async for piece in self.llm.answer(self._for_llm(text), image=look):
+            async for piece in self._pieces(self._for_llm(text), look):
                 if self.cut == number:
                     continue
                 first = first or time.time() - start

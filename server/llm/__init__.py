@@ -94,6 +94,15 @@ def context(function):
     return function
 
 
+class Unavailable(Exception):
+    """The LLM can't answer now (no network, a usage limit, signed out, its process died).
+    Its text is what to say about it; the plugin «llm-fallback» may answer with another."""
+
+    def __init__(self, sentence: str):
+        super().__init__(sentence)
+        self.sentence = sentence
+
+
 class LLM:
     name = "?"
     spoken: list[str] = []  # how its name is said (and misheard): «use Claude», «cambia a Hermes»

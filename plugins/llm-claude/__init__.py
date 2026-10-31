@@ -20,7 +20,7 @@ import i18n
 import kernel
 import paths
 import settings
-from llm import LLM, instructions, register
+from llm import LLM, Unavailable, instructions, register
 
 from . import permissions
 
@@ -191,8 +191,7 @@ class Claude(LLM):
                     continue
                 line, reading = reading.result(), None
                 if not line:  # the process died: the next message starts another
-                    yield i18n.L("speech.connection_cut")
-                    return
+                    raise Unavailable(i18n.L("speech.connection_cut"))
                 event = json.loads(line)
                 if event.get("type") == "stream_event":
                     delta = event["event"].get("delta", {})
@@ -224,7 +223,6 @@ class Claude(LLM):
                             # Signed out: this process stays useless even after signing
                             # in again; the next message starts another.
                             self._process.kill()
-                            yield i18n.L("speech.no_login")
-                        else:
-                            yield i18n.L("speech.llm_failed")
+                            raise Unavailable(i18n.L("speech.no_login"))
+                        raise Unavailable(i18n.L("speech.llm_failed"))
                     return

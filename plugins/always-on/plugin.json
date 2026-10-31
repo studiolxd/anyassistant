@@ -1,0 +1,6 @@
+{
+  "name": "Always on",
+  "description": "It never falls asleep by itself: no need to say its name between sentences. «Go to sleep» still works.",
+  "kind": "feature",
+  "default": false
+}

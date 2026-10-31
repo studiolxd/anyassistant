@@ -65,7 +65,8 @@
     "when_tomorrow": "mañana a {time}",
     "when_in": "dentro de {duration}",
     "duration_and": " y ",
-    "when_day": "el {date} a {time}"
+    "when_day": "el {date} a {time}",
+    "fallback": "{name} no responde; te contesto con el modelo local."
   },
   "commands": {
     "sleep": [
@@ -838,7 +839,8 @@
     "memory_conversations": "resúmenes de conversaciones que guarda",
     "memory_days": "días que guarda el resumen de una conversación",
     "ring_seconds": "cuánto suena una alarma si nadie la para",
-    "snooze_minutes": "«pospón» sin decir cuánto"
+    "snooze_minutes": "«pospón» sin decir cuánto",
+    "llm_fallback": "si el LLM no puede responder, responde otro: auto (el modelo local de Apple si lo hay), el nombre de un LLM o none"
   },
   "plugins": {
     "bonjour": [
@@ -1000,6 +1002,14 @@
     "admin": [
       "Admin",
       "Los ajustes y los plugins para la app de AnyAssistant (/admin/…), solo desde el Mac."
+    ],
+    "llm-fallback": [
+      "Plan B",
+      "Si el LLM no puede responder (sin red, un límite de uso, sin sesión), responde otro y lo dice: de serie, el modelo local de Apple."
+    ],
+    "always-on": [
+      "Siempre encendido",
+      "No se duerme solo: no hace falta decir su nombre entre frases. «A dormir» sigue funcionando."
     ]
   },
   "installer": {

@@ -1,0 +1,5 @@
+{
+  "name": "Plan B",
+  "description": "If the LLM can't answer (no network, a usage limit, signed out), another one answers, saying so: Apple's local model by default.",
+  "kind": "feature"
+}
