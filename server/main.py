@@ -13,6 +13,7 @@
 
 import argparse
 import asyncio
+import json
 import logging
 import os
 import signal
@@ -184,6 +185,10 @@ def main():
     parser.add_argument("--face", choices=["eyes", "orb"], default="eyes", help="the page's face (?face= wins)")
     parser.add_argument("--video", choices=["auto", "normal", "low", "off"], default="auto",
                         help="camera quality; auto: each device by its memory (?video= wins)")
+    parser.add_argument("--detail", default="neutral",
+                        help="how much it says: concise, neutral, detailed or one of «detail_levels»")
+    parser.add_argument("--detail-levels", type=json.loads, default=None,
+                        help='more levels, or other texts for these: {"name": "instruction for the prompt"}')
     parser.add_argument("--memory", choices=["off", "explicit", "auto"], default="off",
                         help="remember across conversations: only when asked (explicit) or also on its own (auto)")
     parser.add_argument("--eyes", action=argparse.BooleanOptionalAction, default=False,
@@ -238,6 +243,9 @@ def main():
         print(f"settings.json: unknown key «{key}» (ignored)", file=sys.stderr)
     parser.set_defaults(**{k: v for k, v in preferences.items() if k in known})
     args = parser.parse_args()
+    levels = {**llm.DETAIL_LEVELS, **(args.detail_levels or {})}
+    if args.detail not in levels:
+        parser.error(f"detail: «{args.detail}» is not one of {', '.join(levels)}")
     for action in parser._actions:  # argparse doesn't check defaults, which come from settings.json
         if action.choices and getattr(args, action.dest) not in action.choices:
             parser.error(f"{action.dest}: «{getattr(args, action.dest)}» is not one of {', '.join(action.choices)}")

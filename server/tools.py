@@ -53,7 +53,10 @@ def get_status() -> str:
 
 
 def get_settings() -> str:
+    import llm
+
     return (f"name: {settings.get('name')}; face: {settings.get('face')}; "
+            f"detail: {settings.get('detail') or 'neutral'} (levels: {', '.join(llm.detail_levels())}); "
             f"voice: {settings.get('voice') or 'the language default'}; language: {i18n.L.code} "
             f"(available: {', '.join(i18n.available())})")
 
@@ -139,6 +142,15 @@ def set_llm(llm: str, model: str = "") -> str:
         raise ToolError("that isn't a model name")
     settings.save(llm=llm, llm_model=model or None)
     return f"Saved: it restarts with {llm} when you finish answering."
+
+
+def set_detail(level: str) -> str:
+    import llm
+
+    if level not in llm.detail_levels():
+        raise ToolError(f"levels: {', '.join(llm.detail_levels())}")
+    settings.save(detail=level)
+    return "Saved: from your next answer on."
 
 
 def _memory_on():
@@ -228,6 +240,9 @@ TOOLS = {
     "forget": (forget, "Forget a fact (its number from get_memory).", _schema(number={"type": "integer"})),
     "camera": (camera, "Show (true) or hide (false) the device's camera live on its screen.",
                _schema(on={"type": "boolean"})),
+    "set_detail": (set_detail, "How much you say in your answers: concise, neutral, detailed (or another level "
+                   "from get_settings), when the user asks you to be briefer or to give more detail.",
+                   _schema(level={"type": "string"})),
     "get_llms": (get_llms, "The LLMs Jarvis can use, which one is in use and whether each is available.", _schema()),
     "set_llm": (set_llm, "Switch to another LLM (claude, apple, hermes), optionally with a model (for Claude: "
                 "sonnet, opus, haiku…; empty for the default). Apple's can't use tools: to come back, the user "

@@ -22,6 +22,7 @@ import memory
 import settings
 import tools
 from audio import normalize
+from llm import detail as llm_detail
 from brain.transcriber import Transcriber
 from text import words
 
@@ -192,6 +193,7 @@ class Assistant(Transcriber):
     def _woke_up(self):
         super()._woke_up()
         self.transcript = []
+        self.detail = llm_detail()  # the one in this conversation's instructions
         asyncio.ensure_future(self.llm.new())
 
     def _fell_asleep(self, by_command: bool):
@@ -323,7 +325,7 @@ class Assistant(Transcriber):
             first = None
             answer = rest = ""
             # Even if cut off, the whole answer is read: the plugin has to finish it.
-            async for piece in self.llm.answer(text, image=look):
+            async for piece in self.llm.answer(self._with_detail(text), image=look):
                 if self.cut == number:
                     continue
                 first = first or time.time() - start
@@ -360,6 +362,14 @@ class Assistant(Transcriber):
             await self._restart(i18n.L("speech.restarting"))
         elif "reload" in asked:
             await self.llm.reload()
+
+    def _with_detail(self, text: str) -> str:
+        """If the detail level changed mid-conversation, the LLM hears it with this message."""
+        current = llm_detail()
+        if current == getattr(self, "detail", current):
+            return text
+        self.detail = current
+        return f"(From now on: {current})\n{text}"
 
     def _looked(self):
         """It looks through the camera: the face says so and the screen shows the photo."""

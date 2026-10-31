@@ -99,6 +99,13 @@ the plugins' (`llm`, `llm_model`, `stt`, `tts`, `voice`, `wake`…) and the ear'
 | `confirm_wait` | `120` | seconds to answer «yes» to an action that writes |
 | `confirm_valid` | `60` | seconds a «yes» stays valid |
 
+**How much it says**: `detail` is `concise` (one short sentence), `neutral` (one
+to three; the default) or `detailed` (a paragraph or two). Each level is an
+instruction added to the prompt; `detail_levels` adds levels or changes those
+texts: `{"telegraphic": "Answer in five words or fewer."}`. By voice too («be
+briefer», «give me more detail»), without asking for your «yes»: if it changes
+mid-conversation, the LLM hears it with the next question.
+
 **The screen**: `show_time`, `show_date` and `show_hint` («Say Hey Jarvis») while
 asleep; `show_status` («Listening», «Thinking…»), `show_heard` (what you said),
 `show_answer` (its answer) and `history` (earlier sentences kept, 2) while awake;
@@ -138,6 +145,7 @@ face», «what do you know about me?»):
 | `set_face`, `set_voice`, `set_name`, `set_language` | saved to `settings.json`, applied after the answer | yes |
 | `remember`, `forget` | memory facts | yes |
 | `camera` | shows or hides the live camera on the screen | no: it only changes the screen |
+| `set_detail` | how much it says: concise, neutral, detailed or your own levels | no: it only changes how it talks |
 | `get_llms`, `set_llm` | the LLMs it can use (and whether each is available); switch to another, with a model | `set_llm`: yes |
 | `reload_tools`, `restart` | after the answer, so the LLM isn't cut off while using it | yes |
 
