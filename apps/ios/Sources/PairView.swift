@@ -29,7 +29,7 @@ struct PairView: View {
                 } header: {
                     Text(T("Code from your Mac"))
                 } footer: {
-                    Text(problem ?? T("On your Mac, open AnyAssistant's menu and choose «Pair a device…»: it shows the code."))
+                    Text(problem ?? T("On your Mac, open AnyAssistant's menu and choose «Connect another device»: it shows the code."))
                         .foregroundColor(problem == nil ? .secondary : .red)
                 }
                 Section(T("Mac")) {
@@ -38,6 +38,11 @@ struct PairView: View {
                 }
             }
             .navigationTitle("AnyAssistant")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {  // from «Pair again»: back as it was
+                    if mac.repairing { Button(T("Cancel")) { mac.cancelPairing() } }  // (a view's «if»: iOS 15 too)
+                }
+            }
             .onAppear { typing = true }
         }
         .navigationViewStyle(.stack)

@@ -60,6 +60,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val link get() = App.link
     private var paired by mutableStateOf(false)
+    private var repairing by mutableStateOf(false)  // «Pair again»: the code screen with a way back (what it had stays)
     private val prefs get() = getSharedPreferences("anyassistant", Context.MODE_PRIVATE)
 
     private val ask = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { begin() }
@@ -175,7 +176,7 @@ class MainActivity : ComponentActivity() {
                             Text(getString(if (connected) R.string.connected else R.string.connect))
                         }
                         TextButton(onClick = {
-                            link.stop(); ListenService.stop(this@MainActivity); link.mac.unpair(); paired = false; close()
+                            link.stop(); ListenService.stop(this@MainActivity); repairing = true; paired = false; close()
                         }) { Text(getString(R.string.pair_again), color = Color(0xffff6b6b)) }
                     }
                 }
@@ -209,6 +210,7 @@ class MainActivity : ComponentActivity() {
                 scope.launch {
                     problem = try {
                         link.mac.pair(code)
+                        repairing = false
                         paired = true
                         begin()
                         null
@@ -224,6 +226,11 @@ class MainActivity : ComponentActivity() {
                 if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text(getString(R.string.pair))
             }
             problem?.let { Text(it, Modifier.padding(top = 12.dp), color = Color(0xffff6b6b)) }
+            if (repairing) {  // from «Pair again»: back as it was
+                TextButton(onClick = { repairing = false; paired = true; begin() }, modifier = Modifier.padding(top = 8.dp)) {
+                    Text(getString(R.string.cancel))
+                }
+            }
             OutlinedTextField(host, { host = it; link.mac.host = it }, label = { Text(getString(R.string.mac_address)) },
                 placeholder = { Text(getString(R.string.found_by_itself)) }, singleLine = true,
                 modifier = Modifier.padding(top = 32.dp).fillMaxWidth())

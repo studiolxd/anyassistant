@@ -112,6 +112,7 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         } else if name != host {
             address = name
         }
+        repairing = false
         paired = true
         UserDefaults.standard.set(true, forKey: "paired")
     }
@@ -180,7 +181,22 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         return parts.url!
     }
 
+    /// «Pair again» chosen here: the code screen, with a way back. What it had stays until a new
+    /// pairing works (not even saved: reopening the app, it is still paired).
+    @Published var repairing = false
+
+    func pairAgain() {
+        repairing = true
+        paired = false
+    }
+
+    func cancelPairing() {
+        repairing = false
+        paired = true
+    }
+
     func unpair() {
+        repairing = false
         paired = false
         UserDefaults.standard.set(false, forKey: "paired")
     }

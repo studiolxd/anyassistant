@@ -12,7 +12,7 @@
 "Done" = "Hecho";
 "Pair" = "Emparejar";
 "Code from your Mac" = "Código de tu Mac";
-"On your Mac, open AnyAssistant's menu and choose «Pair a device…»: it shows the code." = "En tu Mac, abre el menú de AnyAssistant y elige «Emparejar un dispositivo…»: te muestra el código.";
+"On your Mac, open AnyAssistant's menu and choose «Connect another device»: it shows the code." = "En tu Mac, abre el menú de AnyAssistant y elige «Conectar otro dispositivo»: te muestra el código.";
 "That code isn't right (or it expired)." = "Ese código no es correcto (o ha caducado).";
 "Your Mac isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?" = "Tu Mac no responde: ¿está AnyAssistant en marcha, y este dispositivo en la misma Wi-Fi?";
 "Looking for your Mac…" = "Buscando tu Mac…";
@@ -23,3 +23,4 @@
 "Opens AnyAssistant listening, as if you had said its name." = "Abre AnyAssistant escuchando, como si hubieras dicho su nombre.";
 "Stop" = "Parar";
 "It has to be paired again." = "Hay que emparejarlo de nuevo.";
+"Cancel" = "Cancelar";

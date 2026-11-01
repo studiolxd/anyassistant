@@ -128,7 +128,7 @@ struct SettingsView: View {
                     .disabled(connected)
                 }
                 Section {
-                    Button(T("Pair again"), role: .destructive) { link.stop(); mac.unpair(); dismiss() }
+                    Button(T("Pair again"), role: .destructive) { link.stop(); mac.pairAgain(); dismiss() }
                 }
             }
             .onAppear { connectedTo = (mac.host, mac.port) }

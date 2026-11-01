@@ -13,7 +13,7 @@
     <string name="connected">Conectado</string>
     <string name="pair_again">Emparejar de nuevo</string>
     <string name="pair">Emparejar</string>
-    <string name="pair_how">En tu Mac, abre el menú de AnyAssistant y elige «Emparejar un dispositivo…»: te muestra el código.</string>
+    <string name="pair_how">En tu Mac, abre el menú de AnyAssistant y elige «Conectar otro dispositivo»: te muestra el código.</string>
     <string name="code_from_mac">Código de tu Mac</string>
     <string name="wrong_code">Ese código no es correcto (o ha caducado).</string>
     <string name="mac_not_answering">Tu Mac no responde: ¿está AnyAssistant en marcha, y este dispositivo en la misma Wi-Fi?</string>
@@ -28,4 +28,5 @@
     <string name="reminder">Recordatorio</string>
     <string name="timer">Temporizador</string>
     <string name="stop">Parar</string>
+    <string name="cancel">Cancelar</string>
 </resources>
