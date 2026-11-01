@@ -68,12 +68,20 @@ class Session:
             self.channel.send(json.dumps(data))
 
     def _message(self, data: dict):
+        token = hub.here.set(self)  # what it starts (a tap, its skin…) is for this device
+        try:
+            self._handle(data)
+        finally:
+            hub.here.reset(token)
+
+    def _handle(self, data: dict):
         if data.get("type") == "ping":
             self.send({"type": "pong", "t": data["t"]})
         elif hasattr(self.brain, "on_message"):
             self.brain.on_message(data)
 
     async def _read_audio(self, track):
+        hub.here.set(self)  # this task, and what it starts (transcribing, answering…), is for this device
         try:
             while True:
                 self.brain.hear(to_mono(await track.recv()))

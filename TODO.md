@@ -2,8 +2,7 @@
 
 ## Lo siguiente
 
-Orden (1 nov): una conversación por dispositivo, la identificación del hablante y la app
-del Apple Watch.
+Orden (1 nov): la identificación del hablante y la app del Apple Watch.
 
 - [ ] **La app del Apple Watch**: hablarle desde la muñeca (más que la de Android).
 - [ ] **AnyAssistant para el Mac, lo siguiente**: su diseño e icono; el papel de cliente
@@ -16,9 +15,6 @@ del Apple Watch.
 
 ## Varios dispositivos, lo siguiente
 
-- [ ] **Una conversación por dispositivo**: hoy, una a la vez (el LLM es uno: un proceso
-  de Claude); si hablan dos personas en dos habitaciones, la segunda corta la primera.
-  Un LLM por conversación, con su coste.
 - [ ] **Afinar quién contesta**: el margen (1,5 s) y la comparación por volumen, con más
   uso real (el log dice `heard it louder` / `not woken`).
 
@@ -72,6 +68,9 @@ del Apple Watch.
 
 ## Hecho
 
+- [x] **Una conversación por dispositivo** (1 nov): cada uno con su LLM (hasta
+  `conversations`, 2; con 1, de una en una); dos personas en dos habitaciones no se cortan.
+  Sus herramientas actúan en su dispositivo (`/mcp?device=…`).
 - [x] **Skins para verlas** (el antiguo lab, ahora `skins`, `/skins`): todos los estados de
   cada una, desde el menú de la app («Skins…»); solo para ver. Sin comprobador.
 - [x] **Toma la iniciativa** (1 nov): avisos de la agenda («Dentro de 10 minutos:

@@ -124,7 +124,7 @@ class Claude(LLM):
 
     def _load_permissions(self):
         """Reads .mcp.json and permissions.json: on every conversation, to pick up changes."""
-        self._permissions = permissions.load(servers=Path(self.mcp))
+        self._permissions = permissions.load(servers=Path(self.mcp), device=getattr(self, "device", None))
         eyes = kernel.module("eyes")
         self._instructions = instructions() + CLAUDE_INSTRUCTIONS + (eyes.instructions() if eyes else "")
         if self._permissions.tools:

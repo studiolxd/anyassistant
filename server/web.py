@@ -3,6 +3,7 @@ the hooks plugins use (routes, guards like pairing's, /config, startup tasks). m
 
 import asyncio
 import logging
+import re
 import uuid
 
 from aiohttp import web
@@ -72,7 +73,8 @@ async def offer(request: web.Request) -> web.Response:
     if refusal := refused(request):
         return refusal
     data = await request.json()
-    device = str(data.get("device") or "")[:64] or None  # the page's own id (several devices at once)
+    device = str(data.get("device") or "")  # the page's own id (several devices at once): a name in files too
+    device = device if re.fullmatch(r"[A-Za-z0-9_-]{1,64}", device) else None
     session = Session(uuid.uuid4().hex[:6], brain, device)
     session.agent = request.headers.get("User-Agent", "")
     for old in hub.add(session):  # the same device connecting again: its old connection goes

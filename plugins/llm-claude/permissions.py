@@ -63,9 +63,10 @@ def command_help(command: Path) -> str:
     return output.strip()
 
 
-def load(root: Path | None = None, servers: Path | None = None) -> Permissions:
+def load(root: Path | None = None, servers: Path | None = None, device: str | None = None) -> Permissions:
     """What Claude may use, from your permissions.json and .mcp.json (paths.py's places;
-    root: one folder with everything, for tests)."""
+    root: one folder with everything, for tests); `device`: the one its conversation is for
+    (its own tools act on it)."""
     home, app = root or paths.HOME, root or paths.APP
     cache = root / ".build" if root else paths.CACHE
     servers = servers or paths.MCP
@@ -82,8 +83,9 @@ def load(root: Path | None = None, servers: Path | None = None) -> Permissions:
         configs.append(str(servers))
         names.update(json.loads(servers.read_text()).get("mcpServers", {}))
     if "anyassistant" in allowed:  # its own tools (server/tools.py), served by the server itself
-        own = {"type": "http", "url": f"http://127.0.0.1:{settings.get('port', 8080)}/mcp"}
-        path = cache / "anyassistant-mcp.json"
+        url = f"http://127.0.0.1:{settings.get('port', 8080)}/mcp"
+        own = {"type": "http", "url": f"{url}?device={device}" if device else url}
+        path = cache / (f"anyassistant-mcp-{device}.json" if device else "anyassistant-mcp.json")
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"mcpServers": {"anyassistant": own}}))
         configs.append(str(path))

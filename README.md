@@ -137,6 +137,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `detail` | `"neutral"` | how much it says: concise, neutral, detailed or one of detail_levels |
 | `detail_levels` | — | more levels, or other texts for these: {"name": "instruction for the prompt"} |
 | `ignore_others` | `true` | the LLM stays quiet when what it hears is clearly not for it |
+| `conversations` | `2` | how many devices can be in a conversation at once (each its own LLM: with Claude, two processes each); 1: one at a time, the others fall asleep |
 | `quiet_hours` | `"23:00-08:00"` | hours when it doesn't give notices (e.g. 23:00-08:00; empty: any time); alarms ring anyway |
 | `notices_where` | `"everywhere"` | where notices are said: on every device, or on the last one you talked to |
 | `calendar_notice_minutes` | `10` | how many minutes before an event it gives notice |
@@ -260,9 +261,11 @@ its hash in `paired.json`). Unpaired devices can't connect, see the camera
 forgets them all.
 
 **Several devices at once** (`server/hub.py`): each one connects with its own id (the
-page keeps it), so a device that reconnects replaces its old connection. There's one
-conversation at a time (the LLM is one): the device that heard its name answers, and its
-camera and screen are the ones used; another one in a conversation goes to sleep. When
+page keeps it), so a device that reconnects replaces its old connection. Each device has
+its own conversation (its own LLM, made the first time it wakes; at most `conversations`,
+2 by default: with Claude each is two processes; with 1, one at a time and the others
+sleep): two people in two rooms don't cut each other off. What a device's LLM does with its
+tools happens on that device (its camera, «here»: `/mcp?device=…`). When
 two hear the same «Jarvis» (within 1.5 s), the one that heard it louder answers; while one
 speaks, its voice saying its name doesn't wake another. The plugin `devices` gives each a
 name (from what it is: iPad, Android tablet…) and a room, in `devices.json`: «this is the

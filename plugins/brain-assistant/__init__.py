@@ -24,8 +24,10 @@ import skills
 import tools
 from audio import louder, normalize
 import llm
+import options
 import tts
 import web
+from options import Option
 from brain import register
 from plugins.brain_transcriber import Transcriber, listening, volume
 from llm import SILENCE
@@ -34,6 +36,10 @@ import kernel
 from text import words
 
 log = logging.getLogger("assistant")
+
+options.add(Option("conversations", 2, "how many devices can be in a conversation at once (each its own LLM: "
+                   "with Claude, two processes each); 1: one at a time, the others fall asleep", "assistant", "int",
+                   live=True))
 
 # Seconds deaf after speaking (--echo-guard): the time its voice takes to reach the
 # tablet, play and come back through the microphone, plus room echo. With 0.6 s on
@@ -49,12 +55,53 @@ END_OF_SENTENCE = re.compile(r"(?<=[.!?…;:])\s+|\n+")
 
 
 def create(stt, model, voice=None, wake=None, ear=None, guard=GUARD):
-    """The brain(speaker, send) factory that Session expects, with these engines."""
+    """The brain(speaker, send) factory that Session expects, with these engines. `model`: an LLM
+    (every device shares it), or a Conversations (an LLM per device)."""
 
     def brain(speaker, send):
         return Assistant(stt, wake() if wake else None, model, voice, speaker, send, ear, guard)
 
     return brain
+
+
+class Conversations:
+    """An LLM per device, so two people in two rooms each have their own conversation. Made the
+    first time a device needs one (Claude: its process and a spare, ~1.5 s), kept for the next
+    times; at most «conversations» (each costs memory): beyond that, the one used longest ago
+    is closed (its device, if it was in a conversation, falls asleep)."""
+
+    def __init__(self, make):
+        self.make = make  # function() → a new LLM
+        self.llms = {}  # device (or session id): LLM, the most recently used last
+
+    def __call__(self, assistant):
+        session = hub.of(assistant)
+        key = (session.device or session.id) if session else "?"
+        found = self.llms.pop(key, None)
+        if found is None:
+            found = self.make()
+            found.device = session.device if session else None  # its tools act on this device
+            log.info("a conversation of its own for %s (%d now)", key, len(self.llms) + 1)
+            self._room()
+        self.llms[key] = found
+        return found
+
+    def _room(self):
+        """Closes the ones beyond «conversations» (counting the new one): the oldest first."""
+        most = max(1, settings.get("conversations") or 2)
+        while len(self.llms) >= most:
+            key, oldest = next(iter(self.llms.items()))
+            del self.llms[key]
+            session = hub.by_device(key) or hub.sessions.get(key)
+            if session is not None and hub._awake(session):
+                session.brain.ear.sleep_for("its conversation was closed: too many at once")
+            asyncio.ensure_future(oldest.close())
+            log.info("conversation of %s closed (at most %d)", key, most)
+
+    async def close(self):
+        for found in list(self.llms.values()):
+            await found.close()
+        self.llms.clear()
 
 
 RING_MAX = 30 * 60  # «until someone stops it» (ring_seconds 0) still ends: nobody may be home
@@ -78,10 +125,11 @@ def split(text: str) -> tuple[list[str], str]:
 class Assistant(Transcriber):
     @classmethod
     def create(cls, args):
-        """Its engines from the settings: how it listens, the LLM and the voice."""
+        """Its engines from the settings: how it listens, the LLM (one per device: Conversations)
+        and the voice."""
         engine, wake_factory, ear = listening(args)
-        model = llm.create(args.llm, model=args.llm_model, mcp=args.mcp)
-        log.info("LLM: %s (%s)", model.name, model.model)
+        model = Conversations(lambda: llm.create(args.llm, model=args.llm_model, mcp=args.mcp))
+        log.info("LLM: %s (%s), a conversation per device", args.llm, args.llm_model or "default")
         voice = None
         if args.tts != "none":
             voice = tts.create(args.tts, voice=args.voice, rate=args.rate)
@@ -106,7 +154,7 @@ class Assistant(Transcriber):
         self.said = []  # words of the last thing it said, to recognize its echo
         self.saying = []  # words of what it is saying now (sentence by sentence)
         self.transcript = []  # (who, text) of this conversation, for memory
-        self.llm = llm
+        self._llm = llm  # an LLM, or a Conversations that gives this device its own
         self.tts = tts
         self.turn = asyncio.Lock()  # one answer at a time, in order
         # Ids of the answers on screen: unique across restarts, or a new answer would
@@ -116,6 +164,15 @@ class Assistant(Transcriber):
         self.sentences = asyncio.Queue()  # (number, sentence); sentence None = end of answer
         if tts:
             asyncio.ensure_future(self._mouth())
+
+    @property
+    def llm(self):
+        """This device's LLM (its own conversation)."""
+        return self._llm(self) if isinstance(self._llm, Conversations) else self._llm
+
+    @llm.setter
+    def llm(self, value):
+        self._llm = value
 
     def _idle_state(self) -> str:
         """The resting state, or «question» if an action awaits your «yes» (the face shows it)."""
@@ -143,8 +200,9 @@ class Assistant(Transcriber):
     def on_connect(self):
         super().on_connect()
         self.send_timers()
-        if not hub.awake_elsewhere(self):  # the LLM is one: not another device's conversation
-            asyncio.ensure_future(self.llm.new())
+        if not isinstance(self._llm, Conversations):  # its own LLM is made when it first wakes
+            if not hub.awake_elsewhere(self):  # one LLM for all: not another device's conversation
+                asyncio.ensure_future(self.llm.new())
 
     def on_message(self, data: dict):
         super().on_message(data)

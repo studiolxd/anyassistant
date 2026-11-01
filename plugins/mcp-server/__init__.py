@@ -2,7 +2,8 @@
 
 Streamable HTTP, the minimum Claude Code needs: JSON-RPC requests by POST,
 answered with plain JSON. Only from the Mac itself: no device on the network,
-paired or not, can use it.
+paired or not, can use it. /mcp?device=<id>: each device's LLM, so its tools act on that
+device (its camera, «here»…), not on the last one woken elsewhere.
 """
 
 import json
@@ -10,6 +11,7 @@ import logging
 
 from aiohttp import web as http
 
+import hub
 import tools
 import web
 
@@ -63,7 +65,11 @@ async def endpoint(request: http.Request) -> http.Response:
         body = await request.json()
     except json.JSONDecodeError:
         return http.json_response(_error(None, -32700, "parse error"), status=400)
-    answers = [a for a in map(handle, body if isinstance(body, list) else [body]) if a]
+    token = hub.here.set(hub.by_device(request.query.get("device")))
+    try:
+        answers = [a for a in map(handle, body if isinstance(body, list) else [body]) if a]
+    finally:
+        hub.here.reset(token)
     if not answers:
         return http.Response(status=202)
     return http.json_response(answers if isinstance(body, list) else answers[0])

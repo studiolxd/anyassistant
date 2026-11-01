@@ -7,6 +7,7 @@ import pytest
 import hub
 import kernel
 import paths
+import settings
 import vad
 
 kernel.load_all()  # plugins.* importable
@@ -116,10 +117,20 @@ def test_the_fainter_one_after_doesnt_wake():
     assert near.brain.ear.awake and not far.brain.ear.awake
 
 
-def test_one_conversation_at_a_time(monkeypatch):
+def test_a_conversation_per_device(monkeypatch):
     kitchen, living = connect("a", "kitchen"), connect("b", "living")
     hears_its_name(kitchen, 0.3)
     monkeypatch.setattr(hub, "_claim", None)  # a while later: another word, elsewhere
+    hears_its_name(living, 0.3)
+    assert living.brain.ear.awake and kitchen.brain.ear.awake  # both talking, each its own
+    assert hub.current() is living
+
+
+def test_or_one_at_a_time(monkeypatch):
+    monkeypatch.setattr(settings, "active", {"conversations": 1})
+    kitchen, living = connect("a", "kitchen"), connect("b", "living")
+    hears_its_name(kitchen, 0.3)
+    monkeypatch.setattr(hub, "_claim", None)
     hears_its_name(living, 0.3)
     assert living.brain.ear.awake and not kitchen.brain.ear.awake
 
@@ -273,3 +284,83 @@ def test_the_llm_knows_where_you_are_talking_from(house, monkeypatch):
     assert assistant._for_llm("y la de la mesilla") == "y la de la mesilla"  # said once per conversation
     devices.change("b1", room="habitación de invitados")
     assert "«habitación de invitados»" in assistant._for_llm("¿y ahora?")  # it changed: said again
+
+
+# --- A conversation per device ---
+
+class FakeLLM:
+    made = 0
+
+    def __init__(self):
+        FakeLLM.made += 1
+        self.closed = False
+
+    async def close(self):
+        self.closed = True
+
+
+def test_each_device_has_its_own_llm(monkeypatch):
+    from plugins.brain_assistant import Conversations
+
+    monkeypatch.setattr(settings, "active", {"conversations": 2})
+    pool = Conversations(FakeLLM)
+    kitchen, living, bedroom = connect("a", "k"), connect("b", "l"), connect("c", "d")
+    first = pool(kitchen.brain)
+    assert pool(kitchen.brain) is first and first.device == "k"  # kept for the next times
+    second = pool(living.brain)
+    assert second is not first
+
+    async def third():
+        return pool(bedroom.brain)  # a third: the one used longest ago (the kitchen's) is closed
+
+    import asyncio
+
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(third())
+    loop.run_until_complete(asyncio.sleep(0))
+    loop.close()
+    assert first.closed and not second.closed and set(pool.llms) == {"l", "d"}
+
+
+def test_a_devices_work_happens_there():
+    kitchen, living = connect("a", "k"), connect("b", "l")
+    hub.active = "b"  # the living room's woke last
+    token = hub.here.set(kitchen)  # but this is the kitchen's (its audio, its LLM's tools)
+    try:
+        assert hub.current() is kitchen
+    finally:
+        hub.here.reset(token)
+    assert hub.current() is living
+
+
+def test_a_tool_call_is_for_its_llms_device(monkeypatch):
+    import asyncio
+    import json
+
+    from aiohttp.test_utils import make_mocked_request
+
+    import tools
+
+    mcp = kernel.load("mcp-server")
+    kitchen, living = connect("a", "k"), connect("b", "l")
+    hub.active = "b"
+    seen = []
+    monkeypatch.setattr(tools, "call", lambda name, arguments: seen.append(hub.current()) or "ok")
+    request = make_mocked_request("POST", "/mcp?device=k", transport=type("T", (), {
+        "get_extra_info": lambda self, k, d=None: ("127.0.0.1", 1) if k == "peername" else d})())
+    body = {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "x"}}
+    request.json = lambda: asyncio.sleep(0, body)
+    answer = asyncio.run(mcp.endpoint(request))
+    assert json.loads(answer.body)["result"]["content"][0]["text"] == "ok"
+    assert seen == [kitchen]  # not the living room's, though it woke last
+
+
+def test_claude_reaches_its_tools_for_its_device(tmp_path, monkeypatch):
+    import json
+
+    permissions = kernel.load("llm-claude").permissions
+    (tmp_path / "permissions.json").write_text(json.dumps({"allowed": {"anyassistant": "all"}}))
+    found = permissions.load(root=tmp_path, servers=tmp_path / ".mcp.json", device="k")
+    config = json.loads((tmp_path / ".build" / "anyassistant-mcp-k.json").read_text())
+    assert config["mcpServers"]["anyassistant"]["url"].endswith("/mcp?device=k")
+    assert str(tmp_path / ".build" / "anyassistant-mcp-k.json") in found.arguments

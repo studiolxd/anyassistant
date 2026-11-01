@@ -4,14 +4,20 @@ being wired by main.py.
 
 - Each device has its own connection (a transport.Session) and its own brain; a device
   that connects again replaces its old connection (`device`: the page's own id).
-- One conversation at a time (the LLM is one): the device that heard its name is the
-  active one, and the others go to sleep.
+- A conversation per device (brain-assistant: an LLM each, up to «conversations»): the
+  device that heard its name is the active one; with «conversations» 1, the others sleep.
+- What a device's brain does, and the tools its LLM calls (the plugin mcp-server, by its
+  ?device=), happen «here» (a context variable): current() is that device, not the last
+  one woken somewhere else.
 - When two devices hear the same «Jarvis» (they're near each other), only one answers:
   the one that heard it louder, within CLAIM_WINDOW seconds.
 """
 
+import contextvars
 import logging
 import time
+
+import settings
 
 log = logging.getLogger("hub")
 
@@ -20,6 +26,7 @@ CLAIM_WINDOW = 1.5  # seconds: two devices hearing the same word (the wake word'
 sessions: dict = {}  # id: transport.Session, in the order they connected
 active = None  # the id of the session talking to you now (the last one woken)
 _claim = None  # (session, level, at): the last wake-up by its name, to compare a second one
+here = contextvars.ContextVar("here", default=None)  # the session this work is for (its audio, its LLM's tools)
 
 
 def all() -> list:  # noqa: A001 (hub.all(): every connected device)
@@ -27,7 +34,11 @@ def all() -> list:  # noqa: A001 (hub.all(): every connected device)
 
 
 def current():
-    """The device talking to you now; if none was woken yet, the last one connected."""
+    """The device this is for: «here» (its brain, its LLM's tools); else the one last woken; if
+    none was woken yet, the last one connected."""
+    session = here.get()
+    if session is not None and sessions.get(session.id) is session:
+        return session
     if active in sessions:
         return sessions[active]
     return next(reversed(sessions.values()), None)
@@ -37,6 +48,11 @@ def connected():
     """The current device, if its connection is up."""
     session = current()
     return session if session and session.pc.connectionState == "connected" else None
+
+
+def by_device(device: str | None):
+    """The connected session of a device (its page's id)."""
+    return next((s for s in sessions.values() if device and s.device == device), None)
 
 
 def of(brain):
@@ -75,8 +91,8 @@ def awake_elsewhere(brain) -> bool:
 def claim(brain, level: float = 0.0, why: str | None = None) -> bool:
     """A device wants to wake up: by its name (why None, `level` how loud it heard it), a tap…
     False if another one heard that same word better, or is the one speaking (its own voice
-    saying its name, heard by a device nearby). If it may, it is the active one, and any other
-    device in a conversation goes to sleep."""
+    saying its name, heard by a device nearby). If it may, it is the active one (and, with
+    «conversations» 1, any other device in a conversation goes to sleep)."""
     global active, _claim
     session = of(brain)
     if session is None or why == "alarm":  # an alarm rings where it rings; it isn't a conversation
@@ -101,9 +117,10 @@ def claim(brain, level: float = 0.0, why: str | None = None) -> bool:
             _claim[0].brain.ear.drop("another device heard it louder")
         _claim = (session, level, now)
     active = session.id
-    for other in others:
-        if _awake(other):
-            other.brain.ear.sleep_for("another device woke up")
+    if (settings.get("conversations") or 2) <= 1:  # one conversation at a time: the others sleep
+        for other in others:
+            if _awake(other):
+                other.brain.ear.sleep_for("another device woke up")
     return True
 
 
