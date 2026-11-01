@@ -197,13 +197,15 @@ struct MenuView: View {
                  + (device.current && server.devices.count > 1 ? " · " + T("talking to you") : ""))
         }
         if let busy = server.busy { Text(busy) }
-        if server.state != .notInstalled {  // the server, right under how it is
-            if server.state == .stopped {
-                Button(T("Start")) { server.start() }
-            } else {
-                Button(T("Restart")) { server.restart() }
-                Button(T("Stop")) { server.stop() }
-            }
+        // The server, right under how it is: start it when stopped (or failed); while it starts,
+        // only stop it; running, restart or stop.
+        switch server.state {
+        case .notInstalled: EmptyView()
+        case .stopped, .failed: Button(T("Start")) { server.start() }
+        case .starting: Button(T("Stop")) { server.stop() }
+        case .running:
+            Button(T("Restart")) { server.restart() }
+            Button(T("Stop")) { server.stop() }
         }
         Divider()
         if server.state == .notInstalled {

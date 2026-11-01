@@ -145,11 +145,11 @@ function menu() {
   const running = server.state === 'running';
   const items = [
     { label: status(), enabled: false },
-    // The server, right under how it is.
-    server.state === 'stopped' || server.state === 'failed'
-      ? { label: T('Start'), click: () => server.start() }
-      : { label: T('Restart'), click: () => server.restart() },
-    { label: T('Stop'), enabled: server.state !== 'stopped', click: () => server.stop() },
+    // The server, right under how it is: start it when stopped (or failed); while it starts, only
+    // stop it; running, restart or stop.
+    ...(server.state === 'stopped' || server.state === 'failed' ? [{ label: T('Start'), click: () => server.start() }]
+      : server.state === 'starting' ? [{ label: T('Stop'), click: () => server.stop() }]
+      : [{ label: T('Restart'), click: () => server.restart() }, { label: T('Stop'), click: () => server.stop() }]),
     { type: 'separator' },
     faceShown()  // «Hide Eva» while its window is open
       ? { label: T('Hide %s', name), click: () => windows.face.close() }
