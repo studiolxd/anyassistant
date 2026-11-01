@@ -5,6 +5,6 @@ set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 cd "$HERE"
 xcodegen generate --quiet
-xcodebuild -project AnyAssistantWatch.xcodeproj -scheme AnyAssistant -destination 'generic/platform=watchOS' \
+xcodebuild -project AnyAssistantWatch.xcodeproj -scheme AnyAssistantWatch -destination 'generic/platform=watchOS' \
   -quiet build CODE_SIGNING_ALLOWED=NO
-echo "Built. To install: open $HERE/AnyAssistantWatch.xcodeproj, choose your Apple Watch and Run."
+echo "Built. To install: open $HERE/AnyAssistantWatch.xcodeproj, choose the scheme AnyAssistantWatch and your Apple Watch, and Run (or apps/watch/testflight.sh)."
