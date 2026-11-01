@@ -2,16 +2,40 @@
 
 ## Lo siguiente
 
+Probándose ahora (1 nov): el servidor en Windows y Linux, la app de Android en un Android 8.
 
-- [ ] **El Apple Watch, lo siguiente**: probarla en tu reloj; los avisos en la muñeca
-  (alarmas, agenda, «la cocina dice…», con vibración: notificaciones push); fuera de casa
-  (el Mac accesible desde fuera: Tailscale…); una complicación para la esfera y el botón Acción.
-- [ ] **AnyAssistant para el Mac, lo siguiente**: su diseño e icono; encontrar el servidor
-  de otro Mac con Bonjour (hoy, su dirección a mano); campos de ajustes como es debido para
-  las opciones que son listas o JSON (hoy, un campo de texto).
-- [ ] **Instalador, lo siguiente**: un tarball de release (install.sh copia el checkout
-  de git, o la copia de la app); el paso de registro de la voz (`@installer.device`)
-  cuando exista ese plugin.
+- [ ] **Registrar tu voz** («Eva, aprende mi voz», o Ajustes → Voces) y afinar `voice_match`
+  (abajo, «Quién habla»): hoy no hay ninguna voz aprendida, así que escucha a cualquiera.
+- [ ] **Licencia del repositorio** (público en github.com/studiolxd/anyassistant, sin licencia:
+  se puede leer, no reutilizar): MIT, Apache 2.0… o ninguna, a propósito.
+
+## Las apps
+
+- [ ] **iPhone y iPad**: instalar la última versión en el iPhone 16 Pro (el arreglo de los
+  textos); subir a TestFlight para el iPhone 7 (iOS 15) y el iPad (iOS 17) y probarlas allí;
+  el sonido de las alarmas, el de la skin (hoy el del sistema); los recordatorios, ¿alarma
+  (AlarmKit, como ahora) o notificación normal?; un modo demo para la revisión de la App Store
+  (el revisor no tiene tu Mac), solo si se publica fuera de TestFlight.
+- [ ] **Android**: probarla en un Android 8 real (el micrófono y la cancelación de eco,
+  encontrar el Mac por Bonjour, la alarma con la pantalla bloqueada, la cámara); publicarla
+  (Google Play, o el APK firmado para instalar a mano).
+- [ ] **El Mac** (servidor y cliente): hablarle de verdad desde «Mostrar a Eva»; su diseño e
+  icono; encontrar el servidor de otro Mac con Bonjour (hoy, su dirección a mano); campos de
+  ajustes como es debido para las opciones que son listas o JSON (hoy, un campo de texto).
+- [ ] **El Apple Watch**: los avisos en la muñeca (alarmas, agenda, «la cocina dice…», con
+  vibración: notificaciones push); fuera de casa (el Mac accesible desde fuera: Tailscale…);
+  una complicación para la esfera y el botón Acción.
+- [ ] **La tablet con Android 4.4** (la página web): comprobar que el vídeo silencioso
+  (`web/awake.mp4`) mantiene la pantalla encendida; si no, hacerlo algo mayor (un vídeo de
+  1 px quizá no cuente como visible).
+- [ ] **Tele**: no por ahora (sin micrófono que puedan usar las apps); si acaso, Android TV
+  como pantalla y altavoz, con la app de Android.
+
+## El instalador
+
+- [ ] **Un paquete de versión** (install.sh copia el checkout de git, o la copia de la app):
+  ahora que el repositorio es público, las versiones de GitHub (Releases) con lo que lleva
+  cada una; el paso de registro de la voz (`@installer.device`) cuando exista ese plugin.
 
 ## El servidor en Windows y Linux (plan)
 
@@ -49,25 +73,25 @@ Java no tiene cancelación de eco).
   `zeroconf` y `keyring` fuera del Mac (dependencias con marcador de sistema en
   `plugin.json`); PyTorch solo CPU; la alarma sin `afplay`; reiniciar sin señales
   (`web.stop`); los motores por defecto, los que tenga cada equipo. Probado en Ubuntu 24.04
-  (OrbStack): 500 tests, 4 solo de Mac saltados. Falta: los tests en Windows (no hay remoto
-  de GitHub para Actions: a mano en tu PC).
+  (OrbStack). Los tests corren en GitHub Actions en Linux, Windows y macOS en cada subida
+  (encontraron 5 fallos de Windows y del certificado HTTPS, arreglados).
 - [x] **2. Motores portables** (1 nov): `stt-parakeet-onnx` (Parakeet v3 int8, 0,1–0,3 s por
   frase en CPU; con el respaldo de Whisper si se va al inglés), `stt-faster-whisper` (CPU
   int8, o NVIDIA si tiene sus librerías), `tts-kokoro` (Dora en español, ~4× tiempo real),
   `wake-whisper` con faster-whisper fuera del Mac. Probado en Ubuntu: «¿Qué hora es?» por
   `/talk` → «Son las 4 y 48 de la tarde» con la voz de Kokoro.
-- [ ] **2b. Lo que queda de los motores**: `tts-piper` (más ligero, para una Raspberry);
-  `set_voice` con las voces de Kokoro (hoy, solo las del Mac); probar Claude Code en Linux y
-  Windows; probarlo todo en un Windows de verdad.
-- [ ] **3. Linux sin pantalla** (un mini PC, un NAS, una Raspberry Pi 5): `install.sh` para
-  Linux, el servicio de systemd y la administración web (ajustes, dispositivos, emparejar).
+- [ ] **2b. Lo que queda de los motores**: probarlo todo en tu Windows y tu Linux (en
+  curso); Claude Code allí (las preguntas abiertas); `tts-piper` (más ligero, para una
+  Raspberry); `set_voice` con las voces de Kokoro (hoy, solo las del Mac); en Windows,
+  reiniciar por voz con la app de bandeja (hoy `os.execv`, que cambia de proceso).
+- [ ] **3. Linux sin pantalla** (un mini PC, un NAS, una Raspberry Pi 5): `install.sh` y el
+  servicio de systemd ya están; falta la administración web (ajustes, dispositivos,
+  emparejar con QR, correo, voces), que también usará la app de bandeja.
 - [ ] **4. La app de bandeja** (Electron): el servidor, la cara en una ventana, el menú, la
   administración; al iniciar sesión.
 - [ ] **5. Paquetes**: instalador de Windows firmado (sin firma, SmartScreen lo bloquea: hace
   falta un certificado de firma de código), AppImage y .deb para Linux, actualizaciones.
 
-Hace falta un Windows y un Linux donde probarlo (vale una máquina virtual para empezar; el
-micrófono y la voz, mejor en un equipo real).
 
 ## Varios dispositivos, lo siguiente
 
@@ -106,6 +130,9 @@ micrófono y la voz, mejor en un equipo real).
 - [ ] **Interrumpirle sin decir su nombre**: mientras habla no escucha (eco), así que
   solo funcionan «Jarvis, para» o un toque. Necesita una cancelación de eco mejor que
   la de la tablet; lo que más haría que pareciera una conversación, y lo más difícil.
+  Ahora es más alcanzable: las apps nativas (iPhone, Mac, Android) usan la cancelación de
+  eco del sistema, mucho mejor que la del navegador: probar a escuchar mientras habla solo
+  en ellas.
 - [ ] **Palabra de activación**: seguir vigilando falsos positivos y negativos (31 oct:
   28 activaciones, una falsa, corregida; no se encontraron fallos). Un nombre en el
   idioma del usuario llega con el nuevo nombre de la app (`name`).
