@@ -280,6 +280,8 @@ class Assistant(Transcriber):
     def _woke_up(self):
         super()._woke_up()
         self.told_where = ""  # a new conversation: where it is goes with its first message
+        self.told_who = ""  # and who is talking (the plugin «voices»)
+        self.voice = None  # who this conversation recognised
         self.transcript = []
         self.detail = llm_detail()  # the one in this conversation's instructions
         self.doubt = bool(getattr(self.wake, "dubious", False))
@@ -299,6 +301,12 @@ class Assistant(Transcriber):
         if self._is_echo(text, timings):
             log.info("echo dropped: «%s»", settings.private(text))
             return
+        voices = kernel.module("voices")  # learning a voice, or only known voices count
+        if voices and voices.screen(self, text, timings, getattr(self.ear, "last_audio", None), self._handle):
+            return
+        self._handle(text, timings)
+
+    def _handle(self, text: str, timings: dict):
         self._timings = timings
         if skills.hear(text, self):  # time, timers, the camera, «speak English»…: without the LLM
             return
@@ -469,12 +477,21 @@ class Assistant(Transcriber):
     def _for_llm(self, text: str) -> str:
         """The message for the LLM: with a doubt after a dubious wake-up, the detail level if it changed,
         and where you're talking from (the plugin «devices») when the conversation starts or it changes."""
-        text = self._with_where(self._with_detail(text))
+        text = self._with_who(self._with_where(self._with_detail(text)))
         if self.doubt:
             self.doubt = False
             text = ("(It isn't clear this was said to you: unless it is a request or a question for you, "
                     f"answer {SILENCE}.)\n{text}")
         return text
+
+    def _with_who(self, text: str) -> str:
+        """«(Suvi is talking.)»: with the first sentence, and when it changes (the plugin «voices»)."""
+        voices = kernel.module("voices")
+        who = voices.who(self) if voices else ""
+        if not who or who == getattr(self, "told_who", ""):
+            return text
+        self.told_who = who
+        return f"{who}\n{text}"
 
     def _with_where(self, text: str) -> str:
         """«(You're talking through the device «iPad», in the room «dormitorio».)»: so «here» means

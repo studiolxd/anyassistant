@@ -120,3 +120,13 @@
 "No password" = "Sin contraseña";
 "Try" = "Probar";
 "Skins…" = "Skins…";
+"Go to that device: it will ask for the phrases." = "Ve a ese dispositivo: te irá pidiendo las frases.";
+"Turn on the plugin «Voices» to teach it who you are." = "Activa el plugin «Voces» para enseñarle quién eres.";
+"Nobody yet: while nobody is known, it listens to everyone." = "Nadie aún: mientras no conozca a nadie, hace caso a todos.";
+"Known voices" = "Voces conocidas";
+"What needs a known voice is in Settings → Security («voice_check»). On a device you can also say «aprende mi voz»." = "Qué exige una voz conocida está en Ajustes → Seguridad («voice_check»). En un dispositivo también puedes decir «aprende mi voz».";
+"Learn a voice" = "Aprender una voz";
+"On the device" = "En el dispositivo";
+"Choose one" = "Elige uno";
+"the person's: «Suvi»" = "el de la persona: «Suvi»";
+"Start learning" = "Empezar";

@@ -17,12 +17,13 @@ eyes = ["pillow>=10"]
 stt-mlx-whisper = ["mlx-whisper>=0.4.3"]
 stt-parakeet = ["parakeet-mlx>=0.5.3"]
 vad-silero = ["silero-vad>=6.2.3"]
+voices = ["onnxruntime>=1.31.1", "huggingface-hub>=0.20"]
 wake-openwakeword = ["openwakeword>=0.4.0", "onnxruntime>=1.31.1"]
 
 [dependency-groups]
 dev = [  # while developing: every system plugin's packages too (uv run would remove them otherwise)
     "pytest>=8",
-    "anyassistant[eyes,stt-mlx-whisper,stt-parakeet,vad-silero,wake-openwakeword]",
+    "anyassistant[eyes,stt-mlx-whisper,stt-parakeet,vad-silero,voices,wake-openwakeword]",
 ]
 
 [tool.uv]

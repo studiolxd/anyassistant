@@ -77,6 +77,7 @@ class Ear:
         self.may_wake = may_wake or (lambda why: True)
         self.levels = []  # loudness of the last chunks
         self.generation = 0  # a wake-up undone (drop) discards what it was still transcribing
+        self.last_audio = None  # the 16 kHz audio of the last sentence heard
         self.interruptible = False  # the wake word is listening while it speaks
         self.recording = None  # WAV with everything that arrives, for debugging
         if record:
@@ -265,5 +266,6 @@ class Ear:
             self.on_state(self.idle_state)
             return
         log.info("«%s» %s", settings.private(text), timings)
+        self.last_audio = audio  # who said it (the plugin «voices») is in it
         self.on_heard(text, timings)
         self.on_state(self.idle_state)

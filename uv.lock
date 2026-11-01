@@ -234,6 +234,10 @@ stt-parakeet = [
 vad-silero = [
     { name = "silero-vad" },
 ]
+voices = [
+    { name = "huggingface-hub" },
+    { name = "onnxruntime" },
+]
 wake-openwakeword = [
     { name = "onnxruntime" },
     { name = "openwakeword" },
@@ -241,7 +245,7 @@ wake-openwakeword = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "anyassistant", extra = ["eyes", "stt-mlx-whisper", "stt-parakeet", "vad-silero", "wake-openwakeword"] },
+    { name = "anyassistant", extra = ["eyes", "stt-mlx-whisper", "stt-parakeet", "vad-silero", "voices", "wake-openwakeword"] },
     { name = "pytest" },
 ]
 
@@ -249,8 +253,10 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.9" },
     { name = "aiortc", specifier = ">=1.9" },
+    { name = "huggingface-hub", marker = "extra == 'voices'", specifier = ">=0.20" },
     { name = "mlx-whisper", marker = "extra == 'stt-mlx-whisper'", specifier = ">=0.4.3" },
     { name = "numpy", specifier = ">=1.26" },
+    { name = "onnxruntime", marker = "extra == 'voices'", specifier = ">=1.31.1" },
     { name = "onnxruntime", marker = "extra == 'wake-openwakeword'", specifier = ">=1.31.1" },
     { name = "openwakeword", marker = "extra == 'wake-openwakeword'", specifier = ">=0.4.0" },
     { name = "parakeet-mlx", marker = "extra == 'stt-parakeet'", specifier = ">=0.5.3" },
@@ -258,11 +264,11 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.18.1" },
     { name = "silero-vad", marker = "extra == 'vad-silero'", specifier = ">=6.2.3" },
 ]
-provides-extras = ["eyes", "stt-mlx-whisper", "stt-parakeet", "vad-silero", "wake-openwakeword"]
+provides-extras = ["eyes", "stt-mlx-whisper", "stt-parakeet", "vad-silero", "voices", "wake-openwakeword"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "anyassistant", extras = ["eyes", "stt-mlx-whisper", "stt-parakeet", "vad-silero", "wake-openwakeword"] },
+    { name = "anyassistant", extras = ["eyes", "stt-mlx-whisper", "stt-parakeet", "vad-silero", "voices", "wake-openwakeword"] },
     { name = "pytest", specifier = ">=8" },
 ]
 

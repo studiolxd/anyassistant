@@ -2,7 +2,7 @@
 
 ## Lo siguiente
 
-Orden (1 nov): la identificación del hablante y la app del Apple Watch.
+Orden (1 nov): la app del Apple Watch.
 
 - [ ] **La app del Apple Watch**: hablarle desde la muñeca (más que la de Android).
 - [ ] **AnyAssistant para el Mac, lo siguiente**: su diseño e icono; el papel de cliente
@@ -20,13 +20,10 @@ Orden (1 nov): la identificación del hablante y la app del Apple Watch.
 
 ## Quién habla
 
-- [ ] **Identificación del hablante** (una huella de voz, p. ej. embeddings ECAPA): el
-  «sí» que confirma acciones de escritura (un email, Holded con gog en "all") puede
-  venir de cualquiera, un invitado, un niño o la tele; ignore_others ayuda, pero decide
-  el LLM, no es una barrera. Exigir una voz conocida para esos «sí». La memoria
-  también: «hechos solo de lo que dice el usuario», pero ¿qué usuario? En una casa de
-  varios, se mezclan los hechos de todos. Registro: el paso del instalador hecho en el
-  dispositivo (`@installer.device`).
+- [ ] **Afinar la huella de voz con voces reales** (`voice_match`, 0,5): el log da la
+  puntuación de cada frase. Con voces sintéticas: la misma ~0,7–0,8, otra ~0,0–0,5.
+- [ ] **La memoria de cada persona**: «hechos solo de lo que dice el usuario», pero en una
+  casa de varios se mezclan; ahora que sabe quién habla, cada uno los suyos.
 
 ## Tomar la iniciativa
 
@@ -68,6 +65,9 @@ Orden (1 nov): la identificación del hablante y la app del Apple Watch.
 
 ## Hecho
 
+- [x] **Quién habla** (1 nov, `voices`): la huella de voz de cada persona («aprende mi voz»
+  en el dispositivo, o desde la app); `voice_check` all (solo voces conocidas), actions (solo
+  el «sí») u off; un «sí» desconocido se rechaza; el LLM sabe quién habla.
 - [x] **Una conversación por dispositivo** (1 nov): cada uno con su LLM (hasta
   `conversations`, 2; con 1, de una en una); dos personas en dos habitaciones no se cortan.
   Sus herramientas actúan en su dispositivo (`/mcp?device=…`).

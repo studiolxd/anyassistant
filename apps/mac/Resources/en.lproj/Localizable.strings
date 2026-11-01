@@ -120,3 +120,13 @@
 "No password" = "No password";
 "Try" = "Try";
 "Skins…" = "Skins…";
+"Go to that device: it will ask for the phrases." = "Go to that device: it will ask for the phrases.";
+"Turn on the plugin «Voices» to teach it who you are." = "Turn on the plugin «Voices» to teach it who you are.";
+"Nobody yet: while nobody is known, it listens to everyone." = "Nobody yet: while nobody is known, it listens to everyone.";
+"Known voices" = "Known voices";
+"What needs a known voice is in Settings → Security («voice_check»). On a device you can also say «aprende mi voz»." = "What needs a known voice is in Settings → Security («voice_check»). On a device you can also say «learn my voice».";
+"Learn a voice" = "Learn a voice";
+"On the device" = "On the device";
+"Choose one" = "Choose one";
+"the person's: «Suvi»" = "the person's: «Suvi»";
+"Start learning" = "Start";

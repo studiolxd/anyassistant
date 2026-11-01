@@ -183,6 +183,7 @@ struct SettingsView: View {
             List(selection: $section) {
                 Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
                 Label(T("Mail accounts"), systemImage: "envelope").tag("mail")
+                Label(T("Voices"), systemImage: "person.wave.2").tag("voices")
                 Section(T("Settings")) {
                     ForEach(admin.groups, id: \.id) { group in
                         Text(group.title).tag(group.id)
@@ -208,6 +209,8 @@ struct SettingsView: View {
                     PluginsView(admin: admin)
                 } else if section == "mail" {
                     MailView()
+                } else if section == "voices" {
+                    VoicesView()
                 } else if let section {
                     OptionsView(admin: admin, group: section)
                 }

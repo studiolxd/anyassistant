@@ -1,0 +1,31 @@
+{
+  "choices": {
+    "voice_check": {
+      "all": "Everything: it only listens to known voices",
+      "actions": "Only the «yes» to actions",
+      "off": "Nothing"
+    }
+  },
+  "voices": {
+    "learn": ["learn my voice", "learn a voice", "learn a new voice", "remember my voice"],
+    "forget": ["forget my voice"],
+    "name_lead": ["my", "name", "is", "i", "am", "i'm", "its", "it's", "hi", "call", "me"],
+    "phrases": [
+      "It's a lovely day to go for a walk in the park.",
+      "Set an alarm for half past seven tomorrow morning, please.",
+      "Remind me that I have to call my mother this afternoon.",
+      "What's on my calendar for the weekend?",
+      "Send a message to the kitchen saying that dinner is ready."
+    ]
+  },
+  "speech": {
+    "voice_name": "Let's learn your voice. What's your name?",
+    "voice_start": "Hi, {name}. I'll ask you for {count} sentences; say them in your usual voice.",
+    "voice_read": "Say: {phrase}",
+    "voice_again": "A bit longer: say the whole sentence again.",
+    "voice_learnt": "Done, {name}: now I know your voice.",
+    "voice_cancelled": "OK, let's leave it.",
+    "voice_forgotten": "I've forgotten your voice, {name}.",
+    "voice_refused": "I don't recognise your voice: I won't do that."
+  }
+}

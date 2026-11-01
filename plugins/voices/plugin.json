@@ -1,0 +1,7 @@
+{
+  "name": "Voices",
+  "description": "Who is speaking: each person's voice print («aprende mi voz»), so it only listens to known voices, or only their «yes» to actions (voice_check).",
+  "kind": "feature",
+  "security": true,
+  "needs": {"python": ["onnxruntime>=1.31.1", "huggingface-hub>=0.20"]}
+}

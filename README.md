@@ -217,6 +217,8 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `log_transcripts` | `false` | write what it hears and says to the log (to debug); otherwise only lengths |
 | `confirm_wait` | `120` | seconds to answer «yes» to an action that changes something |
 | `confirm_valid` | `60` | seconds a «yes» stays valid |
+| `voice_check` | `"all"` | what needs a known voice once someone's is learnt: all (it only listens to known voices), actions (only the «yes» that authorizes one) or off |
+| `voice_match` | `0.5` | how alike a voice must be to a known one (0–1; higher: stricter) |
 
 **The server**
 
@@ -274,6 +276,17 @@ cocina que bajo ya» (`tell_device`: said aloud there and shown on its screen, n
 and the LLM hears, with the first message of each conversation, which device and room it
 is («here» means there);
 `GET /devices` from the Mac lists them.
+
+**Who is speaking** (the plugin `voices`): each person's voice print, made on the Mac (a
+WeSpeaker ONNX model, 26 MB, downloaded the first time) and kept in `voices.json`. «Aprende mi
+voz» on a device: it asks your name and five phrases to read (with the microphone it will
+hear you with); or the Mac app (Settings → Voices: who is known, forget, learn one on a
+device). Once someone is known, a new voice is learnt only at a known voice's request or
+from the app. `voice_check`: `all` (the default: it only listens to known voices; others
+are dropped, the log says so with the score), `actions` (only the «yes» to an action; an
+unknown one is refused) or `off`; `voice_match` (0.5) how alike. Short sentences («sí»)
+say little about who: they count as whoever the conversation recognised, unless they
+clearly sound like someone else. The LLM hears who is talking.
 
 **By voice**: «Use the orb skin», «Change your voice to Mónica», «From now on your
 name is …», with Jarvis's own tools (below). After every answer the server reads
