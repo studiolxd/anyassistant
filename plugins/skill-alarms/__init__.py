@@ -11,6 +11,8 @@ it stops on all.
 
 import asyncio
 import logging
+import shutil
+import sys
 import time
 from pathlib import Path
 
@@ -166,12 +168,31 @@ def ring_sentence(item: dict) -> str:
     return i18n.L("speech.reminder_ring", text=item.get("label", ""))
 
 
-async def ring_on_mac(item: dict):
-    """No device connected: it rings on the Mac (afplay and say)."""
-    log.info("ringing on the Mac: %s", item["kind"])
+def _player() -> list[str] | None:
+    """What plays a WAV on this computer's speakers (Windows: winsound, in ring_here)."""
+    if sys.platform == "darwin":
+        return ["afplay"]
+    for name in ("pw-play", "paplay", "aplay"):  # PipeWire, PulseAudio, ALSA
+        if shutil.which(name):
+            return [name]
+    return None
+
+
+async def ring_here(item: dict):
+    """No device connected: it rings on the server's own computer (and, on the Mac, says why)."""
+    log.info("ringing here: %s", item["kind"])
     for _ in range(3):
-        await (await asyncio.create_subprocess_exec("afplay", str(ALARM))).wait()
-    await (await asyncio.create_subprocess_exec("say", "-v", i18n.L.tts_voice, ring_sentence(item))).wait()
+        if sys.platform == "win32":
+            import winsound
+
+            await asyncio.to_thread(winsound.PlaySound, str(ALARM), winsound.SND_FILENAME)
+        elif player := _player():
+            await (await asyncio.create_subprocess_exec(*player, str(ALARM), stderr=asyncio.subprocess.DEVNULL)).wait()
+        else:
+            log.warning("nothing here plays sounds (pw-play, paplay or aplay)")
+            return
+    if sys.platform == "darwin":
+        await (await asyncio.create_subprocess_exec("say", "-v", i18n.L.tts_voice, ring_sentence(item))).wait()
 
 
 def label(toks: list[Token], span, when, skip: set[int] = frozenset()) -> str:
@@ -302,7 +323,7 @@ async def ring_when_due(app):
                         for session in found:  # the same item: stopped on one, it stops on all
                             asyncio.ensure_future(session.brain.ring(item))
                         if not found:
-                            asyncio.ensure_future(ring_on_mac(item))
+                            asyncio.ensure_future(ring_here(item))
             except Exception as e:
                 log.warning("timers: %r", e)
             await asyncio.sleep(0.5)

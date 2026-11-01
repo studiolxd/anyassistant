@@ -45,10 +45,12 @@ Java no tiene cancelación de eco).
 
 **Por fases** (cada una se puede usar al acabar):
 
-- [ ] **1. Núcleo portable**: rutas por sistema; `zeroconf`, `keyring`, el nombre del
-  equipo, la alarma sin `afplay`; tests en Linux y Windows (GitHub Actions), con los de
-  solo Mac marcados. Resultado: el servidor arranca en Linux y Windows con Claude, pero
-  aún sin voz propia.
+- [x] **1. Núcleo portable** (1 nov): rutas XDG e instalación con systemd en Linux;
+  `zeroconf` y `keyring` fuera del Mac (dependencias con marcador de sistema en
+  `plugin.json`); PyTorch solo CPU; la alarma sin `afplay`; reiniciar sin señales
+  (`web.stop`); los motores por defecto, los que tenga cada equipo. Probado en Ubuntu 24.04
+  (OrbStack): 500 tests, 4 solo de Mac saltados. Falta: los tests en Windows (no hay remoto
+  de GitHub para Actions: a mano en tu PC).
 - [ ] **2. Motores portables**: `stt-parakeet-onnx`, `stt-faster-whisper`, `tts-kokoro`,
   `tts-piper`, `wake-whisper` sin MLX; el instalador elige según el equipo (CPU, NVIDIA,
   Raspberry). Resultado: un asistente completo en Linux y Windows, por la página web.

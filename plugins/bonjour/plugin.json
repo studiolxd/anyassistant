@@ -2,5 +2,9 @@
   "name": "Bonjour",
   "description": "Announces the server on the network (_anyassistant._tcp), so the apps find it without typing an address.",
   "kind": "feature",
-  "needs": {"system": ["darwin"], "commands": ["dns-sd"]}
+  "needs": {
+    "python": [
+      "zeroconf>=0.136; sys_platform != 'darwin'"
+    ]
+  }
 }

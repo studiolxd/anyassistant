@@ -3,6 +3,7 @@
 import importlib.machinery
 import importlib.util
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,16 @@ import kernel
 kernel.load_all()  # every plugin, so tests can import them as plugins.<id>
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# What only the Mac has (its speech recognition and voices, Apple's model): elsewhere, skipped.
+mac_only = pytest.mark.skipif(sys.platform != "darwin", reason="the Mac's own")
+
+
+def here(plugin_id: str) -> bool:
+    """Whether a plugin fits this computer (its system and chip; installed or not), and the ones it needs."""
+    found = kernel.plugin(plugin_id)
+    return (found is not None and not [w for w in kernel.unfit(plugin_id) if not w.startswith("not installed")]
+            and all(here(r) for r in found.requires))
 
 
 @pytest.fixture(params=["en", "es"])

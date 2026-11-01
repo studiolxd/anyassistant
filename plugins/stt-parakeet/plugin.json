@@ -7,7 +7,7 @@
   ],
   "needs": {
     "python": [
-      "parakeet-mlx>=0.5.3"
+      "parakeet-mlx>=0.5.3; sys_platform == 'darwin'"
     ],
     "system": [
       "darwin"

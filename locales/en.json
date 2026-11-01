@@ -155,8 +155,8 @@
       "Speech recognition, the wake word and voice detection: a few hundred MB the first time."
     ],
     "service": [
-      "Start AnyAssistant with the Mac",
-      "It runs in the background and comes back if it stops (launchd)."
+      "Start AnyAssistant with the computer",
+      "It runs in the background and comes back if it stops (launchd on the Mac, systemd on Linux)."
     ],
     "connect": [
       "Connect your tablet or phone",

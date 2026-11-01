@@ -32,6 +32,15 @@ Swift bridges, the speech models, pairing, memory, eyes, starting with the Mac
 (launchd) and the address (and code) for your tablet. Run again, it updates the
 program and keeps your data.
 
+**On Linux** the same `./install.sh`: the program in `~/.local/opt/AnyAssistant`, your data in
+`~/.local/share/AnyAssistant`, the cache in `~/.cache/AnyAssistant`, and it starts with the
+computer as a systemd user service (`sudo loginctl enable-linger $USER` so it also starts at boot
+without anyone logging in: a server with no screen). Bonjour comes from Python's zeroconf, mail
+passwords go to the Secret Service (keyring), and PyTorch is the CPU one. **Windows** for now runs
+from the project (`uv run server/main.py`); its app comes later. What doesn't work outside the Mac
+yet: its own speech recognition and voice (MLX, AVSpeech) and Apple's model; the plan is in
+`TODO.md` («El servidor en Windows y Linux»).
+
 ```sh
 ~/Applications/AnyAssistant/bin/anyassistant update      # the new version from where it was
                                                           # installed from; packages, models; restarts

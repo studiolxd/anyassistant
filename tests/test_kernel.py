@@ -8,6 +8,7 @@ import kernel
 import paths
 import settings
 import tools
+from conftest import here
 
 
 @pytest.fixture
@@ -42,7 +43,7 @@ class Greeter(Skill):
 def test_every_system_plugin_is_found_and_on():
     found = kernel.discover()
     assert {"llm-claude", "stt-parakeet", "skill-alarms", "vad-silero", "plugin-manager"} <= set(found)
-    off = {p for p in found if not kernel.enabled(p)}
+    off = {p for p in found if not kernel.enabled(p) and here(p)}  # (not the Mac's own, elsewhere)
     assert off == {"pairing", "memory", "eyes", "always-on", "https"}  # everything comes on, but what was opt-in before plugins
 
 
@@ -143,4 +144,23 @@ def test_a_plugin_that_doesnt_fit_is_off(tmp_path, monkeypatch):
     assert not kernel.enabled("needs-much") and kernel.wanted("needs-much")
     assert any("plan9" in w for w in kernel.unfit("needs-much"))
     assert "surely-not-installed-pkg>=1" not in kernel.requirements()  # another system: not even installed
+    kernel.reset()
+
+
+def test_a_package_for_another_system_isnt_needed_here(tmp_path, monkeypatch):
+    """«zeroconf; sys_platform != 'darwin'»: Windows and Linux need it, the Mac doesn't."""
+    import paths
+
+    mine = tmp_path / "plugins"
+    (mine / "elsewhere").mkdir(parents=True)
+    (mine / "elsewhere" / "plugin.json").write_text(json.dumps(
+        {"name": "x", "kind": "feature", "needs": {"python": [
+            "surely-not-installed-pkg>=1; sys_platform == 'plan9'", "pytest>=8"]}}))
+    (mine / "elsewhere" / "__init__.py").write_text("")
+    monkeypatch.setattr(paths, "USER_PLUGINS", mine)
+    kernel.reset()
+    assert kernel.applies("x>=1") and not kernel.applies("x; sys_platform == 'plan9'")
+    assert kernel.python_needs(kernel.plugin("elsewhere")) == ["pytest>=8"]
+    assert kernel.unfit("elsewhere") == [] and kernel.enabled("elsewhere")
+    assert "surely-not-installed-pkg>=1; sys_platform == 'plan9'" not in kernel.requirements()
     kernel.reset()

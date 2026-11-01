@@ -10,7 +10,7 @@ import kernel
 import settings
 import skills
 import tools
-from conftest import load_script
+from conftest import here, load_script
 from plugins.skill_alarms import timers
 import plugins.skills_language as language
 
@@ -190,7 +190,7 @@ def test_interpreter_is_configurable(store, monkeypatch):
     monkeypatch.setattr(llm, "ready", lambda name: "not on this Mac")
     assert not interpreter.enabled()  # auto, without Apple's model
     monkeypatch.setattr(llm, "ready", lambda name: None)
-    assert interpreter.enabled()
+    assert interpreter.enabled() == here("llm-apple")  # auto: a local model (Apple's, only on the Mac)
     settings.active["interpreter"] = "off"
     assert not interpreter.enabled()
     settings.active["interpreter"] = "claude"  # any LLM that can answer outside a conversation

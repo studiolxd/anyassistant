@@ -16,6 +16,19 @@ from transport import Session
 
 brain = None  # brain(speaker, send): what each connection talks to; main.py chooses it (--mode)
 close_on_exit = []  # coroutines to await when stopping (plugin processes)
+restarting = False  # stop() asked to start again (main.py does it)
+
+
+def stop(restart: bool = False):
+    """Stops the server cleanly (sessions, plugins), as Ctrl+C; with restart, it starts again.
+    From the event loop: the same on macOS, Linux and Windows (no signals)."""
+    global restarting
+    restarting = restarting or restart
+
+    def leave():
+        raise web.GracefulExit()  # a SystemExit: it gets out of the loop, then run_app closes everything
+
+    asyncio.get_running_loop().call_soon(leave)
 
 
 # --- What plugins hook into ---

@@ -4,7 +4,7 @@
   "kind": "stt",
   "needs": {
     "python": [
-      "mlx-whisper>=0.4.3"
+      "mlx-whisper>=0.4.3; sys_platform == 'darwin'"
     ],
     "system": [
       "darwin"

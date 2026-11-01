@@ -11,7 +11,7 @@ import settings
 memory = kernel.load("memory")
 mcp_server = kernel.load("mcp-server")
 import tools
-from conftest import load_script
+from conftest import here, load_script, mac_only
 from plugins.llm_claude.permissions import load
 
 
@@ -38,6 +38,7 @@ def test_settings_are_saved_for_after_the_answer(env):
     assert saved(env) == {"skin": "orb", "name": "Viernes", "language": "en"}
 
 
+@mac_only  # the Mac's voices
 def test_voice_must_exist_and_speak_the_language(env):
     tools.call("set_voice", {"voice": "Mónica"})
     assert saved(env)["voice"] == {"es": "Mónica"}
@@ -128,8 +129,9 @@ def test_switching_llm(env, monkeypatch):
     import llm
 
     monkeypatch.setattr(llm, "ready", lambda name: None if name != "hermes" else "gateway down")
-    tools.call("set_llm", {"llm": "apple"})
-    assert saved(env) == {"llm": "apple", "llm_model": None}
+    first = "apple" if here("llm-apple") else "claude"  # Apple's model only on the Mac
+    tools.call("set_llm", {"llm": first})
+    assert saved(env) == {"llm": first, "llm_model": None}
     tools.call("set_llm", {"llm": "claude", "model": "opus"})
     assert saved(env)["llm_model"] == "opus"
     for bad in ({"llm": "gpt"}, {"llm": "hermes"}, {"llm": "claude", "model": "rm -rf /"}):

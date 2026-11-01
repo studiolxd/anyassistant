@@ -4,7 +4,8 @@
                        "imap": "imap.dominio.com:993", "smtp": "smtp.dominio.com:465"}]
 
 Optional per account: "user" (when the login isn't the address), "folder" (INBOX). The
-password is in the macOS Keychain (service «AnyAssistant mail», the address as account), never
+password is in the system's keychain (service «AnyAssistant mail», the address as account: the
+macOS Keychain; Windows' Credential Manager or Linux's Secret Service, through keyring), never
 in settings.json: `bin/anyassistant mail add yo@dominio.com` asks for it, guesses the servers
 of the known providers, tries them and saves the account (plugins/mail/cli.py); the Mac app
 does the same in its settings («Mail accounts», through /admin/mail, only from the Mac).
@@ -26,6 +27,7 @@ import re
 import smtplib
 import ssl
 import subprocess
+import sys
 from dataclasses import dataclass
 from email.message import EmailMessage
 
@@ -102,20 +104,37 @@ def _server(text: str, port: int) -> tuple[str, int]:
     return host, int(given or port)
 
 
-# --- The password, in the Keychain ---
+# --- The password, in the keychain ---
 
 def password(address: str) -> str | None:
+    if sys.platform != "darwin":
+        import keyring
+
+        return keyring.get_password(KEYCHAIN, address)
     done = subprocess.run(["security", "find-generic-password", "-s", KEYCHAIN, "-a", address, "-w"],
                           capture_output=True, text=True)
     return done.stdout.rstrip("\n") if done.returncode == 0 else None
 
 
 def save_password(address: str, secret: str):
+    if sys.platform != "darwin":
+        import keyring
+
+        return keyring.set_password(KEYCHAIN, address, secret)
     subprocess.run(["security", "add-generic-password", "-U", "-s", KEYCHAIN, "-a", address, "-w", secret],
                    check=True, capture_output=True)
 
 
 def forget_password(address: str):
+    if sys.platform != "darwin":
+        import keyring
+        import keyring.errors
+
+        try:
+            keyring.delete_password(KEYCHAIN, address)
+        except keyring.errors.PasswordDeleteError:
+            pass
+        return
     subprocess.run(["security", "delete-generic-password", "-s", KEYCHAIN, "-a", address], capture_output=True)
 
 

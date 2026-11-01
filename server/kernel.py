@@ -13,7 +13,9 @@ one of yours with the same id replaces the system's) with:
 
 What it needs to be installed, in plugin.json «needs» (what the installer reads):
 
-    "needs": {"python": ["parakeet-mlx>=0.5.3"],      packages (pip names)
+    "needs": {"python": ["parakeet-mlx>=0.5.3"],      packages (pip names; with a marker,
+                                                       "zeroconf; sys_platform != 'darwin'",
+                                                       only where it applies)
               "system": ["darwin"], "arch": ["arm64"],  where it runs (sys.platform, the machine)
               "macos": 26,                              the oldest macOS
               "commands": ["claude"]}                   programs it calls (to install apart)
@@ -127,6 +129,20 @@ def choices() -> dict:
     return chosen or {}
 
 
+def applies(requirement: str) -> bool:
+    """Whether a package is needed on this computer (its marker: «; sys_platform == 'win32'»)."""
+    if ";" not in requirement:
+        return True
+    from packaging.markers import Marker
+
+    return Marker(requirement.split(";", 1)[1].strip()).evaluate()
+
+
+def python_needs(found: "Plugin") -> list[str]:
+    """A plugin's packages that this computer needs."""
+    return [r for r in found.needs.get("python", []) if applies(r)]
+
+
 def _installed(requirement: str) -> bool:
     name = re.split(r"[<>=!~\[; ]", requirement, maxsplit=1)[0]
     try:
@@ -153,7 +169,7 @@ def unfit(plugin_id: str) -> list[str]:
             major = int((platform.mac_ver()[0] or "0").split(".")[0])
             if major < int(needs["macos"]):
                 why.append(f"macOS {needs['macos']} or later")
-        missing = [r for r in needs.get("python", []) if not _installed(r)]
+        missing = [r for r in python_needs(plugin(plugin_id)) if not _installed(r)] if needs else []
         if missing:
             why.append("not installed: " + ", ".join(missing))
         if why:
@@ -197,7 +213,7 @@ def requirements(everything: bool = False) -> list[str]:
             continue
         fits = [w for w in unfit(p.id) if not w.startswith("not installed")]
         if not fits:
-            found += [r for r in p.needs.get("python", []) if r not in found]
+            found += [r for r in python_needs(p) if r not in found]
     return found
 
 

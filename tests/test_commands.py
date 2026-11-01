@@ -7,6 +7,7 @@ split = kernel.load("brain-assistant").split
 
 is_yes = kernel.load("confirmation").is_yes
 from plugins.skill_restart import command as system_command
+from conftest import mac_only
 is_sleep_command = kernel.load("skill-sleep").is_sleep_command
 
 CASES = {
@@ -87,7 +88,7 @@ def test_camera_spanish(es, text, expected):
 
 
 @pytest.mark.parametrize("text, expected", [
-    ("Use Claude", "claude"), ("Switch to Hermes.", "hermes"), ("Jarvis, use the Apple model", "apple"),
+    ("Use Claude", "claude"), ("Switch to Hermes.", "hermes"), pytest.param("Jarvis, use the Apple model", "apple", marks=mac_only),
     ("Use cloud", "claude"), ("Use the oven timer", None), ("What does Claude think?", None),
 ])
 def test_llm_english(en, text, expected):
@@ -97,7 +98,7 @@ def test_llm_english(en, text, expected):
 
 
 @pytest.mark.parametrize("text, expected", [
-    ("Usa Claude", "claude"), ("Cambia a Hermes", "hermes"), ("Pásate al modelo de Apple", "apple"),
+    ("Usa Claude", "claude"), ("Cambia a Hermes", "hermes"), pytest.param("Pásate al modelo de Apple", "apple", marks=mac_only),
     ("Cambia la cara", None), ("¿Qué opina Claude?", None),
 ])
 def test_llm_spanish(es, text, expected):

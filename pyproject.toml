@@ -7,27 +7,40 @@ dependencies = [  # the core; each plugin's own are in its plugin.json «needs»
     "aiohttp>=3.9",
     "aiortc>=1.9",
     "numpy>=1.26",
+    "packaging>=24",  # plugin.json's markers («; sys_platform != 'darwin'»)
     "scipy>=1.18.1",
 ]
 
 # The system plugins' packages (their plugin.json «needs», kept equal by a test): the
 # installer installs those of the plugins that are on (bin/anyassistant plugins requirements).
 [project.optional-dependencies]
+bonjour = ["zeroconf>=0.136; sys_platform != 'darwin'"]
 eyes = ["pillow>=10"]
-stt-mlx-whisper = ["mlx-whisper>=0.4.3"]
-stt-parakeet = ["parakeet-mlx>=0.5.3"]
-vad-silero = ["silero-vad>=6.2.3"]
+mail = ["keyring>=25; sys_platform != 'darwin'"]
+stt-mlx-whisper = ["mlx-whisper>=0.4.3; sys_platform == 'darwin'"]
+stt-parakeet = ["parakeet-mlx>=0.5.3; sys_platform == 'darwin'"]
+vad-silero = ["silero-vad>=6.2.3", "torch>=2.5"]  # torch: named, for its CPU index (below)
 voices = ["onnxruntime>=1.31.1", "huggingface-hub>=0.20"]
 wake-openwakeword = ["openwakeword>=0.4.0", "onnxruntime>=1.31.1"]
 
 [dependency-groups]
 dev = [  # while developing: every system plugin's packages too (uv run would remove them otherwise)
     "pytest>=8",
-    "anyassistant[eyes,stt-mlx-whisper,stt-parakeet,vad-silero,voices,wake-openwakeword]",
+    "anyassistant[bonjour,eyes,mail,stt-mlx-whisper,stt-parakeet,vad-silero,voices,wake-openwakeword]",
 ]
 
 [tool.uv]
 default-groups = ["dev"]
+
+# PyTorch (Silero's voice detection) without CUDA on Linux and Windows: the CPU one is enough
+# for it, and the CUDA one brings gigabytes of NVIDIA libraries.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform != 'darwin'" }]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

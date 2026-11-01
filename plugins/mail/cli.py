@@ -6,7 +6,7 @@
     bin/anyassistant mail remove <name or address>
 
 «add» asks for the password (it isn't shown), tries IMAP and SMTP with it, saves the account
-in settings.json and the password in the macOS Keychain. For iCloud, Gmail, Outlook, Yahoo…
+in settings.json and the password in the system's keychain. For iCloud, Gmail, Outlook, Yahoo…
 use an app password (the provider's account page), not your usual one.
 """
 
@@ -35,7 +35,7 @@ def add(args):
         print("Check the password, or give the servers with --imap / --smtp.")
         sys.exit(1)
     mail.keep(a, secret)
-    print(f"Saved «{a['name']}» (the password, in the Keychain). It applies at once.")
+    print(f"Saved «{a['name']}» (the password, in the keychain). It applies at once.")
 
 
 def listing(args):
@@ -43,7 +43,7 @@ def listing(args):
     if not found:
         print("No mail accounts. bin/anyassistant mail add you@domain.com")
     for a in found:
-        key = "password in the Keychain" if mail.password(a["address"]) else "NO PASSWORD"
+        key = "password in the keychain" if mail.password(a["address"]) else "NO PASSWORD"
         print(f"{mail.label(a)}: {a['address']} · IMAP {a.get('imap')} · SMTP {a.get('smtp')} · {key}")
 
 

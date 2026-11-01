@@ -1,6 +1,6 @@
 """The core's own installer steps (installer.py): the computer, the packages, language,
-name, LLM, the Swift bridges, the models, starting with the Mac, and how to connect
-a device. The plugins add theirs (pairing, memory, eyes…).
+name, LLM, the Swift bridges, the models, starting with the computer (launchd on the Mac,
+systemd on Linux), and how to connect a device. The plugins add theirs (pairing, memory, eyes…).
 """
 
 import importlib
@@ -23,15 +23,21 @@ from installer import Skip, question, task
 APP_NAME = "AnyAssistant"
 LABEL = "com.anyassistant.server"
 AGENT = os.path.expanduser(f"~/Library/LaunchAgents/{LABEL}.plist")
+UNIT = os.path.expanduser("~/.config/systemd/user/anyassistant.service")  # Linux
 
 
 # --- The computer ---
 
 @task("computer", "This computer", order=0)
 def computer(progress):
-    if sys.platform != "darwin":
-        raise RuntimeError("for now it needs a Mac")
     machine = platform.machine()
+    if sys.platform.startswith("linux"):
+        name = platform.freedesktop_os_release().get("PRETTY_NAME", "Linux") if hasattr(platform, "freedesktop_os_release") else "Linux"
+        return f"{name}, {machine}"
+    if sys.platform == "win32":
+        return f"Windows {platform.release()} ({platform.version()}), {machine}"
+    if sys.platform != "darwin":
+        raise RuntimeError("it runs on macOS, Linux or Windows")
     version = platform.mac_ver()[0]
     note = "" if machine == "arm64" else " (Intel: speech recognition on MLX won't work)"
     return f"macOS {version}, {machine}{note}"
@@ -51,13 +57,13 @@ def _uv() -> str:
 def packages(progress):
     if not paths.INSTALLED:
         raise Skip("while developing, uv sync installs them all")
-    system = [p.id for p in kernel.discover().values() if not p.yours and p.needs.get("python")
+    system = [p.id for p in kernel.discover().values() if not p.yours and kernel.python_needs(p)
               and kernel.wanted(p.id) and not [w for w in kernel.unfit(p.id) if not w.startswith("not installed")]]
     progress(None, "installing: " + (", ".join(system) or "only the core"))
     command = [_uv(), "sync", "--frozen", "--no-dev", *[a for p in system for a in ("--extra", p)]]
     subprocess.run(command, cwd=paths.APP, check=True, capture_output=True, text=True)
     yours = [r for p in kernel.discover().values() if p.yours and kernel.wanted(p.id)
-             for r in p.needs.get("python", [])]
+             for r in kernel.python_needs(p)]
     if yours:
         progress(None, "your plugins: " + ", ".join(yours))
         subprocess.run([_uv(), "pip", "install", "--python", sys.executable, *yours], check=True,
@@ -148,6 +154,8 @@ def models(progress):
     chosen = {**{o: settings.load().get(o) for o in ("stt", "wake", "vad")}}
     import options
 
+    kernel.load_all()
+    options.resolve_defaults()
     defaults = {o.name: o.default for o in options.OPTIONS}
     done = []
     engine = stt.create(chosen["stt"] or defaults["stt"], language=i18n.L.stt_language)
@@ -165,10 +173,18 @@ def models(progress):
     return ", ".join(done)
 
 
-# --- Starting with the Mac ---
+# --- Starting with the computer ---
 
 def ours() -> bool:
-    """Whether the launchd agent (if there is one) starts this copy: another copy's is left alone."""
+    """Whether the launchd agent or systemd unit (if there is one) starts this copy: another
+    copy's is left alone."""
+    if sys.platform.startswith("linux"):
+        try:
+            with open(UNIT) as f:
+                started = next(line for line in f if line.startswith("ExecStart=")).split("=", 1)[1].split()[0]
+        except (OSError, StopIteration):
+            return True  # none yet
+        return os.path.realpath(started).startswith(os.path.realpath(paths.APP) + os.sep)
     try:
         with open(AGENT, "rb") as f:
             program = plistlib.load(f)["ProgramArguments"][0]
@@ -181,13 +197,17 @@ def _launchctl(*args, check=True):
     return subprocess.run(["launchctl", *args], capture_output=True, text=True, check=check)
 
 
-@question("service", f"Start {APP_NAME} with the Mac", order=90, choices=lambda: [True, False],
-          default=lambda: True, help="It runs in the background and comes back if it stops (launchd).")
+@question("service", f"Start {APP_NAME} with the computer", order=90, choices=lambda: [True, False],
+          default=lambda: True, help="It runs in the background and comes back if it stops (launchd on the Mac, systemd on Linux).")
 def service(value):
     if not paths.INSTALLED:
         raise Skip("only for an installed copy (install.sh); while developing, bin/anyassistant start")
     if not ours():
-        raise Skip("another copy of AnyAssistant starts with the Mac: left as it is")
+        raise Skip("another copy of AnyAssistant starts with the computer: left as it is")
+    if sys.platform == "win32":
+        raise Skip("on Windows, its app starts it")
+    if sys.platform.startswith("linux"):
+        return _systemd(value)
     if value and os.path.isdir("/Applications/AnyAssistant.app"):
         raise Skip("the AnyAssistant app starts it (open it at login: its menu)")
     domain = f"gui/{os.getuid()}"
@@ -219,6 +239,49 @@ def service(value):
             return "on: it starts with the Mac"
         time.sleep(1)
     raise RuntimeError(f"launchd didn't take it: {done.stderr.strip()}")
+
+
+def _systemctl(*args, check=True):
+    return subprocess.run(["systemctl", "--user", *args], capture_output=True, text=True, check=check)
+
+
+def _systemd(value) -> str:
+    """Linux: a systemd user unit (back if it fails; not after «stop»)."""
+    if not shutil.which("systemctl"):
+        raise Skip("no systemd here: start it with bin/anyassistant start")
+    if not value:
+        _systemctl("disable", "--now", "anyassistant", check=False)
+        if os.path.exists(UNIT):
+            os.remove(UNIT)
+        _systemctl("daemon-reload", check=False)
+        return "off: start it with bin/anyassistant start"
+    paths.CACHE.mkdir(parents=True, exist_ok=True)
+    os.makedirs(os.path.dirname(UNIT), exist_ok=True)
+    with open(UNIT, "w") as f:
+        f.write(f"""[Unit]
+Description={APP_NAME}
+After=network-online.target sound.target
+
+[Service]
+ExecStart={paths.BIN / "anyassistant"} run
+Restart=on-failure
+RestartSec=3
+StandardOutput=append:{paths.LOG}
+StandardError=append:{paths.LOG}
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:{os.path.expanduser("~/.local/bin")}
+
+[Install]
+WantedBy=default.target
+""")
+    _systemctl("daemon-reload")
+    done = _systemctl("enable", "--now", "anyassistant", check=False)
+    if done.returncode:
+        raise RuntimeError(f"systemd didn't take it: {done.stderr.strip()}")
+    # Without a session open (a server with no screen): `loginctl enable-linger` lets it start at boot.
+    linger = subprocess.run(["loginctl", "show-user", os.environ.get("USER", ""), "-p", "Linger"],
+                            capture_output=True, text=True).stdout.strip()
+    note = "" if linger.endswith("yes") else " (at boot without logging in: sudo loginctl enable-linger $USER)"
+    return "on: it starts with the computer" + note
 
 
 # --- Connecting a device ---

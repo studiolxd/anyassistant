@@ -1,11 +1,12 @@
 #!/bin/sh
-# Installs AnyAssistant on this Mac: the program, its own Python (uv), and then the
+# Installs AnyAssistant on this Mac or Linux computer (Windows: its app): the program, its own Python (uv), and then the
 # steps of bin/anyassistant setup (language, name, LLM, models, starting with the Mac…).
 #
 #   ./install.sh                   asks each step (Enter keeps what comes)
 #   ./install.sh --defaults        everything as it comes, no questions
 #   ./install.sh --json …          for the app's window (one JSON event per line)
-#   --to <folder>                  where the program goes (default ~/Applications/AnyAssistant)
+#   --to <folder>                  where the program goes (default ~/Applications/AnyAssistant;
+#                                  on Linux ~/.local/opt/AnyAssistant)
 #   --data <folder> --cache <folder>   your data and what can be rebuilt
 #   --set key=value                an answer given in advance (e.g. --set llm=apple)
 #   --no-setup                     only the program and its Python (the app asks the questions)
@@ -17,9 +18,17 @@
 set -e
 
 SOURCE="$(cd "$(dirname "$0")" && pwd)"
-TO="$HOME/Applications/AnyAssistant"
-DATA="$HOME/Library/Application Support/AnyAssistant"
-CACHE="$HOME/Library/Caches/AnyAssistant"
+case "$(uname)" in
+  Darwin)
+    TO="$HOME/Applications/AnyAssistant"
+    DATA="$HOME/Library/Application Support/AnyAssistant"
+    CACHE="$HOME/Library/Caches/AnyAssistant" ;;
+  Linux)  # where Linux keeps them (XDG)
+    TO="$HOME/.local/opt/AnyAssistant"
+    DATA="${XDG_DATA_HOME:-$HOME/.local/share}/AnyAssistant"
+    CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/AnyAssistant" ;;
+  *) echo "This installer is for macOS and Linux (on Windows, the AnyAssistant app)."; exit 1 ;;
+esac
 PASS=""
 UPDATE=0
 SETUP=1
@@ -36,8 +45,6 @@ while [ $# -gt 0 ]; do
 done
 JSON=0; case "$PASS" in *"'--json'"*) JSON=1 ;; esac
 say() { [ $JSON = 1 ] && printf '{"event": "install", "text": "%s"}\n' "$1" || echo "$1"; }
-
-[ "$(uname)" = "Darwin" ] || { say "AnyAssistant needs a Mac for now."; exit 1; }
 
 # Its own Python, without touching the system's (and no administrator rights).
 # $UV: the one the app brings; otherwise the computer's, or it installs it.
@@ -70,7 +77,12 @@ if [ "${FORCE:-0}" != 1 ] && [ -n "$NEW" ] && [ -n "$OLD" ] && [ "$NEW" -lt "$OL
   exit 0
 fi
 # What a new version removed goes too; its Python, its place and its bridges stay.
-rsync -a --delete --exclude .venv --exclude install.env --exclude native "$FRESH/" "$TO/"
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a --delete --exclude .venv --exclude install.env --exclude native "$FRESH/" "$TO/"
+else  # some Linux have no rsync: the same by hand
+  find "$TO" -mindepth 1 -maxdepth 1 ! -name .venv ! -name install.env ! -name native -exec rm -rf {} +
+  cp -a "$FRESH/." "$TO/"
+fi
 rm -rf "$FRESH"
 [ -d "$SOURCE/native" ] && cp -R "$SOURCE/native" "$TO/"  # the Swift bridges, if already built
 cat > "$TO/install.env" <<ENV

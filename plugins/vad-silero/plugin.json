@@ -4,7 +4,7 @@
   "kind": "vad",
   "needs": {
     "python": [
-      "silero-vad>=6.2.3"
+      "silero-vad>=6.2.3", "torch>=2.5"
     ]
   }
 }

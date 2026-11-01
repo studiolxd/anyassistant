@@ -9,9 +9,7 @@ arrives. While it speaks it doesn't listen; tapping the screen stops it.
 
 import asyncio
 import logging
-import os
 import re
-import signal
 import time
 
 import numpy as np
@@ -336,7 +334,7 @@ class Assistant(Transcriber):
             if quiet >= 3:
                 break
             await asyncio.sleep(0.25)
-        os.kill(os.getpid(), signal.SIGHUP)  # main.py treats it as «restart»
+        web.stop(restart=True)
 
     # --- What skills may do (skills/) ---
 

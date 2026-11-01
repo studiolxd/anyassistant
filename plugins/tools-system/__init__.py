@@ -9,6 +9,7 @@ would cut off the LLM while it is still using the tool.
 
 import re
 import subprocess
+import sys
 
 import i18n
 import kernel
@@ -18,7 +19,9 @@ from tools import ToolError, tool
 
 
 def voices() -> dict[str, str]:
-    """{name: locale} of the Mac's voices, from `say -v ?`."""
+    """{name: locale} of the Mac's voices, from `say -v ?` (none elsewhere, for now)."""
+    if sys.platform != "darwin":
+        return {}
     output = subprocess.run(["say", "-v", "?"], capture_output=True, text=True).stdout
     found = {}
     for line in output.splitlines():

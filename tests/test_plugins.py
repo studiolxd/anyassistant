@@ -3,6 +3,7 @@
 import sys
 
 import pytest
+from conftest import here
 
 import llm
 import stt
@@ -11,15 +12,16 @@ import vad
 import wake
 
 
-@pytest.mark.parametrize("registry, expected", [
-    (stt, {"parakeet", "mlx-whisper"}),
-    (wake, {"whisper", "openwakeword"}),
-    (llm, {"claude", "apple", "hermes"}),
-    (tts, {"avspeech", "macos"}),
-    (vad, {"silero"}),
+@pytest.mark.parametrize("registry, expected", [  # {engine: its plugin}
+    (stt, {"parakeet": "stt-parakeet", "mlx-whisper": "stt-mlx-whisper"}),
+    (wake, {"whisper": "wake-whisper", "openwakeword": "wake-openwakeword"}),
+    (llm, {"claude": "llm-claude", "apple": "llm-apple", "hermes": "llm-hermes"}),
+    (tts, {"avspeech": "tts-avspeech", "macos": "tts-macos"}),
+    (vad, {"silero": "vad-silero"}),
 ])
 def test_plugins_are_registered(registry, expected):
-    assert expected <= set(registry.available())
+    """Each engine whose plugin fits this computer (the Mac's only on the Mac)."""
+    assert {name for name, plugin in expected.items() if here(plugin)} <= set(registry.available())
 
 
 def test_listing_does_not_import_models():

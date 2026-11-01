@@ -25,7 +25,6 @@ import settings
 import web
 import brain
 
-restart = False  # SIGHUP («restart» by voice): stop cleanly and start again
 
 
 def main():
@@ -60,12 +59,9 @@ def main():
     app = web.application()
 
     async def listen_for_sighup(app):
-        def on_sighup():
-            global restart
-            restart = True
-            raise aiohttp_web.GracefulExit()  # like Ctrl+C: closes sessions and plugins
-
-        asyncio.get_running_loop().add_signal_handler(signal.SIGHUP, on_sighup)
+        """bin/anyassistant restart (SIGHUP; Windows has no such signal: «restart» by voice is web.stop)."""
+        if hasattr(signal, "SIGHUP"):
+            asyncio.get_running_loop().add_signal_handler(signal.SIGHUP, lambda: web.stop(restart=True))
 
     app.on_startup.append(listen_for_sighup)
 
@@ -80,7 +76,7 @@ def main():
             while os.getppid() == parent:
                 await asyncio.sleep(2)
             logging.info("the app is gone: stopping")
-            os.kill(os.getpid(), signal.SIGTERM)
+            web.stop()
 
         app["follow_the_app"] = asyncio.ensure_future(watch())
 
@@ -88,7 +84,7 @@ def main():
 
     # Short shutdown_timeout: the camera monitor (/video.mjpg) never ends by itself.
     aiohttp_web.run_app(app, host=args.host, port=args.port, shutdown_timeout=3)
-    if restart:
+    if web.restarting:
         logging.info("restarting…")
         argv = sys.argv
         if settings.load().get("language", i18n.L.code) != i18n.L.code:

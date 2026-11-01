@@ -25,9 +25,17 @@ class Option:
     flag: str = ""  # another command-line name (--lang)
     plugin: str | None = None  # the plugin that added it (None: the core's); its texts are in its locales
     empty: str = ""  # what happens when it isn't set («the language's voice»), for the app
+    prefer: tuple = ()  # an engine: the default is the first of these this computer has (resolve())
 
     def options(self) -> list:
         return list(self.choices()) if callable(self.choices) else list(self.choices or [])
+
+    def resolve(self):
+        """Its default for this computer: the first it prefers that is there (the Mac's engines on
+        the Mac, others on Windows and Linux). Once the plugins are loaded."""
+        if self.prefer:
+            there = self.options()
+            self.default = next((p for p in self.prefer if p in there), there[0] if there else self.default)
 
 
 def _plugins(package):
@@ -70,16 +78,17 @@ OPTIONS = [
     Option("ignore_others", True, "the LLM stays quiet when what it hears is clearly not for it", "assistant",
            "bool", live=True),
     # Listening and speaking
-    Option("stt", "parakeet", "speech recognition: parakeet, mlx-whisper…", "voice", "choice", _plugins("stt")),
+    Option("stt", "parakeet", "speech recognition: parakeet, mlx-whisper…", "voice", "choice", _plugins("stt"),
+           prefer=("parakeet", "parakeet-onnx", "faster-whisper", "mlx-whisper")),
     Option("stt_model", None, "its model", "voice", empty="the engine's own"),
     Option("tts", "avspeech", "its voice engine: avspeech, macos… or none", "voice", "choice",
-           lambda: _plugins("tts")() + ["none"]),
+           lambda: _plugins("tts")() + ["none"], prefer=("avspeech", "kokoro", "piper", "macos", "none")),
     Option("voice", None, "the voice (default: the language's); one, or one per language: "
            '{"es": "Mónica", "en": "Samantha"}', "voice", "json", empty="the language's"),
     Option("rate", None, "words per minute", "voice", "int", empty="the voice's own"),
     Option("volume", 100, "its voice and sounds, 5–100 %", "voice", "int", live=True),
     Option("wake", "whisper", "the wake word engine: whisper, openwakeword… or none", "voice", "choice",
-           lambda: _plugins("wake")() + ["none"]),
+           lambda: _plugins("wake")() + ["none"], prefer=("whisper", "none")),
     Option("wake_word", None, "the word or model (default: its name)", "voice", empty="its name"),
     Option("threshold", None, "how sure the wake word must be (each engine has its own default)", "voice", "float",
            empty="the engine's own"),
@@ -133,6 +142,7 @@ def parser() -> argparse.ArgumentParser:
     import kernel
 
     kernel.load_all()  # they add their options when they load
+    resolve_defaults()
     made = argparse.ArgumentParser(description="Jarvis's server. Options also come from settings.json.")
     for o in OPTIONS:
         flag = o.flag or "--" + o.name.replace("_", "-")
@@ -145,6 +155,12 @@ def parser() -> argparse.ArgumentParser:
             kwargs["type"] = _json_or_text
         made.add_argument(flag, **kwargs)
     return made
+
+
+def resolve_defaults():
+    """The engines' defaults for this computer (the plugins loaded)."""
+    for o in OPTIONS:
+        o.resolve()
 
 
 def _json_or_text(value: str):
