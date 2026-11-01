@@ -1,0 +1,25 @@
+{
+  "plugins": {
+    "llm-opencode": [
+      "OpenCode",
+      "OpenCode con los proveedores que conectaste en él (OpenCode Go o Zen, los tuyos…): sus servidores MCP y las herramientas de Eva, con tu «sí» antes de lo que cambia algo."
+    ]
+  },
+  "speech": {
+    "wait": [
+      "Un momento, lo miro.",
+      "Déjame ver.",
+      "Un segundo.",
+      "Lo compruebo.",
+      "Dame un momento.",
+      "Voy a mirarlo."
+    ],
+    "llm_failed": "Perdona, no he podido responder.",
+    "llm_cut": "Perdona, se me ha cortado la conexión con {name}.",
+    "llm_signed_out": "No tengo sesión en {name}: hay que ejecutar {command} en el terminal.",
+    "llm_limit": "{name} dice que he llegado a su límite de uso. Prueba en un rato.",
+    "llm_offline": "No puedo conectar con {name}: ¿hay conexión a internet?",
+    "llm_approval": "{name} quiere hacer esto: {action}. ¿Lo hago?",
+    "opencode_provider": "OpenCode no tiene sesión en el proveedor de ese modelo: conéctalo con {command}, o elige otro modelo en los ajustes."
+  }
+}

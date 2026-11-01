@@ -67,7 +67,7 @@
     "plugins": "qué plugins están encendidos o apagados, si no como vienen",
     "name": "el nombre del asistente: su palabra de activación, el título y cómo se llama a sí mismo",
     "language": "en, es…: el idioma en que habla y entiende (de serie, el del Mac)",
-    "llm": "el LLM: claude, apple, openai, ollama, hermes…",
+    "llm": "el LLM: claude, codex, gemini, opencode, apple, openai, ollama, hermes…",
     "llm_model": "el modelo del LLM (para Claude: sonnet, opus, haiku…)",
     "mcp": ".mcp.json con los servidores MCP (de serie, el de tu carpeta de datos)",
     "instructions": "las tuyas, añadidas a las del LLM: quién eres, cómo hablarte…",

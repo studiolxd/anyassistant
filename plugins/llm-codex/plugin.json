@@ -1,0 +1,10 @@
+{
+  "name": "Codex",
+  "description": "ChatGPT through OpenAI's Codex CLI: your subscription, its MCP servers and Jarvis's tools, asking for your «yes» before what changes something.",
+  "kind": "llm",
+  "needs": {
+    "commands": [
+      "codex"
+    ]
+  }
+}

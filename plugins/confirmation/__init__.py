@@ -4,14 +4,18 @@
   refuses the call until you answer «yes» to exactly that call.
 - Claude Code: the hook bin/anyassistant-confirm (installed by llm-claude while this is on).
 - Hermes: its approvals wait here for your answer (llm-openai).
+- Codex: it asks Jarvis before each MCP tool (let_through()); Gemini CLI and OpenCode too, and
+  wait meanwhile (decision()).
 
 The pending action and your answer live in store.py (files, so separate processes
 agree). While one waits, the face shows «question»; your next sentence answers it.
 Off (by hand only: it is a security plugin), nothing asks and everything goes through.
 """
 
+import asyncio
 import json
 import logging
+import time
 
 import i18n
 import options
@@ -64,6 +68,42 @@ def _ask_first(name: str, arguments: dict):
         return
     store.ask(sign, f"anyassistant: {name} {json.dumps(arguments, ensure_ascii=False)}")
     raise ToolError(ASK)
+
+
+def free(server: str, tool: str) -> bool:
+    """Whether an LLM's MCP tool may run without your «yes», with the same rule as Claude's hook:
+    reads (get_, list_…), Jarvis's own tools (they ask themselves), or «confirm» off."""
+    return server == "anyassistant" or tool.startswith(store.READS) or not asking()
+
+
+def let_through(server: str, tool: str, arguments: dict) -> bool:
+    """An LLM's CLI asks whether one of its MCP tools may run (Codex's approvals): if it isn't
+    free, only with your «yes» to exactly this call, once. Otherwise it is left waiting (False): the
+    CLI refuses it, the LLM asks you, and after your «yes» it calls it again."""
+    if free(server, tool):
+        return True
+    sign = store.signature(f"mcp__{server}__{tool}", arguments)
+    if store.confirmed(sign):
+        return True
+    store.ask(sign, f"{server}: {tool} {json.dumps(arguments, ensure_ascii=False)}")
+    return False
+
+
+async def decision(sign: str, action: str) -> bool:
+    """Asks you about an action that waits meanwhile (Gemini's and OpenCode's approvals, like
+    Hermes's): your answer is for whoever asked, not a new message for the LLM («consume»).
+    True if you said «yes» in time; anything else, or nothing, is a «no»."""
+    store.ask(sign, action, consume=True)
+    deadline = time.time() + (settings.get("confirm_wait") or store.WAIT)
+    while time.time() < deadline:
+        await asyncio.sleep(0.2)
+        if store.confirmed(sign):
+            return True
+        if not store.waiting(sign):
+            return False  # the answer wasn't «yes»
+    if store.waiting(sign):
+        store.answer(False)  # too late: dropped
+    return False
 
 
 def answer(text: str) -> bool | None:

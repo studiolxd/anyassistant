@@ -64,7 +64,7 @@ OPTIONS = [
     Option("name", "Jarvis", "the assistant's name: its wake word, the page's title, what the LLM calls itself", "assistant"),
     Option("language", None, "en, es…: what it speaks and understands (default: the Mac's)", "assistant",
            "choice", _languages, flag="--lang", empty="the Mac's language"),
-    Option("llm", "claude", "the LLM: claude, apple, openai, ollama, hermes…", "assistant", "choice", _plugins("llm")),
+    Option("llm", "claude", "the LLM: claude, codex, gemini, opencode, apple, openai, ollama, hermes…", "assistant", "choice", _plugins("llm")),
     Option("llm_model", None, "the LLM's model (for Claude: sonnet, opus, haiku…)", "assistant",
            empty="the LLM's own"),
     Option("mcp", None, ".mcp.json with the MCP servers (default: your data folder's)", "assistant",
