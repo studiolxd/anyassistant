@@ -16,7 +16,7 @@
     <string name="pair_how">Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.</string>
     <string name="code_from_mac">Código del servidor</string>
     <string name="wrong_code">Ese código no es correcto (o ha caducado).</string>
-    <string name="mac_not_answering">El servidor no responde: ¿está AnyAssistant en marcha, y este dispositivo en la misma Wi-Fi?</string>
+    <string name="mac_not_answering">El servidor no responde: ¿está AnyAssistant en marcha y este dispositivo en la misma red?</string>
     <string name="looking_for_mac">Buscando el servidor…</string>
     <string name="pair_again_needed">Hay que emparejarlo de nuevo.</string>
     <string name="listening">%1$s te escucha</string>

@@ -157,7 +157,7 @@ struct SettingsView: View {
             let answers = await mac.url() != nil
             checking = false
             if !answers {
-                problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+                problem = T("The server isn't answering: is AnyAssistant running and this device on the same network?")
             }
         }
     }

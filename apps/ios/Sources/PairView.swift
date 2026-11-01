@@ -78,7 +78,7 @@ struct PairView: View {
         Task {
             defer { connecting = nil }
             do { try await mac.pair(code: "") } catch {
-                problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+                problem = T("The server isn't answering: is AnyAssistant running and this device on the same network?")
             }
         }
     }
@@ -127,9 +127,9 @@ struct OtherServerView: View {
         case .some(true): showCode = true
         case .some(false):
             do { try await mac.pair(code: "") } catch {
-                problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+                problem = T("The server isn't answering: is AnyAssistant running and this device on the same network?")
             }
-        case .none: problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+        case .none: problem = T("The server isn't answering: is AnyAssistant running and this device on the same network?")
         }
     }
 }
@@ -212,7 +212,7 @@ struct CodeView: View {
                 problem = T("That code isn't right (or it expired).")
                 code = ""
             } catch {
-                problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+                problem = T("The server isn't answering: is AnyAssistant running and this device on the same network?")
             }
         }
     }

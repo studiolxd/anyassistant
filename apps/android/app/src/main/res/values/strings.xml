@@ -17,7 +17,7 @@
     <string name="pair_how">To get the code, open AnyAssistant on the server and select Connect another device.</string>
     <string name="code_from_mac">Code from the server</string>
     <string name="wrong_code">That code isn\'t right (or it expired).</string>
-    <string name="mac_not_answering">The server isn\'t answering: is AnyAssistant running, and this device on the same Wi-Fi?</string>
+    <string name="mac_not_answering">The server isn\'t answering: is AnyAssistant running and this device on the same network?</string>
     <string name="looking_for_mac">Looking for the server…</string>
     <string name="pair_again_needed">It has to be paired again.</string>
     <string name="listening">%1$s is listening</string>
