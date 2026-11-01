@@ -2,7 +2,7 @@
 
 "1. The certificate" = "1. El certificado";
 "2. The page" = "2. Conectar";
-"A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "Un asistente de voz que funciona en este Mac. Puedes hablar con él aquí o desde un iPhone, un iPad o cualquier móvil o tablet.";
+"A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "Este Mac será el servidor y también un cliente: podrás hablar con el asistente desde aquí o desde cualquier otro dispositivo conectado a él. Si ya tienes un servidor, puedes usar este Mac solo como cliente.";
 "An old device (it doesn't open .local names): use the address" = "¿Es un dispositivo antiguo y no abre esa dirección? Usar la IP";
 "Another code" = "Pedir otro código";
 "AnyAssistant needs it to work as usual." = "AnyAssistant lo necesita para funcionar bien.";
@@ -142,7 +142,7 @@
 "Looking for the server…" = "Buscando el servidor…";
 "The microphone is off" = "El micrófono está apagado";
 "Turn the microphone on" = "Encender el micrófono";
-"Another Mac's server" = "Usar otro servidor";
+"Another Mac's server" = "Conectarse a otro servidor";
 "This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "Este Mac solo se usará para hablar con el asistente. Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.";
 "Port" = "Puerto";
 "Code" = "Código";
@@ -150,7 +150,7 @@
 "Connect" = "Conectar";
 "That code isn't right (or it's too old): ask for another." = "El código no es correcto o ha caducado.";
 "That Mac doesn't answer: is AnyAssistant running there, on this network?" = "El servidor no responde. Comprueba que AnyAssistant esté en marcha y que este Mac esté en la misma red.";
-"The server is on another Mac: use this one only to talk to it" = "Usar un servidor de otro ordenador…";
+"The server is on another Mac: use this one only to talk to it" = "Conectarse a otro servidor…";
 "Allow the microphone…" = "Permitir el micrófono…";
 
 /* The guide to learn a voice (Voices.swift) */
