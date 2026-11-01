@@ -251,6 +251,7 @@ final class Link: NSObject, ObservableObject {
             pageReady = true
             showAgain()
         } else {
+            if message["type"] as? String == "tap" { audio.hush() }  // quiet at once; the Mac stops too
             send(message)  // tap, skin, ping
         }
     }
