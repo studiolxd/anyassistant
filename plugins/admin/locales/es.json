@@ -60,7 +60,6 @@
     "Learn a voice": "Aprender una voz",
     "No device connected: open one and come back.": "No hay ningún dispositivo conectado: abre uno y vuelve.",
     "the person's: «Suvi»": "el de la persona: «Suvi»",
-    "Listen to the device: it asks for the phrases.": "Atiende al dispositivo: te irá pidiendo las frases.",
     "Start learning": "Empezar a aprender",
     "Mail": "Correo",
     "Accounts besides Gmail (IMAP and SMTP): new email notices, the morning count, and for the LLM to read and send (with your «yes»). The password goes to the system's keychain.": "Cuentas además de Gmail (IMAP y SMTP): avisos de correos nuevos, el recuento de la mañana, y para que el LLM lea y envíe (con tu «sí»). La contraseña va al llavero del sistema.",
@@ -99,6 +98,16 @@
     "Voice detection": "Detección de voz",
     "Skills": "Habilidades",
     "Features": "Funciones",
-    "Libraries": "Librerías"
+    "Libraries": "Librerías",
+    "Tell it your name": "Dile tu nombre",
+    "Say it to the device: «Me llamo Suvi».": "Díselo al dispositivo: «Me llamo Suvi».",
+    "Phrase": "Frase",
+    "Read it out loud:": "Léela en voz alta:",
+    "A little longer: say the whole phrase again.": "Un poco más larga: repite la frase entera.",
+    "When it hears you, it goes on to the next one.": "Cuando te oiga, pasará a la siguiente.",
+    "Done: it knows your voice.": "Listo: ya conoce tu voz.",
+    "Cancelled: nothing was learnt.": "Cancelado: no ha aprendido nada.",
+    "Learn another": "Aprender otra",
+    "Cancel": "Cancelar"
   }
 }

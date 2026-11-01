@@ -152,3 +152,19 @@
 "That Mac doesn't answer: is AnyAssistant running there, on this network?" = "That Mac doesn't answer: is AnyAssistant running there, on this network?";
 "The server is on another Mac: use this one only to talk to it" = "The server is on another Mac: use this one only to talk to it";
 "Allow the microphone…" = "Allow the microphone…";
+
+/* The guide to learn a voice (Voices.swift) */
+"A guide shows each phrase to read, one at a time." = "A guide shows each phrase to read, one at a time.";
+"Learn a voice…" = "Learn a voice…";
+"Tell it your name" = "Tell it your name";
+"Say it to the device: «Me llamo Suvi»." = "Say it to the device: «Me llamo Suvi».";
+"Done, %@: it knows your voice." = "Done, %@: it knows your voice.";
+"Cancelled: nothing was learnt." = "Cancelled: nothing was learnt.";
+"Stand in front of the device you talk to most: its microphone is the one that will hear you. Then read the phrases this window shows, one at a time." = "Stand in front of the device you talk to most: its microphone is the one that will hear you. Then read the phrases this window shows, one at a time.";
+"Phrase %d of %d" = "Phrase %d of %d";
+"Read it out loud:" = "Read it out loud:";
+"A little longer: say the whole phrase again." = "A little longer: say the whole phrase again.";
+"When it hears you, it goes on to the next one." = "When it hears you, it goes on to the next one.";
+"Listening on the device…" = "Listening on the device…";
+"Learn another" = "Learn another";
+"Close" = "Close";

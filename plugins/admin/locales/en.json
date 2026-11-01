@@ -54,7 +54,6 @@
     "Learn a voice": "Learn a voice",
     "No device connected: open one and come back.": "No device connected: open one and come back.",
     "the person's: «Suvi»": "the person's: «Suvi»",
-    "Listen to the device: it asks for the phrases.": "Listen to the device: it asks for the phrases.",
     "Start learning": "Start learning",
     "Mail": "Mail",
     "Accounts besides Gmail (IMAP and SMTP): new email notices, the morning count, and for the LLM to read and send (with your «yes»). The password goes to the system's keychain.": "Accounts besides Gmail (IMAP and SMTP): new email notices, the morning count, and for the LLM to read and send (with your «yes»). The password goes to the system's keychain.",
@@ -93,6 +92,16 @@
     "Voice detection": "Voice detection",
     "Skills": "Skills",
     "Features": "Features",
-    "Libraries": "Libraries"
+    "Libraries": "Libraries",
+    "Tell it your name": "Tell it your name",
+    "Say it to the device: «Me llamo Suvi».": "Say it to the device: «Me llamo Suvi».",
+    "Phrase": "Phrase",
+    "Read it out loud:": "Read it out loud:",
+    "A little longer: say the whole phrase again.": "A little longer: say the whole phrase again.",
+    "When it hears you, it goes on to the next one.": "When it hears you, it goes on to the next one.",
+    "Done: it knows your voice.": "Done: it knows your voice.",
+    "Cancelled: nothing was learnt.": "Cancelled: nothing was learnt.",
+    "Learn another": "Learn another",
+    "Cancel": "Cancel"
   }
 }

@@ -125,6 +125,28 @@ def test_learning_a_voice(monkeypatch, es):
     assert [p["name"] for p in voices.people()] == ["Suvi"] and assistant.learning is None
 
 
+def test_the_guide_follows_each_step(monkeypatch, es):
+    """The app's and admin page's guide: the phrase to read, which one, again, done or cancelled."""
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 0))
+    monkeypatch.setattr(voices, "progress", {})
+    assistant = Assistant()
+    monkeypatch.setattr(voices.hub, "of", lambda brain: type("S", (), {"device": "mac1"})())
+    voices.start(assistant)
+    assert voices.progress["mac1"]["step"] == "name"
+    voices.screen(assistant, "Me llamo suvi", {}, SECOND, None)
+    shown = voices.progress["mac1"]
+    assert (shown["step"], shown["name"], shown["number"], shown["total"]) == ("phrase", "Suvi", 1, voices.PHRASES)
+    assert shown["phrase"] and assistant.said[-1] == "Di: " + shown["phrase"]
+    voices.screen(assistant, "hoy", {}, np.zeros(8000, np.float32), None)  # too short
+    assert voices.progress["mac1"]["again"] and voices.progress["mac1"]["number"] == 1
+    voices.screen(assistant, "una frase", {}, np.zeros(32000, np.float32), None)
+    assistant.run()
+    assert voices.progress["mac1"]["number"] == 2 and not voices.progress["mac1"]["again"]
+    assistant.learning.cancel()
+    assert voices.progress["mac1"]["step"] == "cancelled" and assistant.learning is None
+    assert voices._listing()["learning"]["mac1"]["step"] == "cancelled"
+
+
 @pytest.mark.parametrize("said, name", [("Me llamo suvi.", "Suvi"), ("Soy Ana García", "Ana García"),
                                         ("Luis", "Luis"), ("Pues me llamo Marta", "Marta")])
 def test_names(es, said, name):

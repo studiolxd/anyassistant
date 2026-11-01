@@ -39,6 +39,11 @@ struct AnyAssistantApp: App {
             DevicesView()
                 .frame(minWidth: 560, minHeight: 360)
         }
+        Window(T("Learn a voice"), id: "learn-voice") {
+            LearnVoiceView()
+                .frame(minWidth: 520, minHeight: 400)
+        }
+        .defaultSize(width: 560, height: 440)
         Window(T("Pair a device"), id: "pair") {
             PairView(server: server)
                 .frame(width: 660, height: 380)

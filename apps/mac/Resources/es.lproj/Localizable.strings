@@ -152,3 +152,19 @@
 "That Mac doesn't answer: is AnyAssistant running there, on this network?" = "Ese Mac no responde: ¿está AnyAssistant abierto allí, en esta red?";
 "The server is on another Mac: use this one only to talk to it" = "El servidor está en otro Mac: usar este solo para hablarle";
 "Allow the microphone…" = "Permitir el micrófono…";
+
+/* The guide to learn a voice (Voices.swift) */
+"A guide shows each phrase to read, one at a time." = "Una guía te muestra cada frase que tienes que leer, una a una.";
+"Learn a voice…" = "Aprender una voz…";
+"Tell it your name" = "Dile tu nombre";
+"Say it to the device: «Me llamo Suvi»." = "Díselo al dispositivo: «Me llamo Suvi».";
+"Done, %@: it knows your voice." = "Listo, %@: ya conoce tu voz.";
+"Cancelled: nothing was learnt." = "Cancelado: no ha aprendido nada.";
+"Stand in front of the device you talk to most: its microphone is the one that will hear you. Then read the phrases this window shows, one at a time." = "Ponte delante del dispositivo con el que más le hablas: es su micrófono el que te oirá. Luego lee las frases que te muestra esta ventana, una a una.";
+"Phrase %d of %d" = "Frase %d de %d";
+"Read it out loud:" = "Léela en voz alta:";
+"A little longer: say the whole phrase again." = "Un poco más larga: repite la frase entera.";
+"When it hears you, it goes on to the next one." = "Cuando te oiga, pasará a la siguiente.";
+"Listening on the device…" = "Escuchando en el dispositivo…";
+"Learn another" = "Aprender otra";
+"Close" = "Cerrar";

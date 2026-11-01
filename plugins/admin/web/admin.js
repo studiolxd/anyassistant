@@ -358,12 +358,48 @@ function voices(main) {
     var device = el('select', {}, connected.map(function (d) { return el('option', { value: d.id, text: d.name || d.id }); }));
     var name = el('input', { placeholder: T('the person\'s: «Suvi»') });
     var note = el('span', { class: 'muted' });
-    learn.appendChild(el('form', { class: 'inline', onsubmit: function (e) {
+    var form = el('form', { class: 'inline', onsubmit: function (e) {
       e.preventDefault();
       api('POST', '/admin/voices', { learn: device.value, name: name.value }).then(function (r) {
-        note.textContent = r.error || T('Listen to the device: it asks for the phrases.');
+        if (r.error) { note.textContent = r.error; return; }
+        guide(device.value);
       });
-    } }, [device, name, el('button', { text: T('Start learning') }), note]));
+    } }, [device, name, el('button', { text: T('Start learning') }), note]);
+    learn.appendChild(form);
+
+    // The guide: the phrase to read now, which one, and what happens, until it ends.
+    function guide(id) {
+      form.hidden = true;
+      var box = el('div', { style: 'padding:16px 0' });
+      learn.appendChild(box);
+      var follow = setInterval(function () {
+        api('GET', '/admin/voices').then(function (r) {
+          var now = (r.learning || {})[id];
+          if (!now) return;
+          box.innerHTML = '';
+          if (now.step === 'name') {
+            box.appendChild(el('h2', { text: T('Tell it your name') }));
+            box.appendChild(el('p', { text: T('Say it to the device: «Me llamo Suvi».') }));
+          } else if (now.step === 'phrase') {
+            box.appendChild(el('b', { text: T('Phrase') + ' ' + now.number + ' / ' + now.total }));
+            box.appendChild(el('p', { class: 'muted', text: T('Read it out loud:') }));
+            box.appendChild(el('p', { style: 'font-size:28px;font-weight:600;line-height:1.3;margin:6px 0 12px', text: now.phrase }));
+            if (now.again) box.appendChild(el('p', { style: 'color:var(--warn)', text: T('A little longer: say the whole phrase again.') }));
+            box.appendChild(el('p', { class: 'muted', text: T('When it hears you, it goes on to the next one.') }));
+          } else {
+            clearInterval(follow);
+            box.appendChild(el('h2', { text: now.step === 'done' ? T('Done: it knows your voice.') : T('Cancelled: nothing was learnt.') }));
+            box.appendChild(el('button', { class: 'quiet', text: T('Learn another'), onclick: function () { show('voices'); } }));
+            api('GET', '/admin/voices').then(draw);
+            return;
+          }
+          box.appendChild(el('button', { class: 'danger', text: T('Cancel'), onclick: function () {
+            api('POST', '/admin/voices', { cancel: id });
+          } }));
+        });
+      }, 700);
+      timer = follow;  // leaving the section stops it
+    }
   });
 }
 

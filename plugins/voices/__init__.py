@@ -202,28 +202,50 @@ def who(assistant) -> str:
 
 # --- Learning a voice ---
 
+# Where each learning is (by device), for the app's and the admin page's guide: the phrase to
+# read, which one it is, whether it has to be said again; kept a while once it ends.
+progress: dict[str, dict] = {}
+
+
 class Learning:
     """«¿Cómo te llamas?», then PHRASES phrases read out loud; their voice prints, averaged."""
 
     def __init__(self, assistant, name: str | None = None):
         self.assistant, self.name, self.prints, self.asked = assistant, name, [], 0
+        session = hub.of(assistant)
+        self.device = session.device if session else None
         assistant.learning = self
         if name:
             self._next()
         else:
+            self._show("name")
             assistant.say(i18n.L("speech.voice_name"))
 
-    def _next(self):
+    def _show(self, step: str, again: bool = False):
+        """Its step, for the guide: name, phrase, done or cancelled."""
+        if not self.device:
+            return
         phrases = i18n.L.list("voices.phrases")
+        progress[self.device] = {"step": step, "name": self.name or "", "again": again, "number": self.asked + 1,
+                                 "total": PHRASES, "phrase": phrases[self.asked % len(phrases)] if step == "phrase" else "",
+                                 "at": time.time()}
+
+    def _next(self, again: bool = False):
+        phrases = i18n.L.list("voices.phrases")
+        self._show("phrase", again)
         self.assistant.say(i18n.L("speech.voice_read", phrase=phrases[self.asked % len(phrases)]))
+
+    def cancel(self):
+        self.assistant.learning = None
+        self._show("cancelled")
+        self.assistant.say(i18n.L("speech.voice_cancelled"))
 
     def heard(self, text: str, audio):
         assistant = self.assistant
         assistant.show_heard(text)
         found = words(text)
         if found and set(found) & set(i18n.L.list("commands.stop")) and len(found) <= 2:
-            assistant.learning = None
-            assistant.say(i18n.L("speech.voice_cancelled"))
+            self.cancel()
             return
         if self.name is None:
             self.name = _name(text)
@@ -235,7 +257,7 @@ class Learning:
             return
         if audio is None or len(audio) / RATE < MIN_SAMPLE:
             assistant.say(i18n.L("speech.voice_again"))
-            self._next()
+            self._next(again=True)
             return
         assistant.later(self._print(audio))
 
@@ -248,6 +270,7 @@ class Learning:
         learn(self.name, self.prints)
         self.assistant.learning = None
         self.assistant.voice = self.name
+        self._show("done")
         self.assistant.say(i18n.L("speech.voice_learnt", name=self.name))
 
 
@@ -291,8 +314,11 @@ class LearnVoice(Skill):
 
 
 def _listing():
+    now = time.time()
+    for device in [d for d, p in progress.items() if p["step"] in ("done", "cancelled") and now - p["at"] > 60]:
+        progress.pop(device)  # an ended one stays a minute, for the guide to say so
     return {"people": [{"name": p["name"], "samples": p.get("samples", 0), "since": p.get("since")} for p in people()],
-            "check": checking()}
+            "check": checking(), "learning": progress}
 
 
 @web.route("GET", "/admin/voices")
@@ -304,7 +330,8 @@ async def _list(request):
 
 @web.route("POST", "/admin/voices")
 async def _change(request):
-    """{"learn": device id, "name"?: «Ana»} starts it on that device; {"forget": «Ana»}."""
+    """{"learn": device id, "name"?: «Ana»} starts it on that device; {"cancel": device id};
+    {"forget": «Ana»}. Where each learning is: «learning» in the answer (GET too)."""
     if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
     data = await request.json()
@@ -317,6 +344,11 @@ async def _change(request):
             start(session.brain, (data.get("name") or "").strip() or None)
         finally:
             hub.here.reset(token)
+    elif "cancel" in data:
+        session = hub.by_device(str(data["cancel"]))
+        learning = getattr(session.brain, "learning", None) if session else None
+        if learning is not None:
+            learning.cancel()
     elif "forget" in data:
         forget(str(data["forget"]))
     return http.json_response(_listing())
