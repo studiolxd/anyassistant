@@ -4,6 +4,9 @@
 // only it; otherwise HTTP, on the local network.
 
 import Foundation
+#if !os(watchOS)
+import Network
+#endif
 
 @MainActor
 final class Mac: NSObject, ObservableObject, URLSessionDelegate {
@@ -113,10 +116,47 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         UserDefaults.standard.set(true, forKey: "paired")
     }
 
-    /// Where it answers now (its name, else its IP), or nil.
+    /// Where it answers now (its name, else its IP), or nil. Neither answering (the Mac's IP changed,
+    /// and its name isn't found from here): its address now, from its Bonjour announcement.
     func url() async -> URL? {
+        if let (name, _) = await reachable({ self.base($0) }) { return base(name) }
+        guard let found = await discover(), found != address else { return nil }
+        for known in [host, address].compactMap({ $0 }) {  // the pairing's cookie, for the new address
+            copyCookies(from: URL(string: "http://\(known):\(port)")!, to: found)
+        }
+        address = found
         guard let (name, _) = await reachable({ self.base($0) }) else { return nil }
         return base(name)
+    }
+
+    /// The Mac's address now, from its Bonjour announcement («_anyassistant._tcp», its «address»).
+    func discover(seconds: Double = 3) async -> String? {
+        #if os(watchOS)
+        return nil  // the watch can't browse: its name, or the IP it knows
+        #else
+        final class Once: @unchecked Sendable {
+            var done = false
+        }
+        let once = Once()
+        return await withCheckedContinuation { continuation in
+            let browser = NWBrowser(for: .bonjourWithTXTRecord(type: "_anyassistant._tcp", domain: nil), using: .tcp)
+            let finish: (String?) -> Void = { found in
+                guard !once.done else { return }
+                once.done = true
+                browser.cancel()
+                continuation.resume(returning: found)
+            }
+            browser.browseResultsChangedHandler = { results, _ in
+                for result in results {
+                    if case .bonjour(let record) = result.metadata, let found = record["address"], !found.isEmpty {
+                        return finish(found)
+                    }
+                }
+            }
+            browser.start(queue: .main)
+            DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { finish(nil) }
+        }
+        #endif
     }
 
     /// The pairing's cookies, for a web view or a WebSocket to the same address.
@@ -167,8 +207,8 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
 
     /// One sentence (a WAV) → what it heard, its answer and its voice.
     func talk(_ wav: Data) async throws -> Answer {
-        guard let (name, _) = await reachable({ self.base($0) }) else { throw Failure.unreachable }
-        var request = URLRequest(url: with(base(name).appendingPathComponent("talk"), device: device))
+        guard let base = await url() else { throw Failure.unreachable }
+        var request = URLRequest(url: with(base.appendingPathComponent("talk"), device: device))
         request.httpMethod = "POST"
         request.setValue("audio/wav", forHTTPHeaderField: "Content-Type")
         request.httpBody = wav

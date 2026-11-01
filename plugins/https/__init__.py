@@ -210,7 +210,23 @@ async def serve(app):
         return
     log.info("HTTPS on https://%s:%s", NAME, port())
 
+    async def renew():
+        """Its certificate again when its addresses change (another Wi-Fi, a new IP): new
+        connections get the new one, without restarting."""
+        while True:
+            await asyncio.sleep(60)
+            try:
+                if not await asyncio.get_running_loop().run_in_executor(None, _current):
+                    cert, key = await asyncio.get_running_loop().run_in_executor(None, certificate)
+                    context.load_cert_chain(cert, key)
+                    log.info("its addresses changed: a new certificate for %s", ", ".join(addresses()))
+            except Exception as e:
+                log.warning("couldn't renew the certificate: %r", e)
+
+    renewing = asyncio.ensure_future(renew())
+
     async def stop():
+        renewing.cancel()
         server.close()
         await handler.shutdown(3)
 
