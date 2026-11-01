@@ -99,9 +99,10 @@
     "Read it out loud:": "Read it out loud:",
     "A little longer: say the whole phrase again.": "A little longer: say the whole phrase again.",
     "When it hears you, it goes on to the next one.": "When it hears you, it goes on to the next one.",
-    "Done: it knows your voice.": "Done: it knows your voice.",
     "Cancelled: nothing was learnt.": "Cancelled: nothing was learnt.",
     "Learn another": "Learn another",
-    "Cancel": "Cancel"
+    "Cancel": "Cancel",
+    "Done, %s: it knows your voice.": "Done, %s: it knows your voice.",
+    "Stand in front of the device you talk to most: its microphone is the one that will hear you. Then read the phrases shown here, one at a time.": "Stand in front of the device you talk to most: its microphone is the one that will hear you. Then read the phrases shown here, one at a time."
   }
 }
