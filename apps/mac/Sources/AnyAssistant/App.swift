@@ -193,6 +193,14 @@ struct MenuView: View {
                  + (device.current && server.devices.count > 1 ? " · " + T("talking to you") : ""))
         }
         if let busy = server.busy { Text(busy) }
+        if server.state != .notInstalled {  // the server, right under how it is
+            if server.state == .stopped {
+                Button(T("Start")) { server.start() }
+            } else {
+                Button(T("Restart")) { server.restart() }
+                Button(T("Stop")) { server.stop() }
+            }
+        }
         Divider()
         if server.state == .notInstalled {
             Button(M("Install…")) { open("setup") }
@@ -207,12 +215,6 @@ struct MenuView: View {
                 NSWorkspace.shared.open(URL(string: "http://127.0.0.1:\(server.port)/skins")!)
             }
             Divider()
-            if server.state == .stopped {
-                Button(T("Start")) { server.start() }
-            } else {
-                Button(T("Restart")) { server.restart() }
-                Button(T("Stop")) { server.stop() }
-            }
             Button(T("Show the log")) {
                 NSWorkspace.shared.open([server.log], withApplicationAt: URL(fileURLWithPath: "/System/Applications/Utilities/Console.app"),
                                         configuration: NSWorkspace.OpenConfiguration())

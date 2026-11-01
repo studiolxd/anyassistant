@@ -136,6 +136,11 @@ function menu() {
   const running = server.state === 'running';
   const items = [
     { label: status(), enabled: false },
+    // The server, right under how it is.
+    server.state === 'stopped' || server.state === 'failed'
+      ? { label: T('Start'), click: () => server.start() }
+      : { label: T('Restart'), click: () => server.restart() },
+    { label: T('Stop'), enabled: server.state !== 'stopped', click: () => server.stop() },
     { type: 'separator' },
     faceShown()  // «Hide Eva» while its window is open
       ? { label: T('Hide %s', name), click: () => windows.face.close() }
@@ -143,10 +148,6 @@ function menu() {
     { label: T('Pair a device'), enabled: running, click: () => showAdmin('#pair') },
     { label: T('Administer'), enabled: running, click: () => showAdmin() },
     { type: 'separator' },
-    server.state === 'stopped' || server.state === 'failed'
-      ? { label: T('Start'), click: () => server.start() }
-      : { label: T('Restart'), click: () => server.restart() },
-    { label: T('Stop'), enabled: server.state !== 'stopped', click: () => server.stop() },
     { label: T('Log'), click: () => shell.openPath(server.log) },
     { label: T('Open at login'), type: 'checkbox', checked: opensAtLogin(), click: (item) => setOpensAtLogin(item.checked) },
     { type: 'separator' },
