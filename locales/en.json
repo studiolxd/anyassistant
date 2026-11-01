@@ -94,7 +94,7 @@
   "options": {
     "plugins": "which plugins are on or off, if not as they come: {\"memory\": true, \"tap-to-wake\": false}",
     "name": "the assistant's name: its wake word, the page's title, what the LLM calls itself",
-    "language": "en, es…: what it speaks and understands (default: the Mac's)",
+    "language": "en, es…: what it speaks and understands (default: the system's)",
     "llm": "the LLM: claude, codex, gemini, opencode, apple, openai, ollama, hermes…",
     "llm_model": "the LLM's model (for Claude: sonnet, opus, haiku…)",
     "mcp": ".mcp.json with the MCP servers (default: your data folder's)",
@@ -164,7 +164,7 @@
     ]
   },
   "options_empty": {
-    "language": "the Mac's language",
+    "language": "the system's language",
     "llm_model": "the LLM's own",
     "mcp": "the one in your data folder",
     "instructions": "none",

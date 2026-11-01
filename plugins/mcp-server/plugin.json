@@ -1,5 +1,5 @@
 {
   "name": "AnyAssistant's MCP server",
-  "description": "Jarvis's tools as the «anyassistant» MCP server at /mcp, only from the Mac itself (Claude, Hermes).",
+  "description": "Jarvis's tools as the «anyassistant» MCP server at /mcp, only from the server itself (Claude, Hermes).",
   "kind": "feature"
 }

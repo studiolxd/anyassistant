@@ -4,12 +4,12 @@
 "Settings" = "Ajustes";
 "It needs the microphone (Settings → Privacy)." = "Necesita el micrófono (Ajustes → Privacidad).";
 "It didn't catch that." = "No te he entendido.";
-"Your Mac isn't answering: is AnyAssistant running, and the watch on the same network?" = "Tu Mac no contesta: ¿está AnyAssistant en marcha y el reloj en la misma red?";
+"The server isn't answering: is AnyAssistant running, and the watch on the same network?" = "El servidor no contesta: ¿está AnyAssistant en marcha y el reloj en la misma red?";
 "It has to be paired again." = "Hay que volver a emparejarlo.";
-"Mac" = "Mac";
+"Server" = "Servidor";
 "Address" = "Dirección";
 "Port" = "Puerto";
 "Pair again" = "Emparejar de nuevo";
-"Code from your Mac" = "Código de tu Mac";
-"Mac: " = "Mac: ";
+"Code from the server" = "Código del servidor";
+"Server: " = "Servidor: ";
 "That code isn't right (or it expired)." = "Ese código no es correcto (o ha caducado).";

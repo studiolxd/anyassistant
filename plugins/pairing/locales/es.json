@@ -2,13 +2,13 @@
   "plugins": {
     "pairing": [
       "Emparejamiento",
-      "Solo los dispositivos que escribieron un código pueden usarlo; el Mac, siempre."
+      "Solo los dispositivos que escribieron un código pueden usarlo; el propio servidor, siempre."
     ]
   },
   "installer": {
     "pairing": [
       "Pedir un código a cada dispositivo nuevo",
-      "La primera vez, cada dispositivo escribe un código. Así nadie de fuera puede usarlo. Tu Mac nunca lo necesita."
+      "La primera vez, cada dispositivo escribe un código. Así nadie de fuera puede usarlo. El servidor nunca lo necesita."
     ]
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "Pairing",
-  "description": "Only devices that entered a code (bin/anyassistant pair) may use Jarvis; the Mac always can.",
+  "description": "Only devices that entered a code (bin/anyassistant pair) may use Jarvis; the server itself always can.",
   "kind": "feature",
   "security": true,
   "default": false

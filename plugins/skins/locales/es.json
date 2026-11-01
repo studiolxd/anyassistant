@@ -2,7 +2,7 @@
   "plugins": {
     "skins": [
       "Skins",
-      "http://<mac>:8080/skins: todos los estados de una skin a la vez, para verlas y elegir (la app del Mac la abre)."
+      "http://<servidor>:8080/skins: todos los estados de una skin a la vez, para verlas y elegir (la app la abre)."
     ]
   }
 }

@@ -16,7 +16,7 @@ struct PairView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 6) {
-                Text(T("Code from your Mac")).font(.footnote).foregroundStyle(.secondary)
+                Text(T("Code from the server")).font(.footnote).foregroundStyle(.secondary)
                 Text(code.isEmpty ? "······" : code).font(.title3.monospacedDigit())
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 3), spacing: 4) {
                     ForEach(keys, id: \.self) { key in
@@ -26,7 +26,7 @@ struct PairView: View {
                 }
                 if busy { ProgressView() }
                 if let problem { Text(problem).font(.footnote).foregroundStyle(.red) }
-                Button(T("Mac: ") + mac.host) { settings = true }.font(.footnote).buttonStyle(.borderless)
+                Button(T("Server: ") + mac.host) { settings = true }.font(.footnote).buttonStyle(.borderless)
             }
         }
         .sheet(isPresented: $settings) { SettingsView(mac: mac) }
@@ -51,7 +51,7 @@ struct PairView: View {
                 problem = T("That code isn't right (or it expired).")
                 code = ""
             } catch {
-                problem = T("Your Mac isn't answering: is AnyAssistant running, and the watch on the same network?")
+                problem = T("The server isn't answering: is AnyAssistant running, and the watch on the same network?")
             }
         }
     }

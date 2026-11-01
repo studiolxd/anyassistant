@@ -66,7 +66,7 @@
   "options": {
     "plugins": "qué plugins están encendidos o apagados, si no como vienen",
     "name": "el nombre del asistente: su palabra de activación, el título y cómo se llama a sí mismo",
-    "language": "en, es…: el idioma en que habla y entiende (de serie, el del Mac)",
+    "language": "en, es…: el idioma en que habla y entiende (de serie, el del sistema)",
     "llm": "el LLM: claude, codex, gemini, opencode, apple, openai, ollama, hermes…",
     "llm_model": "el modelo del LLM (para Claude: sonnet, opus, haiku…)",
     "mcp": ".mcp.json con los servidores MCP (de serie, el de tu carpeta de datos)",
@@ -99,7 +99,7 @@
   },
   "installer": {
     "computer": [
-      "Tu Mac",
+      "Este ordenador",
       ""
     ],
     "language": [
@@ -178,7 +178,7 @@
   },
   "language_native": "Español",
   "options_empty": {
-    "language": "el idioma del Mac",
+    "language": "el idioma del sistema",
     "llm_model": "el del propio LLM",
     "mcp": "el de tu carpeta de datos",
     "instructions": "ninguna",

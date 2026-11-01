@@ -115,7 +115,7 @@ struct SettingsView: View {
                 } footer: {
                     Text(T("With the screen off it listens as long as the app isn't closed; iOS shows the microphone in use."))
                 }
-                Section(T("Mac")) {
+                Section(T("Server")) {
                     TextField(T("Address"), text: $mac.host).autocapitalization(.none).disableAutocorrection(true)
                     TextField(T("Port"), value: $mac.port, format: .number.grouping(.never)).keyboardType(.numberPad)
                     // «Connected» (nothing to do) while it is, at the address it has; «Connect» if it

@@ -128,6 +128,6 @@ async def _pair(request):
 
 @installer.question("pairing", "Only paired devices", order=60, choices=lambda: [True, False],
                     default=lambda: bool((settings.load().get("plugins") or {}).get("pairing", True)), always=True,
-                    help="A device must type a code once before using it (the Mac never needs one).")
+                    help="A device must type a code once before using it (the server itself never needs one).")
 def _install(value):
     settings.save(plugins={**(settings.load().get("plugins") or {}), "pairing": bool(value)})

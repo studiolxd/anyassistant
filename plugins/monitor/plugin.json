@@ -1,6 +1,6 @@
 {
   "name": "Camera monitor",
-  "description": "http://<mac>:8080/monitor: what the device's camera sees, to watch it from the Mac's browser.",
+  "description": "http://<server>:8080/monitor: what the device's camera sees, to watch it from the server's browser.",
   "kind": "feature",
   "requires": ["page"]
 }

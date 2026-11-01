@@ -2,7 +2,7 @@
   "speech": {
     "llm_changing": "Okay, switching to {llm}. I'll be back in a few seconds.",
     "llm_same": "I'm already using {llm}.",
-    "llm_unavailable": "{llm} isn't available on this Mac.",
+    "llm_unavailable": "{llm} isn't available on this server.",
     "llm_here": "Okay, here I'll use {llm} from your next question."
   },
   "commands": {

@@ -27,12 +27,12 @@ struct PairView: View {
                     }
                     .disabled(busy || code.count != 6)
                 } header: {
-                    Text(T("Code from your Mac"))
+                    Text(T("Code from the server"))
                 } footer: {
-                    Text(problem ?? T("On your Mac, open AnyAssistant's menu and choose «Connect another device»: it shows the code."))
+                    Text(problem ?? T("On the server, open AnyAssistant and choose «Connect another device»: it shows the code."))
                         .foregroundColor(problem == nil ? .secondary : .red)
                 }
-                Section(T("Mac")) {
+                Section(T("Server")) {
                     TextField(T("Address"), text: $mac.host).autocapitalization(.none).disableAutocorrection(true)
                     TextField(T("Port"), value: $mac.port, format: .number.grouping(.never)).keyboardType(.numberPad)
                 }
@@ -59,7 +59,7 @@ struct PairView: View {
                 problem = T("That code isn't right (or it expired).")
                 code = ""
             } catch {
-                problem = T("Your Mac isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+                problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
             }
         }
     }

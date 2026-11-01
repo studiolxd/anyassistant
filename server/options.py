@@ -62,8 +62,8 @@ OPTIONS = [
            "plugins", "json", live=True),
     # The assistant
     Option("name", "Jarvis", "the assistant's name: its wake word, the page's title, what the LLM calls itself", "assistant"),
-    Option("language", None, "en, es…: what it speaks and understands (default: the Mac's)", "assistant",
-           "choice", _languages, flag="--lang", empty="the Mac's language"),
+    Option("language", None, "en, es…: what it speaks and understands (default: the system's)", "assistant",
+           "choice", _languages, flag="--lang", empty="the system's language"),
     Option("llm", "claude", "the LLM: claude, codex, gemini, opencode, apple, openai, ollama, hermes…", "assistant", "choice", _plugins("llm")),
     Option("llm_model", None, "the LLM's model (for Claude: sonnet, opus, haiku…)", "assistant",
            empty="the LLM's own"),

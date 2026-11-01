@@ -11,7 +11,7 @@
   "installer": {
     "eyes": [
       "Que pueda mirar por la cámara",
-      "Solo cuando se lo pidas («¿qué ves?», «léeme esto»). Si no, nada sale de tu Mac."
+      "Solo cuando se lo pidas («¿qué ves?», «léeme esto»). Si no, nada sale del servidor."
     ]
   },
   "commands": {

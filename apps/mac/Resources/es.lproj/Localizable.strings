@@ -31,8 +31,8 @@
 "No code needed: pairing is off." = "No hace falta código: cualquier dispositivo de tu red puede conectarse.";
 "Not installed yet" = "Todavía no está instalado";
 "Once per device: scan it, or open this address, to download it." = "Solo hay que hacerlo una vez en cada dispositivo. Escanea el código o abre:";
-"Open AnyAssistant at login" = "Abrir AnyAssistant al encender el Mac";
-"Open at login" = "Abrir al encender el Mac";
+"Open AnyAssistant at login" = "Abrir AnyAssistant al iniciar sesión";
+"Open at login" = "Abrir al iniciar sesión";
 "Open the page" = "Ahora, conecta el dispositivo";
 "Pair a device" = "Conectar otro dispositivo";
 "Pair a device…" = "Conectar otro dispositivo…";
@@ -134,12 +134,12 @@
 
 /* The assistant on this Mac (Eva.swift) */
 "Show %@" = "Mostrar a %@";
-"Listen on this Mac" = "Escuchar en este Mac";
+"Listen on this Mac" = "Escuchar en este dispositivo";
 "Run the server on this Mac…" = "Usar este Mac como servidor…";
 "Connected to %@" = "Conectado a %@";
 "It has to be paired again." = "Hay que emparejarlo otra vez.";
 "Looking for the server…" = "Buscando el servidor…";
-"Looking for your Mac…" = "Buscando tu Mac…";
+"Looking for the server…" = "Buscando el servidor…";
 "The microphone is off" = "El micrófono está apagado";
 "Turn the microphone on" = "Encender el micrófono";
 "Another Mac's server" = "El servidor de otro Mac";

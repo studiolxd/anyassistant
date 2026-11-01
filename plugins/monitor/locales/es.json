@@ -2,7 +2,7 @@
   "plugins": {
     "monitor": [
       "Monitor de la cámara",
-      "http://<mac>:8080/monitor: lo que ve la cámara del dispositivo, desde el navegador del Mac."
+      "http://<servidor>:8080/monitor: lo que ve la cámara del dispositivo, desde el navegador del servidor."
     ]
   }
 }

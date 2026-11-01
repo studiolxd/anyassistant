@@ -154,7 +154,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | Option | Default | |
 |---|---|---|
 | `name` | `"Jarvis"` | the assistant's name: its wake word, the page's title, what the LLM calls itself *(restarts)* |
-| `language` | — | en, es…: what it speaks and understands (default: the Mac's) *(restarts)* |
+| `language` | — | en, es…: what it speaks and understands (default: the system's) *(restarts)* |
 | `llm` | `"claude"` | the LLM: claude, codex, gemini, opencode, apple, openai, ollama, hermes… *(restarts)* |
 | `llm_model` | — | the LLM's model (for Claude: sonnet, opus, haiku…) *(restarts)* |
 | `mcp` | — | .mcp.json with the MCP servers (default: your data folder's) *(restarts)* |

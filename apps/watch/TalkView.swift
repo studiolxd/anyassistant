@@ -70,7 +70,7 @@ struct TalkView: View {
                 voice.play(found.audio)
                 if found.heard.isEmpty && found.answer.isEmpty { problem = T("It didn't catch that.") }
             } catch Mac.Failure.unreachable {
-                problem = T("Your Mac isn't answering: is AnyAssistant running, and the watch on the same network?")
+                problem = T("The server isn't answering: is AnyAssistant running, and the watch on the same network?")
             } catch Mac.Failure.wrongCode {
                 problem = T("It has to be paired again.")
             } catch {
@@ -86,7 +86,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section(T("Mac")) {
+            Section(T("Server")) {
                 TextField(T("Address"), text: $mac.host)
                 TextField(T("Port"), value: $mac.port, format: .number.grouping(.never))
             }
