@@ -193,9 +193,9 @@ function devices(main) {
         var name = el('input', { value: d.name, placeholder: T('Name') });
         var room = el('input', { value: d.room, placeholder: T('Room') });
         // Its own LLM, or the general one: from its next question.
-        var llm = el('select', { title: T('Its LLM') }, [el('option', { value: '', text: T('The general one') + ' (' + data.general + ')' })]
+        var llm = el('select', { title: T('Its LLM') }, [el('option', { value: '', text: T('The general one') + ' (' + (LLM_NAMES[data.general] || data.general) + ')' })]
           .concat((data.llms || []).filter(function (l) { return l !== data.general; }).map(function (l) {
-            return el('option', { value: l, text: l });
+            return el('option', { value: l, text: LLM_NAMES[l] || l });
           })));
         llm.value = d.llm || '';
         llm.addEventListener('focus', function () { editing = true; });
@@ -302,6 +302,10 @@ function option(o) {
     el('div', { class: 'field' }, [field])
   ]);
 }
+
+// An LLM's name as its maker writes it.
+var LLM_NAMES = { claude: 'Claude', codex: 'Codex', gemini: 'Gemini', opencode: 'OpenCode', openai: 'OpenAI',
+                  ollama: 'Ollama', hermes: 'Hermes', apple: 'Apple' };
 
 var KINDS = { brain: 'How it works', stt: 'Speech recognition', wake: 'Wake word', llm: 'LLM', tts: 'Voice',
               vad: 'Voice detection', skill: 'Skills', feature: 'Features', library: 'Libraries' };

@@ -178,4 +178,4 @@
 "No device connected" = "Ningún dispositivo conectado";
 "and %d more" = "y %d más";
 "Its LLM" = "Su LLM";
-"The general one (%@)" = "El general (%@)";
+"The general one (%@)" = "Por defecto (%@)";

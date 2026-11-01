@@ -178,4 +178,4 @@
 "No device connected" = "No device connected";
 "and %d more" = "and %d more";
 "Its LLM" = "Its LLM";
-"The general one (%@)" = "The general one (%@)";
+"The general one (%@)" = "Default (%@)";
