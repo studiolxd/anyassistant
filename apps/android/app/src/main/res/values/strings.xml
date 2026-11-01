@@ -43,4 +43,8 @@
     <string name="host_hint">The name or IP address of the server.</string>
     <string name="pairing_code">Pairing code</string>
     <string name="connecting">Connecting…</string>
+    <string name="settings_button">Settings button</string>
+    <string name="settings_text">Text</string>
+    <string name="settings_icon">Icon</string>
+    <string name="settings_button_note">It shows asleep or in error, where the skin puts it. Holding the screen opens the settings too.</string>
 </resources>

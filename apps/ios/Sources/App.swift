@@ -54,7 +54,8 @@ struct MainView: View {
         SkinView(face: link.face, levels: link.levels, camera: link.camera)
             .contentShape(Rectangle())
             .onTapGesture { link.tap() }  // it stops talking, or wakes up
-            .overlay(alignment: .bottom) { SettingsButton(face: link.face) { settings = true } }
+            .onLongPressGesture(minimumDuration: 0.8) { settings = true }  // always, whatever the skin
+            .overlay { SettingsButton(face: link.face) { settings = true } }
             .statusBarHidden(true)
             .modifier(Quiet())
             .background(Orientation())
@@ -84,24 +85,50 @@ struct MainView: View {
     }
 }
 
-/// «Ajustes», only asleep or in error (where it's needed: its address, pairing again…), under
-/// the face: a small translucent button, inside the safe area.
+/// «Ajustes», only asleep or in error (where it's needed: its address, pairing again…), inside
+/// the safe area. Where it goes and its colour are the skin's (its options «settings»: bottom, top,
+/// bottom-left… and «settings_color», else its accent); text or icon, this device's choice.
+/// Holding the screen opens it too, always.
 struct SettingsButton: View {
     @ObservedObject var face: FaceModel
     let open: () -> Void
+    @AppStorage("settingsStyle") private var style = "text"
 
     var body: some View {
         if face.look == "asleep" || face.look == "error" {
             Button(action: open) {
-                Text(T("Settings"))
-                    .font(.subheadline.weight(.medium))
-                    .foregroundColor(.white.opacity(0.75))
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 9)
-                    .background(Capsule().fill(Color.white.opacity(0.12)))
+                if style == "icon" {
+                    Image(systemName: "gearshape.fill")
+                        .font(.body)
+                        .foregroundColor(tint.opacity(0.8))
+                        .frame(width: 40, height: 40)
+                        .background(Circle().fill(tint.opacity(0.14)))
+                } else {
+                    Text(T("Settings"))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(tint.opacity(0.85))
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 9)
+                        .background(Capsule().fill(tint.opacity(0.14)))
+                }
             }
-            .padding(.bottom, 12)
+            .accessibilityLabel(T("Settings"))
+            .padding(12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: place)
             .transition(.opacity)
+        }
+    }
+
+    var tint: Color { face.color("settings_color", face.color("accent", face.color("glow", .white))) }
+
+    var place: Alignment {
+        switch face.options["settings"] ?? "bottom" {
+        case "top": return .top
+        case "top-left": return .topLeading
+        case "top-right": return .topTrailing
+        case "bottom-left": return .bottomLeading
+        case "bottom-right": return .bottomTrailing
+        default: return .bottom
         }
     }
 }
@@ -117,6 +144,7 @@ struct SettingsView: View {
     var changed: Bool { connectedTo.map { $0.host != mac.host || $0.port != mac.port } ?? false }
     @AppStorage("background") private var background = true
     @AppStorage("awake") private var awake = true
+    @AppStorage("settingsStyle") private var settingsStyle = "text"
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -127,6 +155,14 @@ struct SettingsView: View {
                     Toggle(T("Keep the screen on"), isOn: $awake)
                 } footer: {
                     Text(T("With the screen off it listens as long as the app isn't closed; iOS shows the microphone in use."))
+                }
+                Section {
+                    Picker(T("Settings button"), selection: $settingsStyle) {
+                        Text(T("Text")).tag("text")
+                        Text(T("Icon")).tag("icon")
+                    }
+                } footer: {
+                    Text(T("It shows asleep or in error, where the skin puts it. Holding the screen opens the settings too."))
                 }
                 Section(T("Server")) { ServerFields(mac: mac) }
                 Section {

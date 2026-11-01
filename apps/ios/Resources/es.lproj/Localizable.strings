@@ -33,3 +33,7 @@
 "Pairing code" = "Código de emparejamiento";
 "To get the code, open AnyAssistant on the server and select Connect another device." = "Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.";
 "Connecting…" = "Conectando…";
+"Settings button" = "Botón de ajustes";
+"Text" = "Texto";
+"Icon" = "Icono";
+"It shows asleep or in error, where the skin puts it. Holding the screen opens the settings too." = "Aparece en reposo o con un error, donde lo coloque la skin. Manteniendo pulsada la pantalla también se abren los ajustes.";
