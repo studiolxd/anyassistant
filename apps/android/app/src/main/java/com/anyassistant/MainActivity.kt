@@ -42,7 +42,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -66,6 +65,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -159,9 +160,14 @@ class MainActivity : ComponentActivity() {
             Box(Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { link.tap() }) {
                 SkinView(link.face, link.camera)
             }
-            Icon(Icons.Outlined.Settings, getString(R.string.settings), tint = Color.White.copy(alpha = 0.35f),
-                modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(6.dp).size(56.dp)
-                    .clickable { settings = true }.padding(16.dp))
+            // «Ajustes», only asleep or in error (where it's needed), under the face: small, translucent.
+            if (link.face.look == "asleep" || link.face.look == "error") {
+                Text(getString(R.string.settings), color = Color.White.copy(alpha = 0.75f), fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 12.dp)
+                        .clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.12f))
+                        .clickable { settings = true }.padding(horizontal = 18.dp, vertical = 9.dp))
+            }
         }
         if (settings) Settings { settings = false }
     }

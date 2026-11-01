@@ -54,18 +54,7 @@ struct MainView: View {
         SkinView(face: link.face, levels: link.levels, camera: link.camera)
             .contentShape(Rectangle())
             .onTapGesture { link.tap() }  // it stops talking, or wakes up
-            .overlay(alignment: .bottomTrailing) {
-                Image(systemName: "gearshape")
-                    .font(.title3)
-                    .foregroundColor(.white.opacity(0.35))
-                    .frame(width: 56, height: 56)
-                    .contentShape(Rectangle())
-                    .onTapGesture { settings = true }
-                    .accessibilityLabel(T("Settings"))
-                    .accessibilityAddTraits(.isButton)
-                    .padding(.trailing, 6)
-                    .padding(.bottom, 6)
-            }
+            .overlay(alignment: .bottom) { SettingsButton(face: link.face) { settings = true } }
             .statusBarHidden(true)
             .modifier(Quiet())
             .background(Orientation())
@@ -92,6 +81,28 @@ struct MainView: View {
             .onChange(of: awake) { on in UIApplication.shared.isIdleTimerDisabled = on }
             .onReceive(NotificationCenter.default.publisher(for: .talk)) { _ in link.talk() }
             .onReceive(NotificationCenter.default.publisher(for: .stopRinging)) { _ in link.stopRinging() }
+    }
+}
+
+/// «Ajustes», only asleep or in error (where it's needed: its address, pairing again…), under
+/// the face: a small translucent button, inside the safe area.
+struct SettingsButton: View {
+    @ObservedObject var face: FaceModel
+    let open: () -> Void
+
+    var body: some View {
+        if face.look == "asleep" || face.look == "error" {
+            Button(action: open) {
+                Text(T("Settings"))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(.white.opacity(0.75))
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 9)
+                    .background(Capsule().fill(Color.white.opacity(0.12)))
+            }
+            .padding(.bottom, 12)
+            .transition(.opacity)
+        }
     }
 }
 
