@@ -384,6 +384,7 @@ skin», «what do you know about me?»):
 | `set_voice`, `set_name`, `set_language` | saved to `settings.json`, applied after the answer | yes |
 | `remember`, `forget` | memory facts | yes |
 | `camera` | shows or hides the live camera on the screen | no: it only changes the screen |
+| `set_screen` | shows or hides parts of the screen for every skin: the time, the date, the transcription, the answers, the timers… (the screen settings) | no: it only changes the screen |
 | `set_detail` | how much it says: concise, neutral, detailed or your own levels | no: it only changes how it talks |
 | `add_detail_level`, `remove_detail_level` | create, change or remove a detail level | yes: its text goes into the prompt |
 | `get_llms`, `set_llm` | the LLMs it can use (and whether each is available); switch to another, with a model | `set_llm`: yes |

@@ -181,3 +181,17 @@ def test_what_doesnt_change_anything_doesnt_ask(env, asking):
     tools.call("set_detail", {"level": "concise"})
     tools.call("set_timer", {"seconds": 60})
     assert kernel.load("confirmation").store.pending() is None
+
+
+def test_showing_or_hiding_parts_of_the_screen(env):
+    """«Quita la transcripción»: a setting for every skin, not a new skin."""
+    tools.call("set_screen", {"setting": "show_heard", "value": "no"})
+    assert saved(env)["show_heard"] is False
+    tools.call("set_screen", {"setting": "history", "value": "0"})
+    tools.call("set_screen", {"setting": "clock", "value": "24"})
+    assert saved(env)["history"] == 0 and saved(env)["clock"] == "24"
+    for bad in ({"setting": "show_heard", "value": "maybe"}, {"setting": "skin", "value": "orb"},
+                {"setting": "clock", "value": "13"}, {"setting": "history", "value": "many"}):
+        with pytest.raises(tools.ToolError):
+            tools.call("set_screen", bad)
+    assert "set_screen" not in tools.NEEDS_YES  # only the screen: no «yes»

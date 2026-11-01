@@ -275,7 +275,9 @@ final class Link: NSObject, ObservableObject {
         guard eyes, canSee, let id = id as? Int else { return }
         camera.photo { [weak self] jpeg in
             Task { @MainActor in
-                guard let self, let jpeg, !jpeg.isEmpty, let base = await self.mac.url() else { return }
+                guard let self else { return }
+                guard let jpeg, !jpeg.isEmpty else { return self.report("photo: none (no camera, or it failed)") }
+                guard let base = await self.mac.url() else { return }
                 var parts = URLComponents(url: base.appendingPathComponent("photo"), resolvingAgainstBaseURL: false)!
                 parts.queryItems = [URLQueryItem(name: "id", value: "\(id)"), URLQueryItem(name: "how", value: "photo")]
                 var request = URLRequest(url: parts.url!)

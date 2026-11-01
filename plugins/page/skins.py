@@ -335,7 +335,8 @@ def _tools():
         return "Saved: the skin changes when you finish answering."
 
     @tool("Create a skin of the user's own as a copy of another (based_on: eyes, orb, minimal, bedside or one of "
-          "theirs), to customize it.")
+          "theirs), to change its look (colours, shapes, layout). Not to show or hide parts of the screen (the "
+          "time, the transcription, the answers, the timers…): that is set_screen, for every skin.")
     def create_skin(name: str, based_on: str = DEFAULT) -> str:
         try:
             created = new(name, based_on)

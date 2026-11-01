@@ -128,6 +128,41 @@ def set_detail(level: str) -> str:
     return "Saved: from your next answer on."
 
 
+SCREEN = {"show_time": "the time (asleep)", "show_date": "the date (asleep)", "show_hint": "«Say “Hey, …”» (asleep)",
+          "show_status": "«Listening», «Thinking…»", "show_heard": "what the user said (the transcription)",
+          "show_answer": "what you answer", "show_timers": "timers, alarms and reminders",
+          "show_stats": "the connection's figures", "history": "how many earlier sentences stay (a number)",
+          "clock": "12 or 24 hours, or auto"}
+
+
+@tool("Show or hide parts of the screen, on every device and with any skin: " + "; ".join(
+      f"{k}: {v}" for k, v in SCREEN.items()) + ". value: yes/no for show_*, a number for history, 12/24/auto for "
+      "clock. Use this (not a new skin) when the user wants something on the screen shown or hidden.",
+      choices={"setting": list(SCREEN)})
+def set_screen(setting: str, value: str) -> str:
+    import options
+
+    if setting not in SCREEN:
+        raise ToolError(f"settings: {', '.join(SCREEN)}")
+    said = str(value).strip().lower()
+    if setting.startswith("show_"):
+        if said not in {"yes", "no", "true", "false", "on", "off", "show", "hide", "sí", "si", "1", "0"}:
+            raise ToolError("value: yes or no")
+        chosen = said in {"yes", "true", "on", "show", "sí", "si", "1"}
+    elif setting == "history":
+        try:
+            chosen = max(0, int(said))
+        except ValueError:
+            raise ToolError("value: a number (0: none)") from None
+    else:
+        chosen = said
+    problems = options.check({setting: chosen})
+    if problems:
+        raise ToolError("; ".join(problems))
+    settings.save(**{setting: chosen})
+    return "Saved: the screen changes when you finish answering."
+
+
 @tool("Create a detail level, or change one's instruction, when the user asks for a new way of answering "
       "(«a teacher mode that explains step by step»). The instruction is added to your prompt: write it in "
       "English, one or two sentences, about how much and how to answer (it is spoken: no lists). When asking "
