@@ -372,16 +372,19 @@ struct EyesSkin: View {
         }
         let w = width * v, h = height * v
         return ZStack {
-            Ellipse().fill(accent)
+            Ellipse().fill(accent).frame(width: w, height: h)
             if let cover {
                 Ellipse().fill(face.background).frame(width: w * 1.01, height: h).offset(y: cover * v)
             }
             if let lid {
+                // As the page's: turned on its own centre, 62 % above the eye's (not around the
+                // eye's, which swung it sideways).
                 Rectangle().fill(face.background).frame(width: w * 1.8, height: h)
-                    .offset(y: -0.62 * h).rotationEffect(.degrees(lid))
+                    .rotationEffect(.degrees(lid)).offset(y: -0.62 * h)
             }
         }
         .frame(width: w, height: h)
+        .clipShape(Ellipse())  // the lid and the cover only take from this eye, never its neighbour
         .scaleEffect(x: 1, y: blink ? 0.1 : 1)
         .rotationEffect(.degrees(left ? -7 : 7))
         .animation(.easeOut(duration: 0.2), value: look)
