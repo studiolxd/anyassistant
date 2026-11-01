@@ -97,7 +97,11 @@ struct MainView: View {
 
 struct SettingsView: View {
     @ObservedObject var mac: Mac
-    let link: Link
+    @ObservedObject var link: Link
+    @State private var connectedTo: (host: String, port: Int)?  // where it was when the settings opened
+
+    /// The address or port changed here: connecting again is what applies it.
+    var changed: Bool { connectedTo.map { $0.host != mac.host || $0.port != mac.port } ?? false }
     @AppStorage("background") private var background = true
     @AppStorage("awake") private var awake = true
     @Environment(\.dismiss) private var dismiss
@@ -114,12 +118,21 @@ struct SettingsView: View {
                 Section(T("Mac")) {
                     TextField(T("Address"), text: $mac.host).autocapitalization(.none).disableAutocorrection(true)
                     TextField(T("Port"), value: $mac.port, format: .number.grouping(.never)).keyboardType(.numberPad)
-                    Button(T("Reconnect")) { link.restart(); dismiss() }
+                    // «Connected» (nothing to do) while it is, at the address it has; «Connect» if it
+                    // isn't, or the address or port changed (leaving the settings connects too).
+                    let connected = link.state == .connected && !changed
+                    Button(connected ? T("Connected") : T("Connect")) {
+                        link.restart()
+                        connectedTo = (mac.host, mac.port)
+                    }
+                    .disabled(connected)
                 }
                 Section {
                     Button(T("Pair again"), role: .destructive) { link.stop(); mac.unpair(); dismiss() }
                 }
             }
+            .onAppear { connectedTo = (mac.host, mac.port) }
+            .onDisappear { if changed { link.restart() } }
             .navigationTitle(T("Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button(T("Done")) { dismiss() } } }

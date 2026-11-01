@@ -155,7 +155,11 @@ class MainActivity : ComponentActivity() {
         var background by remember { mutableStateOf(prefs.getBoolean("background", true)) }
         var awake by remember { mutableStateOf(prefs.getBoolean("awake", true)) }
         var host by remember { mutableStateOf(link.mac.host) }
-        AlertDialog(onDismissRequest = close, confirmButton = { TextButton(onClick = close) { Text(getString(R.string.done)) } },
+        var connectedTo by remember { mutableStateOf(link.mac.host) }  // the address when it opened
+        val changed = host != connectedTo
+        // Leaving the settings with another address connects to it.
+        val leave = { if (changed) link.restart(); close() }
+        AlertDialog(onDismissRequest = leave, confirmButton = { TextButton(onClick = leave) { Text(getString(R.string.done)) } },
             title = { Text(getString(R.string.settings)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -165,7 +169,11 @@ class MainActivity : ComponentActivity() {
                     OutlinedTextField(host, { host = it; link.mac.host = it }, label = { Text(getString(R.string.mac_address)) },
                         placeholder = { Text(getString(R.string.found_by_itself)) }, singleLine = true)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { link.restart(); close() }) { Text(getString(R.string.reconnect)) }
+                        // «Connected» (nothing to do) while it is, at this address; «Connect» if not, or it changed.
+                        val connected = link.state == Link.State.CONNECTED && !changed
+                        TextButton(onClick = { link.restart(); connectedTo = host }, enabled = !connected) {
+                            Text(getString(if (connected) R.string.connected else R.string.connect))
+                        }
                         TextButton(onClick = {
                             link.stop(); ListenService.stop(this@MainActivity); link.mac.unpair(); paired = false; close()
                         }) { Text(getString(R.string.pair_again), color = Color(0xffff6b6b)) }

@@ -10,7 +10,8 @@
     <string name="keep_screen_on">Keep the screen on</string>
     <string name="mac_address">Mac\'s address</string>
     <string name="found_by_itself">Found by itself</string>
-    <string name="reconnect">Reconnect</string>
+    <string name="connect">Connect</string>
+    <string name="connected">Connected</string>
     <string name="pair_again">Pair again</string>
     <string name="pair">Pair</string>
     <string name="pair_how">On your Mac, open AnyAssistant\'s menu and choose «Pair a device…»: it shows the code.</string>

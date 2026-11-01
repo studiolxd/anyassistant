@@ -9,7 +9,8 @@
     <string name="keep_screen_on">Mantener la pantalla encendida</string>
     <string name="mac_address">Dirección del Mac</string>
     <string name="found_by_itself">La encuentra sola</string>
-    <string name="reconnect">Volver a conectar</string>
+    <string name="connect">Conectar</string>
+    <string name="connected">Conectado</string>
     <string name="pair_again">Emparejar de nuevo</string>
     <string name="pair">Emparejar</string>
     <string name="pair_how">En tu Mac, abre el menú de AnyAssistant y elige «Emparejar un dispositivo…»: te muestra el código.</string>

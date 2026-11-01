@@ -6,7 +6,8 @@
 "Mac" = "Mac";
 "Address" = "Address";
 "Port" = "Port";
-"Reconnect" = "Reconnect";
+"Connect" = "Connect";
+"Connected" = "Connected";
 "Pair again" = "Pair again";
 "Done" = "Done";
 "Pair" = "Pair";

@@ -6,7 +6,8 @@
 "Mac" = "Mac";
 "Address" = "Dirección";
 "Port" = "Puerto";
-"Reconnect" = "Volver a conectar";
+"Connect" = "Conectar";
+"Connected" = "Conectado";
 "Pair again" = "Emparejar de nuevo";
 "Done" = "Hecho";
 "Pair" = "Emparejar";
