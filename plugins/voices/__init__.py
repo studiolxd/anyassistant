@@ -288,7 +288,6 @@ class LearnVoice(Skill):
 
 # --- For the Mac app: who is known; learning one on a device; forgetting ---
 
-LOCAL = {"127.0.0.1", "::1"}
 
 
 def _listing():
@@ -298,7 +297,7 @@ def _listing():
 
 @web.route("GET", "/admin/voices")
 async def _list(request):
-    if request.remote not in LOCAL:
+    if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
     return http.json_response(_listing())
 
@@ -306,7 +305,7 @@ async def _list(request):
 @web.route("POST", "/admin/voices")
 async def _change(request):
     """{"learn": device id, "name"?: «Ana»} starts it on that device; {"forget": «Ana»}."""
-    if request.remote not in LOCAL:
+    if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
     data = await request.json()
     if "learn" in data:

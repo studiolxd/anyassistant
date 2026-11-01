@@ -104,8 +104,8 @@ def _config(request):
 
 @web.route("POST", "/pairing")
 async def _new_code(request):
-    """For bin/anyassistant pair: only from the Mac itself."""
-    if request.remote not in LOCAL:
+    """For bin/anyassistant pair and the admin page: this computer, or an admin's browser."""
+    if not web.owner(request):
         return http.json_response({}, status=403)
     if request.query.get("forget"):
         unpair_all()

@@ -84,9 +84,12 @@ Java no tiene cancelación de eco).
   curso); Claude Code allí (las preguntas abiertas); `tts-piper` (más ligero, para una
   Raspberry); `set_voice` con las voces de Kokoro (hoy, solo las del Mac); en Windows,
   reiniciar por voz con la app de bandeja (hoy `os.execv`, que cambia de proceso).
-- [ ] **3. Linux sin pantalla** (un mini PC, un NAS, una Raspberry Pi 5): `install.sh` y el
-  servicio de systemd ya están; falta la administración web (ajustes, dispositivos,
-  emparejar con QR, correo, voces), que también usará la app de bandeja.
+- [x] **3. Linux sin pantalla** (1 nov): `install.sh` y el servicio de systemd; la
+  administración web en `/admin` (emparejar con QR, dispositivos, ajustes, plugins, voces,
+  correo, administradores), en el idioma del servidor. Desde el propio equipo, o desde un
+  navegador con un código de administración (`bin/anyassistant admin-code` por SSH, o la
+  página): de un solo uso, 5 minutos, cookie con su hash en `admins.json`, revocable; una
+  tablet emparejada para hablar no puede administrar. Falta: probarla en tu Linux.
 - [ ] **4. La app de bandeja** (Electron): el servidor, la cara en una ventana, el menú, la
   administración; al iniciar sesión.
 - [ ] **5. Paquetes**: instalador de Windows firmado (sin firma, SmartScreen lo bloquea: hace

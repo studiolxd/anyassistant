@@ -37,6 +37,8 @@ ROUTES = []  # (method, path, handler, plugin)
 GUARDS = []  # (function, plugin): may refuse a request to a protected route
 CONFIG = []  # (function, plugin): more for the page's /config
 STARTUP = []  # (function, plugin): async function(app), when the server starts (a background loop…)
+OWNERS = []  # (function, plugin): function(request) → True if it comes from the owner (an admin's browser)
+LOCAL = {"127.0.0.1", "::1"}
 
 
 def _put(hooks: list, entry: tuple, same) -> None:
@@ -66,6 +68,25 @@ config = _hook(CONFIG)
 config.__doc__ = "function(request) → a dict added to /config, for the page."
 startup = _hook(STARTUP)
 startup.__doc__ = "async function(app) when the server starts; a loop it starts should check its plugin is on."
+owner_check = _hook(OWNERS)
+owner_check.__doc__ = "function(request) → True if the request comes from the owner (the plugin «admin»: its code)."
+
+
+def owner(request: web.Request) -> bool:
+    """Whether a request may administer: from this computer itself, or a browser given an admin code."""
+    if request.remote in LOCAL:
+        return True
+    return any(function(request) for function, plugin in OWNERS if kernel.enabled(plugin))
+
+
+def only_the_owner(handler):
+    """A route only the owner may use (settings, plugins, devices, voices, mail, pairing codes)."""
+    async def checked(request):
+        if not owner(request):
+            return web.json_response({"owner": False}, status=403)
+        return await handler(request)
+    checked.__name__ = handler.__name__
+    return checked
 
 
 def refused(request: web.Request) -> web.Response | None:

@@ -9,6 +9,7 @@ dependencies = [  # the core; each plugin's own are in its plugin.json «needs»
     "numpy>=1.26",
     "packaging>=24",  # plugin.json's markers («; sys_platform != 'darwin'»)
     "scipy>=1.18.1",
+    "segno>=1.6",  # the admin page's QR codes
 ]
 
 # The system plugins' packages (their plugin.json «needs», kept equal by a test): the

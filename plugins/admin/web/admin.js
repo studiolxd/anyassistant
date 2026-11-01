@@ -1,0 +1,482 @@
+// AnyAssistant's admin page (/admin): what the Mac app shows, for Windows, Linux and a Linux with
+// no screen. Over the same routes (/admin/settings, /admin/plugins, /devices, /pairing,
+// /admin/voices, /admin/mail). Texts: English as the key, the server's language from /admin/me.
+
+var texts = {};
+function T(english) { return texts[english] || english; }
+function $(selector, root) { return (root || document).querySelector(selector); }
+function el(tag, attributes, children) {
+  var made = document.createElement(tag);
+  Object.keys(attributes || {}).forEach(function (key) {
+    if (key === 'text') made.textContent = attributes[key];
+    else if (key.slice(0, 2) === 'on') made.addEventListener(key.slice(2), attributes[key]);
+    else if (attributes[key] !== null && attributes[key] !== undefined && attributes[key] !== false) made.setAttribute(key, attributes[key]);
+  });
+  (children || []).forEach(function (child) {
+    if (child !== null && child !== undefined) made.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+  });
+  return made;
+}
+function api(method, path, body) {
+  return fetch(path, {
+    method: method, credentials: 'same-origin',
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined
+  }).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (data) {
+      if (r.status === 403 && data.owner === false) { showLogin(); throw new Error('not the owner'); }
+      data._status = r.status;
+      return data;
+    });
+  });
+}
+function ago(seconds) {
+  if (!seconds) return '';
+  var s = Date.now() / 1000 - seconds;
+  if (s < 90) return T('just now');
+  if (s < 5400) return Math.round(s / 60) + ' min';
+  if (s < 129600) return Math.round(s / 3600) + ' h';
+  return Math.round(s / 86400) + ' ' + T('days');
+}
+function toggle(checked, disabled, onchange) {
+  var input = el('input', { type: 'checkbox' });
+  input.checked = !!checked;
+  input.disabled = !!disabled;
+  input.addEventListener('change', function () { onchange(input.checked, input); });
+  return el('label', { class: 'switch' }, [input, el('span')]);
+}
+function flash(field, ok) {
+  field.classList.remove('saved', 'bad');
+  field.classList.add(ok ? 'saved' : 'bad');
+  if (ok) setTimeout(function () { field.classList.remove('saved'); }, 1500);
+}
+
+// --- Restarting ---
+
+function needsRestart(why) {
+  var banner = $('#banner');
+  banner.hidden = false;
+  banner.innerHTML = '';
+  banner.appendChild(el('span', { text: why || T('Some changes apply when it restarts.') }));
+  banner.appendChild(el('button', { text: T('Restart now'), onclick: restart }));
+}
+function restart() {
+  $('#banner').hidden = false;
+  $('#banner').textContent = T('Restarting…');
+  api('POST', '/admin/restart').catch(function () {});
+  var tries = 0;
+  var wait = setInterval(function () {
+    fetch('/admin/me').then(function (r) {
+      if (r.ok) { clearInterval(wait); $('#banner').hidden = true; show(current); }
+    }).catch(function () {});
+    if (++tries > 120) clearInterval(wait);
+  }, 1500);
+}
+
+// --- Logging in with an admin code ---
+
+function showLogin() {
+  $('#app').hidden = true;
+  $('#restart').hidden = true;
+  var box = $('#login');
+  box.hidden = false;
+  $('h1', box).textContent = T('Administer AnyAssistant');
+  $('p', box).textContent = T('Type the admin code. On the computer with the server: this page, Admins → «A code for another browser»; or in its terminal: bin/anyassistant admin-code.');
+  $('button', box).textContent = T('Enter');
+  $('form', box).onsubmit = function (e) {
+    e.preventDefault();
+    fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: $('input', box).value }) })
+      .then(function (r) {
+        if (r.ok) location.reload();
+        else $('.error', box).textContent = T('That code isn\'t right (or it\'s too old): ask for another.');
+      });
+  };
+  $('input', box).focus();
+}
+
+// --- The sections ---
+
+var SECTIONS = [
+  ['pair', 'Pair a device'], ['devices', 'Devices'], ['settings', 'Settings'], ['plugins', 'Plugins'],
+  ['voices', 'Voices'], ['mail', 'Mail'], ['admins', 'Admins']
+];
+var current = 'pair';
+var timer = null;
+
+function show(id) {
+  current = id;
+  if (timer) { clearInterval(timer); timer = null; }
+  Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (b) {
+    b.classList.toggle('on', b.dataset.id === id);
+  });
+  var main = $('main');
+  main.innerHTML = '';
+  ({ pair: pair, devices: devices, settings: settingsPage, plugins: plugins, voices: voices, mail: mail, admins: adminsPage })[id](main);
+  history.replaceState(null, '', '#' + id);
+}
+
+// Pairing a device: the page's address as a QR (with the code: it pairs by itself), the
+// certificate first if HTTPS is on, the address for old devices that don't open .local names.
+function pair(main) {
+  main.appendChild(el('h1', { text: T('Pair a device') }));
+  main.appendChild(el('p', { class: 'lead', text: T('A tablet or phone: scan the code with its camera, or open the address. The iPhone, Android and Apple Watch apps ask for the 6 digits.') }));
+  var box = el('div', { class: 'card' });
+  main.appendChild(box);
+  Promise.all([api('GET', '/admin/status'), api('POST', '/pairing')]).then(function (found) {
+    var status = found[0], pairing = found[1];
+    var code = pairing.code;
+    var old = false, step = 0;
+    function draw() {
+      box.innerHTML = '';
+      var host = old ? (status.addresses[0] || location.hostname) : 'anyassistant.local';
+      var page = status.https_port ? 'https://' + host + (status.https_port === 443 ? '' : ':' + status.https_port)
+                                  : 'http://' + host + ':' + status.port;
+      var certificate = 'http://' + host + ':' + status.port + '/https/ca.crt';
+      var showing = status.https_port && step === 0 ? certificate : (code ? page + '/?code=' + code : page);
+      if (status.https_port) {
+        var tabs = el('div', { class: 'tabs' }, [
+          el('button', { text: T('1. The certificate'), class: step === 0 ? 'on' : null, onclick: function () { step = 0; draw(); } }),
+          el('button', { text: T('2. The page'), class: step === 1 ? 'on' : null, onclick: function () { step = 1; draw(); } })
+        ]);
+        box.appendChild(el('div', { style: 'padding-top:14px' }, [tabs]));
+      }
+      var words = [];
+      if (status.https_port && step === 0) {
+        words = [el('h2', { text: T('Install the certificate') }),
+                 el('p', { text: T('Once per device: scan it, or open this address, to download it.') }),
+                 el('p', { class: 'mono', text: certificate }),
+                 el('p', { class: 'muted', text: T('If it doesn\'t install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»).') }),
+                 el('button', { text: T('Done: the page'), onclick: function () { step = 1; draw(); } })];
+      } else {
+        words = [el('h2', { text: T('Open the page') }),
+                 el('p', { text: T('Scan it with the tablet or phone: it pairs by itself. Or open') }),
+                 el('p', { class: 'mono', text: page })];
+        if (code) {
+          words.push(el('p', { text: T('and type the code') }), el('div', { class: 'code', text: code }),
+                     el('p', { class: 'muted', text: T('Valid for 5 minutes, for one device.') }),
+                     el('button', { class: 'quiet', text: T('Another code'), onclick: function () { show('pair'); } }));
+        } else {
+          words.push(el('p', { class: 'muted', text: T('No code needed: pairing is off.') }));
+        }
+      }
+      box.appendChild(el('div', { class: 'pair' }, [
+        el('img', { src: '/admin/qr?text=' + encodeURIComponent(showing), alt: showing }),
+        el('div', { style: 'flex:1;min-width:240px' }, words)
+      ]));
+      var oldBox = el('label', { class: 'muted', style: 'display:block;padding-bottom:14px' }, [
+        el('input', { type: 'checkbox', onchange: function (e) { old = e.target.checked; draw(); } }),
+        ' ' + T('An old device (it doesn\'t open .local names): use the address')
+      ]);
+      $('input', oldBox).checked = old;
+      box.appendChild(oldBox);
+    }
+    draw();
+  });
+}
+
+function devices(main) {
+  main.appendChild(el('h1', { text: T('Devices') }));
+  main.appendChild(el('p', { class: 'lead', text: T('Its name and room: «dile a la cocina…», and where alarms ring.') }));
+  var box = el('div', { class: 'card' });
+  main.appendChild(box);
+  var editing = false;
+  function load() {
+    if (editing) return;
+    api('GET', '/devices').then(function (data) {
+      box.innerHTML = '';
+      if (!data.devices.length) box.appendChild(el('p', { class: 'muted', text: T('None yet: pair one.') }));
+      data.devices.forEach(function (d) {
+        var state = d.connected ? el('span', { class: 'pill ok', text: d.current ? T('talking to you') : T('connected') })
+                    : d.press ? el('span', { class: 'pill', text: T('press to talk') + (d.seen ? ' · ' + ago(d.seen) : '') })
+                    : el('span', { class: 'pill', text: d.seen ? T('seen') + ' ' + ago(d.seen) : T('not connected') });
+        var name = el('input', { value: d.name, placeholder: T('Name') });
+        var room = el('input', { value: d.room, placeholder: T('Room') });
+        [name, room].forEach(function (field) {
+          field.addEventListener('focus', function () { editing = true; });
+          field.addEventListener('change', function () {
+            api('POST', '/devices', { id: d.id, name: name.value, room: room.value }).then(function (r) {
+              flash(field, !r.error);
+              if (r.error) alert(r.error);
+            });
+          });
+          field.addEventListener('blur', function () { editing = false; });
+        });
+        box.appendChild(el('div', { class: 'row' }, [
+          el('div', { class: 'what' }, [name, ' ', room, state]),
+          el('button', { class: 'danger', text: T('Forget'), onclick: function () {
+            if (confirm(T('Forget this device? It will need a new code if pairing is on.'))) {
+              api('POST', '/devices', { id: d.id, forget: true }).then(load);
+            }
+          } })
+        ]));
+      });
+    });
+  }
+  load();
+  timer = setInterval(load, 5000);
+}
+
+function settingsPage(main) {
+  main.appendChild(el('h1', { text: T('Settings') }));
+  main.appendChild(el('p', { class: 'lead', text: T('They are saved as you change them (in settings.json). Empty: what comes.') }));
+  api('GET', '/admin/settings').then(function (data) {
+    data.groups.forEach(function (group) {
+      var mine = data.options.filter(function (o) { return o.group === group.id; });
+      if (!mine.length) return;
+      main.appendChild(el('h2', { text: group.title }));
+      var box = el('div', { class: 'card' });
+      main.appendChild(box);
+      mine.forEach(function (o) { box.appendChild(option(o)); });
+    });
+  });
+}
+
+function option(o) {
+  var field;
+  function save(value) {
+    var change = {};
+    change[o.name] = value;
+    api('POST', '/admin/settings', change).then(function (r) {
+      flash(field.querySelector ? (field.querySelector('input,select,textarea') || field) : field, !r.error);
+      if (r.error) alert(r.error);
+      if (r.restart) needsRestart();
+    });
+  }
+  var value = o.value;
+  if (o.kind === 'bool') {
+    field = toggle(value === null ? o.default : value, false, function (on) { save(on); });
+  } else if (o.kind === 'choice' && o.choices) {
+    field = el('select');
+    var none = value === null || value === undefined;
+    o.choices.forEach(function (c) {
+      var item = el('option', { value: String(c), text: (o.labels && o.labels[String(c)]) || String(c) });
+      if ((none ? o.default : value) === c) item.selected = true;
+      field.appendChild(item);
+    });
+    field.addEventListener('change', function () {
+      var chosen = o.choices.filter(function (c) { return String(c) === field.value; })[0];
+      save(chosen);
+    });
+  } else if (o.kind === 'json' || o.kind === 'dict' || o.kind === 'longtext') {
+    var shown = value === null || value === undefined ? '' : (typeof value === 'string' && o.kind === 'longtext' ? value : JSON.stringify(value, null, 2));
+    field = el('textarea', { placeholder: o.empty || '' });
+    field.value = shown;
+    field.addEventListener('change', function () {
+      var text = field.value.trim();
+      if (!text) return save(null);
+      if (o.kind === 'longtext') {
+        try { return save(JSON.parse(text)); } catch (e) { return save(text); }
+      }
+      try { save(JSON.parse(text)); } catch (e) {
+        if (o.kind === 'json') return save(text);  // a plain value («Mónica»)
+        flash(field, false);
+      }
+    });
+  } else {
+    var number = o.kind === 'int' || o.kind === 'float';
+    field = el('input', { type: number ? 'number' : 'text', step: o.kind === 'float' ? 'any' : null,
+                          placeholder: o.empty || (o.default !== null ? String(o.default) : '') });
+    field.value = value === null || value === undefined ? '' : (typeof value === 'object' ? JSON.stringify(value) : value);
+    field.addEventListener('change', function () {
+      var text = field.value.trim();
+      if (!text) return save(null);
+      save(number ? Number(text) : text);
+    });
+  }
+  return el('div', { class: 'row' }, [
+    el('div', { class: 'what' }, [el('b', { text: o.name }),
+      o.live ? null : el('span', { class: 'pill', text: T('restarts') }),
+      el('div', { class: 'muted', text: o.help })]),
+    el('div', { class: 'field' }, [field])
+  ]);
+}
+
+var KINDS = { brain: 'How it works', stt: 'Speech recognition', wake: 'Wake word', llm: 'LLM', tts: 'Voice',
+              vad: 'Voice detection', skill: 'Skills', feature: 'Features', library: 'Libraries' };
+
+function plugins(main) {
+  main.appendChild(el('h1', { text: T('Plugins') }));
+  main.appendChild(el('p', { class: 'lead', text: T('What it can do. The engines (speech, voice, LLM) are chosen in Settings.') }));
+  api('GET', '/admin/plugins').then(function (data) {
+    Object.keys(KINDS).forEach(function (kind) {
+      var mine = data.plugins.filter(function (p) { return p.kind === kind; });
+      if (!mine.length) return;
+      main.appendChild(el('h2', { text: T(KINDS[kind]) }));
+      var box = el('div', { class: 'card' });
+      main.appendChild(box);
+      mine.forEach(function (p) {
+        var notes = (p.unfit || []).concat((p.commands_missing || []).map(function (c) { return T('command not found:') + ' ' + c; }));
+        var elsewhere = (p.unfit || []).some(function (w) { return w.indexOf('only on') === 0; });
+        box.appendChild(el('div', { class: 'row' }, [
+          el('div', { class: 'what' }, [el('b', { text: p.name }),
+            p.security ? el('span', { class: 'pill warn', text: T('security') }) : null,
+            p.yours ? el('span', { class: 'pill', text: T('yours') }) : null,
+            el('div', { class: 'muted', text: p.description }),
+            notes.length ? el('div', { class: 'muted', style: 'color:var(--warn)', text: notes.join('; ') }) : null]),
+          toggle(p.wanted, elsewhere, function (on, input) {
+            if (!on && p.locked && !confirm(T('It is a security plugin, or one it needs to work. Turn it off anyway?'))) {
+              input.checked = true;
+              return;
+            }
+            var change = {};
+            change[p.id] = on;
+            api('POST', '/admin/plugins', change).then(function (r) {
+              if (r.packages) needsRestart(T('It needs its packages: bin/anyassistant setup packages, then restart.'));
+              else if (r.restart) needsRestart();
+            });
+          })
+        ]));
+      });
+    });
+  });
+}
+
+function voices(main) {
+  main.appendChild(el('h1', { text: T('Voices') }));
+  main.appendChild(el('p', { class: 'lead', text: T('Who is speaking. While nobody is known, it listens to everyone; on a device you can also say «aprende mi voz».') }));
+  var box = el('div', { class: 'card' });
+  main.appendChild(box);
+  function draw(data) {
+    box.innerHTML = '';
+    if (data._status === 404) { box.appendChild(el('p', { class: 'muted', text: T('Turn on the plugin «Voices» to teach it who you are.') })); return; }
+    if (!data.people.length) box.appendChild(el('p', { class: 'muted', text: T('Nobody yet: while nobody is known, it listens to everyone.') }));
+    data.people.forEach(function (p) {
+      box.appendChild(el('div', { class: 'row' }, [
+        el('div', { class: 'what' }, [el('b', { text: p.name }), el('div', { class: 'muted', text: p.samples + ' ' + T('phrases') + ' · ' + ago(p.since) })]),
+        el('button', { class: 'danger', text: T('Forget'), onclick: function () { api('POST', '/admin/voices', { forget: p.name }).then(draw); } })
+      ]));
+    });
+  }
+  api('GET', '/admin/voices').then(draw);
+  main.appendChild(el('h2', { text: T('Learn a voice') }));
+  var learn = el('div', { class: 'card' });
+  main.appendChild(learn);
+  api('GET', '/devices').then(function (data) {
+    var connected = data.devices.filter(function (d) { return d.connected; });
+    if (!connected.length) { learn.appendChild(el('p', { class: 'muted', text: T('No device connected: open one and come back.') })); return; }
+    var device = el('select', {}, connected.map(function (d) { return el('option', { value: d.id, text: d.name || d.id }); }));
+    var name = el('input', { placeholder: T('the person\'s: «Suvi»') });
+    var note = el('span', { class: 'muted' });
+    learn.appendChild(el('form', { class: 'inline', onsubmit: function (e) {
+      e.preventDefault();
+      api('POST', '/admin/voices', { learn: device.value, name: name.value }).then(function (r) {
+        note.textContent = r.error || T('Listen to the device: it asks for the phrases.');
+      });
+    } }, [device, name, el('button', { text: T('Start learning') }), note]));
+  });
+}
+
+function mail(main) {
+  main.appendChild(el('h1', { text: T('Mail') }));
+  main.appendChild(el('p', { class: 'lead', text: T('Accounts besides Gmail (IMAP and SMTP): new email notices, the morning count, and for the LLM to read and send (with your «yes»). The password goes to the system\'s keychain.') }));
+  var box = el('div', { class: 'card' });
+  main.appendChild(box);
+  function draw(data) {
+    box.innerHTML = '';
+    if (data._status === 404) { box.appendChild(el('p', { class: 'muted', text: T('Turn on the plugin «Mail».') })); return; }
+    if (data.problems && data.problems.length) alert(data.problems.join('\n'));
+    if (!data.accounts.length) box.appendChild(el('p', { class: 'muted', text: T('None yet.') }));
+    data.accounts.forEach(function (a) {
+      box.appendChild(el('div', { class: 'row' }, [
+        el('div', { class: 'what' }, [el('b', { text: a.name || a.address }),
+          a.password ? null : el('span', { class: 'pill warn', text: T('no password') }),
+          el('div', { class: 'muted', text: a.address + ' · ' + a.imap + ' · ' + a.smtp })]),
+        el('button', { class: 'quiet', text: T('Test'), onclick: function () {
+          api('POST', '/admin/mail', { test: a.address }).then(function (r) {
+            alert(r.problems && r.problems.length ? r.problems.join('\n') : T('It works.'));
+          });
+        } }),
+        el('button', { class: 'danger', text: T('Remove'), onclick: function () {
+          if (confirm(T('Remove this account?'))) api('POST', '/admin/mail', { remove: a.address }).then(draw);
+        } })
+      ]));
+    });
+  }
+  api('GET', '/admin/mail').then(draw);
+  main.appendChild(el('h2', { text: T('Add an account') }));
+  var address = el('input', { placeholder: 'yo@dominio.com', type: 'text' });
+  var secret = el('input', { type: 'password', placeholder: T('Password (an app password if it has one)') });
+  var label = el('input', { placeholder: T('Name (optional)') });
+  var imap = el('input', { placeholder: 'imap.dominio.com:993' });
+  var smtp = el('input', { placeholder: 'smtp.dominio.com:465' });
+  var note = el('span', { class: 'error' });
+  address.addEventListener('change', function () {
+    if (address.value.indexOf('@') < 0) return;
+    api('GET', '/admin/mail?guess=' + encodeURIComponent(address.value)).then(function (r) {
+      if (!imap.value && r.imap) imap.value = r.imap;
+      if (!smtp.value && r.smtp) smtp.value = r.smtp;
+    });
+  });
+  main.appendChild(el('div', { class: 'card' }, [el('form', { class: 'inline', onsubmit: function (e) {
+    e.preventDefault();
+    note.textContent = T('Trying it…');
+    api('POST', '/admin/mail', { add: { address: address.value, password: secret.value, name: label.value, imap: imap.value, smtp: smtp.value } })
+      .then(function (r) {
+        if (r.problems || r.error) { note.textContent = (r.problems || [r.error]).join('; '); return; }
+        note.textContent = '';
+        [address, secret, label, imap, smtp].forEach(function (f) { f.value = ''; });
+        draw(r);
+      });
+  } }, [address, secret, label, imap, smtp, el('button', { text: T('Add') }), note])]));
+}
+
+function adminsPage(main) {
+  main.appendChild(el('h1', { text: T('Admins') }));
+  main.appendChild(el('p', { class: 'lead', text: T('The browsers that may change all this, besides this computer itself. A device paired to talk can\'t.') }));
+  var box = el('div', { class: 'card' });
+  main.appendChild(box);
+  function draw(data) {
+    box.innerHTML = '';
+    if (!data.admins.length) box.appendChild(el('p', { class: 'muted', text: T('Only this computer.') }));
+    data.admins.forEach(function (a) {
+      box.appendChild(el('div', { class: 'row' }, [
+        el('div', { class: 'what' }, [el('b', { text: a.name.slice(0, 90) }), a.you ? el('span', { class: 'pill ok', text: T('this browser') }) : null,
+          el('div', { class: 'muted', text: T('since') + ' ' + ago(a.since) })]),
+        el('button', { class: 'danger', text: a.you ? T('Log out') : T('Revoke'), onclick: function () {
+          api('POST', '/admin/admins', a.you ? { logout: true } : { forget: a.id }).then(function (r) {
+            if (a.you) location.reload(); else draw(r);
+          });
+        } })
+      ]));
+    });
+  }
+  api('GET', '/admin/admins').then(draw);
+  main.appendChild(el('h2', { text: T('A code for another browser') }));
+  var shown = el('div');
+  main.appendChild(el('div', { class: 'card' }, [el('div', { style: 'padding:14px 0' }, [
+    el('button', { text: T('Make a code'), onclick: function () {
+      api('POST', '/admin/code').then(function (r) {
+        shown.innerHTML = '';
+        shown.appendChild(el('p', { text: T('On the other computer or phone, open') }));
+        shown.appendChild(el('p', { class: 'mono', text: location.origin.replace('127.0.0.1', 'anyassistant.local').replace('localhost', 'anyassistant.local') + '/admin' }));
+        shown.appendChild(el('p', { text: T('and type') }));
+        shown.appendChild(el('div', { class: 'code', text: r.code }));
+        shown.appendChild(el('p', { class: 'muted', text: T('Valid for 5 minutes, for one browser.') }));
+      });
+    } }), shown])]));
+}
+
+// --- Start ---
+
+fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (me) {
+  texts = me.texts || {};
+  document.documentElement.lang = me.lang || 'en';
+  if (!me.owner) return showLogin();
+  $('#app').hidden = false;
+  var restartButton = $('#restart');
+  restartButton.hidden = false;
+  restartButton.textContent = T('Restart');
+  restartButton.onclick = function () { if (confirm(T('Restart the server now?'))) restart(); };
+  api('GET', '/admin/status').then(function (s) {
+    $('#title').textContent = s.name;
+    $('#subtitle').textContent = s.computer + ' · ' + s.version;
+    document.title = s.name + ' · ' + T('Admin');
+  });
+  var nav = $('nav');
+  SECTIONS.forEach(function (section) {
+    nav.appendChild(el('button', { text: T(section[1]), 'data-id': section[0], onclick: function () { show(section[0]); } }));
+  });
+  var wanted = location.hash.slice(1);
+  show(SECTIONS.some(function (s) { return s[0] === wanted; }) ? wanted : 'pair');
+});

@@ -1,6 +1,6 @@
 {
   "name": "Admin",
-  "description": "The settings and the plugins for the AnyAssistant app (/admin/…), only from the Mac itself.",
+  "description": "The settings, plugins, devices, voices and mail: for the Mac app, and as a web page (/admin) on Windows and Linux; from this computer, or a browser given an admin code.",
   "kind": "feature",
   "locked": true
 }

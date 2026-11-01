@@ -27,7 +27,6 @@ from skills.tokens import tokens
 from tools import ToolError, tool
 
 FILE = paths.HOME / "devices.json"
-LOCAL = {"127.0.0.1", "::1"}
 log = logging.getLogger("devices")
 
 
@@ -188,14 +187,14 @@ def tell_device(where: str, text: str) -> str:
 
 @web.route("GET", "/devices")
 async def _devices(request):
-    if request.remote not in LOCAL:
+    if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
     return http.json_response({"devices": _listing()})
 
 
 @web.route("POST", "/devices")
 async def _change(request):
-    if request.remote not in LOCAL:
+    if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
     data = await request.json()
     device = str(data.get("id") or "")

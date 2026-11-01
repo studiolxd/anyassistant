@@ -393,7 +393,6 @@ def on_the_mac() -> list[dict] | None:
     return sorted(accounts_, key=lambda a: a["address"].lower())
 
 
-LOCAL = {"127.0.0.1", "::1"}
 
 
 def _shown(a: dict) -> dict:
@@ -402,7 +401,7 @@ def _shown(a: dict) -> dict:
 
 @web.route("GET", "/admin/mail")
 async def _list(request):
-    if request.remote not in LOCAL:
+    if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
     if "guess" in request.query:  # the servers for an address, as you type it
         imap, smtp = guess(request.query["guess"])
@@ -424,7 +423,7 @@ async def _change(request):
     {"test": address}; {"remove": address}."""
     import asyncio
 
-    if request.remote not in LOCAL:
+    if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
     data = await request.json()
     loop = asyncio.get_running_loop()
