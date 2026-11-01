@@ -23,6 +23,12 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         return id
     }()
 
+    /// The Mac's IP on your network (learnt when pairing): tried when its name isn't found
+    /// (through the iPhone, «.local» names often aren't).
+    private var address: String? {
+        get { UserDefaults.standard.string(forKey: "address") }
+        set { UserDefaults.standard.set(newValue, forKey: "address") }
+    }
     private var authority: Data? = UserDefaults.standard.data(forKey: "authority")  // the Mac's CA (DER)
     private var httpsPort: Int? {
         get { UserDefaults.standard.object(forKey: "httpsPort") as? Int }
@@ -37,20 +43,35 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
     }()
 
-    var base: URL {
+    var base: URL { base(host) }
+
+    func base(_ name: String) -> URL {
         if let httpsPort, authority != nil {
-            return URL(string: httpsPort == 443 ? "https://\(host)" : "https://\(host):\(httpsPort)")!
+            return URL(string: httpsPort == 443 ? "https://\(name)" : "https://\(name):\(httpsPort)")!
         }
-        return URL(string: "http://\(host):\(port)")!
+        return URL(string: "http://\(name):\(port)")!
+    }
+
+    /// Its name, then its IP: the first that answers soon (nil: none does).
+    private func reachable(_ url: (String) -> URL) async -> (String, Int)? {
+        for name in [host, address].compactMap({ $0 }) where !name.isEmpty {
+            var request = URLRequest(url: url(name).appending(path: "status"))
+            request.timeoutInterval = 8
+            if let (_, found) = try? await session.data(for: request), let status = (found as? HTTPURLResponse)?.statusCode {
+                return (name, status)
+            }
+        }
+        return nil
     }
 
     enum Failure: Error { case unreachable, wrongCode, refused(String) }
 
     /// Pairs with the code (if the Mac asks for one) and learns its HTTPS authority.
     func pair(code: String) async throws {
-        let plain = URL(string: "http://\(host):\(port)")!
-        guard let (_, found) = try? await session.data(from: plain.appending(path: "status")),
-              let status = (found as? HTTPURLResponse)?.statusCode else { throw Failure.unreachable }
+        guard let (name, status) = await reachable({ URL(string: "http://\($0):\(self.port)")! }) else {
+            throw Failure.unreachable
+        }
+        let plain = URL(string: "http://\(name):\(port)")!
         if status == 403 {  // pairing is on: the code
             var request = URLRequest(url: plain.appending(path: "pair"))
             request.httpMethod = "POST"
@@ -68,7 +89,16 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
             authority = der
             UserDefaults.standard.set(der, forKey: "authority")
             httpsPort = info["port"] as? Int ?? 443
-            copyCookies(from: plain)  // the pairing's cookie, for the HTTPS address too
+            copyCookies(from: plain, to: name)  // the pairing's cookie, for the HTTPS address too
+        }
+        // Its IP, for when its name isn't found (the certificate is for it too).
+        if let (raw, _) = try? await session.data(from: plain.appending(path: "https/info")),
+           let info = try? JSONSerialization.jsonObject(with: raw) as? [String: Any],
+           let found = (info["addresses"] as? [String])?.first(where: { $0 != "127.0.0.1" && !$0.contains(":") }) {
+            address = found
+            copyCookies(from: plain, to: found)
+        } else if name != host {
+            address = name
         }
         paired = true
         UserDefaults.standard.set(true, forKey: "paired")
@@ -79,11 +109,11 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         UserDefaults.standard.set(false, forKey: "paired")
     }
 
-    private func copyCookies(from url: URL) {
+    private func copyCookies(from url: URL, to name: String) {
         for cookie in HTTPCookieStorage.shared.cookies(for: url) ?? [] {
             var properties = cookie.properties ?? [:]
             properties[.secure] = nil
-            properties[.domain] = host
+            properties[.domain] = name
             if let copy = HTTPCookie(properties: properties) { HTTPCookieStorage.shared.setCookie(copy) }
         }
     }
@@ -92,7 +122,8 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
 
     /// One sentence (a WAV) → what it heard, its answer and its voice.
     func talk(_ wav: Data) async throws -> Answer {
-        var request = URLRequest(url: base.appending(path: "talk").appending(queryItems: [.init(name: "device", value: device)]))
+        guard let (name, _) = await reachable({ self.base($0) }) else { throw Failure.unreachable }
+        var request = URLRequest(url: base(name).appending(path: "talk").appending(queryItems: [.init(name: "device", value: device)]))
         request.httpMethod = "POST"
         request.setValue("audio/wav", forHTTPHeaderField: "Content-Type")
         request.httpBody = wav
