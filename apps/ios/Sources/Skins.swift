@@ -10,11 +10,13 @@ struct SkinView: View {
     @ObservedObject var levels: Levels
     let camera: Camera
 
+    @State private var faceEnd: CGFloat = 0  // where the skin's face and words end (FaceEnd)
+
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
             let v = min(size.width, size.height) / 100
-            ZStack {
+            ZStack(alignment: .top) {
                 face.background.ignoresSafeArea()
                 switch face.skin {
                 case "orb": OrbSkin(face: face, levels: levels, v: v, size: size)
@@ -22,8 +24,18 @@ struct SkinView: View {
                 case "minimal": MinimalSkin(face: face, levels: levels, v: v, size: size)
                 default: EyesSkin(face: face, levels: levels, v: v, size: size)
                 }
-                Windows(face: face, camera: camera, v: v, size: size)
+                // «Muestra la cámara»: centred below what the face says, in the space left; the
+                // face doesn't move.
+                if face.cameraShown {
+                    let top = (faceEnd > 0 ? faceEnd : size.height * 0.6) + 2 * v
+                    CameraBox(camera: camera, area: CGSize(width: size.width, height: max(size.height - top - 3 * v, size.height * 0.2)))
+                        .offset(y: min(top, size.height * 0.8 - 3 * v))
+                        .transition(.opacity)
+                }
+                Windows(face: face, v: v, size: size)
             }
+            .coordinateSpace(name: "skin")
+            .onPreferenceChange(FaceEnd.self) { faceEnd = $0 }
         }
         #if os(iOS)
         .ignoresSafeArea()  // the whole screen; in a Mac window, under its title bar
@@ -139,11 +151,40 @@ struct Clock<Content: View>: View {
     }
 }
 
-/// The camera («muestra la cámara»: live, mirrored) and the photo it looks at (with a
-/// scanning sweep while it thinks about it), over the face.
+/// Where a skin's face and words end (in SkinView's space): the camera goes below.
+struct FaceEnd: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
+extension View {
+    /// Marks the end of the skin's face and words (each skin, on its column).
+    func endsTheFace() -> some View {
+        background(GeometryReader { geometry in
+            Color.clear.preference(key: FaceEnd.self, value: geometry.frame(in: .named("skin")).maxY)
+        })
+    }
+}
+
+/// The camera live («muestra la cámara», mirrored), centred in the space below the face.
+struct CameraBox: View {
+    let camera: Camera
+    let area: CGSize
+
+    var body: some View {
+        let height = min(area.height * 0.88, area.width * 0.9 * 3 / 4), width = height * 4 / 3
+        CameraPreview(camera: camera)
+            .frame(width: width, height: height)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(hex: "#5bc6e8")!, lineWidth: 2))
+            .frame(width: area.width, height: area.height)
+    }
+}
+
+/// The photo it looks at (with a scanning sweep while it thinks about it), over the face: a
+/// moment, and what it is looking at.
 struct Windows: View {
     @ObservedObject var face: FaceModel
-    let camera: Camera
     let v: CGFloat
     let size: CGSize
 
@@ -151,12 +192,6 @@ struct Windows: View {
         // 80 × 60 (vmin), at most 45 % of the height: in a wide window it stays above the captions.
         let height = min(60 * v, size.height * 0.45), width = height * 4 / 3
         ZStack {
-            if face.cameraShown {
-                CameraPreview(camera: camera)
-                    .frame(width: width, height: height)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(hex: "#5bc6e8")!, lineWidth: 2))
-            }
             if let photo = face.photo {
                 let green = Color(hex: "#3fe0a8")!
                 ZStack {
@@ -249,6 +284,7 @@ struct EyesSkin: View {
                 }
             }
             .padding(.top, size.height * (landscape ? 0.10 : 0.28))
+            .endsTheFace()
             if look == "asleep" {
                 Clock(face: face) { time, day in
                     HStack(alignment: .top) {
@@ -433,6 +469,7 @@ struct OrbSkin: View {
                     .padding(.top, 10)
             }
         }
+        .endsTheFace()
         .frame(width: size.width, height: size.height)
         .animation(.easeInOut(duration: 0.4), value: look)
     }
@@ -508,6 +545,7 @@ struct BedsideSkin: View {
                     .multilineTextAlignment(.center).frame(width: size.width * 0.8).padding(.top, 16)
             }
         }
+        .endsTheFace()
         .foregroundColor(glow)
         .frame(width: size.width, height: size.height)
     }
@@ -582,6 +620,7 @@ struct MinimalSkin: View {
             }
             .foregroundColor(ink)
             .padding(.top, top)
+            .endsTheFace()
             .padding(.horizontal, 6 * v)
             .frame(width: size.width, alignment: .leading)
         }

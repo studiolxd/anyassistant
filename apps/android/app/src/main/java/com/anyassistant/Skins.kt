@@ -14,6 +14,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -83,15 +87,50 @@ val grey = Color(0xff888888)
 fun SkinView(face: FaceState, camera: Camera) {
     BoxWithConstraints(Modifier.fillMaxSize().background(face.background)) {
         val v = min(maxWidth.value, maxHeight.value) / 100
-        val landscape = maxWidth > maxHeight
-        val scope = Sizes(v, maxWidth, maxHeight, landscape)
-        when (face.skin) {
-            "orb" -> OrbSkin(face, scope)
-            "bedside" -> BedsideSkin(face, scope)
-            "minimal" -> MinimalSkin(face, scope)
-            else -> EyesSkin(face, scope)
+        val scope = Sizes(v, maxWidth, maxHeight, maxWidth > maxHeight)
+        val end = remember { mutableStateOf(0f) }  // where the skin's face and words end (px, FaceEnd)
+        var origin by remember { mutableStateOf(0f) }
+        Box(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot().y }) {
+            CompositionLocalProvider(LocalFaceEnd provides { y -> end.value = y - origin }) {
+                when (face.skin) {
+                    "orb" -> OrbSkin(face, scope)
+                    "bedside" -> BedsideSkin(face, scope)
+                    "minimal" -> MinimalSkin(face, scope)
+                    else -> EyesSkin(face, scope)
+                }
+            }
         }
-        Windows(face, camera, scope)
+        // «Muestra la cámara»: centred below what the face says, in the space left; the face doesn't move.
+        if (face.cameraShown) {
+            val density = LocalDensity.current
+            val faceEnd = with(density) { end.value.toDp() }
+            val top = (if (faceEnd > 0.dp) faceEnd else maxHeight * 0.6f) + scope.dp(2f)
+            val area = maxOf(maxHeight - top - scope.dp(3f), maxHeight * 0.2f)
+            CameraBox(camera, maxWidth, area, Modifier.offset(y = minOf(top, maxHeight * 0.8f - scope.dp(3f))))
+        }
+        Windows(face, scope)
+    }
+}
+
+/** Where a skin's face and words end: each skin puts FaceEndMark() last in its column. */
+val LocalFaceEnd = staticCompositionLocalOf<(Float) -> Unit> { {} }
+
+@Composable
+fun FaceEndMark() {
+    val report = LocalFaceEnd.current
+    Box(Modifier.size(1.dp).onGloballyPositioned { report(it.positionInRoot().y) })
+}
+
+/** The camera live («muestra la cámara»), centred in the space below the face. */
+@Composable
+fun CameraBox(camera: Camera, areaWidth: Dp, areaHeight: Dp, modifier: Modifier) {
+    val height = min(areaHeight.value * 0.88f, areaWidth.value * 0.9f * 3 / 4).dp
+    Box(modifier.width(areaWidth).height(areaHeight), contentAlignment = Alignment.Center) {
+        AndroidView(
+            factory = { context -> PreviewView(context).also { camera.preview(it) } },
+            modifier = Modifier.size(height * 4 / 3, height).clip(RoundedCornerShape(10.dp))
+                .border(2.dp, hex("#5bc6e8")!!, RoundedCornerShape(10.dp)),
+            onRelease = { camera.preview(null) })
     }
 }
 
@@ -186,19 +225,12 @@ fun Clock(face: FaceState, content: @Composable (time: String?, day: String?) ->
     content(if (face.shows("show_time")) face.time(now) else null, if (face.shows("show_date")) face.day(now) else null)
 }
 
-/** The camera («muestra la cámara»: live) and the photo it looks at (with a scanning sweep), over the face. */
+/** The photo it looks at (with a scanning sweep), over the face: a moment, and what it is looking at. */
 @Composable
-fun Windows(face: FaceState, camera: Camera, s: Sizes) {
-    val width = s.dp(80f)
-    val height = s.dp(60f)
+fun Windows(face: FaceState, s: Sizes) {
+    val height = min(s.dp(60f).value, s.height.value * 0.45f).dp
+    val width = height * 4 / 3
     Box(Modifier.fillMaxSize().padding(top = s.height * 0.08f), contentAlignment = Alignment.TopCenter) {
-        if (face.cameraShown) {
-            AndroidView(
-                factory = { context -> PreviewView(context).also { camera.preview(it) } },
-                modifier = Modifier.size(width, height).clip(RoundedCornerShape(10.dp))
-                    .border(2.dp, hex("#5bc6e8")!!, RoundedCornerShape(10.dp)),
-                onRelease = { camera.preview(null) })
-        }
         face.photo?.let { photo ->
             val green = hex("#3fe0a8")!!
             val alpha by animateFloatAsState(if (face.photoFading) 0f else 1f, tween(1200), label = "photo")
@@ -244,6 +276,7 @@ fun EyesSkin(face: FaceState, s: Sizes) {
                 CaptionLines(face, accent, modifier = Modifier.width(s.width * (if (s.landscape) 0.7f else 0.9f))
                     .heightIn(min = if (s.landscape) 0.dp else 112.dp).padding(top = 10.dp))
             }
+            FaceEndMark()
         }
         if (look == "asleep") {
             Clock(face) { time, day ->
@@ -411,6 +444,7 @@ fun OrbSkin(face: FaceState, s: Sizes) {
             CaptionLines(face, tone, Color(0xff666666), 1f, Modifier.width(s.width * (if (s.landscape) 0.7f else 0.9f))
                 .heightIn(min = if (s.landscape) 0.dp else 112.dp).padding(top = 10.dp))
         }
+        FaceEndMark()
     }
 }
 
@@ -445,6 +479,7 @@ fun BedsideSkin(face: FaceState, s: Sizes) {
         if (!asleep && face.shows("show_answer")) {
             Text(face.answer, Modifier.width(s.width * 0.8f).alpha(0.7f).padding(top = 16.dp), color = glow, fontSize = s.sp(5f), textAlign = TextAlign.Center)
         }
+        FaceEndMark()
     }
 }
 
@@ -499,6 +534,7 @@ fun MinimalSkin(face: FaceState, s: Sizes) {
                 }
                 if (face.shows("show_answer") && face.answer.isNotEmpty()) Text(face.answer, color = ink, fontSize = s.sp(7f))
             }
+            FaceEndMark()
         }
     }
 }

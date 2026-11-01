@@ -357,6 +357,33 @@ function showCamera(on) {
     box.hidden = true;
     video.srcObject = null;
   }
+  document.body.classList.toggle('camera-on', !box.hidden);
+  clearInterval(cameraPlacing);
+  if (!box.hidden) {
+    placeCamera();
+    cameraPlacing = setInterval(placeCamera, 500);  // what it says grows and shrinks; the window too
+  }
+}
+
+// The camera below the face and its words (wherever the skin puts them), centred, 4:3, in the
+// space left down to the bottom; never over the eyes.
+var cameraPlacing = null;
+function placeCamera() {
+  var box = Skin.block('camera');
+  if (!box || box.hidden) return;
+  var unit = Math.min(innerWidth, innerHeight) / 100;
+  var end = 0;
+  ['face', 'status', 'timers', 'captions'].forEach(function (name) {
+    var part = Skin.block(name);
+    if (part && !part.hidden && part.offsetParent !== null) end = Math.max(end, part.getBoundingClientRect().bottom);
+  });
+  if (!end) end = innerHeight * 0.6;
+  var top = Math.min(end + 2 * unit, innerHeight * 0.8 - 3 * unit);
+  var height = Math.max(innerHeight - top - 3 * unit, innerHeight * 0.2);
+  height = Math.min(height, innerWidth * 0.9 * 3 / 4);
+  box.style.top = top + 'px';
+  box.style.height = height + 'px';
+  box.style.width = height * 4 / 3 + 'px';
 }
 
 // «Read this»: a photo at the camera's full resolution (the video may be 320×240).
