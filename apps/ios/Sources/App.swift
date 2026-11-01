@@ -115,7 +115,7 @@ struct SettingsView: View {
                 } footer: {
                     Text(T("With the screen off it listens as long as the app isn't closed; iOS shows the microphone in use."))
                 }
-                ServerFields(mac: mac)
+                Section(T("Server")) { ServerFields(mac: mac) }
                 Section {
                     // «Connected» (nothing to do) while it is, at the address it has; «Connect» if it
                     // isn't, or the address or port changed (leaving the settings connects too).

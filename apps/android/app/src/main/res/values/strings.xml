@@ -14,7 +14,7 @@
     <string name="connected">Connected</string>
     <string name="pair_again">Pair again</string>
     <string name="pair">Pair</string>
-    <string name="pair_how">On the server, open AnyAssistant and choose «Connect another device»: it shows the code.</string>
+    <string name="pair_how">To get the code, open AnyAssistant on the server and select Connect another device.</string>
     <string name="code_from_mac">Code from the server</string>
     <string name="wrong_code">That code isn\'t right (or it expired).</string>
     <string name="mac_not_answering">The server isn\'t answering: is AnyAssistant running, and this device on the same Wi-Fi?</string>
@@ -30,12 +30,16 @@
     <string name="timer">Timer</string>
     <string name="stop">Stop</string>
     <string name="cancel">Cancel</string>
-    <string name="choose_server">Choose your server</string>
-    <string name="looking_for_servers">Looking for servers on this network…</string>
-    <string name="servers_here">AnyAssistant running on a computer of this network shows up here.</string>
-    <string name="type_host">Type its host</string>
+    <string name="servers_here">AnyAssistant servers on this network are shown here.</string>
     <string name="server">Server</string>
     <string name="port">Port</string>
-    <string name="next">Continue</string>
+    <string name="next">Next</string>
     <string name="back">Back</string>
+    <string name="servers_here_title">Servers on this network</string>
+    <string name="searching">Searching…</string>
+    <string name="on_computer">%1$s on %2$s</string>
+    <string name="other_server_more">Other server…</string>
+    <string name="other_server">Other server</string>
+    <string name="host_hint">The name or IP address of the server.</string>
+    <string name="pairing_code">Pairing code</string>
 </resources>

@@ -13,7 +13,7 @@
     <string name="connected">Conectado</string>
     <string name="pair_again">Emparejar de nuevo</string>
     <string name="pair">Emparejar</string>
-    <string name="pair_how">En el servidor, abre AnyAssistant y elige «Conectar otro dispositivo»: te muestra el código.</string>
+    <string name="pair_how">Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.</string>
     <string name="code_from_mac">Código del servidor</string>
     <string name="wrong_code">Ese código no es correcto (o ha caducado).</string>
     <string name="mac_not_answering">El servidor no responde: ¿está AnyAssistant en marcha, y este dispositivo en la misma Wi-Fi?</string>
@@ -29,12 +29,16 @@
     <string name="timer">Temporizador</string>
     <string name="stop">Parar</string>
     <string name="cancel">Cancelar</string>
-    <string name="choose_server">Elige tu servidor</string>
-    <string name="looking_for_servers">Buscando servidores en esta red…</string>
-    <string name="servers_here">Aquí aparece AnyAssistant si está en marcha en un ordenador de esta red.</string>
-    <string name="type_host">Escribir el host a mano</string>
+    <string name="servers_here">Se muestran los servidores de AnyAssistant que hay en esta red.</string>
     <string name="server">Servidor</string>
     <string name="port">Puerto</string>
-    <string name="next">Continuar</string>
+    <string name="next">Siguiente</string>
     <string name="back">Atrás</string>
+    <string name="servers_here_title">Servidores en esta red</string>
+    <string name="searching">Buscando…</string>
+    <string name="on_computer">%1$s en %2$s</string>
+    <string name="other_server_more">Otro servidor…</string>
+    <string name="other_server">Otro servidor</string>
+    <string name="host_hint">El nombre o la dirección IP del servidor.</string>
+    <string name="pairing_code">Código de emparejamiento</string>
 </resources>

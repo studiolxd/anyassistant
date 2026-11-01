@@ -1,28 +1,49 @@
-// Pairing, once, in two steps: the server (the ones announcing themselves on this network, by
-// Bonjour; or its host typed by hand), then its 6-digit code («Conectar otro dispositivo» on the
-// server shows it). A server that asks for no code connects at once.
+// Pairing, once, as iOS's own Wi-Fi settings: the servers announcing themselves on this network
+// (Bonjour) or «Other server…», then the pairing code («Conectar otro dispositivo» on the server
+// shows it). A server that asks for no code connects at once. Back is the navigation bar's; the
+// step's action, its top right; nothing but fields and rows in the content.
 
 import SwiftUI
 
 struct PairView: View {
     @ObservedObject var mac: Mac
     @StateObject private var browser = ServerBrowser()
-    @State private var step = Step.choose
-    @State private var checking = false
+    @State private var connecting: String?  // the server connecting without a code
     @State private var problem: String?
-
-    enum Step: Equatable { case choose, manual, code(String) }  // code: the server's name, to show it
 
     var body: some View {
         NavigationView {
-            Group {
-                switch step {
-                case .choose: choose
-                case .manual: manual
-                case .code(let server): CodeStep(mac: mac, server: server) { step = .choose }
+            List {
+                Section {
+                    if browser.servers.isEmpty {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                            Text(T("Searching…")).foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 6)
+                    }
+                    ForEach(browser.servers) { server in
+                        if server.pairing {
+                            NavigationLink {
+                                CodeView(mac: mac, server: String(format: T("%@ on %@"), server.assistant, server.computer),
+                                         host: server.address, port: server.port)
+                            } label: { row(server) }
+                        } else {
+                            Button { connect(server) } label: { row(server) }
+                        }
+                    }
+                } header: {
+                    Text(T("Servers on this network"))
+                } footer: {
+                    Text(problem ?? T("AnyAssistant servers on this network are shown here."))
+                        .foregroundColor(problem == nil ? .secondary : .red)
+                }
+                Section {
+                    NavigationLink(T("Other server…")) { OtherServerView(mac: mac) }
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.insetGrouped)
+            .navigationTitle(T("Connect"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {  // from «Pair again»: back as it was
                     if mac.repairing { Button(T("Cancel")) { mac.cancelPairing() } }  // (a view's «if»: iOS 15 too)
@@ -34,94 +55,27 @@ struct PairView: View {
         .onDisappear { browser.stop() }
     }
 
-    // MARK: Step 1: the server
-
-    var choose: some View {
-        Form {
-            Section {
-                if browser.servers.isEmpty {
-                    HStack(spacing: 10) {
-                        ProgressView()
-                        Text(T("Looking for servers on this network…")).foregroundColor(.secondary)
-                    }
-                }
-                ForEach(browser.servers) { server in
-                    Button { chosen(server) } label: {
-                        HStack {
-                            Image(systemName: "server.rack").foregroundColor(.accentColor)
-                            VStack(alignment: .leading) {
-                                Text(server.assistant).foregroundColor(.primary)
-                                Text(server.computer).font(.caption).foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            if checking { ProgressView() } else { Image(systemName: "chevron.right").foregroundColor(.secondary) }
-                        }
-                    }
-                    .disabled(checking)
-                }
-            } header: {
-                Text(T("Choose your server"))
-            } footer: {
-                Text(problem ?? T("AnyAssistant running on a computer of this network shows up here."))
-                    .foregroundColor(problem == nil ? .secondary : .red)
+    func row(_ server: ServerBrowser.Found) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: "server.rack").font(.title3).foregroundColor(.accentColor).frame(width: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(server.assistant).foregroundColor(.primary)
+                Text(server.computer).font(.subheadline).foregroundColor(.secondary)
             }
-            Section {
-                Button(T("Type its host")) { problem = nil; step = .manual }
-            }
+            Spacer()
+            if connecting == server.id { ProgressView() }
         }
-    }
-
-    func chosen(_ server: ServerBrowser.Found) {
-        mac.host = server.address
-        mac.port = server.port
-        if server.pairing {
-            step = .code(server.computer)
-        } else {
-            connectWithoutCode()
-        }
-    }
-
-    // MARK: Step 1, by hand
-
-    var manual: some View {
-        Form {
-            ServerFields(mac: mac)
-            Section {
-                Button {
-                    Task { await check() }
-                } label: {
-                    HStack {
-                        Text(T("Continue"))
-                        if checking { Spacer(); ProgressView() }
-                    }
-                }
-                .disabled(checking || mac.host.trimmingCharacters(in: .whitespaces).isEmpty)
-            } footer: {
-                if let problem { Text(problem).foregroundColor(.red) }
-            }
-            Section {
-                Button(T("Back")) { problem = nil; step = .choose }
-            }
-        }
-    }
-
-    /// Typed by hand: whether it answers, and whether it asks for a code.
-    func check() async {
-        checking = true
-        problem = nil
-        defer { checking = false }
-        switch await mac.needsCode() {
-        case .some(true): step = .code(mac.host)
-        case .some(false): connectWithoutCode()
-        case .none: problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
-        }
+        .padding(.vertical, 6)
     }
 
     /// Pairing is off on that server: nothing to type.
-    func connectWithoutCode() {
-        checking = true
+    func connect(_ server: ServerBrowser.Found) {
+        mac.host = server.address
+        mac.port = server.port
+        connecting = server.id
+        problem = nil
         Task {
-            defer { checking = false }
+            defer { connecting = nil }
             do { try await mac.pair(code: "") } catch {
                 problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
             }
@@ -129,71 +83,120 @@ struct PairView: View {
     }
 }
 
-// MARK: Step 2: the code
-
-/// Six boxes, one per digit (the keyboard offers a code from Messages too); it pairs by itself
-/// with the sixth, and «Pair» is there to try again.
-struct CodeStep: View {
+/// «Other server…»: its host and port typed; «Next» finds out whether it asks for a code.
+struct OtherServerView: View {
     @ObservedObject var mac: Mac
-    let server: String
-    let back: () -> Void
+    @State private var checking = false
+    @State private var problem: String?
+    @State private var showCode = false
+
+    var body: some View {
+        Form {
+            Section {
+                ServerFields(mac: mac)
+            } footer: {
+                Text(problem ?? T("The name or IP address of the server."))
+                    .foregroundColor(problem == nil ? .secondary : .red)
+            }
+            NavigationLink(isActive: $showCode) {
+                CodeView(mac: mac, server: mac.host, host: mac.host, port: mac.port)
+            } label: { EmptyView() }
+            .hidden()
+        }
+        .navigationTitle(T("Other server"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                if checking { ProgressView() } else {
+                    Button(T("Next")) { Task { await next() } }
+                        .disabled(mac.host.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+        }
+    }
+
+    func next() async {
+        checking = true
+        problem = nil
+        defer { checking = false }
+        switch await mac.needsCode() {
+        case .some(true): showCode = true
+        case .some(false):
+            do { try await mac.pair(code: "") } catch {
+                problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+            }
+        case .none: problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+        }
+    }
+}
+
+/// The pairing code: six boxes, one per digit (the keyboard offers one from Messages too); it
+/// pairs by itself with the sixth, and «Pair» (top right) tries again.
+struct CodeView: View {
+    @ObservedObject var mac: Mac
+    let server: String  // «Eva on MacBook-Air-de-Suvi», or the host typed: never an IP it found
+    let host: String
+    let port: Int
     @State private var code = ""
     @State private var busy = false
     @State private var problem: String?
     @FocusState private var typing: Bool
 
     var body: some View {
-        VStack(spacing: 22) {
-            VStack(spacing: 6) {
-                Text(T("Code from the server")).font(.title2.bold())
-                Text(server).foregroundColor(.secondary)
-            }
-            .padding(.top, 24)
-            ZStack {
-                TextField("", text: $code)  // the real field, hidden behind the boxes
-                    .keyboardType(.numberPad)
-                    .textContentType(.oneTimeCode)
-                    .focused($typing)
-                    .opacity(0.01)
-                    .onChange(of: code) { new in
-                        code = String(new.filter(\.isNumber).prefix(6))
-                        if code.count == 6 { pair() }
-                    }
-                HStack(spacing: 10) {
-                    ForEach(0..<6, id: \.self) { i in
-                        let digit = i < code.count ? String(Array(code)[i]) : ""
-                        Text(digit)
-                            .font(.title.monospacedDigit().weight(.semibold))
-                            .frame(width: 44, height: 56)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.secondarySystemBackground)))
-                            .overlay(RoundedRectangle(cornerRadius: 10)
-                                .stroke(i == code.count && typing ? Color.accentColor : .clear, lineWidth: 2))
-                    }
+        ScrollView {
+            VStack(spacing: 28) {
+                VStack(spacing: 8) {
+                    Text(T("Pairing code")).font(.title2.bold())
+                    Text(server).foregroundColor(.secondary)
                 }
-                .onTapGesture { typing = true }
-            }
-            Button(action: pair) {
-                HStack {
-                    if busy { ProgressView().tint(.white) }
-                    Text(T("Pair")).bold()
+                ZStack {
+                    TextField("", text: $code)  // the real field, behind the boxes
+                        .keyboardType(.numberPad)
+                        .textContentType(.oneTimeCode)
+                        .focused($typing)
+                        .opacity(0.01)
+                        .onChange(of: code) { new in
+                            code = String(new.filter(\.isNumber).prefix(6))
+                            if code.count == 6 { pair() }
+                        }
+                    HStack(spacing: 10) {
+                        ForEach(0..<6, id: \.self) { i in
+                            Text(i < code.count ? String(Array(code)[i]) : "")
+                                .font(.title.monospacedDigit().weight(.semibold))
+                                .frame(width: 46, height: 58)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(Color(.secondarySystemBackground)))
+                                .overlay(RoundedRectangle(cornerRadius: 12)
+                                    .stroke(i == code.count && typing ? Color.accentColor : .clear, lineWidth: 2))
+                        }
+                    }
+                    .onTapGesture { typing = true }
                 }
-                .frame(maxWidth: .infinity, minHeight: 30)
+                Text(problem ?? T("To get the code, open AnyAssistant on the server and select Connect another device."))
+                    .font(.footnote)
+                    .foregroundColor(problem == nil ? .secondary : .red)
+                    .multilineTextAlignment(.center)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(busy || code.count != 6)
-            Text(problem ?? T("On the server, open AnyAssistant and choose «Connect another device»: it shows the code."))
-                .font(.footnote)
-                .foregroundColor(problem == nil ? .secondary : .red)
-                .multilineTextAlignment(.center)
-            Spacer()
-            Button(T("Back"), action: back)
+            .padding(.horizontal, 24)
+            .padding(.top, 32)
         }
-        .padding(.horizontal, 24)
-        .onAppear { typing = true }
+        .navigationTitle(T("Pair"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                if busy { ProgressView() } else {
+                    Button(T("Pair"), action: pair).disabled(code.count != 6)
+                }
+            }
+        }
+        .onAppear {
+            mac.host = host
+            mac.port = port
+            typing = true
+        }
     }
 
     func pair() {
-        guard !busy else { return }
+        guard !busy, code.count == 6 else { return }
         busy = true
         problem = nil
         Task {
@@ -210,23 +213,21 @@ struct CodeStep: View {
     }
 }
 
-/// Where the server is: its host (a name or an IP) and its port.
+/// Where the server is: its host (a name or an IP) and its port, in a form's section.
 struct ServerFields: View {
     @ObservedObject var mac: Mac
 
     var body: some View {
-        Section(T("Server")) {
-            HStack {
-                Text(T("Host"))
-                TextField(T("anyassistant.local or 192.168.1.10"), text: $mac.host)
-                    .multilineTextAlignment(.trailing).autocapitalization(.none).disableAutocorrection(true)
-                    .keyboardType(.URL)
-            }
-            HStack {
-                Text(T("Port"))
-                TextField("8080", value: $mac.port, format: .number.grouping(.never))
-                    .multilineTextAlignment(.trailing).keyboardType(.numberPad)
-            }
+        HStack {
+            Text(T("Host"))
+            TextField("anyassistant.local", text: $mac.host)
+                .multilineTextAlignment(.trailing).autocapitalization(.none).disableAutocorrection(true)
+                .keyboardType(.URL)
+        }
+        HStack {
+            Text(T("Port"))
+            TextField("8080", value: $mac.port, format: .number.grouping(.never))
+                .multilineTextAlignment(.trailing).keyboardType(.numberPad)
         }
     }
 }
