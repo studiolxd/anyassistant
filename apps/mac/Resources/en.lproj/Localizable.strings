@@ -178,7 +178,6 @@
 "and %d more" = "and %d more";
 "Its LLM" = "Its LLM";
 "The general one (%@)" = "Default (%@)";
-"Later" = "Not Now";
 "Host" = "Host";
 "This device will only be used to talk to the assistant." = "This device will only be used to talk to the assistant.";
 "To get the code, open AnyAssistant on the server and select Connect another device." = "To get the code, open AnyAssistant on the server and select Connect another device.";
@@ -192,3 +191,4 @@
 "The name or IP address of the server." = "The name or IP address of the server.";
 "Pairing code" = "Pairing Code";
 "Pair" = "Pair";
+"AnyAssistant is now running on this device." = "AnyAssistant is now running on this device.";

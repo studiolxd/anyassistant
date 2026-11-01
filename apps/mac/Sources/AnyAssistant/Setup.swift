@@ -37,6 +37,7 @@ final class Setup: ObservableObject {
     @Published var note = ""
     @Published var failed = false
     @Published var startAtLogin = true
+    @Published var total = 0  // how many steps it runs (for the progress bar)
 
     let server = Server.shared
     /// What the app does itself: it starts the server (not launchd), and shows how to connect.
@@ -114,6 +115,7 @@ final class Setup: ObservableObject {
         let text = event["text"] as? String ?? ""
         switch kind {
         case "step":
+            total = event["total"] as? Int ?? total
             steps.append(StepRow(id: id, title: event["title"] as? String ?? id))
         case "progress":
             if let i = steps.firstIndex(where: { $0.id == id }) { steps[i].text = text }

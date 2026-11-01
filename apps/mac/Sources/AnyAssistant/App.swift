@@ -436,32 +436,55 @@ struct SetupView: View {
         }
     }
 
+    /// Installing: a bar and the steps as they go; finished: how it went at a glance, the steps as
+    /// a summary (title, what it did) and the buttons together on the right, the main one blue.
     var progress: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(setup.phase == .finished ? (setup.failed ? T("Installed, with problems")
-                                                          : T("Installed"))
-                                          : T("Installing…"))
-                .font(.title2.bold())
-            ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(setup.steps) { step in
-                        HStack(alignment: .top) {
-                            symbol(step.status).frame(width: 18)
-                            VStack(alignment: .leading) {
+        let finished = setup.phase == .finished
+        return VStack(spacing: 14) {
+            VStack(spacing: 8) {
+                if finished {
+                    Image(systemName: setup.failed ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                        .font(.system(size: 46)).foregroundStyle(setup.failed ? .orange : .green)
+                } else {
+                    Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 64, height: 64)
+                }
+                Text(finished ? (setup.failed ? T("Installed, with problems") : T("Installed")) : T("Installing…"))
+                    .font(.title2.bold())
+                if finished && !setup.failed {
+                    Text(T("AnyAssistant is now running on this device.")).foregroundStyle(.secondary)
+                } else if !finished {
+                    ProgressView(value: Double(setup.steps.filter { $0.status != .running }.count),
+                                 total: Double(max(setup.total, setup.steps.count, 1)))
+                        .frame(width: 280)
+                }
+            }
+            ScrollViewReader { scroller in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(setup.steps) { step in
+                            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                symbol(step.status).frame(width: 16)
                                 Text(step.title)
-                                if !step.text.isEmpty {
-                                    Text(step.text).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                                }
+                                Spacer(minLength: 12)
+                                Text(step.text).foregroundStyle(step.status == .failed ? .red : .secondary)
+                                    .lineLimit(1).truncationMode(.middle)
                             }
+                            .font(.callout)
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .id(step.id)
+                            if step.id != setup.steps.last?.id { Divider().padding(.leading, 38) }
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.05)))
+                .onChange(of: setup.steps.count) { _, _ in
+                    if let last = setup.steps.last { scroller.scrollTo(last.id, anchor: .bottom) }
+                }
             }
-            if setup.phase == .finished {
+            if finished {
                 HStack {
-                    Button(T("Later"), action: close)
                     Spacer()
+                    Button(T("Close"), action: close)
                     Button(T("Pair your tablet or phone")) {
                         close()
                         Delegate.show("pair")
