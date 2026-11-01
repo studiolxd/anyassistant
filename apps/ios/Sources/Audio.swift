@@ -11,6 +11,7 @@ final class Audio {
     private let playing = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 48000, channels: 1, interleaved: false)!
     private let wire = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 48000, channels: 1, interleaved: true)!
     private var converter: AVAudioConverter?
+    private var mono: AVAudioFormat?
     private(set) var running = false
     /// The audio was cut off (a call, headphones plugged in…): it has to start again.
     var onRestartNeeded: (() -> Void)?
@@ -43,11 +44,14 @@ final class Audio {
         try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
         try session.setActive(true)
         #endif
+        // The player wired first: on the Mac, voice processing fails to start its output otherwise.
+        engine.connect(player, to: engine.mainMixerNode, format: playing)
         let input = engine.inputNode
         if !input.isVoiceProcessingEnabled { try input.setVoiceProcessingEnabled(true) }
-        engine.connect(player, to: engine.mainMixerNode, format: playing)
         let format = input.outputFormat(forBus: 0)
-        converter = AVAudioConverter(from: format, to: wire)
+        // With voice processing the Mac gives several channels: the first is your voice, cleaned.
+        mono = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: format.sampleRate, channels: 1, interleaved: false)
+        converter = mono.flatMap { AVAudioConverter(from: $0, to: wire) }
         input.installTap(onBus: 0, bufferSize: 960, format: format) { [weak self] buffer, _ in
             if let (pcm, level) = self?.convert(buffer) { heard(pcm, level) }
         }
@@ -100,8 +104,12 @@ final class Audio {
     }
 
     /// The microphone's piece as the Mac wants it, and its loudest sample (0…1, for the face).
-    private func convert(_ buffer: AVAudioPCMBuffer) -> (Data, Float)? {
-        guard let converter else { return nil }
+    private func convert(_ whole: AVAudioPCMBuffer) -> (Data, Float)? {
+        guard let converter, let mono, let first = whole.floatChannelData?[0],
+              let buffer = AVAudioPCMBuffer(pcmFormat: mono, frameCapacity: whole.frameLength),
+              let target = buffer.floatChannelData?[0] else { return nil }
+        buffer.frameLength = whole.frameLength
+        target.update(from: first, count: Int(whole.frameLength))  // only the first channel
         let capacity = AVAudioFrameCount(Double(buffer.frameLength) * 48000 / buffer.format.sampleRate) + 32
         guard let output = AVAudioPCMBuffer(pcmFormat: wire, frameCapacity: capacity) else { return nil }
         var given = false
