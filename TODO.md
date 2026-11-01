@@ -2,7 +2,8 @@
 
 ## Lo siguiente
 
-Probándose ahora (1 nov): el servidor en Windows y Linux, la app de Android en un Android 8.
+Probándose ahora (1 nov): la versión 0.1.0 de Windows y Linux (github.com/studiolxd/anyassistant/
+releases: el instalador .exe, el AppImage y el .deb), y la app de Android en un Android 8.
 
 - [ ] **Registrar tu voz** («Eva, aprende mi voz», o Ajustes → Voces) y afinar `voice_match`
   (abajo, «Quién habla»): hoy no hay ninguna voz aprendida, así que escucha a cualquiera.
@@ -37,11 +38,11 @@ Probándose ahora (1 nov): el servidor en Windows y Linux, la app de Android en 
   ahora que el repositorio es público, las versiones de GitHub (Releases) con lo que lleva
   cada una; el paso de registro de la voz (`@installer.device`) cuando exista ese plugin.
 
-## El servidor en Windows y Linux (plan)
+## El servidor en Windows y Linux
 
-Hoy el servidor solo corre en el Mac. El núcleo (aiohttp, aiortc, numpy, los plugins en
-Python) ya es portable, y `plugin.json` ya dice dónde corre cada plugin
-(`needs.system`, `needs.arch`, `needs.commands`). Lo que ata al Mac:
+Corre en el Mac, Windows y Linux (1 nov; versión 0.1.0 publicada). Cada plugin dice en
+`plugin.json` dónde corre (`needs.system`, `needs.arch`, paquetes con marcador de sistema), y
+cada equipo elige los motores que tiene. Cómo se hizo cada pieza:
 
 | Pieza | En el Mac | En Windows y Linux |
 |---|---|---|
@@ -96,14 +97,16 @@ Java no tiene cancelación de eco).
   página, con micrófono y cámara solo para 127.0.0.1), «Emparejar un dispositivo…» y
   «Administrar…» (`/admin`); abrir al iniciar sesión (Windows, y `~/.config/autostart` en
   Linux). Probada en el Mac (arranca su servidor, carga la cara, al salir lo para). Falta:
-  probarla en tu Windows y tu Linux; hoy necesita Node.js y uv (la fase 5 los mete dentro).
+  probarla en tu Windows y tu Linux.
 - [x] **5. Paquetes, sin firmar** (1 nov): el instalador de Windows (.exe, NSIS, para tu
   usuario), el AppImage y el .deb, con el programa y uv dentro (sin Node ni uv aparte), hechos
   en GitHub Actions («packages»: a mano, o una etiqueta v* hace una versión en Releases).
+  **v0.1.0 publicada** (1 nov). La siguiente: subir `version` en `apps/desktop/package.json`,
+  `git tag v0.1.1 && git push origin v0.1.1`.
 - [ ] **5b. Lo que queda de los paquetes**: firmar el de Windows cuando lo instale más gente
   (Azure Artifact Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de
   España); actualizarse sola (hoy, instalar la versión nueva encima); versiones ARM (Windows
-  en ARM, Raspberry Pi).
+  en ARM, Raspberry Pi); la app del Mac (el .dmg notarizado) también en Releases.
 
 
 ## Varios dispositivos, lo siguiente
