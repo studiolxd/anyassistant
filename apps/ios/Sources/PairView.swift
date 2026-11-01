@@ -13,6 +13,7 @@ struct PairView: View {
     var body: some View {
         NavigationView {
             Form {
+                ServerFields(mac: mac)  // first: where the server is, then its code
                 Section {
                     TextField("123456", text: $code)
                         .keyboardType(.numberPad)
@@ -32,12 +33,8 @@ struct PairView: View {
                     Text(problem ?? T("On the server, open AnyAssistant and choose «Connect another device»: it shows the code."))
                         .foregroundColor(problem == nil ? .secondary : .red)
                 }
-                Section(T("Server")) {
-                    TextField(T("Address"), text: $mac.host).autocapitalization(.none).disableAutocorrection(true)
-                    TextField(T("Port"), value: $mac.port, format: .number.grouping(.never)).keyboardType(.numberPad)
-                }
             }
-            .navigationTitle("AnyAssistant")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {  // from «Pair again»: back as it was
                     if mac.repairing { Button(T("Cancel")) { mac.cancelPairing() } }  // (a view's «if»: iOS 15 too)
@@ -60,6 +57,28 @@ struct PairView: View {
                 code = ""
             } catch {
                 problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+            }
+        }
+    }
+}
+
+
+/// Where the server is: its host (a name or an IP) and its port.
+struct ServerFields: View {
+    @ObservedObject var mac: Mac
+
+    var body: some View {
+        Section(T("Server")) {
+            HStack {
+                Text(T("Host"))
+                TextField(T("anyassistant.local or 192.168.1.10"), text: $mac.host)
+                    .multilineTextAlignment(.trailing).autocapitalization(.none).disableAutocorrection(true)
+                    .keyboardType(.URL)
+            }
+            HStack {
+                Text(T("Port"))
+                TextField("8080", value: $mac.port, format: .number.grouping(.never))
+                    .multilineTextAlignment(.trailing).keyboardType(.numberPad)
             }
         }
     }

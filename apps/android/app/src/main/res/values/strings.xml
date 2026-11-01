@@ -8,8 +8,8 @@
     <string name="keep_listening">Keep listening with the screen off</string>
     <string name="keep_listening_note">With the screen off it listens while its notification is there; «Stop listening» in it, or here, stops it.</string>
     <string name="keep_screen_on">Keep the screen on</string>
-    <string name="mac_address">Server\'s address</string>
-    <string name="found_by_itself">Found by itself</string>
+    <string name="mac_address">Host</string>
+    <string name="found_by_itself">Empty: found by itself (or 192.168.1.10)</string>
     <string name="connect">Connect</string>
     <string name="connected">Connected</string>
     <string name="pair_again">Pair again</string>

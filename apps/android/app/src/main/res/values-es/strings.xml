@@ -7,8 +7,8 @@
     <string name="keep_listening">Seguir escuchando con la pantalla apagada</string>
     <string name="keep_listening_note">Con la pantalla apagada escucha mientras esté su notificación; «Dejar de escuchar» en ella, o aquí, lo para.</string>
     <string name="keep_screen_on">Mantener la pantalla encendida</string>
-    <string name="mac_address">Dirección del servidor</string>
-    <string name="found_by_itself">La encuentra sola</string>
+    <string name="mac_address">Host</string>
+    <string name="found_by_itself">Vacío: lo encuentra solo (o 192.168.1.10)</string>
     <string name="connect">Conectar</string>
     <string name="connected">Conectado</string>
     <string name="pair_again">Emparejar de nuevo</string>

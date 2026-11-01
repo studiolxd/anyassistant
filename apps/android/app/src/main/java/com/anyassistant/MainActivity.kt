@@ -200,8 +200,11 @@ class MainActivity : ComponentActivity() {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         Column(Modifier.fillMaxSize().background(Color.Black).padding(28.dp), verticalArrangement = Arrangement.Center) {
-            Text("AnyAssistant", fontSize = 30.sp, color = Color.White)
-            Text(getString(R.string.pair_how), Modifier.padding(top = 12.dp, bottom = 20.dp), color = Color.Gray)
+            // First where the server is (empty: found by itself), then its code.
+            OutlinedTextField(host, { host = it; link.mac.host = it }, label = { Text(getString(R.string.mac_address)) },
+                placeholder = { Text(getString(R.string.found_by_itself)) }, singleLine = true,
+                modifier = Modifier.fillMaxWidth())
+            Text(getString(R.string.pair_how), Modifier.padding(top = 24.dp, bottom = 12.dp), color = Color.Gray)
             OutlinedTextField(code, { code = it.filter(Char::isDigit).take(6) }, label = { Text(getString(R.string.code_from_mac)) },
                 singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), modifier = Modifier.fillMaxWidth())
             Button(onClick = {
@@ -231,9 +234,6 @@ class MainActivity : ComponentActivity() {
                     Text(getString(R.string.cancel))
                 }
             }
-            OutlinedTextField(host, { host = it; link.mac.host = it }, label = { Text(getString(R.string.mac_address)) },
-                placeholder = { Text(getString(R.string.found_by_itself)) }, singleLine = true,
-                modifier = Modifier.padding(top = 32.dp).fillMaxWidth())
         }
     }
 

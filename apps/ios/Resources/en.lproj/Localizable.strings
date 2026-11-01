@@ -4,7 +4,6 @@
 "Keep the screen on" = "Keep the screen on";
 "With the screen off it listens as long as the app isn't closed; iOS shows the microphone in use." = "With the screen off it listens as long as the app isn't closed; iOS shows the microphone in use.";
 "Server" = "Server";
-"Address" = "Address";
 "Port" = "Port";
 "Connect" = "Connect";
 "Connected" = "Connected";
@@ -24,3 +23,5 @@
 "Stop" = "Stop";
 "It has to be paired again." = "It has to be paired again.";
 "Cancel" = "Cancel";
+"Host" = "Host";
+"anyassistant.local or 192.168.1.10" = "anyassistant.local or 192.168.1.10";
