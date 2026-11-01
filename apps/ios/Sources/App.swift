@@ -99,6 +99,8 @@ struct SettingsView: View {
     @ObservedObject var mac: Mac
     @ObservedObject var link: Link
     @State private var connectedTo: (host: String, port: Int)?  // where it was when the settings opened
+    @State private var checking = false  // «Connect» pressed: trying it
+    @State private var problem: String?  // it didn't answer there
 
     /// The address or port changed here: connecting again is what applies it.
     var changed: Bool { connectedTo.map { $0.host != mac.host || $0.port != mac.port } ?? false }
@@ -118,24 +120,45 @@ struct SettingsView: View {
                 Section(T("Server")) { ServerFields(mac: mac) }
                 Section {
                     // «Connected» (nothing to do) while it is, at the address it has; «Connect» if it
-                    // isn't, or the address or port changed (leaving the settings connects too).
+                    // isn't, or the address or port changed (leaving the settings connects too);
+                    // «Connecting…» while it tries, and why not if it doesn't answer.
                     let connected = link.state == .connected && !changed
-                    Button(connected ? T("Connected") : T("Connect")) {
-                        if changed { mac.moved() }
-                        link.restart()
-                        connectedTo = (mac.host, mac.port)
+                    Button(action: connect) {
+                        HStack {
+                            Text(checking ? T("Connecting…") : connected ? T("Connected") : T("Connect"))
+                            if checking { Spacer(); ProgressView() }
+                        }
                     }
-                    .disabled(connected)
+                    .disabled(connected || checking)
+                } footer: {
+                    if let problem { Text(problem).foregroundColor(.red) }
                 }
                 Section {
                     Button(T("Pair again"), role: .destructive) { link.stop(); mac.pairAgain(); dismiss() }
                 }
             }
             .onAppear { connectedTo = (mac.host, mac.port) }
+            .onChange(of: mac.host) { _ in problem = nil }
+            .onChange(of: mac.port) { _ in problem = nil }
             .onDisappear { if changed { mac.moved(); link.restart() } }
             .navigationTitle(T("Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button(T("Done")) { dismiss() } } }
+        }
+    }
+
+    func connect() {
+        if changed { mac.moved() }
+        connectedTo = (mac.host, mac.port)
+        problem = nil
+        checking = true
+        link.restart()
+        Task {
+            let answers = await mac.url() != nil
+            checking = false
+            if !answers {
+                problem = T("The server isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?")
+            }
         }
     }
 }

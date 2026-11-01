@@ -32,3 +32,4 @@
 "The name or IP address of the server." = "El nombre o la dirección IP del servidor.";
 "Pairing code" = "Código de emparejamiento";
 "To get the code, open AnyAssistant on the server and select Connect another device." = "Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.";
+"Connecting…" = "Conectando…";

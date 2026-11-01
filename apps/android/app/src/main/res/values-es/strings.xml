@@ -41,4 +41,5 @@
     <string name="other_server">Otro servidor</string>
     <string name="host_hint">El nombre o la dirección IP del servidor.</string>
     <string name="pairing_code">Código de emparejamiento</string>
+    <string name="connecting">Conectando…</string>
 </resources>

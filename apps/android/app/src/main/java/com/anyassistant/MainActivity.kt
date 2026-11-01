@@ -172,6 +172,9 @@ class MainActivity : ComponentActivity() {
         var awake by remember { mutableStateOf(prefs.getBoolean("awake", true)) }
         var host by remember { mutableStateOf(link.mac.host) }
         var connectedTo by remember { mutableStateOf(link.mac.host) }  // the address when it opened
+        var checking by remember { mutableStateOf(false) }  // «Connect» pressed: trying it
+        var problem by remember { mutableStateOf<String?>(null) }  // it didn't answer there
+        val scope = rememberCoroutineScope()
         val changed = host != connectedTo
         // Leaving the settings with another address connects to it.
         val leave = { if (changed) { link.mac.moved(); link.restart() }; close() }
@@ -182,18 +185,30 @@ class MainActivity : ComponentActivity() {
                     Toggle(getString(R.string.keep_listening), background) { background = it; prefs.edit().putBoolean("background", it).apply() }
                     Text(getString(R.string.keep_listening_note), fontSize = 13.sp, color = Color.Gray)
                     Toggle(getString(R.string.keep_screen_on), awake) { awake = it; prefs.edit().putBoolean("awake", it).apply(); keepAwake() }
-                    OutlinedTextField(host, { host = it; link.mac.host = it }, label = { Text(getString(R.string.mac_address)) },
+                    OutlinedTextField(host, { host = it; link.mac.host = it; problem = null }, label = { Text(getString(R.string.mac_address)) },
                         placeholder = { Text(getString(R.string.found_by_itself)) }, singleLine = true)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         // «Connected» (nothing to do) while it is, at this address; «Connect» if not, or it changed.
                         val connected = link.state == Link.State.CONNECTED && !changed
-                        TextButton(onClick = { if (changed) link.mac.moved(); link.restart(); connectedTo = host }, enabled = !connected) {
-                            Text(getString(if (connected) R.string.connected else R.string.connect))
+                        TextButton(onClick = {
+                            if (changed) link.mac.moved()
+                            connectedTo = host
+                            problem = null
+                            checking = true
+                            link.restart()
+                            scope.launch {
+                                val answers = link.mac.url() != null
+                                checking = false
+                                if (!answers) problem = getString(R.string.mac_not_answering)
+                            }
+                        }, enabled = !connected && !checking) {
+                            Text(getString(if (checking) R.string.connecting else if (connected) R.string.connected else R.string.connect))
                         }
                         TextButton(onClick = {
                             link.stop(); ListenService.stop(this@MainActivity); repairing = true; paired = false; close()
                         }) { Text(getString(R.string.pair_again), color = Color(0xffff6b6b)) }
                     }
+                    problem?.let { Text(it, fontSize = 13.sp, color = Color(0xffff6b6b)) }
                 }
             })
     }

@@ -42,4 +42,5 @@
     <string name="other_server">Other server</string>
     <string name="host_hint">The name or IP address of the server.</string>
     <string name="pairing_code">Pairing code</string>
+    <string name="connecting">Connecting…</string>
 </resources>
