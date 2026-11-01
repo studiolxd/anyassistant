@@ -30,6 +30,7 @@ import json
 import logging
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -55,8 +56,11 @@ def prefix(server: str) -> str:
 
 
 def command_help(command: Path) -> str:
+    run = [str(command), "help"]
+    if sys.platform == "win32" and shutil.which("bash"):  # scripts (#!): Git Bash, as Claude Code runs them there
+        run = [shutil.which("bash"), command.as_posix(), "help"]
     try:
-        output = subprocess.run([str(command), "help"], capture_output=True, text=True, timeout=30).stdout
+        output = subprocess.run(run, capture_output=True, text=True, timeout=30).stdout
     except OSError as e:
         log.warning("cannot run %s: %s", command, e)
         return ""
