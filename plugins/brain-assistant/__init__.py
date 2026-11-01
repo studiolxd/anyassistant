@@ -249,6 +249,7 @@ class Assistant(Transcriber):
         # While ringing, the ear's «awake» or «listening» doesn't hide the alarm on the face.
         if self.ringing and state in ("awake", "listening", "asleep"):
             state = "alarm"
+        self.shown = state
         super()._state(state)
 
     def hush(self):
@@ -517,6 +518,17 @@ class Assistant(Transcriber):
         self._state("looking")
         self.send({"type": "look", "at": time.time()})
 
+    async def _still_thinking(self, number: int):
+        """A sentence said («Un momento, lo miro») while the answer is still coming (the LLM, a
+        tool): when it ends and nothing else is ready to say, the face thinks again, not a
+        speaking mouth standing still."""
+        await asyncio.sleep(0.2)
+        while self.speaker.speaking:
+            await asyncio.sleep(0.1)
+        if (getattr(self, "shown", None) == "speaking" and self.turn.locked() and self.sentences.empty()
+                and number != self.cut and number == self.number):
+            self._state("thinking")
+
     async def _mouth(self):
         """Says the sentences in order as they arrive; synthesizes one while the previous plays."""
         loop = asyncio.get_running_loop()
@@ -538,4 +550,5 @@ class Assistant(Transcriber):
                 self._state("speaking")
             self.saying += words(sentence)
             self.speaker.play(normalize(pcm, 0.95 * volume()))
+            asyncio.ensure_future(self._still_thinking(number))
             log.info("voice «%s» (%d ms)", settings.private(sentence), (time.time() - start) * 1000)

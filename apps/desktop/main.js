@@ -18,7 +18,7 @@ const TEXTS = {
     'Preparándolo (la primera vez descarga Python y los modelos: unos minutos)…',
   'It failed': 'Ha fallado', 'Show %s': 'Mostrar a %s', 'Pair a device…': 'Emparejar un dispositivo…',
   'Administer…': 'Administrar…', 'Start': 'Arrancar', 'Stop': 'Parar', 'Restart': 'Reiniciar',
-  'Show the log': 'Ver el registro', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
+  'Log': 'Registro', 'Hide %s': 'Ocultar a %s', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
   'started by systemd': 'lo arranca systemd',
   'uv isn\'t installed: it brings Python and the server\'s packages.': 'uv no está instalado: trae Python y los paquetes del servidor.',
   'Install it and open AnyAssistant again:': 'Instálalo y vuelve a abrir AnyAssistant:',
@@ -77,10 +77,12 @@ function open(id, route, options) {
     webPreferences: { contextIsolation: true, sandbox: true },
   });
   made.loadURL(server.url + route);
+  for (const event of ['show', 'hide', 'closed']) made.on(event, () => tray && menu());  // the menu follows it
   made.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
   windows[id] = made;
 }
 
+const faceShown = () => Boolean(windows.face && !windows.face.isDestroyed() && windows.face.isVisible());
 const showFace = () => open('face', '/', { width: 480, height: 720, title: name, dark: true });
 const showAdmin = (part = '') => open('admin', '/admin' + part, { width: 1100, height: 780, title: 'AnyAssistant' });
 
@@ -135,7 +137,9 @@ function menu() {
   const items = [
     { label: status(), enabled: false },
     { type: 'separator' },
-    { label: T('Show %s', name), enabled: running, click: showFace },
+    faceShown()  // «Hide Eva» while its window is open
+      ? { label: T('Hide %s', name), click: () => windows.face.close() }
+      : { label: T('Show %s', name), enabled: running, click: showFace },
     { label: T('Pair a device…'), enabled: running, click: () => showAdmin('#pair') },
     { label: T('Administer…'), enabled: running, click: () => showAdmin() },
     { type: 'separator' },
@@ -143,7 +147,7 @@ function menu() {
       ? { label: T('Start'), click: () => server.start() }
       : { label: T('Restart'), click: () => server.restart() },
     { label: T('Stop'), enabled: server.state !== 'stopped', click: () => server.stop() },
-    { label: T('Show the log'), click: () => shell.openPath(server.log) },
+    { label: T('Log'), click: () => shell.openPath(server.log) },
     { label: T('Open at login'), type: 'checkbox', checked: opensAtLogin(), click: (item) => setOpensAtLogin(item.checked) },
     { type: 'separator' },
     { label: T('Quit AnyAssistant'), click: () => app.quit() },
