@@ -232,3 +232,47 @@ def test_apagate_needs_only_a_voice_not_clearly_a_strangers(monkeypatch, es):
     assert voices.screen(Assistant(), "¿Qué hora es?", {}, long, lambda *a: None)  # anything else: checked
     monkeypatch.setattr(voices, "voice_print", lambda audio: unit(0, 0, 1))  # a guest
     assert voices.screen(Assistant(), "Apágate.", {}, long, lambda *a: None)  # checked, and dropped
+
+
+def test_it_keeps_learning_a_voice_from_what_it_is_sure_of(monkeypatch):
+    """voice_adapt: long sentences clearly theirs make a recent print, which brings them nearer."""
+    voices.learn("Suvi", [unit(1, 0)], device="mac")
+    long = np.zeros(int(2.5 * 16000), np.float32)
+    everyday = unit(1, 0.9)  # how Suvi really talks: 0.74 to the learnt print
+    monkeypatch.setattr(voices, "voice_print", lambda audio: everyday)
+    assert voices.identify(long)[1] < 0.75
+    voices.adapt(long, "Suvi")
+    assert voices.identify(long)[1] > 0.99  # the recent print is just like it
+    voices.adapt(np.zeros(16000, np.float32), "Suvi")  # too short: not kept
+    assert len(voices.people()[0]["recent"]) == 1
+    for _ in range(15):
+        voices.adapt(long, "Suvi")
+    assert len(voices.people()[0]["recent"]) == voices.RECENT  # only the last ones
+
+
+def test_a_recent_print_cant_drift_to_someone_else(monkeypatch):
+    voices.learn("Suvi", [unit(1, 0)], device="mac")
+    long = np.zeros(int(2.5 * 16000), np.float32)
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 0.9))
+    voices.adapt(long, "Suvi")
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(0.3, 1))  # far from the learnt one
+    assert voices.identify(long)[1] < 0.5  # its recent print doesn't let it in
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 3))  # 0.32: not sure, not kept
+    voices.adapt(long, "Suvi")
+    assert len(voices.people()[0]["recent"]) == 1
+
+
+def test_off_it_deletes_what_it_learnt_that_way(monkeypatch):
+    voices.learn("Suvi", [unit(1, 0)], device="mac")
+    long = np.zeros(int(2.5 * 16000), np.float32)
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 0.9))
+    voices.adapt(long, "Suvi")
+    settings.active["voice_adapt"] = False
+    assert voices.identify(long)[1] < 0.75  # not used
+    voices.adapt(long, "Suvi")
+    voices.drop_recent()
+    assert "recent" not in voices.people()[0]
+    settings.active["voice_adapt"] = True
+    voices.adapt(long, "Suvi")
+    voices.learn("Suvi", [unit(1, 0)], device="mac")  # learnt again on that device: its recent ones go
+    assert voices.people()[0]["recent"] == []

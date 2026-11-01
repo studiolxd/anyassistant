@@ -12,6 +12,11 @@ voices.json in your data folder.
   with someone else is dropped, and in between they count as the person this conversation
   already recognised (with a longer sentence) — never as an unknown.
 - The LLM hears who is talking («(Suvi is talking.)»), with the first sentence of each.
+- «voice_adapt» (on by default): it keeps learning each voice from what that person says
+  (only voice prints, never the audio): the last RECENT sentences it was sure of (long, clearly
+  theirs, nobody else close) make a «recent» print beside the one learnt, per device. That one is
+  never touched: a recent print only counts when the voice is also near it (FLOOR), so it can't
+  drift off to someone else. Off: the recent ones are deleted; learning a voice again, too.
 """
 
 import asyncio
@@ -39,10 +44,17 @@ RATE = 16000
 SHORT = 1.2  # seconds: shorter sentences say little about who
 MIN_SAMPLE = 1.5  # seconds of a phrase when learning a voice
 PHRASES = 5
+RECENT = 10  # sentences kept, per person, to adapt their print
+SURE = 0.65  # how alike a sentence must be to be kept (well above voice_match)
+LONG = 2.0  # seconds a sentence must last to be kept
+APART = 0.15  # and how much nearer to them than to anyone else
+FLOOR = 0.45  # a recent print counts only if the voice is also this near the learnt one
 
 options.add(Option("voice_check", "all", "what needs a known voice once someone's is learnt: all (it only listens "
                    "to known voices), actions (only the «yes» that authorizes one) or off", "security", "choice",
                    ["all", "actions", "off"], live=True))
+options.add(Option("voice_adapt", True, "keep learning each voice from what that person says (only voice prints, "
+                   "never the audio; off: what it learnt that way is deleted)", "security", "bool", live=True))
 options.add(Option("voice_match", 0.5, "how alike a voice must be to a known one (0–1; higher: stricter)",
                    "security", "float", live=True))
 
@@ -76,6 +88,7 @@ def learn(name: str, prints: list[np.ndarray], device: str | None = None):
     if "print" in person:  # before a print per device: the one it had, kept
         person.setdefault("prints", {})["?"] = person.pop("print")
     person.setdefault("prints", {})[device or "?"] = [round(float(x), 6) for x in mean]
+    person["recent"] = [r for r in person.get("recent", []) if r["near"] != (device or "?")]  # learnt anew
     person["samples"] = person.get("samples", 0) + len(prints)
     _save(found)
     log.info("voice learnt: %s on %s (%d phrases, %d devices)", name, device or "a device", len(prints),
@@ -143,16 +156,71 @@ def voice_print(audio: np.ndarray) -> np.ndarray:
 
 def identify(audio: np.ndarray) -> tuple[str | None, float]:
     """The known person it sounds most like, and how much (cosine, -1–1)."""
-    known = people()
-    if not known:
-        return None, 0.0
+    found = ranked(voice_print(audio)) if people() else []
+    return (found[0][1], found[0][0]) if found else (None, 0.0)
+
+
+def ranked(heard: np.ndarray) -> list[tuple[float, str, str]]:
+    """Everyone known, nearest first: (score, name, the device whose print is nearest). Each person
+    by their print closest to this voice (the one learnt with a microphone like this), or its recent
+    one if the voice is also near the learnt one (FLOOR)."""
+    adapt = settings.get("voice_adapt", True)
+    found = []
+    for person in people():
+        best = None
+        for key, learnt in _prints(person).items():
+            score = float(heard @ learnt)
+            recent = _recent(person, key) if adapt and score >= FLOOR else None
+            if recent is not None:
+                score = max(score, float(heard @ recent))
+            if best is None or score > best[0]:
+                best = (score, person["name"], key)
+        if best:
+            found.append(best)
+    return sorted(found, reverse=True)
+
+
+def _prints(person: dict) -> dict[str, np.ndarray]:
+    found = person.get("prints") or ({"?": person["print"]} if "print" in person else {})
+    return {key: np.array(p) for key, p in found.items()}
+
+
+def _recent(person: dict, key: str) -> np.ndarray | None:
+    """The average of the sentences it kept of them near that device's print (None: none yet)."""
+    kept = [np.array(r["print"]) for r in person.get("recent", []) if r["near"] == key]
+    if not kept:
+        return None
+    mean = np.mean(kept, axis=0)
+    return mean / np.linalg.norm(mean)
+
+
+def adapt(audio: np.ndarray, name: str):
+    """A sentence it accepted as `name`'s: kept (only its print) if it is sure of it."""
+    if not settings.get("voice_adapt", True) or len(audio) / RATE < LONG:
+        return
     heard = voice_print(audio)
-    # Each person by their print closest to this voice (the one learnt with a microphone like this).
-    scores = [(max(float(heard @ one) for one in prints_of(p)), p["name"]) for p in known if prints_of(p)]
-    if not scores:
-        return None, 0.0
-    score, name = max(scores)
-    return name, score
+    found = ranked(heard)
+    if not found or found[0][1] != name or found[0][0] < SURE:
+        return
+    if len(found) > 1 and found[0][0] - found[1][0] < APART:  # someone else almost as near: not sure
+        return
+    everyone = people()
+    person = next(p for p in everyone if p["name"] == name)
+    kept = person.setdefault("recent", [])
+    kept.append({"near": found[0][2], "print": [round(float(x), 6) for x in heard], "at": time.time()})
+    person["recent"] = kept[-RECENT:]
+    _save(everyone)
+    log.info("voice adapted: %s (%.2f, %d recent)", name, found[0][0], len(person["recent"]))
+
+
+def drop_recent():
+    """«voice_adapt» off: what it learnt from what people said, deleted."""
+    everyone = people()
+    if any(p.get("recent") for p in everyone):
+        for person in everyone:
+            person.pop("recent", None)
+        _save(everyone)
+        log.info("voice adaptation off: recent prints deleted")
 
 
 def judge(audio: np.ndarray, before: str | None) -> tuple[str | None, bool, str]:
@@ -224,6 +292,10 @@ def screen(assistant, text: str, timings: dict, audio, handle) -> bool:
         log.info("voice: %s", why)
         assistant.voice = name
         handle(text, timings)
+        if settings.get("voice_adapt", True):
+            await asyncio.get_running_loop().run_in_executor(None, adapt, audio, name)
+        else:
+            drop_recent()
 
     assistant.later(check())
     return True

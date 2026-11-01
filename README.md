@@ -244,6 +244,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `confirm_wait` | `120` | seconds to answer «yes» to an action that changes something |
 | `confirm_valid` | `60` | seconds a «yes» stays valid |
 | `voice_check` | `"all"` | what needs a known voice once someone's is learnt: all (it only listens to known voices), actions (only the «yes» that authorizes one) or off |
+| `voice_adapt` | `true` | keep learning each voice from what that person says (only voice prints, never the audio; off: what it learnt that way is deleted) |
 | `voice_match` | `0.5` | how alike a voice must be to a known one (0–1; higher: stricter) |
 
 **The server**

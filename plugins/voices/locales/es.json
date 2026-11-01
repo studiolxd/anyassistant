@@ -7,6 +7,7 @@
   },
   "options": {
     "voice_check": "qué exige una voz conocida, una vez aprendida alguna",
+    "voice_adapt": "seguir aprendiendo cada voz de lo que dice esa persona (solo huellas de voz, nunca el audio; desactivado: se borra lo aprendido así)",
     "voice_match": "cuánto debe parecerse una voz a una conocida (0–1; más alto: más estricto)"
   },
   "choices": {
