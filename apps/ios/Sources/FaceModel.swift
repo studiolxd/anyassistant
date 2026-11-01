@@ -48,6 +48,7 @@ final class FaceModel: ObservableObject {
     // MARK: Texts and settings
 
     func text(_ key: String, _ values: [String: String] = [:]) -> String {
+        if texts.isEmpty { return "" }  // nothing until the Mac's texts arrive
         var found = texts[key] ?? key
         for (name, value) in values { found = found.replacingOccurrences(of: "{\(name)}", with: value) }
         return found

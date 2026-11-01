@@ -142,7 +142,9 @@ final class Link: NSObject, ObservableObject {
         switch new {
         case .connected: face.problem = nil
         case .connecting: face.problem = nil; face.state = "connecting"
-        case .lost: face.problem = face.text("connection_lost") == "connection_lost" ? T("Looking for your Mac…") : face.text("connection_lost")
+        case .lost:
+            let said = face.text("connection_lost")
+            face.problem = said.isEmpty || said == "connection_lost" ? T("Looking for your Mac…") : said
         case .unpaired: face.problem = T("It has to be paired again.")
         }
     }

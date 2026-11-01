@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="talk">Hablar</string>
+    <string name="talk_long">Hablar con AnyAssistant</string>
+    <string name="settings">Ajustes</string>
+    <string name="done">Hecho</string>
+    <string name="keep_listening">Seguir escuchando con la pantalla apagada</string>
+    <string name="keep_listening_note">Con la pantalla apagada escucha mientras esté su notificación; «Dejar de escuchar» en ella, o aquí, lo para.</string>
+    <string name="keep_screen_on">Mantener la pantalla encendida</string>
+    <string name="mac_address">Dirección del Mac</string>
+    <string name="found_by_itself">La encuentra sola</string>
+    <string name="reconnect">Volver a conectar</string>
+    <string name="pair_again">Emparejar de nuevo</string>
+    <string name="pair">Emparejar</string>
+    <string name="pair_how">En tu Mac, abre el menú de AnyAssistant y elige «Emparejar un dispositivo…»: te muestra el código.</string>
+    <string name="code_from_mac">Código de tu Mac</string>
+    <string name="wrong_code">Ese código no es correcto (o ha caducado).</string>
+    <string name="mac_not_answering">Tu Mac no responde: ¿está AnyAssistant en marcha, y este dispositivo en la misma Wi-Fi?</string>
+    <string name="looking_for_mac">Buscando tu Mac…</string>
+    <string name="pair_again_needed">Hay que emparejarlo de nuevo.</string>
+    <string name="listening">%1$s te escucha</string>
+    <string name="stop_listening">Dejar de escuchar</string>
+    <string name="channel_answers">Respuestas y mensajes</string>
+    <string name="channel_listening">Escuchando</string>
+    <string name="channel_ringing">Alarmas y temporizadores</string>
+    <string name="alarm">Alarma</string>
+    <string name="reminder">Recordatorio</string>
+    <string name="timer">Temporizador</string>
+    <string name="stop">Parar</string>
+</resources>

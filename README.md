@@ -290,6 +290,17 @@ In the background, answers and messages arrive as notifications. «Talk to AnyAs
 Siri, Shortcuts and the Action button (iOS 16 or later). Paired with the 6-digit code, HTTPS
 trusting only your Mac's authority.
 
+**The Android app** (`apps/android`, Android 8 or later, Kotlin and Compose; the plugin
+`stream-api`): the same as the iPhone's. Its face, the four skins (`Skins.kt`); its microphone
+and speaker over the WebSocket, in «communication» mode with Android's echo canceller; it finds
+the Mac by Bonjour (`_anyassistant._tcp`: many Androids don't resolve anyassistant.local), pairs
+with the 6-digit code and talks HTTPS trusting only your Mac's authority. With the screen off it
+keeps listening while its notification is there («Stop listening»). Alarms, timers and
+reminders are the phone's own alarm clock: they ring on the alarm channel, even on silent, full
+screen over the lock screen; stopped on the phone, the Mac stops too. «Hablar»: long-press the
+icon, the quick settings tile, or the assistant gesture (choose it as the phone's assistant).
+`apps/android/run.sh` builds it and installs it on the device adb sees (or the emulator).
+
 **The Apple Watch** (`apps/watch`, and the plugin `talk-api`): press to talk on your wrist.
 It goes inside the iPhone app, and also works on its own. The first time it asks for the
 6-digit code the Mac app shows («Pair a device…»), and finds the Mac at `anyassistant.local`
