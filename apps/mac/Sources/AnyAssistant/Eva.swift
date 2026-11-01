@@ -62,6 +62,12 @@ final class Client: ObservableObject {
     func begin() {
         if role == .server { here() }
         update()
+        checkPermissions()
+        // Every few seconds too: a permission changed in System Settings shows in the menu.
+        guard permissionsTimer == nil else { return }
+        permissionsTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+            MainActor.assumeIsolated { Client.shared.checkPermissions() }
+        }
     }
 
     /// This Mac's own server.
@@ -72,6 +78,17 @@ final class Client: ObservableObject {
 
     /// The microphone isn't allowed (System Settings → Privacy → Microphone).
     @Published private(set) var refused = false
+    /// The camera isn't allowed (System Settings → Privacy → Camera): «muestra la cámara», «¿qué ves?».
+    @Published private(set) var cameraRefused = false
+    private var permissionsTimer: Timer?
+
+    /// The permissions as macOS has them now (they change in System Settings, not here).
+    func checkPermissions() {
+        let camera = AVCaptureDevice.authorizationStatus(for: .video)
+        cameraRefused = camera == .denied || camera == .restricted
+        let microphone = AVCaptureDevice.authorizationStatus(for: .audio)
+        if microphone == .authorized, refused { update() }  // allowed meanwhile: it hears now
+    }
 
     func update() {
         guard listening && ready else { return link.stop() }
@@ -117,8 +134,8 @@ final class Client: ObservableObject {
     }
 
     /// Where to allow the microphone.
-    func openPrivacy() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
+    func openPrivacy(_ what: String = "Privacy_Microphone") {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?\(what)")!)
     }
 }
 

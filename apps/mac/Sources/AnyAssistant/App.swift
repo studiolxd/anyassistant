@@ -83,6 +83,9 @@ final class Delegate: NSObject, NSApplicationDelegate {
     /// In the Dock (and ⌘⇥) while one of its windows is open; only in the menu bar otherwise.
     private func followWindows() {
         let center = NotificationCenter.default
+        center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { Client.shared.checkPermissions() }  // changed in System Settings
+        }
         center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { note in
             guard let window = note.object as? NSWindow, window.styleMask.contains(.titled) else { return }
             MainActor.assumeIsolated {
@@ -152,6 +155,7 @@ struct MenuView: View {
         faceItem
         Toggle(T("Listen on this Mac"), isOn: $client.listening)
         if client.refused { Button(M("Allow the microphone…")) { client.openPrivacy() } }
+            if client.cameraRefused { Button(M("Allow the camera…")) { client.openPrivacy("Privacy_Camera") } }
         Divider()
         Button(M("Run the server on this Mac…")) {
             client.useThisMac()
@@ -208,6 +212,7 @@ struct MenuView: View {
             faceItem
             Toggle(T("Listen on this Mac"), isOn: $client.listening)
             if client.refused { Button(M("Allow the microphone…")) { client.openPrivacy() } }
+            if client.cameraRefused { Button(M("Allow the camera…")) { client.openPrivacy("Privacy_Camera") } }
             Divider()
             Button(M("Pair a device…")) { open("pair") }
             Button(M("Devices…")) { open("devices") }

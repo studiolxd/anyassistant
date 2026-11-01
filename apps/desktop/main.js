@@ -5,7 +5,7 @@
 //
 //   cd apps/desktop && npm install && npm start
 
-const { app, BrowserWindow, Menu, Tray, nativeImage, session, shell, dialog } = require('electron');
+const { app, BrowserWindow, Menu, Tray, nativeImage, session, shell, dialog, systemPreferences } = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -18,7 +18,7 @@ const TEXTS = {
     'Preparándolo (la primera vez descarga Python y los modelos: unos minutos)…',
   'It failed': 'Ha fallado', 'Show %s': 'Mostrar a %s', 'Pair a device': 'Emparejar un dispositivo',
   'Administer': 'Administrar', 'Start': 'Arrancar', 'Stop': 'Parar', 'Restart': 'Reiniciar',
-  'Log': 'Registro', 'Hide %s': 'Ocultar a %s', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
+  'Log': 'Registro', 'Allow the microphone': 'Permitir el micrófono', 'Allow the camera': 'Permitir la cámara', 'Hide %s': 'Ocultar a %s', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
   'started by systemd': 'lo arranca systemd',
   'uv isn\'t installed: it brings Python and the server\'s packages.': 'uv no está instalado: trae Python y los paquetes del servidor.',
   'Install it and open AnyAssistant again:': 'Instálalo y vuelve a abrir AnyAssistant:',
@@ -121,6 +121,15 @@ function setOpensAtLogin(on) {
                          `Icon=${path.join(__dirname, 'icons', 'icon.png')}\nX-GNOME-Autostart-enabled=true\n`);
 }
 
+// --- Windows' privacy: the microphone and the camera (Linux has none to ask) ---
+
+function refused(what) {
+  if (process.platform !== 'win32') return false;
+  try { return systemPreferences.getMediaAccessStatus(what) === 'denied'; } catch (e) { return false; }
+}
+
+const PRIVACY = { microphone: 'ms-settings:privacy-microphone', camera: 'ms-settings:privacy-webcam' };
+
 // --- The tray ---
 
 function status() {
@@ -145,6 +154,8 @@ function menu() {
     faceShown()  // «Hide Eva» while its window is open
       ? { label: T('Hide %s', name), click: () => windows.face.close() }
       : { label: T('Show %s', name), enabled: running, click: showFace },
+    ...(refused('microphone') ? [{ label: T('Allow the microphone'), click: () => shell.openExternal(PRIVACY.microphone) }] : []),
+    ...(refused('camera') ? [{ label: T('Allow the camera'), click: () => shell.openExternal(PRIVACY.camera) }] : []),
     { label: T('Pair a device'), enabled: running, click: () => showAdmin('#pair') },
     { label: T('Administer'), enabled: running, click: () => showAdmin() },
     { type: 'separator' },
@@ -193,6 +204,7 @@ app.whenReady().then(async () => {
   tray = new Tray(icon);
   tray.on('click', () => (server.state === 'running' ? showFace() : null));  // Windows: a click shows it
   menu();
+  setInterval(menu, 10000);  // a permission changed in Windows' settings shows in the menu
   await server.begin();
   if (server.state === 'running' && !opensAtLogin()) showFace();  // the first time: its face
 });
