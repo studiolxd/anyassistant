@@ -44,6 +44,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSUIElement</key><true/>
   <key>NSLocalNetworkUsageDescription</key>
   <string>AnyAssistant talks to your tablet or phone on this network: its microphone, camera and screen.</string>
+  <key>NSAppTransportSecurity</key>
+  <dict><key>NSAllowsLocalNetworking</key><true/></dict>
   <key>NSMicrophoneUsageDescription</key>
   <string>So you can talk to the assistant on this Mac.</string>
   <key>NSCameraUsageDescription</key>

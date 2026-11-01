@@ -39,6 +39,11 @@ struct AnyAssistantApp: App {
             DevicesView()
                 .frame(minWidth: 560, minHeight: 360)
         }
+        Window("Skins", id: "skins") {
+            SkinsWindow()
+                .frame(minWidth: 640, minHeight: 480)
+        }
+        .defaultSize(width: 1100, height: 780)
         Window(T("Learn a voice"), id: "learn-voice") {
             LearnVoiceView()
                 .frame(minWidth: 520, minHeight: 400)
@@ -215,9 +220,7 @@ struct MenuView: View {
             Toggle(T("Listen on this Mac"), isOn: $client.listening)
             if client.refused { Button(M("Allow the microphone…")) { client.openPrivacy() } }
             if client.cameraRefused { Button(M("Allow the camera…")) { client.openPrivacy("Privacy_Camera") } }
-            Button(M("Skins…")) {  // every state of each skin, to see them (the plugin «skins»)
-                NSWorkspace.shared.open(URL(string: "http://127.0.0.1:\(server.port)/skins")!)
-            }
+            Button(M("Skins…")) { open("skins") }  // every state of each skin, to see them (the plugin «skins»)
             Divider()
             Button(M("Pair a device…")) { open("pair") }
             Button(M("Devices…")) { open("devices") }
