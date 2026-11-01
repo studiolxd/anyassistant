@@ -5,8 +5,9 @@ address that changes (another network) doesn't matter.
     dns-sd -B _anyassistant._tcp          to see it from the Mac's terminal
 
 The announcement carries the port, the assistant's name, whether pairing is on and the
-HTTPS port if the plugin «https» is on (a TXT record: name=Jarvis pairing=1 https=443
-version=1). It also gives the Mac the name anyassistant.local (for devices that resolve
+HTTPS port if the plugin «https» is on, its address and its own id (a TXT record: name=Jarvis
+pairing=1 https=443 id=3f2a… version=1): an app looking for the server it paired with takes
+only the one with its id, not another server on the same network. It also gives the Mac the name anyassistant.local (for devices that resolve
 .local names: not old Androids, which use the address). On the Mac, macOS's own dns-sd does
 it while the server runs; on Windows and Linux, zeroconf (Python). Turn the plugin off and it
 stops being announced.
@@ -34,6 +35,7 @@ def record() -> list[str]:
     ip = address()
     if ip:  # its address now: an app that knew another one (the Mac's IP changed) finds it again
         found.append(f"address={ip}")
+    found.append(f"id={web.identity()}")  # which server it is (the app paired with this one)
     return found + ["version=1"]
 
 

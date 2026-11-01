@@ -12,6 +12,7 @@ import events
 import hub
 import i18n
 import kernel
+import paths
 import settings
 from transport import Session
 
@@ -119,6 +120,21 @@ async def offer(request: web.Request) -> web.Response:
     return web.json_response({"sdp": answer.sdp, "type": answer.type})
 
 
+def identity() -> str:
+    """This server's own id, made once and kept (server-id): how a paired app tells it from another
+    server on the same network when it looks for it by Bonjour (its IP changed)."""
+    file = paths.HOME / "server-id"
+    try:
+        return file.read_text().strip()
+    except OSError:
+        made = uuid.uuid4().hex[:12]
+        try:
+            file.write_text(made)
+        except OSError:
+            pass
+        return made
+
+
 async def status(request: web.Request) -> web.Response:
     if refusal := refused(request):
         return refusal
@@ -126,6 +142,7 @@ async def status(request: web.Request) -> web.Response:
     connected = [s for s in hub.all() if s.pc.connectionState == "connected"]
     devices = kernel.module("devices")  # their names and rooms, if it's on
     return web.json_response({
+        "server": identity(),  # which one it is (also in its Bonjour announcement)
         "connected": bool(connected),
         "frames": session.frames if session else 0,
         "llm": settings.get("llm"),

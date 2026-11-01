@@ -20,4 +20,5 @@ google-client.json
 apps/mac/.build/
 apps/mac/build/
 /devices.json
+server-id
 /voices.json

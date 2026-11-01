@@ -10,7 +10,7 @@ import android.net.nsd.NsdServiceInfo
 import android.os.Build
 import android.util.Base64
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.MediaType.Companion.toMediaType
@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
-import kotlin.coroutines.resume
 
 class Mac(private val context: Context) {
     private val prefs = context.getSharedPreferences("anyassistant", Context.MODE_PRIVATE)
@@ -56,6 +55,12 @@ class Mac(private val context: Context) {
     var port: Int
         get() = prefs.getInt("port", 8080)
         set(value) = prefs.edit().putInt("port", value).apply()
+
+    /** Which server it is paired with (its /status «server», its Bonjour «id»): looking for it by
+     *  Bonjour takes that one only, never another server on the same network. */
+    private var server: String?
+        get() = prefs.getString("server", null)
+        set(value) = prefs.edit().putString("server", value).apply()
 
     /** Its IP, as Bonjour found it last (or as pairing learnt it). */
     private var address: String?
@@ -122,7 +127,18 @@ class Mac(private val context: Context) {
 
     /** Where it answers now: what Bonjour finds, its IP, its name; null if none answers. */
     suspend fun url(): String? = withContext(Dispatchers.IO) {
-        fun answers(name: String) = runCatching { quick.newCall(request(base(name) + "/status").build()).execute().use { it.code } }.isSuccess
+        fun answers(name: String) = runCatching {
+            quick.newCall(request(base(name) + "/status").build()).execute().use { answer ->
+                if (answer.code == 200) {
+                    val said = runCatching { JSONObject(answer.body.string()).optString("server") }.getOrDefault("")
+                    if (said.isNotEmpty()) {
+                        if (server == null) server = said  // the first time it answers: it is this one
+                        else if (said != server) return@runCatching false  // another server there: not ours
+                    }
+                }
+                true
+            }
+        }.getOrDefault(false)
         if (exact && host.isNotEmpty()) {  // moved by hand: there or nowhere (not the old one, nor another found)
             return@withContext if (answers(host)) { exact = false; lastGood = host; base(host) } else null
         }
@@ -143,47 +159,35 @@ class Mac(private val context: Context) {
      *  server's, and until it answers at the new place nothing else stands in for it. */
     fun moved() {
         address = null
+        server = null  // learnt again where it answers now
         lastGood = null
         exact = host.isNotEmpty()
     }
 
     // --- Bonjour ---
 
-    /** The Mac's IP as Bonjour announces it (and its ports), within a few seconds; null if not found. */
-    suspend fun discover(): String? = withContext(Dispatchers.Main) {
-        val nsd = context.getSystemService(Context.NSD_SERVICE) as NsdManager
-        val found = withTimeoutOrNull(4000) { find(nsd) } ?: return@withContext null
-        val resolved = withTimeoutOrNull(4000) { resolve(nsd, found) } ?: return@withContext null
-        @Suppress("DEPRECATION")
-        val ip = (if (Build.VERSION.SDK_INT >= 34) resolved.hostAddresses.firstOrNull() else resolved.host)
-            ?.hostAddress?.takeIf { !it.contains(":") } ?: return@withContext null
-        address = ip
-        if (resolved.port > 0) port = resolved.port
-        ip
-    }
-
-    private suspend fun find(nsd: NsdManager): NsdServiceInfo = suspendCancellableCoroutine { done ->
-        val listener = object : NsdManager.DiscoveryListener {
-            override fun onServiceFound(info: NsdServiceInfo) {
-                if (done.isActive) done.resume(info)
-                runCatching { nsd.stopServiceDiscovery(this) }
-            }
-            override fun onStartDiscoveryFailed(type: String, code: Int) {}
-            override fun onStopDiscoveryFailed(type: String, code: Int) {}
-            override fun onDiscoveryStarted(type: String) {}
-            override fun onDiscoveryStopped(type: String) {}
-            override fun onServiceLost(info: NsdServiceInfo) {}
-        }
-        nsd.discoverServices("_anyassistant._tcp", NsdManager.PROTOCOL_DNS_SD, listener)
-        done.invokeOnCancellation { runCatching { nsd.stopServiceDiscovery(listener) } }
-    }
-
-    @Suppress("DEPRECATION")
-    private suspend fun resolve(nsd: NsdManager, info: NsdServiceInfo): NsdServiceInfo = suspendCancellableCoroutine { done ->
-        nsd.resolveService(info, object : NsdManager.ResolveListener {
-            override fun onResolveFailed(info: NsdServiceInfo, code: Int) {}
-            override fun onServiceResolved(info: NsdServiceInfo) { if (done.isActive) done.resume(info) }
-        })
+    /** The Mac's IP as Bonjour announces it (and its port), within a few seconds: only the server
+     *  it is paired with (its «id»); null if not found or not known yet. */
+    suspend fun discover(): String? {
+        val wanted = server ?: return null
+        val found = withContext(Dispatchers.Main) {
+            val servers = Servers(context)
+            servers.start()
+            try {
+                withTimeoutOrNull(5000) {
+                    var hit: Servers.Found? = null
+                    while (hit == null) {
+                        hit = servers.found.firstOrNull { it.server == wanted }
+                        if (hit == null) delay(250)
+                    }
+                    hit
+                }
+            } finally { servers.stop() }
+        } ?: return null
+        address = found.address
+        port = found.port
+        if (Regex("""\d{1,3}(\.\d{1,3}){3}""").matches(host)) host = found.address  // the settings show it where it is
+        return found.address
     }
 
     // --- Pairing ---
@@ -245,7 +249,7 @@ class Mac(private val context: Context) {
  *  and go: for the first pairing step. Android resolves one at a time: they queue. */
 class Servers(context: Context) {
     data class Found(val id: String, val assistant: String, val computer: String, val address: String,
-                     val port: Int, val pairing: Boolean)
+                     val port: Int, val pairing: Boolean, val server: String?)
 
     val found = androidx.compose.runtime.mutableStateListOf<Found>()
     private val nsd = context.getSystemService(Context.NSD_SERVICE) as NsdManager
@@ -288,7 +292,7 @@ class Servers(context: Context) {
                     found.removeAll { it.id == info.serviceName }
                     found.add(Found(info.serviceName, text("name") ?: "AnyAssistant",
                         text("computer") ?: info.serviceName.removePrefix("AnyAssistant on "), address,
-                        text("port")?.toIntOrNull() ?: info.port, text("pairing") != "0"))
+                        text("port")?.toIntOrNull() ?: info.port, text("pairing") != "0", text("id")))
                 }
                 resolving = false
                 next()

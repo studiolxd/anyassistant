@@ -41,6 +41,12 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         get { UserDefaults.standard.string(forKey: "address") }
         set { UserDefaults.standard.set(newValue, forKey: "address") }
     }
+    /// Which server it is paired with (its /status «server», in its Bonjour announcement «id»):
+    /// looking for it by Bonjour takes that one only, never another server on the same network.
+    private var server: String? {
+        get { UserDefaults.standard.string(forKey: "server") }
+        set { UserDefaults.standard.set(newValue, forKey: "server") }
+    }
     private var authority: Data? = UserDefaults.standard.data(forKey: "authority")  // the Mac's CA (DER)
     private var httpsPort: Int? {
         get { UserDefaults.standard.object(forKey: "httpsPort") as? Int }
@@ -69,7 +75,11 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         for name in [host, address].compactMap({ $0 }) where !name.isEmpty {
             var request = URLRequest(url: url(name).appendingPathComponent("status"))
             request.timeoutInterval = 8
-            if let (_, found) = try? await session.data(for: request), let status = (found as? HTTPURLResponse)?.statusCode {
+            if let (raw, found) = try? await session.data(for: request), let status = (found as? HTTPURLResponse)?.statusCode {
+                if status == 200, let said = (try? JSONSerialization.jsonObject(with: raw) as? [String: Any])?["server"] as? String {
+                    if server == nil { server = said }  // the first time it answers: it is this one
+                    else if said != server { continue }  // another server at that address: not ours
+                }
                 return (name, status)
             }
         }
@@ -137,18 +147,20 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         return base(name)
     }
 
-    /// The Mac's address now, from its Bonjour announcement («_anyassistant._tcp», its «address»).
+    /// The Mac's address now, from its Bonjour announcement («_anyassistant._tcp», its «address»):
+    /// only the server it is paired with (its «id»), never another one on the same network.
     func discover(seconds: Double = 3) async -> String? {
         #if os(watchOS)
         return nil  // the watch can't browse: its name, or the IP it knows
         #else
+        guard let wanted = server else { return nil }  // not known yet: none is surely ours
         final class Once: @unchecked Sendable {
             var done = false
         }
         let once = Once()
-        return await withCheckedContinuation { continuation in
+        let found: (address: String, port: Int?)? = await withCheckedContinuation { continuation in
             let browser = NWBrowser(for: .bonjourWithTXTRecord(type: "_anyassistant._tcp", domain: nil), using: .tcp)
-            let finish: (String?) -> Void = { found in
+            let finish: ((address: String, port: Int?)?) -> Void = { found in
                 guard !once.done else { return }
                 once.done = true
                 browser.cancel()
@@ -156,14 +168,18 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
             }
             browser.browseResultsChangedHandler = { results, _ in
                 for result in results {
-                    if case .bonjour(let record) = result.metadata, let found = record["address"], !found.isEmpty {
-                        return finish(found)
-                    }
+                    guard case .bonjour(let record) = result.metadata, record["id"] == wanted,
+                          let address = record["address"], !address.isEmpty else { continue }  // only ours
+                    return finish((address, record["port"].flatMap(Int.init)))
                 }
             }
             browser.start(queue: .main)
             DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { finish(nil) }
         }
+        guard let found else { return nil }
+        if Self.isIP(host) { host = found.address }  // the settings show it where it is now
+        if let port = found.port { self.port = port }
+        return found.address
         #endif
     }
 
@@ -213,7 +229,14 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
     /// old server's, and until it answers at the new place nothing else stands in for it.
     func moved() {
         address = nil
+        server = nil  // learnt again where it answers now
         exact = true
+    }
+
+    /// Whether a host is an IPv4 address (Bonjour updates it), not a name.
+    nonisolated static func isIP(_ host: String) -> Bool {
+        let parts = host.split(separator: ".", omittingEmptySubsequences: false)
+        return parts.count == 4 && parts.allSatisfy { UInt8($0) != nil }
     }
     private var exact = false
 

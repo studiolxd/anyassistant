@@ -9,15 +9,30 @@ def test_the_record_says_the_name_and_whether_to_pair(monkeypatch):
     monkeypatch.setattr(bonjour, "address", lambda: None)
     monkeypatch.setattr(settings, "active", {"name": "Viernes", "plugins": {"pairing": True}})
     monkeypatch.setattr(bonjour.socket, "gethostname", lambda: "salon.local")
-    assert bonjour.record() == ["name=Viernes", "pairing=1", "port=8080", "computer=salon", "version=1"]
+    monkeypatch.setattr(bonjour.web, "identity", lambda: "3f2a")
+    assert bonjour.record() == ["name=Viernes", "pairing=1", "port=8080", "computer=salon", "id=3f2a", "version=1"]
     monkeypatch.setattr(settings, "active", {})
-    assert bonjour.record() == ["name=Jarvis", "pairing=0", "port=8080", "computer=salon", "version=1"]
+    assert bonjour.record() == ["name=Jarvis", "pairing=0", "port=8080", "computer=salon", "id=3f2a", "version=1"]
+
+
+def test_each_server_has_its_own_id_and_keeps_it(monkeypatch, tmp_path):
+    """Two servers on one network: the app knows which one it paired with by this."""
+    import paths
+    import web
+
+    monkeypatch.setattr(paths, "HOME", tmp_path)
+    first = web.identity()
+    assert first and web.identity() == first
+    monkeypatch.setattr(paths, "HOME", tmp_path / "otro")
+    (tmp_path / "otro").mkdir()
+    assert web.identity() != first
 
 
 def test_and_its_address_now(monkeypatch):
     """An app that knew another IP (the Mac's changed) finds the new one in the announcement."""
     bonjour = kernel.load("bonjour")
     monkeypatch.setattr(bonjour, "address", lambda: "192.168.1.40")
+    monkeypatch.setattr(bonjour.web, "identity", lambda: "3f2a")
     monkeypatch.setattr(settings, "active", {})
     assert "address=192.168.1.40" in bonjour.record()
 
