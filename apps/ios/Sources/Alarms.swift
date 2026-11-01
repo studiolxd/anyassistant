@@ -10,7 +10,6 @@ extension Notification.Name {
     static let stopRinging = Notification.Name("stopRinging")
 }
 
-#if !targetEnvironment(macCatalyst)  // no AlarmKit on the Mac: notifications there
 import AlarmKit
 import AppIntents
 import SwiftUI
@@ -84,5 +83,3 @@ struct StopRinging: LiveActivityIntent {
         return .result()
     }
 }
-
-#endif

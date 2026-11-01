@@ -277,6 +277,15 @@ and the LLM hears, with the first message of each conversation, which device and
 is («here» means there);
 `GET /devices` from the Mac lists them.
 
+**The Mac app** (`apps/mac`, in the menu bar): it installs and runs the server, pairs devices,
+and has the settings; and the assistant is on the Mac too: «Show Eva» opens its face in a
+window (the iPhone app's own files, `Sources/AnyAssistant/Client`, linked to `apps/ios/Sources`),
+with the Mac's microphone and speaker (macOS's echo cancellation) and, while the window is open,
+its camera; «Listen on this Mac» turns the microphone off. It talks to its own server (no code).
+On a Mac without the server, it is only that: a client of another Mac's («The server is on
+another Mac» when installing: its address and the code). `apps/mac/install-dev.sh --build` while
+developing.
+
 **The iPhone and iPad app** (`apps/ios`, iOS 15 or later, and the plugin `stream-api`): native.
 Its face is drawn as the page's skins (Eyes, Orb, Bedside, Minimal: `apps/ios/Sources/Skins.swift`,
 the same looks; a new skin has to be drawn there too, else it shows as Eyes), following the Mac's

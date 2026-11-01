@@ -1,6 +1,7 @@
 # AnyAssistant's Apple apps (xcodegen): `apps/apple/build.sh` makes AnyAssistant.xcodeproj.
-# «AnyAssistant» is the iPhone and iPad app (apps/ios, iOS 15 or later), and the Mac client
-# («AnyAssistant Client», Mac Catalyst); the iPhone's carries the Apple Watch app «AnyAssistantWatch» (apps/watch), which also works on its own. Both share
+# «AnyAssistant» is the iPhone and iPad app (apps/ios, iOS 15 or later; the Mac app builds its
+# face, audio, camera and link too: apps/mac); it carries the Apple Watch app «AnyAssistantWatch»
+# (apps/watch), which also works on its own. Both share
 # apps/shared (pairing, the Mac's address, HTTPS trusting only its authority).
 # `apps/apple/testflight.sh` uploads them to TestFlight.
 name: AnyAssistant
@@ -50,9 +51,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant
         TARGETED_DEVICE_FAMILY: "1,2"
-        SUPPORTS_MACCATALYST: YES  # the Mac client too (apps/apple/run.sh mac)
-        DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER: NO
-        "PRODUCT_NAME[sdk=macosx*]": AnyAssistant Client  # not to be mistaken for the Mac app with the server
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
   AnyAssistantWatch:
     type: application

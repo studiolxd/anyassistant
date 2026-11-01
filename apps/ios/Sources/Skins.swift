@@ -157,7 +157,7 @@ struct Windows: View {
             if let photo = face.photo {
                 let green = Color(hex: "#3fe0a8")!
                 ZStack {
-                    Image(uiImage: photo).resizable().scaledToFill()
+                    Image(platform: photo).resizable().scaledToFill()
                         .saturation(0.6).brightness(-0.1)
                         .frame(width: width, height: height).clipped()
                     if face.scanning {
@@ -187,6 +187,7 @@ struct Windows: View {
     }
 }
 
+#if os(iOS)
 struct CameraPreview: UIViewRepresentable {
     let camera: Camera
 
@@ -199,6 +200,20 @@ struct CameraPreview: UIViewRepresentable {
 
     func updateUIView(_ view: PreviewView, context: Context) { view.orient() }
 }
+#else
+struct CameraPreview: NSViewRepresentable {
+    let camera: Camera
+
+    func makeNSView(context: Context) -> PreviewView {
+        let view = PreviewView()
+        view.preview.session = camera.session
+        view.preview.videoGravity = .resizeAspectFill
+        return view
+    }
+
+    func updateNSView(_ view: PreviewView, context: Context) {}
+}
+#endif
 
 // MARK: - Eyes
 

@@ -4,7 +4,6 @@
 // background, the microphone stays on so iOS keeps the app alive to reconnect.
 
 import Foundation
-import UIKit
 
 @MainActor
 final class Link: NSObject, ObservableObject {
@@ -165,7 +164,9 @@ final class Link: NSObject, ObservableObject {
         guard let (data, _) = try? await mac.session.data(from: parts.url!),
               let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
         face.configure(config)
+        #if os(iOS)
         Notices.shared.name = face.name
+        #endif
         send(["type": "skin", "name": face.skin])  // its skin's sounds are played from the Mac
     }
 
@@ -219,7 +220,9 @@ final class Link: NSObject, ObservableObject {
             Task { await configure() }
         default:
             face.receive(message)
+            #if os(iOS)
             Notices.shared.handle(message)
+            #endif
             if type == "state" || type == "camera" { look() }
         }
     }
@@ -252,7 +255,7 @@ final class Link: NSObject, ObservableObject {
     private func showPhoto() async {
         guard let base = await mac.url(),
               let (data, response) = try? await mac.session.data(from: base.appendingPathComponent("eyes.jpg")),
-              (response as? HTTPURLResponse)?.statusCode == 200, let image = UIImage(data: data) else { return }
+              (response as? HTTPURLResponse)?.statusCode == 200, let image = PlatformImage(data: data) else { return }
         face.show(photo: image)
     }
 

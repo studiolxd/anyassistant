@@ -5,7 +5,11 @@
 
 import AVFoundation
 import CoreImage
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 
 final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCapturePhotoCaptureDelegate {
     let session = AVCaptureSession()
@@ -56,7 +60,9 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
                 ?? AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: device) else { return false }
         session.beginConfiguration()
+        #if os(iOS)
         session.automaticallyConfiguresApplicationAudioSession = false  // the audio is Audio's: don't touch it
+        #endif
         session.sessionPreset = .photo
         if session.canAddInput(input) { session.addInput(input) }
         video.alwaysDiscardsLateVideoFrames = true
@@ -68,8 +74,9 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
         return true
     }
 
-    /// Upright, as the screen is held.
+    /// Upright, as the screen is held (a Mac's camera always is).
     private func orient() {
+        #if os(iOS)
         let orientation: AVCaptureVideoOrientation
         switch Camera.interface {
         case .landscapeLeft: orientation = .landscapeLeft
@@ -82,10 +89,13 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
                 connection.videoOrientation = orientation
             }
         }
+        #endif
     }
 
+    #if os(iOS)
     /// The screen's orientation (kept from the main thread).
     static var interface = UIInterfaceOrientation.portrait
+    #endif
 
     func captureOutput(_ output: AVCaptureOutput, didOutput buffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard Date().timeIntervalSince(lastFrame) >= 1, let pixels = CMSampleBufferGetImageBuffer(buffer) else { return }
@@ -107,6 +117,7 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
 }
 
 /// The camera live, for «muestra la cámara» (a mirror: the front camera as you see yourself).
+#if os(iOS)
 final class PreviewView: UIView {
     override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
     var preview: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
@@ -126,3 +137,16 @@ final class PreviewView: UIView {
         orient()
     }
 }
+#else
+final class PreviewView: NSView {
+    let preview = AVCaptureVideoPreviewLayer()
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer = preview
+    }
+
+    required init?(coder: NSCoder) { fatalError("not from a nib") }
+}
+#endif

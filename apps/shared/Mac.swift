@@ -1,4 +1,4 @@
-// Shared by the watch and the iPhone/iPad apps (apps/shared). Talking to the Mac: its address (anyassistant.local by default; its IP if the watch can't find
+// Shared by the watch, the iPhone/iPad and the Mac apps (apps/shared). Talking to the Mac: its address (anyassistant.local by default; its IP if the watch can't find
 // it), pairing with the code, and one sentence at a time. Over HTTPS when the Mac has the plugin
 // «https»: the watch keeps the Mac's own certificate authority (fetched when pairing) and trusts
 // only it; otherwise HTTP, on the local network.
@@ -143,6 +143,15 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
     func unpair() {
         paired = false
         UserDefaults.standard.set(false, forKey: "paired")
+    }
+
+    /// Forgets the Mac it was paired with: its authority, its port and its IP too.
+    func forget() {
+        unpair()
+        authority = nil
+        UserDefaults.standard.removeObject(forKey: "authority")
+        httpsPort = nil
+        address = nil
     }
 
     private func copyCookies(from url: URL, to name: String) {

@@ -33,7 +33,6 @@
 "Once per device: scan it, or open this address, to download it." = "Solo hay que hacerlo una vez en cada dispositivo. Escanea el código o abre:";
 "Open AnyAssistant at login" = "Abrir AnyAssistant al encender el Mac";
 "Open at login" = "Abrir al encender el Mac";
-"Open on this Mac" = "Hablarle desde este Mac";
 "Open the page" = "Ahora, conecta el dispositivo";
 "Pair a device" = "Conectar un dispositivo";
 "Pair a device…" = "Conectar una tablet o un móvil…";
@@ -132,3 +131,24 @@
 "Start learning" = "Empezar";
 "Press to talk" = "Pulsar para hablar";
 "last used" = "usado";
+
+/* The assistant on this Mac (Eva.swift) */
+"Show %@" = "Mostrar a %@";
+"Listen on this Mac" = "Escuchar en este Mac";
+"Run the server on this Mac…" = "Usar este Mac como servidor…";
+"Connected to %@" = "Conectado a %@";
+"It has to be paired again." = "Hay que emparejarlo otra vez.";
+"Looking for the server…" = "Buscando el servidor…";
+"Looking for your Mac…" = "Buscando tu Mac…";
+"The microphone is off" = "El micrófono está apagado";
+"Turn the microphone on" = "Encender el micrófono";
+"Another Mac's server" = "El servidor de otro Mac";
+"This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "Este Mac solo pone el micrófono, el altavoz, la cámara y la pantalla. En el Mac con el servidor: AnyAssistant → Emparejar un dispositivo…, para el código.";
+"Port" = "Puerto";
+"Code" = "Código";
+"Back" = "Atrás";
+"Connect" = "Conectar";
+"That code isn't right (or it's too old): ask for another." = "Ese código no vale (o ha caducado): pide otro.";
+"That Mac doesn't answer: is AnyAssistant running there, on this network?" = "Ese Mac no responde: ¿está AnyAssistant abierto allí, en esta red?";
+"The server is on another Mac: use this one only to talk to it" = "El servidor está en otro Mac: usar este solo para hablarle";
+"Allow the microphone…" = "Permitir el micrófono…";

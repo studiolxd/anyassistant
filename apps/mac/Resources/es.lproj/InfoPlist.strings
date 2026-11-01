@@ -1,1 +1,3 @@
 "NSLocalNetworkUsageDescription" = "AnyAssistant habla con tu tablet o móvil en esta red: su micrófono, su cámara y su pantalla.";
+"NSMicrophoneUsageDescription" = "Para que puedas hablar con el asistente en este Mac.";
+"NSCameraUsageDescription" = "Para «¿qué ves?»: el asistente solo mira mientras su ventana está abierta.";

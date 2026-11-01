@@ -20,10 +20,12 @@ final class Audio {
     init() {
         engine.attach(player)
         let center = NotificationCenter.default
+        #if os(iOS)
         center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             let kind = (note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap(AVAudioSession.InterruptionType.init)
             if kind == .ended { self?.onRestartNeeded?() }
         }
+        #endif
         center.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { [weak self] _ in
             self?.onRestartNeeded?()
         }
@@ -31,9 +33,16 @@ final class Audio {
 
     func start(heard: @escaping (Data, Float) -> Void) throws {
         guard !running else { return }
+        #if os(macOS)  // without it, the engine waits for an answer on the main thread: asked first (Eva.swift)
+        guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {
+            throw NSError(domain: "Audio", code: 1, userInfo: [NSLocalizedDescriptionKey: "not allowed"])
+        }
+        #endif
+        #if os(iOS)
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
         try session.setActive(true)
+        #endif
         let input = engine.inputNode
         if !input.isVoiceProcessingEnabled { try input.setVoiceProcessingEnabled(true) }
         engine.connect(player, to: engine.mainMixerNode, format: playing)
@@ -63,7 +72,9 @@ final class Audio {
         onSpeech?(0)
         player.stop()
         engine.stop()
+        #if os(iOS)
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        #endif
     }
 
     /// Its voice: 16-bit mono PCM at 48 kHz, after what is already queued.

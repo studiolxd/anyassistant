@@ -28,7 +28,7 @@ struct StepRow: Identifiable {
 
 @MainActor
 final class Setup: ObservableObject {
-    enum Phase { case welcome, preparing, questions, installing, finished }
+    enum Phase { case welcome, another, preparing, questions, installing, finished }
 
     @Published var phase: Phase = .welcome
     @Published var questions: [Question] = []
@@ -104,6 +104,7 @@ final class Setup: ObservableObject {
         if startAtLogin { try? SMAppService.mainApp.register() }
         phase = .finished
         server.launch()
+        Client.shared.begin()  // the assistant on this Mac too
     }
 
     private func handle(_ line: String) {

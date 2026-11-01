@@ -1,5 +1,7 @@
 // AnyAssistant: in the menu bar. The first time, it installs the server (with what
-// comes, or step by step); then it runs it, says how it is, and pairs devices.
+// comes, or step by step); then it runs it, says how it is, and pairs devices. The
+// assistant is on this Mac too (Eva.swift): its face in a window, its microphone and
+// speaker. On a Mac without the server, it is only that: a client of another Mac's.
 
 import AppKit
 import CoreImage.CIFilterBuiltins
@@ -9,17 +11,23 @@ import SwiftUI
 @main
 struct AnyAssistantApp: App {
     @StateObject private var server = Server.shared
+    @StateObject private var client = Client.shared
     @StateObject private var setup = Setup()
     @NSApplicationDelegateAdaptor private var delegate: Delegate
 
     var body: some Scene {
         MenuBarExtra {
-            MenuView(server: server)
+            MenuView(server: server, client: client)
         } label: {
             Image(systemName: icon)
         }
+        Window("AnyAssistant", id: "face") {
+            FaceWindow(client: client)
+                .frame(minWidth: 320, minHeight: 400)
+        }
+        .defaultSize(width: 480, height: 640)
         Window("AnyAssistant", id: "setup") {
-            SetupView(setup: setup)
+            SetupView(setup: setup, client: client)
                 .frame(width: 520, height: 480)
         }
         .windowResizability(.contentSize)
@@ -39,7 +47,10 @@ struct AnyAssistantApp: App {
     }
 
     var icon: String {
-        switch server.state {
+        if client.role == .client {
+            return client.link.state == .connected ? "waveform.circle.fill" : "circle.dotted"
+        }
+        return switch server.state {
         case .running: server.connected ? "waveform.circle.fill" : "waveform.circle"
         case .failed: "exclamationmark.circle"
         default: "circle.dotted"
@@ -51,6 +62,9 @@ final class Delegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         Task { @MainActor in
             let server = Server.shared
+            let client = Client.shared
+            defer { client.begin() }
+            if client.role == .client { return }  // no server here: another Mac's
             if server.installed {
                 server.launch()
             } else {
@@ -61,7 +75,10 @@ final class Delegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        MainActor.assumeIsolated { Server.shared.stop() }
+        MainActor.assumeIsolated {
+            Client.shared.link.stop()
+            if Client.shared.role == .server { Server.shared.stop() }
+        }
         Thread.sleep(forTimeInterval: 1)
     }
 
@@ -80,10 +97,47 @@ extension Notification.Name {
 
 struct MenuView: View {
     @ObservedObject var server: Server
+    @ObservedObject var client: Client
     @Environment(\.openWindow) private var openWindow
     @State private var login = SMAppService.mainApp.status == .enabled
 
     var body: some View {
+        if client.role == .client { clientMenu } else { serverMenu }
+    }
+
+    /// A client of another Mac's server: its face and its microphone, nothing else here.
+    @ViewBuilder var clientMenu: some View {
+        Text(client.status)
+        Divider()
+        Button(String(format: T("Show %@"), client.name)) { open("face") }
+        Toggle(T("Listen on this Mac"), isOn: $client.listening)
+        if client.refused { Button(T("Allow the microphone…")) { client.openPrivacy() } }
+        Divider()
+        Button(T("Run the server on this Mac…")) {
+            client.useThisMac()
+            if server.installed { server.launch() } else { open("setup") }
+        }
+        loginToggle
+        Divider()
+        quit
+    }
+
+    var loginToggle: some View {
+        Toggle(T("Open at login"), isOn: $login)
+            .onChange(of: login) { _, on in
+                if on { try? SMAppService.mainApp.register() } else { try? SMAppService.mainApp.unregister() }
+            }
+    }
+
+    var quit: some View {
+        Button(T("Quit AnyAssistant")) { NSApp.terminate(nil) }
+            .keyboardShortcut("q")
+            .onReceive(NotificationCenter.default.publisher(for: .open)) { note in
+                if let id = note.object as? String { openWindow(id: id) }
+            }
+    }
+
+    @ViewBuilder var serverMenu: some View {
         Text(status)
         ForEach(Array(server.devices.enumerated()), id: \.offset) { _, device in  // which ones
             Text("   " + (device.name.isEmpty ? T("a device") : device.name)
@@ -94,9 +148,10 @@ struct MenuView: View {
         if server.state == .notInstalled {
             Button(T("Install…")) { open("setup") }
         } else {
-            Button(T("Open on this Mac")) {
-                NSWorkspace.shared.open(URL(string: "http://127.0.0.1:\(server.port)")!)
-            }
+            Button(String(format: T("Show %@"), client.name)) { open("face") }
+            Toggle(T("Listen on this Mac"), isOn: $client.listening)
+            if client.refused { Button(T("Allow the microphone…")) { client.openPrivacy() } }
+            Divider()
             Button(T("Pair a device…")) { open("pair") }
             Button(T("Devices…")) { open("devices") }
             Button(T("Skins…")) {  // every state of each skin, to see them (the plugin «skins»)
@@ -116,17 +171,10 @@ struct MenuView: View {
             Button(T("Settings…")) { open("settings") }
                 .keyboardShortcut(",")
             Button(T("Install steps again…")) { open("setup") }
-            Toggle(T("Open at login"), isOn: $login)
-                .onChange(of: login) { _, on in
-                    if on { try? SMAppService.mainApp.register() } else { try? SMAppService.mainApp.unregister() }
-                }
+            loginToggle
         }
         Divider()
-        Button(T("Quit AnyAssistant")) { NSApp.terminate(nil) }
-            .keyboardShortcut("q")
-            .onReceive(NotificationCenter.default.publisher(for: .open)) { note in
-                if let id = note.object as? String { openWindow(id: id) }
-            }
+        quit
     }
 
     var status: String {
@@ -154,6 +202,7 @@ struct MenuView: View {
 
 struct SetupView: View {
     @ObservedObject var setup: Setup
+    @ObservedObject var client: Client
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
 
@@ -161,6 +210,12 @@ struct SetupView: View {
         VStack(alignment: .leading, spacing: 16) {
             switch setup.phase {
             case .welcome: welcome
+            case .another:
+                AnotherMacView(client: client, done: {
+                    dismissWindow(id: "setup")
+                    NSApp.activate(ignoringOtherApps: true)
+                    openWindow(id: "face")
+                }, back: { setup.phase = .welcome })
             case .preparing: working(setup.note)
             case .questions: form
             case .installing, .finished: progress
@@ -194,6 +249,8 @@ struct SetupView: View {
             .controlSize(.large)
             Text(T("You can change everything later. The speech models download once (a few hundred MB)."))
                 .font(.footnote).foregroundStyle(.secondary)
+            Button(T("The server is on another Mac: use this one only to talk to it")) { setup.phase = .another }
+                .buttonStyle(.link)
         }
     }
 

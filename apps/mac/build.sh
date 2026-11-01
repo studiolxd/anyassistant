@@ -43,6 +43,10 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSUIElement</key><true/>
   <key>NSLocalNetworkUsageDescription</key>
   <string>AnyAssistant talks to your tablet or phone on this network: its microphone, camera and screen.</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>So you can talk to the assistant on this Mac.</string>
+  <key>NSCameraUsageDescription</key>
+  <string>For «what do you see?»: the assistant looks only while its window is open.</string>
 </dict></plist>
 PLIST
 
@@ -65,7 +69,7 @@ STAMP=""; [ "$IDENTITY" != "-" ] && STAMP="--timestamp"
 for binary in "$APP/Contents/Resources/uv" "$PROGRAM/native/"*; do
   codesign --force --options runtime $STAMP --sign "$IDENTITY" "$binary"
 done
-codesign --force --options runtime $STAMP --sign "$IDENTITY" "$APP"
+codesign --force --options runtime $STAMP --entitlements "$HERE/AnyAssistant.entitlements" --sign "$IDENTITY" "$APP"
 codesign --verify --strict "$APP"
 
 echo "Making the .dmg…"

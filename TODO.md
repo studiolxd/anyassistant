@@ -6,13 +6,61 @@
 - [ ] **El Apple Watch, lo siguiente**: probarla en tu reloj; los avisos en la muñeca
   (alarmas, agenda, «la cocina dice…», con vibración: notificaciones push); fuera de casa
   (el Mac accesible desde fuera: Tailscale…); una complicación para la esfera y el botón Acción.
-- [ ] **AnyAssistant para el Mac, lo siguiente**: su diseño e icono; el papel de cliente
-  (hablarle desde el propio Mac; conectarse al servidor de otro Mac, encontrado con
-  Bonjour); campos de ajustes como es debido para las opciones que son listas o JSON
-  (hoy, un campo de texto).
+- [ ] **AnyAssistant para el Mac, lo siguiente**: su diseño e icono; encontrar el servidor
+  de otro Mac con Bonjour (hoy, su dirección a mano); campos de ajustes como es debido para
+  las opciones que son listas o JSON (hoy, un campo de texto).
 - [ ] **Instalador, lo siguiente**: un tarball de release (install.sh copia el checkout
   de git, o la copia de la app); el paso de registro de la voz (`@installer.device`)
   cuando exista ese plugin.
+
+## El servidor en Windows y Linux (plan)
+
+Hoy el servidor solo corre en el Mac. El núcleo (aiohttp, aiortc, numpy, los plugins en
+Python) ya es portable, y `plugin.json` ya dice dónde corre cada plugin
+(`needs.system`, `needs.arch`, `needs.commands`). Lo que ata al Mac:
+
+| Pieza | En el Mac | En Windows y Linux |
+|---|---|---|
+| Reconocimiento de voz | Parakeet y Whisper en MLX (Apple Silicon) | `stt-parakeet-onnx` (el mismo Parakeet v3 en ONNX, CPU; CUDA si hay NVIDIA) y `stt-faster-whisper` |
+| Palabra de activación | `wake-whisper` sobre MLX | que use el Whisper que haya (faster-whisper tiny/base); openWakeWord ya vale |
+| Voz | AVSpeech y `say` | `tts-kokoro` (Kokoro-82M en ONNX, voces en español) y `tts-piper` (más ligero, para una Raspberry) |
+| LLM | Claude (CLI), Hermes, Apple (modelo del Mac) | Claude y Hermes valen; Apple no (`llm-fallback` ya lo salta) |
+| Correo | contraseñas en el llavero (`security`) | `keyring`: el Administrador de credenciales de Windows, Secret Service en Linux |
+| Bonjour (`anyassistant.local`) | `dns-sd` | `zeroconf` en Python (vale también en el Mac: una sola implementación) |
+| HTTPS | el nombre con `scutil` | `socket.gethostname()` |
+| Alarma sin dispositivos | `afplay` y `say` en el Mac | la voz del plugin de TTS por los altavoces del equipo, o nada |
+| Voces del sistema (`tools-system`) | `say -v ?` | las voces del plugin de TTS |
+| Servicio | `launchctl` (`bin/anyassistant`) | Linux: unidad `systemd --user`; Windows: la app de la bandeja lo arranca (como la del Mac), y al iniciar sesión |
+| Rutas | `~/Library/Application Support`, `~/Library/Caches` | Windows: `%APPDATA%`, `%LOCALAPPDATA%`; Linux: `~/.local/share`, `~/.cache` (XDG) |
+| App | la de la barra de menús (servidor y cliente) | una app de bandeja para los dos (abajo) |
+
+**La app de Windows y Linux** (servidor y cliente, como la del Mac): Electron. Arranca el
+servidor, tiene el menú de la bandeja, y su cara es la página que ya existe (`/`, las cuatro
+skins), con micrófono, cámara y cancelación de eco de Chromium, iguales en los dos sistemas.
+Lo que hoy dibuja la app del Mac en SwiftUI (ajustes, dispositivos, emparejar con QR, correo,
+voces) se hace una vez como páginas web de administración (`/admin`, solo desde el propio
+equipo), y valen para los dos y para un Linux sin pantalla. Descartados: Tauri (en Linux usa
+WebKitGTK, con WebRTC flojo) y Compose Desktop (reutilizaría las skins de Android, pero
+Java no tiene cancelación de eco).
+
+**Por fases** (cada una se puede usar al acabar):
+
+- [ ] **1. Núcleo portable**: rutas por sistema; `zeroconf`, `keyring`, el nombre del
+  equipo, la alarma sin `afplay`; tests en Linux y Windows (GitHub Actions), con los de
+  solo Mac marcados. Resultado: el servidor arranca en Linux y Windows con Claude, pero
+  aún sin voz propia.
+- [ ] **2. Motores portables**: `stt-parakeet-onnx`, `stt-faster-whisper`, `tts-kokoro`,
+  `tts-piper`, `wake-whisper` sin MLX; el instalador elige según el equipo (CPU, NVIDIA,
+  Raspberry). Resultado: un asistente completo en Linux y Windows, por la página web.
+- [ ] **3. Linux sin pantalla** (un mini PC, un NAS, una Raspberry Pi 5): `install.sh` para
+  Linux, el servicio de systemd y la administración web (ajustes, dispositivos, emparejar).
+- [ ] **4. La app de bandeja** (Electron): el servidor, la cara en una ventana, el menú, la
+  administración; al iniciar sesión.
+- [ ] **5. Paquetes**: instalador de Windows firmado (sin firma, SmartScreen lo bloquea: hace
+  falta un certificado de firma de código), AppImage y .deb para Linux, actualizaciones.
+
+Hace falta un Windows y un Linux donde probarlo (vale una máquina virtual para empezar; el
+micrófono y la voz, mejor en un equipo real).
 
 ## Varios dispositivos, lo siguiente
 
@@ -66,6 +114,11 @@
 
 ## Hecho
 
+- [x] **Una sola app de Mac, servidor y cliente** (1 nov, `apps/mac`): la cara del asistente
+  en una ventana («Mostrar a Eva»), su micrófono, altavoz y cámara (los mismos archivos que la
+  app del iPhone: `Sources/AnyAssistant/Client`, enlaces a `apps/ios/Sources`), hablando con
+  el servidor del propio Mac sin emparejar; o, en un Mac sin servidor, solo cliente del de otro
+  Mac (dirección y código, en la instalación). Fuera el cliente Mac Catalyst.
 - [x] **La app del Apple Watch** (1 nov, `apps/watch`, `talk-api`): toca y habla; la frase al
   Mac (`POST /talk`), la respuesta en texto y voz; emparejada con el código de 6 dígitos;
   HTTPS fiándose solo de la autoridad del Mac. Un dispositivo más (su conversación, su voz).

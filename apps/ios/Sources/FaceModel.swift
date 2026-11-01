@@ -34,7 +34,7 @@ final class FaceModel: ObservableObject {
     @Published var answer = ""
     @Published var items: [Item] = []
     @Published var alarmLabel = ""
-    @Published var photo: UIImage?
+    @Published var photo: PlatformImage?
     @Published var scanning = false
     @Published var photoFading = false
     @Published var cameraShown = false
@@ -126,7 +126,7 @@ final class FaceModel: ObservableObject {
     }
 
     /// «¿Qué ves?»: the photo it looks at, with a scanning sweep until it answers.
-    func show(photo image: UIImage) {
+    func show(photo image: PlatformImage) {
         photo = image
         photoFading = false
         scanning = true

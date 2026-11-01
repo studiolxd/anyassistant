@@ -33,7 +33,6 @@
 "Once per device: scan it, or open this address, to download it." = "You only need to do this once on each device. Scan the code or open:";
 "Open AnyAssistant at login" = "Open AnyAssistant when the Mac starts";
 "Open at login" = "Open when the Mac starts";
-"Open on this Mac" = "Talk to it from this Mac";
 "Open the page" = "Now, connect the device";
 "Pair a device" = "Connect a device";
 "Pair a device…" = "Connect a tablet or phone…";
@@ -132,3 +131,24 @@
 "Start learning" = "Start";
 "Press to talk" = "Press to talk";
 "last used" = "last used";
+
+/* The assistant on this Mac (Eva.swift) */
+"Show %@" = "Show %@";
+"Listen on this Mac" = "Listen on this Mac";
+"Run the server on this Mac…" = "Run the server on this Mac…";
+"Connected to %@" = "Connected to %@";
+"It has to be paired again." = "It has to be paired again.";
+"Looking for the server…" = "Looking for the server…";
+"Looking for your Mac…" = "Looking for your Mac…";
+"The microphone is off" = "The microphone is off";
+"Turn the microphone on" = "Turn the microphone on";
+"Another Mac's server" = "Another Mac's server";
+"This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code.";
+"Port" = "Port";
+"Code" = "Code";
+"Back" = "Back";
+"Connect" = "Connect";
+"That code isn't right (or it's too old): ask for another." = "That code isn't right (or it's too old): ask for another.";
+"That Mac doesn't answer: is AnyAssistant running there, on this network?" = "That Mac doesn't answer: is AnyAssistant running there, on this network?";
+"The server is on another Mac: use this one only to talk to it" = "The server is on another Mac: use this one only to talk to it";
+"Allow the microphone…" = "Allow the microphone…";
