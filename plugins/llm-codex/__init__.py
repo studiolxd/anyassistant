@@ -128,12 +128,12 @@ class Codex(LLM):
     def ready(cls):
         found = command()
         if not found:
-            return "Codex isn't installed"
+            return i18n.L.text("llm_ready.codex", "Codex isn't installed")
         try:
             signed = subprocess.run([found, "login", "status"], capture_output=True, timeout=10).returncode == 0
         except (OSError, subprocess.TimeoutExpired):
             signed = False
-        return None if signed else "Codex isn't signed in: run codex login"
+        return None if signed else i18n.L.text("llm_ready.codex_login", "Codex isn't signed in")
 
     def __init__(self, model=None, mcp=None):
         super().__init__(model, mcp)

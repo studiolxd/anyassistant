@@ -18,6 +18,7 @@ Its tools stay in the list, refused, rather than removed: removing them, its fre
 to answer. An empty folder is its workspace.
 """
 
+import i18n
 import json
 import re
 import shutil
@@ -71,7 +72,7 @@ class OpenCode(ACP):
 
     @classmethod
     def ready(cls):
-        return None if shutil.which("opencode") else "OpenCode isn't installed"
+        return None if shutil.which("opencode") else i18n.L.text("llm_ready.opencode", "OpenCode isn't installed")
 
     def command(self):
         return [shutil.which("opencode") or "opencode", "acp"]

@@ -53,7 +53,7 @@ class Claude(LLM):
 
     @classmethod
     def ready(cls):
-        return None if shutil.which("claude") else "Claude Code isn't installed"
+        return None if shutil.which("claude") else i18n.L.text("llm_ready.claude", "Claude Code isn't installed")
 
     def __init__(self, model=None, mcp=None):
         super().__init__(model or "sonnet", mcp or str(paths.MCP))

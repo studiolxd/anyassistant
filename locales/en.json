@@ -164,7 +164,18 @@
     ],
     "not_set": "Not set",
     "packages_done": "Packages for {count} plugins",
-    "packages_yours": ", {count} of yours"
+    "packages_yours": ", {count} of yours",
+    "intel": " (Intel: speech recognition on MLX won't work)",
+    "installing": "Installing: {what}",
+    "core": "only the core",
+    "your_plugins": "Your plugins: {what}",
+    "not_ready": " (not ready yet: {why})",
+    "bridge_fm_bridge": "Apple Intelligence",
+    "bridge_avspeech_bridge": "System voices",
+    "none_needed": "None needed",
+    "stt": "Speech recognition: {name}",
+    "wake": "Wake word: {name}",
+    "vad": "Voice detection"
   },
   "options_empty": {
     "language": "the system's language",
@@ -177,5 +188,17 @@
     "rate": "the voice's own",
     "wake_word": "its name",
     "threshold": "the engine's own"
+  },
+  "llm_ready": {
+    "apple": "Requires macOS 26 and Apple Intelligence",
+    "claude": "Claude Code isn't installed",
+    "codex": "Codex isn't installed",
+    "codex_login": "Codex isn't signed in",
+    "gemini": "Gemini CLI isn't installed",
+    "gemini_login": "Gemini CLI isn't signed in",
+    "opencode": "OpenCode isn't installed",
+    "openai": "Needs an API key",
+    "ollama": "Ollama isn't running or has no model",
+    "hermes": "Hermes's gateway isn't running"
   }
 }

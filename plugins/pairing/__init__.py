@@ -128,6 +128,6 @@ async def _pair(request):
 
 @installer.question("pairing", "Code for new devices", order=60, choices=lambda: [True, False],
                     default=lambda: bool((settings.load().get("plugins") or {}).get("pairing", True)), always=True,
-                    help="Each new device enters a code the first time, so nobody else can use it. This computer doesn't need one.")
+                    help="Each new device enters a code the first time, so nobody else can use it. This device doesn't need one.")
 def _install(value):
     settings.save(plugins={**(settings.load().get("plugins") or {}), "pairing": bool(value)})

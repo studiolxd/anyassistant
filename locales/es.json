@@ -136,7 +136,18 @@
     ],
     "not_set": "Sin indicar",
     "packages_done": "Paquetes de {count} plugins",
-    "packages_yours": ", {count} tuyos"
+    "packages_yours": ", {count} tuyos",
+    "intel": " (Intel: el reconocimiento de voz con MLX no funcionará)",
+    "installing": "Instalando: {what}",
+    "core": "solo lo básico",
+    "your_plugins": "Tus plugins: {what}",
+    "not_ready": " (aún no está listo: {why})",
+    "bridge_fm_bridge": "Apple Intelligence",
+    "bridge_avspeech_bridge": "Voces del sistema",
+    "none_needed": "No hace falta ninguno",
+    "stt": "Reconocimiento de voz: {name}",
+    "wake": "Palabra de activación: {name}",
+    "vad": "Detección de voz"
   },
   "choices": {
     "bool": {
@@ -191,5 +202,17 @@
     "rate": "la de la voz",
     "wake_word": "su nombre",
     "threshold": "la del motor"
+  },
+  "llm_ready": {
+    "apple": "Requiere macOS 26 y Apple Intelligence",
+    "claude": "Claude Code no está instalado",
+    "codex": "Codex no está instalado",
+    "codex_login": "No has iniciado sesión en Codex",
+    "gemini": "Gemini CLI no está instalado",
+    "gemini_login": "No has iniciado sesión en Gemini CLI",
+    "opencode": "OpenCode no está instalado",
+    "openai": "Falta la clave de API",
+    "ollama": "Ollama no está en marcha o no tiene ningún modelo",
+    "hermes": "La pasarela de Hermes no está en marcha"
   }
 }

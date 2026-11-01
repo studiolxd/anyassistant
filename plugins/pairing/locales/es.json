@@ -8,7 +8,7 @@
   "installer": {
     "pairing": [
       "Código para dispositivos nuevos",
-      "Cada dispositivo nuevo introduce un código la primera vez, para que nadie más pueda usarlo. Este ordenador no lo necesita."
+      "Cada dispositivo nuevo introduce un código la primera vez, para que nadie más pueda usarlo. Este dispositivo no lo necesita."
     ]
   }
 }

@@ -19,6 +19,7 @@ Google stopped accepting Gemini CLI with some free accounts («Gemini Code Assis
 «migrate to Antigravity»): then it says so (it can't be fixed here).
 """
 
+import i18n
 import asyncio
 import json
 import logging
@@ -76,8 +77,8 @@ class Gemini(ACP):
     @classmethod
     def ready(cls):
         if not shutil.which("gemini"):
-            return "Gemini CLI isn't installed"
-        return None if signed_in() else "Gemini CLI isn't signed in: run gemini and sign in with Google"
+            return i18n.L.text("llm_ready.gemini", "Gemini CLI isn't installed")
+        return None if signed_in() else i18n.L.text("llm_ready.gemini_login", "Gemini CLI isn't signed in")
 
     def policy(self) -> str:
         own = own_tools(getattr(self, "device", None))

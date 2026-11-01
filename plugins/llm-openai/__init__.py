@@ -240,7 +240,7 @@ class OpenAI(Chat):
     @classmethod
     def ready(cls):
         if not (os.environ.get("OPENAI_API_KEY") or keychain.get(KEYCHAIN, "openai")):
-            return "it needs its key: bin/anyassistant llm-key openai"
+            return i18n.L.text("llm_ready.openai", "Needs an API key")
         return None
 
     def _model(self):
@@ -268,7 +268,7 @@ class Ollama(Chat):
     @classmethod
     def ready(cls):
         if not cls.installed():
-            return "Ollama isn't running, or has no model (ollama pull …)"
+            return i18n.L.text("llm_ready.ollama", "Ollama isn't running or has no model")
         return None
 
     def _model(self):
@@ -313,7 +313,7 @@ class Hermes(Chat):
             urllib.request.urlopen(HERMES + "/health", timeout=1)
             return None
         except OSError:
-            return "Hermes's gateway isn't running"
+            return i18n.L.text("llm_ready.hermes", "Hermes's gateway isn't running")
 
     def _model(self):
         return self.model or "hermes-agent"

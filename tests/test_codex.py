@@ -169,7 +169,7 @@ def test_after_dying_the_next_question_starts_another(fake, es):
 
 
 def test_ready(fake, monkeypatch):
-    assert codex.Codex.ready() == "Codex isn't signed in: run codex login"
+    assert codex.Codex.ready() == "Codex isn't signed in"
     monkeypatch.setenv("FAKE_CODEX_SIGNED_IN", "1")
     assert codex.Codex.ready() is None
     monkeypatch.setenv("PATH", "/nonexistent")

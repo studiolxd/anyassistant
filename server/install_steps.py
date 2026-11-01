@@ -26,6 +26,11 @@ AGENT = os.path.expanduser(f"~/Library/LaunchAgents/{LABEL}.plist")
 UNIT = os.path.expanduser("~/.config/systemd/user/anyassistant.service")  # Linux
 
 
+def _t(key: str, default: str, **values) -> str:
+    """A text of the installer in the active language (locale «installer.<key>»), filled in."""
+    return i18n.L.text(f"installer.{key}", default).format(**values)
+
+
 # --- The computer ---
 
 @task("computer", "Device", order=0)
@@ -39,7 +44,7 @@ def computer(progress):
     if sys.platform != "darwin":
         raise RuntimeError("it runs on macOS, Linux or Windows")
     version = platform.mac_ver()[0]
-    note = "" if machine == "arm64" else " (Intel: speech recognition on MLX won't work)"
+    note = "" if machine == "arm64" else _t("intel", " (Intel: speech recognition on MLX won't work)")
     return f"macOS {version}, {machine}{note}"
 
 
@@ -59,13 +64,13 @@ def packages(progress):
         raise Skip("while developing, uv sync installs them all")
     system = [p.id for p in kernel.discover().values() if not p.yours and kernel.python_needs(p)
               and kernel.wanted(p.id) and not [w for w in kernel.unfit(p.id) if not w.startswith("not installed")]]
-    progress(None, "installing: " + (", ".join(system) or "only the core"))
+    progress(None, _t("installing", "Installing: {what}", what=", ".join(system) or _t("core", "only the core")))
     command = [_uv(), "sync", "--frozen", "--no-dev", *[a for p in system for a in ("--extra", p)]]
     subprocess.run(command, cwd=paths.APP, check=True, capture_output=True, text=True)
     yours = [r for p in kernel.discover().values() if p.yours and kernel.wanted(p.id)
              for r in kernel.python_needs(p)]
     if yours:
-        progress(None, "your plugins: " + ", ".join(yours))
+        progress(None, _t("your_plugins", "Your plugins: {what}", what=", ".join(yours)))
         subprocess.run([_uv(), "pip", "install", "--python", sys.executable, *yours], check=True,
                        capture_output=True, text=True)
     importlib.invalidate_caches()
@@ -122,7 +127,8 @@ def choose_llm(value):
 
     settings.save(llm=value)
     why = llm.ready(value)
-    return f"{value}" + (f" (not ready yet: {why})" if why else "")
+    shown = NAMES.get(value, value.capitalize())
+    return shown + (_t("not_ready", " (not ready yet: {why})", why=why) if why else "")
 
 
 # --- What is built or downloaded ---
@@ -135,14 +141,15 @@ def bridges(progress):
     for name, source in swift.BRIDGES.items():
         if not kernel.wanted(_plugin_of(source)):
             continue
-        progress(None, name)
+        shown = _t(f"bridge_{name.replace('-', '_')}", name)
+        progress(None, shown)
         try:
             swift.build(source, name)
-            built.append(name)
+            built.append(shown)
         except (OSError, RuntimeError) as e:
             raise RuntimeError(f"{name} couldn't be built (are Xcode's command line tools installed?): {e}")
     if not built:
-        raise Skip("none needed")
+        raise Skip(_t("none_needed", "None needed"))
     return ", ".join(built)
 
 
@@ -165,17 +172,17 @@ def models(progress):
     defaults = {o.name: o.default for o in options.OPTIONS}
     done = []
     engine = stt.create(chosen["stt"] or defaults["stt"], language=i18n.L.stt_language)
-    progress(None, f"speech recognition: {engine.name}")
+    progress(None, _t("stt", "Speech recognition: {name}", name=engine.name.capitalize()))
     engine.warm_up()
-    done.append(engine.name)
+    done.append(engine.name.capitalize())
     wake_name = chosen["wake"] or defaults["wake"]
     if wake_name != "none":
-        progress(None, f"wake word: {wake_name}")
+        progress(None, _t("wake", "Wake word: {name}", name=wake_name.capitalize()))
         wake.create(wake_name, word=None)
-        done.append(wake_name)
-    progress(None, "voice detection")
+        done.append(wake_name.capitalize())
+    progress(None, _t("vad", "Voice detection"))
     vad.create()
-    done.append("vad")
+    done.append(_t("vad", "Voice detection").lower())
     return ", ".join(done)
 
 

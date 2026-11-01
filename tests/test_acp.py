@@ -200,7 +200,7 @@ def test_ready(agent, monkeypatch, tmp_path):
     for key in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_USE_VERTEXAI"):
         monkeypatch.delenv(key, raising=False)
     if agent is gemini.Gemini:
-        assert agent.ready() == "Gemini CLI isn't signed in: run gemini and sign in with Google"
+        assert agent.ready() == "Gemini CLI isn't signed in"
         monkeypatch.setenv("GEMINI_API_KEY", "x")
     assert agent.ready() is None
     monkeypatch.setenv("PATH", "/nonexistent")

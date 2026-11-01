@@ -28,7 +28,7 @@ class Apple(LLM):
     @classmethod
     def ready(cls):
         major = int((platform.mac_ver()[0] or "0").split(".")[0])
-        return None if major >= 26 else "it needs macOS 26 with Apple Intelligence"
+        return None if major >= 26 else i18n.L.text("llm_ready.apple", "Requires macOS 26 and Apple Intelligence")
 
     def __init__(self, model=None, mcp=None):
         super().__init__(model or "SystemLanguageModel.default", mcp)
