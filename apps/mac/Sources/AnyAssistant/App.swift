@@ -87,6 +87,7 @@ final class Delegate: NSObject, NSApplicationDelegate {
             guard let window = note.object as? NSWindow, window.styleMask.contains(.titled) else { return }
             MainActor.assumeIsolated {
                 if NSApp.activationPolicy() != .regular { NSApp.setActivationPolicy(.regular) }
+                Client.shared.followFace()
             }
         }
         center.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { note in
@@ -95,6 +96,7 @@ final class Delegate: NSObject, NSApplicationDelegate {
                 MainActor.assumeIsolated {
                     let open = NSApp.windows.contains { $0 !== closing && $0.isVisible && $0.styleMask.contains(.titled) }
                     if !open { NSApp.setActivationPolicy(.accessory) }
+                    Client.shared.followFace(closing: closing)
                 }
             }
         }
@@ -158,7 +160,7 @@ struct MenuView: View {
     /// «Show Eva», or «Hide Eva» while its window is open.
     @ViewBuilder var faceItem: some View {
         if client.faceShown {
-            Button(String(format: T("Hide %@"), client.name)) { dismissWindow(id: "face") }
+            Button(String(format: T("Hide %@"), client.name)) { client.hideFace() }
         } else {
             Button(String(format: T("Show %@"), client.name)) { open("face") }
         }
