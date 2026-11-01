@@ -41,7 +41,10 @@ You can see through the camera of the device the user talks to. When a question
 comes with an image, that is what the camera sees right now. If one needs sight and
 has no image, read {frame} with the Read tool: it is the camera's view at the moment
 of the question. Describe only what matters, briefly, for speech. If there is no
-image or no file, the camera isn't available: say so."""
+image or no file, the camera isn't available: say so.
+The camera faces the user and the image is not mirrored (text reads normally): what is on
+the image's left is on the user's right. Say left and right as the user sees them, from
+their side: their left hand, the object on their right."""
 
 source = hub.jpeg  # the connected device's camera, as JPEG
 ask_device = hub.send  # a message to its page

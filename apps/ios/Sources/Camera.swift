@@ -69,6 +69,14 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
         video.setSampleBufferDelegate(self, queue: queue)
         if session.canAddOutput(video) { session.addOutput(video) }
         if session.canAddOutput(still) { session.addOutput(still) }
+        // What goes to the Mac is never mirrored (the LLM reads text in it; it is told its left
+        // is the user's right); only the preview on the screen is a mirror.
+        for output in [video, still] as [AVCaptureOutput] {
+            if let connection = output.connection(with: .video), connection.isVideoMirroringSupported {
+                connection.automaticallyAdjustsVideoMirroring = false
+                connection.isVideoMirrored = false
+            }
+        }
         session.commitConfiguration()
         configured = true
         return true
