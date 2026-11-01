@@ -517,7 +517,7 @@ understands). Starting and pairing aren't blocks: they always work.
   `.timers p.alarm::before { content: "⏰ "; }` (and `body[data-state=alarm] .status::before`
   while one rings). Android 4.4's font lacks some emoji (⏱).
 
-**The lab**: `http://<mac>:8080/lab?skin=mine` shows every state at once, with a
+**Seeing them**: the Mac app's «Skins…» (or `http://<mac>:8080/skins?skin=mine`) shows every state at once, with a
 simulated voice and timer, and reloads when you save.
 
 **By voice**: «crea una skin a partir del orbe y que piense en lila» — Jarvis copies
@@ -878,7 +878,7 @@ so they need no account or network; they run on a free port, next to a running J
 - `server/kernel.py`, `server/registry.py` — the core: plugins found, loaded, on or off; engines' registry.
 - `plugins/` — every plugin: engines (`stt-*`, `wake-*`, `llm-*`, `tts-*`, `vad-*`), skills (`skill-*`),
   `tools-system`, `plugin-manager`, and features: `pairing`, `confirmation` (the «yes»), `memory`, `eyes`,
-  `sounds`, `tap-to-wake`, `monitor` (`/monitor`), `lab` (the skins lab), `mcp-server` (`/mcp`)…
+  `sounds`, `tap-to-wake`, `monitor` (`/monitor`), `skins` (`/skins`: every state of a skin), `mcp-server` (`/mcp`)…
   `server/stt/`, `wake/`, `llm/`, `tts/`, `vad/` keep only what each kind is.
 - `server/text.py`, text utilities;
   `server/swift.py`, builds the plugins' Swift bridges.

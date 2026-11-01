@@ -44,7 +44,7 @@ function deviceSkin(name) {
 }
 (function () {
   var params = new URLSearchParams(location.search);
-  if (params.get('skin') && !params.has('demo')) deviceSkin(params.get('skin'));  // the lab's views don't
+  if (params.get('skin') && !params.has('demo')) deviceSkin(params.get('skin'));  // the skins page's views don't
 })();
 
 function text(key, values) {

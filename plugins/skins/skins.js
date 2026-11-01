@@ -1,4 +1,4 @@
-// The skins lab: every state of a skin at once (each view is the page in ?demo=<state>),
+// The skins: every state of a skin at once (each view is the page in ?demo=<state>),
 // reloading them when the skin's files change. Open it on the Mac while you design one.
 
 var STATES = ['asleep', 'awake', 'hearing', 'transcribing', 'thinking', 'looking', 'speaking', 'question', 'alarm', 'error'];
@@ -47,7 +47,7 @@ function show(data) {
   version = data.skin.version;
   var about = data.skins.filter(function (s) { return s.name === data.skin.name; })[0];
   document.getElementById('about').textContent = about ? about.description : '';
-  history.replaceState(null, '', '/lab?skin=' + encodeURIComponent(data.skin.name));
+  history.replaceState(null, '', '/skins?skin=' + encodeURIComponent(data.skin.name));
   views(data.skin.name);
 }
 

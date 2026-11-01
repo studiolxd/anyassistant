@@ -1,8 +1,0 @@
-{
-  "plugins": {
-    "lab": [
-      "Lab de skins",
-      "http://<mac>:8080/lab?skin=<nombre>: todos los estados de una skin a la vez, recargándose al cambiarla."
-    ]
-  }
-}

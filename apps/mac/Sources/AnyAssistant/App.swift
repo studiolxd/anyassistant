@@ -99,6 +99,9 @@ struct MenuView: View {
             }
             Button(T("Pair a device…")) { open("pair") }
             Button(T("Devices…")) { open("devices") }
+            Button(T("Skins…")) {  // every state of each skin, to see them (the plugin «skins»)
+                NSWorkspace.shared.open(URL(string: "http://127.0.0.1:\(server.port)/skins")!)
+            }
             Divider()
             if server.state == .stopped {
                 Button(T("Start")) { server.start() }

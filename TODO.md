@@ -2,9 +2,10 @@
 
 ## Lo siguiente
 
-- [ ] **La app de Android**: sin el flag de Chrome; encuentra el servidor con Bonjour
-  (`_anyassistant._tcp`) y se empareja con el QR de la app del Mac. Comprobar antes si
-  puede llegar a la tablet antigua (Android 4.4) o si esa se queda con la página en Chrome.
+Orden (1 nov): una conversación por dispositivo, la identificación del hablante y la app
+del Apple Watch.
+
+- [ ] **La app del Apple Watch**: hablarle desde la muñeca (más que la de Android).
 - [ ] **AnyAssistant para el Mac, lo siguiente**: su diseño e icono; el papel de cliente
   (hablarle desde el propio Mac; conectarse al servidor de otro Mac, encontrado con
   Bonjour); campos de ajustes como es debido para las opciones que son listas o JSON
@@ -20,11 +21,6 @@
   Un LLM por conversación, con su coste.
 - [ ] **Afinar quién contesta**: el margen (1,5 s) y la comparación por volumen, con más
   uso real (el log dice `heard it louder` / `not woken`).
-
-## Skins
-
-- [ ] **El lab como vista previa oficial de skins** (un plugin, o parte de la página):
-  ver y editar skins, no solo previsualizarlas. Su diseño, más adelante.
 
 ## Quién habla
 
@@ -52,8 +48,9 @@
   2. Órdenes rápidas sin LLM, con su API («enciende la luz», «sube la persiana», «pon
      la calefacción a 21»): en menos de un segundo, y aunque falle Claude.
   3. Avisos de Home Assistant («la lavadora ha terminado») dichos donde estés.
-- [ ] **Música, radio, podcasts**: solo reproduce su voz y sus sonidos; controlar
-  Spotify o Apple Music en el Mac.
+- [ ] **Música, radio, podcasts**: solo reproduce su voz y sus sonidos. Antes, valorar
+  opciones para que suene en el dispositivo donde la pides (no solo en el Mac: Spotify
+  Connect, AirPlay, por la página…).
 
 ## Calidad de la conversación
 
@@ -75,6 +72,8 @@
 
 ## Hecho
 
+- [x] **Skins para verlas** (el antiguo lab, ahora `skins`, `/skins`): todos los estados de
+  cada una, desde el menú de la app («Skins…»); solo para ver. Sin comprobador.
 - [x] **Toma la iniciativa** (1 nov): avisos de la agenda («Dentro de 10 minutos:
   dentista», `calendar-notices`) y el resumen de la mañana («buenos días» o al parar la
   primera alarma: la fecha y los festivos, el tiempo, la agenda y cuántos emails sin leer,
@@ -178,8 +177,9 @@
 
 ## Aplazado
 
-- **Apps nativas para iOS, Android TV, Windows** (Android primero, arriba; el papel de
-  cliente del Mac con la app del Mac).
+- **Apps nativas para Android, iOS, Android TV, Windows** (el Apple Watch antes; el papel
+  de cliente del Mac con la app del Mac). La de Android: sin el flag de Chrome, encuentra el
+  servidor con Bonjour y se empareja con el QR; comprobar si llega a la tablet antigua.
 - **Bilingüe a la vez**: contestar en el idioma en que se dice cada frase; cuando todo
   lo demás funcione.
 

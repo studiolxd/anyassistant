@@ -1,0 +1,8 @@
+{
+  "name": "Skins",
+  "description": "http://<mac>:8080/skins: every state of a skin at once, to see them and choose (the Mac app opens it).",
+  "kind": "feature",
+  "requires": [
+    "page"
+  ]
+}

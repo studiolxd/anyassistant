@@ -118,7 +118,7 @@ async def no_cache(request: web.Request, handler):
     # dead connection instead of opening a new one.
     response = await handler(request)
     response.headers["Cache-Control"] = "no-store"
-    if request.path in ("/", "/lab"):
+    if request.path in ("/", "/skins"):
         # Skins are someone else's HTML and CSS on a page with the microphone and the camera:
         # nothing from outside, and no scripts but Jarvis's own.
         response.headers["Content-Security-Policy"] = (

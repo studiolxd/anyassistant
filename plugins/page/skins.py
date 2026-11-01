@@ -341,7 +341,7 @@ def _tools():
             created = new(name, based_on)
         except ValueError as e:
             raise ToolError(str(e)) from None
-        return f"Created «{name}» from «{based_on}» in {created}. See it at /lab?skin={name}; set_skin to use it."
+        return f"Created «{name}» from «{based_on}» in {created}. See it at /skins?skin={name}; set_skin to use it."
 
     @tool("Read a skin's files (skin.json, skin.html, skin.css, locales/*.json) before changing it.")
     def get_skin(name: str) -> str:
