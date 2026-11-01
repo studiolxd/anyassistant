@@ -379,10 +379,11 @@ struct SetupView: View {
                 Text(T("Set it up step by step")).frame(maxWidth: 240)
             }
             .controlSize(.large)
+            Button(T("The server is on another Mac: use this one only to talk to it")) { setup.phase = .another }
+                .buttonStyle(.link).padding(.top, 4)
+            Spacer().frame(height: 6)
             Text(T("You can change everything later. The speech models download once (a few hundred MB)."))
                 .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            Button(T("The server is on another Mac: use this one only to talk to it")) { setup.phase = .another }
-                .buttonStyle(.link).font(.footnote)
         }
         .frame(maxWidth: .infinity)
     }
