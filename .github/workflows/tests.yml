@@ -1,0 +1,21 @@
+# The tests on Linux, Windows and macOS, on every push (free for a public repository).
+name: tests
+on:
+  push:
+  pull_request:
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run pytest -q
+        env:
+          PYTHONUTF8: "1"
