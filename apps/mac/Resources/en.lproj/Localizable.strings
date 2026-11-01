@@ -2,7 +2,7 @@
 
 "1. The certificate" = "1. The certificate";
 "2. The page" = "2. Connect";
-"A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "This Mac will be the server and a client: you can talk to the assistant from here or from any other device connected to it. If you already have a server, you can use this Mac as a client only.";
+"A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "Install the AnyAssistant server on this device, or connect to another server.";
 "An old device (it doesn't open .local names): use the address" = "An older device that can't open that address? Use the IP instead";
 "Another code" = "Get another code";
 "AnyAssistant needs it to work as usual." = "AnyAssistant needs it to work properly.";
