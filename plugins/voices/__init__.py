@@ -169,6 +169,21 @@ def judge(audio: np.ndarray, before: str | None) -> tuple[str | None, bool, str]
     return None, False, f"short and unclear (best {name}, {score:.2f})"
 
 
+def may_wake(audio: np.ndarray) -> bool:
+    """«Ey, Eva» said by whom: with «voice_check» all and someone known, only a voice that isn't
+    clearly a stranger's wakes it. Its name is short (under a second: its print says less), so it
+    only refuses a voice clearly unlike everyone known (below 60 % of «voice_match»); what is said
+    after it is checked as always."""
+    if checking() != "all":
+        return True
+    name, score = identify(audio)
+    least = (settings.get("voice_match") or 0.5) * 0.6
+    if score < least:
+        log.info("not woken: unknown voice (best %s, %.2f)", name, score)
+        return False
+    return True
+
+
 # --- In the assistant: every sentence (or only the «yes»), before it is handled ---
 
 def screen(assistant, text: str, timings: dict, audio, handle) -> bool:

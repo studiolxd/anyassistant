@@ -183,4 +183,5 @@ class WhisperWakeWord(WakeWord):
         # Dubious: the name not at the start, or in a long sentence («…se llama Jarvis, y…»).
         self.dubious = i >= 2 or len(found) > 12
         self.heard_sentence = audio if found[i + span :] else None
+        self.wake_audio = audio  # who said it (the plugin «voices»: only known voices wake it)
         return True

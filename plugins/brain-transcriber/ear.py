@@ -67,6 +67,9 @@ class Ear:
         self.end_of_sentence = silence  # seconds of silence that end a sentence
         self.follow_up = follow_up
         self.busy = busy or (lambda: False)  # thinking or ringing: not idle
+        # Whether this voice may wake it (its wake word's audio): the plugin «voices», through
+        # the assistant; None: anyone.
+        self.voice_may_wake = None
         # While the speaker is talking it doesn't listen, or it would hear itself;
         # only for the wake word, to be interrupted («Jarvis, stop»): on_interrupt(text)
         # says whether to stop (False: it was its own voice saying its name).
@@ -110,6 +113,11 @@ class Ear:
                         self.wake.heard_sentence = None
                         self.wake.reset()
                         return
+                    said = getattr(self.wake, "wake_audio", None)
+                    if self.voice_may_wake and said is not None and not self.voice_may_wake(said):
+                        self.wake.heard_sentence = None  # not a known voice: it doesn't wake
+                        self.wake.reset()
+                        return
                     self._wake_up()
                     if sentence is not None:
                         # "Hey Jarvis, what time is it?" in one go.
@@ -133,6 +141,10 @@ class Ear:
     def _interrupted(self):
         sentence = getattr(self.wake, "heard_sentence", None)
         self.wake.heard_sentence = None
+        said = getattr(self.wake, "wake_audio", None)
+        if self.voice_may_wake and said is not None and not self.voice_may_wake(said):
+            self.wake.reset()  # «Eva, para» by a voice that isn't known: it goes on
+            return
         if not self.on_interrupt(getattr(self.wake, "last_text", "")):
             return
         log.info("interrupted by voice")

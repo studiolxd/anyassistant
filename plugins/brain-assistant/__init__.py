@@ -163,6 +163,7 @@ class Assistant(Transcriber):
     def __init__(self, stt, wake, llm, tts, speaker, send, ear=None, guard=GUARD):
         super().__init__(stt, wake, speaker, send, ear, deaf=self._deaf, on_interrupt=self._interrupt,
                          busy=lambda: self.turn.locked() or bool(self.ringing))
+        self.ear.voice_may_wake = self._voice_may_wake
         self.doubt = False  # the first sentence after a dubious wake-up
         self.ringing = None  # the timer, alarm or reminder ringing now
         self.toning_until = 0.0  # while its tone plays it still listens: a tone isn't speech
@@ -199,6 +200,11 @@ class Assistant(Transcriber):
         if confirmation and confirmation.waiting():
             return "question"
         return self.ear.idle_state
+
+    def _voice_may_wake(self, audio) -> bool:
+        """Its name said by a voice that isn't clearly another's (the plugin «voices»)."""
+        voices = kernel.module("voices")
+        return voices.may_wake(audio) if voices else True
 
     def _deaf(self) -> bool:
         if self.ringing:  # its tone isn't speech: it listens for «stop», «snooze» through it

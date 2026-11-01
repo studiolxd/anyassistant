@@ -204,3 +204,17 @@ def test_an_old_single_print_is_kept(monkeypatch):
     assert voices.identify(SECOND)[0] == "Ana"
     voices.learn("Ana", [unit(0, 1)], device="iphone")
     assert voices._listing()["people"][0]["devices"] == 2  # the old one stays, the iPhone's added
+
+
+def test_only_a_known_voice_wakes_it(monkeypatch):
+    """«Ey, Eva» by a stranger doesn't wake it once someone is known (voice_check all)."""
+    assert voices.may_wake(SECOND)  # nobody known: anyone
+    voices.learn("Suvi", [unit(1, 0)], device="mac")
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 0.6))  # Suvi, quickly: 0.86
+    assert voices.may_wake(SECOND)
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 2))  # Suvi far away: ~0.45, not refused
+    assert voices.may_wake(SECOND)
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(0, 0, 1))  # a guest
+    assert not voices.may_wake(SECOND)
+    settings.active["voice_check"] = "actions"  # only the «yes» needs a known voice: anyone wakes it
+    assert voices.may_wake(SECOND)
