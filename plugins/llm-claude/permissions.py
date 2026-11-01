@@ -119,7 +119,7 @@ def load(root: Path | None = None, servers: Path | None = None, device: str | No
             allow.append(f"Bash({command}:*)")
             relative = str(command.relative_to(app))
             # The relative path («bin/gog») becomes the full one, unless it already is.
-            texts.append(re.sub(rf"(?<![\w/]){re.escape(relative)}", str(command), command_help(command)))
+            texts.append(re.sub(rf"(?<![\w/]){re.escape(relative)}", lambda _: str(command), command_help(command)))
         instructions = (
             "\nIn the terminal you may run only these commands, with their full path, "
             "one at a time and without pipes or redirections:\n\n" + "\n\n".join(texts)
@@ -130,7 +130,8 @@ def load(root: Path | None = None, servers: Path | None = None, device: str | No
         hooks = cache / "claude-settings.json"
         hooks.parent.mkdir(parents=True, exist_ok=True)
         # With Jarvis's own Python, not whatever python3 the system has.
-        hook = f"{shlex.quote(sys.executable)} {shlex.quote(str(app / 'bin' / 'anyassistant-confirm'))}"
+        # With / (Claude Code runs hooks with Git Bash on Windows).
+        hook = f"{shlex.quote(Path(sys.executable).as_posix())} {shlex.quote((app / 'bin' / 'anyassistant-confirm').as_posix())}"
         hooks.write_text(json.dumps({"hooks": {"PreToolUse": [{
             "matcher": "Bash|mcp__.*",
             "hooks": [{"type": "command", "command": hook}],

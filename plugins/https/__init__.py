@@ -89,7 +89,7 @@ def _authority():
         return x509.load_pem_x509_certificate(CA.read_bytes()), key
     FOLDER.mkdir(parents=True, exist_ok=True)
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)  # RSA: old devices too
-    subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, f"AnyAssistant on {socket.gethostname()}"),
+    subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, f"AnyAssistant on {socket.gethostname()}"[:64]),  # at most 64
                          x509.NameAttribute(NameOID.ORGANIZATION_NAME, "AnyAssistant")])
     now = datetime.datetime.now(datetime.timezone.utc)
     cert = (x509.CertificateBuilder().subject_name(subject).issuer_name(subject).public_key(key.public_key())
