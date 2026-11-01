@@ -45,14 +45,23 @@ struct MainView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
+        ZStack {
             Color.black.ignoresSafeArea()
             Face(link: link).ignoresSafeArea()
-            Button { settings = true } label: {
-                Image(systemName: "gearshape").font(.title3).foregroundColor(.white).padding(14)
-            }
-            .opacity(0.3)
-            .accessibilityLabel(T("Settings"))
+        }
+        // The gear: on its own layer above the web view (which otherwise takes the taps), with
+        // a finger-sized area to tap.
+        .overlay(alignment: .bottomTrailing) {
+            Image(systemName: "gearshape")
+                .font(.title3)
+                .foregroundColor(.white.opacity(0.35))
+                .frame(width: 56, height: 56)
+                .contentShape(Rectangle())
+                .onTapGesture { settings = true }
+                .accessibilityLabel(T("Settings"))
+                .accessibilityAddTraits(.isButton)
+                .padding(.trailing, 6)
+                .padding(.bottom, 6)
         }
         .statusBarHidden(true)
         .sheet(isPresented: $settings) { SettingsView(mac: mac, link: link) }
