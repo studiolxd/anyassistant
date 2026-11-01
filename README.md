@@ -43,6 +43,11 @@ fallback) or Whisper (`stt-faster-whisper`, CPU or an NVIDIA card), the voice Ko
 **Windows** for now runs from the project (`uv run server/main.py`); its app comes later. Apple's
 model is only on the Mac; the plan is in `TODO.md` («El servidor en Windows y Linux»).
 
+**Administering it** without the Mac app: the page `/admin` (pair a device with its QR, devices,
+settings, plugins, voices, mail, admins): from the computer itself, or from another one's browser
+with an admin code (`bin/anyassistant admin-code`, over SSH on a Linux with no screen; or the
+page's Admins). A device paired to talk can't administer.
+
 ```sh
 ~/Applications/AnyAssistant/bin/anyassistant update      # the new version from where it was
                                                           # installed from; packages, models; restarts
