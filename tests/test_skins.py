@@ -77,12 +77,11 @@ def test_files_only_from_inside_the_skin(mine):
     assert skins.asset("nope", "skin.css") is None
 
 
-def test_check_finds_what_the_tablet_lacks(mine):
-    (mine / "skin.css").write_text(".a { inset: 0; } .b { display: flex; gap: 4px; } .c:has(p) {} "
-                                   "@import url(https://fonts.example/x.css);")
+def test_what_is_wrong_in_a_skin(mine):
+    (mine / "skin.css").write_text("@import url(https://fonts.example/x.css);")
     (mine / "skin.html").write_text('<div data-block="faces" onclick="x()"></div>')
     problems = " ".join(skins.check(mine))
-    for words in ("inset", "gap", ":has", "outside resources", "unknown block «faces»", "onclick"):
+    for words in ("outside resources", "unknown block «faces»", "onclick"):
         assert words in problems, words
 
 
@@ -125,8 +124,9 @@ def test_jarvis_makes_a_skin_of_your_own(mine, monkeypatch):
     css = "body[data-look=\"thinking\"] .core { background: #ff00ff; }"
     assert tools.call("edit_skin", {"name": "lamp", "file": "skin.css", "content": css}).startswith("Saved.")
     assert (mine.parent / "lamp" / "skin.css").read_text() == css
-    answer = tools.call("edit_skin", {"name": "lamp", "file": "skin.css", "content": ".a { inset: 0; }"})
-    assert "inset" in answer  # the check, for it to fix
+    answer = tools.call("edit_skin", {"name": "lamp", "file": "skin.html", "content": '<p data-block="faces"></p>'})
+    assert "unknown block «faces»" in answer  # what is wrong, for it to fix
+    tools.call("edit_skin", {"name": "lamp", "file": "skin.html", "content": '<div data-block="face"></div>'})
     tools.call("edit_skin", {"name": "lamp", "file": "locales/es.json", "content": '{"ui": {"thinking": "Mmm"}}'})
     assert skins.for_page("lamp", "es")["ui"] == {"thinking": "Mmm"}
     tools.call("delete_skin", {"name": "lamp"})

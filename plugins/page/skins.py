@@ -18,7 +18,6 @@ styles them with CSS, from body[data-state] / [data-look] and live CSS variables
 attributes, nothing loaded from outside (and the page forbids it too): the page
 has the microphone and the camera.
 
-    bin/anyassistant skin check <folder>     problems for the tablet's old Chrome, and more
     bin/anyassistant skin new <name> [--from orb]
 """
 
@@ -200,18 +199,11 @@ def sound(name: str, kind: str) -> np.ndarray | None:
     return audio.wav(file)
 
 
-OLD_CHROME = [  # the tablet's Chrome 81 doesn't have these
-    (r"(^|[;{\s])inset\s*:", "«inset»: use top/right/bottom/left"),
-    (r"(^|[;{\s])(row-)?gap\s*:", "«gap» doesn't work with flex in Chrome 81: use margins"),
-    (r":has\(", "«:has()»"), (r":is\(", "«:is()»"), (r":where\(", "«:where()»"),
-    (r"@container", "container queries"), (r"aspect-ratio\s*:", "«aspect-ratio» (Chrome 88)"),
-    (r"@layer", "«@layer»"), (r"\bdvh\b|\bsvh\b|\blvh\b", "dvh/svh/lvh units"),
-    (r"color-mix\(", "«color-mix()»"), (r"(^|[^-])\bnesting\b|&\s*[.:#]", "CSS nesting"),
-]
 
 
 def check(path: Path) -> list[str]:
-    """What is wrong or won't work, in plain words; empty if it's fine."""
+    """What is wrong in a skin, in plain words (missing files, unknown blocks, what gets removed): for
+    the assistant when it edits one of yours; empty if it's fine."""
     problems = []
     for needed in ("skin.json", "skin.html", "skin.css"):
         if not (path / needed).exists():
@@ -232,9 +224,6 @@ def check(path: Path) -> list[str]:
     if not blocks & {"status", "face"}:
         problems.append("skin.html: neither «face» nor «status»: nothing would show what it is doing")
     css = re.sub(r"/\*.*?\*/", "", (path / "skin.css").read_text(), flags=re.S)  # not in comments
-    for pattern, why in OLD_CHROME:
-        if re.search(pattern, css, re.M):
-            problems.append(f"skin.css: {why}")
     if re.search(r"url\(\s*['\"]?(https?:|//)", css) or re.search(r"@import", css):
         problems.append("skin.css: outside resources (url(http…), @import) are blocked: put them in the skin's folder")
     for code_file in (path / "locales").glob("*.json") if (path / "locales").is_dir() else []:
@@ -368,8 +357,7 @@ def _tools():
           "blocks Jarvis fills (data-block: face, status, heard, answer, captions, clock, time, date, timers, photo, "
           "camera, stats); skin.css styles them by state with body[data-look] (asleep, awake, hearing, thinking, "
           "looking, speaking, question, alarm, error), body.blink and, on the face block, the live variables "
-          "--voice, --speech, --bar-1…5 (0–1). It runs on an old Chrome (81): no inset, no flex gap, no :has(). "
-          "It answers what the check finds.")
+          "--voice, --speech, --bar-1…5 (0–1). It answers what is wrong in it, if anything.")
     def edit_skin(name: str, file: str, content: str) -> str:
         import settings
 
@@ -382,7 +370,7 @@ def _tools():
             connected.send({"type": "config"})  # the one on screen: it changes now
         if problems:
             return "Saved, but: " + "; ".join(problems)
-        return "Saved. The check finds nothing wrong."
+        return "Saved. Nothing wrong in it."
 
     @tool("Delete one of the user's skins (never a system one).", needs_yes=True)
     def delete_skin(name: str) -> str:
@@ -407,10 +395,6 @@ if __name__ == "__main__":
 
     settings.active = settings.load()  # skins_dir
     args = sys.argv[1:]
-    if args[:1] == ["check"] and len(args) == 2:
-        found = check(Path(args[1]))
-        print("\n".join(f"✗ {p}" for p in found) or "✓ The skin looks fine.")
-        sys.exit(1 if found else 0)
     if args[:1] == ["new"] and len(args) >= 2:
         source = args[args.index("--from") + 1] if "--from" in args else DEFAULT
         print(f"Created {new(args[1], source)}: edit it and choose it with \"skin\": \"{args[1]}\".")

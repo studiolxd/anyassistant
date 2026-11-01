@@ -23,10 +23,6 @@
 
 ## Skins
 
-- [ ] **Un mejor comprobador de skins**: hoy `skin check` comprueba en concreto el
-  Chrome 81 de la tablet antigua. Comprobar contra los navegadores/dispositivos que
-  soportamos (una lista de objetivos, p. ej. «Chrome ≥ 81, Android WebView ≥ …»), o
-  quitarlo.
 - [ ] **El lab como vista previa oficial de skins** (un plugin, o parte de la página):
   ver y editar skins, no solo previsualizarlas. Su diseño, más adelante.
 
@@ -147,7 +143,7 @@
   necesita en plugin.json.
 - [x] **Skins**: la pantalla como HTML + CSS que cualquiera puede hacer (bloques,
   estados, variables en vivo, opciones, textos, sonidos); ojos, orbe, minimal y mesilla;
-  un lab y un comprobador.
+  un lab.
 - [x] **No toda frase es para él**: una ventana de `follow_up` (20 s) en lugar de 2
   minutos escuchando, e `ignore_others`: el LLM contesta `<silence>` a lo que no es
   para él.

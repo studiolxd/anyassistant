@@ -8,7 +8,7 @@
 #   bin/anyassistant log                      (the live log; Ctrl+C to leave)
 #   bin/anyassistant pair                     a code to pair a device (with "pairing": true)
 #   bin/anyassistant unpair                   forgets every paired device
-#   bin/anyassistant skin list|check <folder>|new <name> [--from orb]   the screen's skins
+#   bin/anyassistant skin list|new <name> [--from orb]   the screen's skins
 #   bin/anyassistant plugins [requirements [--all]]   which are on, what they lack; their Python packages
 #   bin/anyassistant mail add|list|test|remove   mail accounts besides Gmail (IMAP and SMTP)
 #   bin/anyassistant setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)

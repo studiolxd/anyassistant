@@ -518,9 +518,7 @@ understands). Starting and pairing aren't blocks: they always work.
   while one rings). Android 4.4's font lacks some emoji (⏱).
 
 **The lab**: `http://<mac>:8080/lab?skin=mine` shows every state at once, with a
-simulated voice and timer, and reloads when you save. **The check**: `bin/anyassistant
-skin check skins.local/mine` points out what the tablet's Chrome 81 lacks
-(`inset`, flex `gap`, `:has()`…), unknown blocks, scripts, outside resources.
+simulated voice and timer, and reloads when you save.
 
 **By voice**: «crea una skin a partir del orbe y que piense en lila» — Jarvis copies
 it into your folder, reads it and changes what you asked (`create_skin`,
