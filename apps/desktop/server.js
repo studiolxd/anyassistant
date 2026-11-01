@@ -54,6 +54,11 @@ class Server extends EventEmitter {
       : process.platform === 'darwin' ? path.join(home, 'Library', 'Caches', 'AnyAssistant')
       : path.join(process.env.XDG_CACHE_HOME || path.join(home, '.cache'), 'AnyAssistant'));
     this.log = path.join(this.cache, 'anyassistant.log');
+    // An installed copy says where its data is (as install.sh does): bin/anyassistant reads it too.
+    if (process.env.ANYASSISTANT_PROGRAM === this.program && !exists(path.join(this.program, 'install.env'))) {
+      fs.writeFileSync(path.join(this.program, 'install.env'),
+        `# Where this copy keeps your data (the AnyAssistant app wrote it).\nANYASSISTANT_HOME="${this.data}"\nANYASSISTANT_CACHE="${this.cache}"\n`);
+    }
     this.unit = path.join(home, '.config', 'systemd', 'user', 'anyassistant.service');
   }
 
@@ -102,6 +107,8 @@ class Server extends EventEmitter {
   }
 
   python() {
+    // The app's own uv (packaged): its environment kept up to date with the program (uv.lock) each start.
+    if (process.env.UV) return [process.env.UV, ['run', '--frozen', '--project', this.program, 'python', 'server/main.py']];
     const venv = path.join(this.program, '.venv', WINDOWS ? 'Scripts' : 'bin', WINDOWS ? 'python.exe' : 'python');
     if (exists(venv) && exists(path.join(this.program, 'install.env'))) return [venv, ['server/main.py']];
     // Developing (or not prepared yet): uv makes the environment and runs it.

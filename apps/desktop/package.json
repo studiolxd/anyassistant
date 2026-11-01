@@ -7,9 +7,74 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "node scripts/prepare.js && electron-builder --publish never"
   },
   "devDependencies": {
-    "electron": "44.10.1"
+    "electron": "44.10.1",
+    "electron-builder": "26.18.0"
+  },
+  "author": {
+    "name": "Studio LXD",
+    "email": "hello@studiolxd.com"
+  },
+  "homepage": "https://github.com/studiolxd/anyassistant",
+  "build": {
+    "appId": "com.anyassistant.desktop",
+    "productName": "AnyAssistant",
+    "artifactName": "AnyAssistant-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "icons/**"
+    ],
+    "extraResources": [
+      {
+        "from": "build/program",
+        "to": "program"
+      },
+      {
+        "from": "build/uv",
+        "to": "uv"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "icons/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "runAfterFinish": true,
+      "shortcutName": "AnyAssistant"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "icons/icon.png",
+      "category": "Utility",
+      "synopsis": "A voice assistant for the home",
+      "maintainer": "Studio LXD <hello@studiolxd.com>"
+    },
+    "deb": {
+      "depends": [
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libasound2t64 | libasound2"
+      ]
+    }
+  },
+  "allowScripts": {
+    "electron-winstaller": false
   }
 }

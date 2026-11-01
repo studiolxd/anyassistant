@@ -1,0 +1,49 @@
+# The Windows and Linux app's packages (apps/desktop): the installer (.exe, unsigned) and the
+# AppImage and .deb. By hand (Actions → packages → Run), or with a tag (git tag v0.1.0 && git push
+# --tags): then they also become a GitHub release.
+name: packages
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # VERSION: the number of commits
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - run: npm ci --no-audit --no-fund
+      - run: npm run dist
+      - uses: actions/upload-artifact@v5
+        with:
+          name: anyassistant-${{ matrix.os }}
+          path: |
+            apps/desktop/dist/*.exe
+            apps/desktop/dist/*.AppImage
+            apps/desktop/dist/*.deb
+          if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: packages
+          merge-multiple: true
+      - run: gh release create "$GITHUB_REF_NAME" packages/* --repo "$GITHUB_REPOSITORY" --title "AnyAssistant $GITHUB_REF_NAME" --notes "Windows (unsigned: «More info» → «Run anyway» the first time) and Linux (AppImage, .deb). The Mac app and the phone apps are separate."
+        env:
+          GH_TOKEN: ${{ github.token }}
