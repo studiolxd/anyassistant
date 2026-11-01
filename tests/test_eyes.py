@@ -92,3 +92,31 @@ def test_every_llm_that_sees_knows_its_left_is_the_users_right(monkeypatch):
     monkeypatch.setattr(eyes, "enabled", lambda: True)
     assert "user's right" in eyes.instructions() and str(eyes.FRAME) in eyes.instructions()  # Claude
     assert "user's right" in eyes.seeing() and str(eyes.FRAME) not in eyes.seeing()  # Hermes: no Read tool
+
+
+def test_claudes_read_of_a_missing_frame_asks_for_a_photo_first(tmp_path, monkeypatch):
+    """The Mac sends no frames: when Claude opens the camera's file, the hook asks for a photo."""
+    import io
+    import sys
+
+    import paths
+    from conftest import load_script
+
+    look = load_script("anyassistant-look")
+    monkeypatch.setattr(paths, "EYES", tmp_path)
+    asked = []
+    monkeypatch.setattr(look.urllib.request, "urlopen", lambda request, timeout: asked.append(
+        (request.full_url, request.data)) or io.BytesIO(b"{}"))
+    monkeypatch.setattr(sys, "argv", ["anyassistant-look", "mac1"])
+
+    def read(path):
+        monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"tool_name": "Read", "tool_input": {"file_path": path}})))
+        look.main()
+
+    read("/Users/me/notes.txt")  # another file: nothing
+    assert asked == []
+    read(str(tmp_path / "now.jpg"))  # the camera's, missing: a photo from that device
+    assert asked[0][0].endswith("/eyes/now") and json.loads(asked[0][1]) == {"device": "mac1"}
+    (tmp_path / "now.jpg").write_bytes(b"jpeg")
+    read(str(tmp_path / "now.jpg"))  # already there (frames come): nothing
+    assert len(asked) == 1

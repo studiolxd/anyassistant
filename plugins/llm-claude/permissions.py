@@ -141,18 +141,22 @@ def load(root: Path | None = None, servers: Path | None = None, device: str | No
         )
     args += ["--tools", ",".join(tools)]
 
+    # Its hooks, run before a tool: with Jarvis's own Python, not whatever python3 the system has;
+    # with / (Claude Code runs hooks with Git Bash on Windows).
+    def hook(script: str, *more: str) -> str:
+        return " ".join(shlex.quote(p) for p in (Path(sys.executable).as_posix(), (app / "bin" / script).as_posix(), *more))
+
+    before = []
     if allow and config.get("confirm", True) and kernel.enabled("confirmation"):
-        hooks = cache / "claude-settings.json"
-        hooks.parent.mkdir(parents=True, exist_ok=True)
-        # With Jarvis's own Python, not whatever python3 the system has.
-        # With / (Claude Code runs hooks with Git Bash on Windows).
-        hook = f"{shlex.quote(Path(sys.executable).as_posix())} {shlex.quote((app / 'bin' / 'anyassistant-confirm').as_posix())}"
-        hooks.write_text(json.dumps({"hooks": {"PreToolUse": [{
-            "matcher": "Bash|mcp__.*",
-            "hooks": [{"type": "command", "command": hook}],
-        }]}}))
-        args += ["--settings", str(hooks)]
+        before.append({"matcher": "Bash|mcp__.*", "hooks": [{"type": "command", "command": hook("anyassistant-confirm")}]})
         log.info("actions that write ask for confirmation")
+    if eyes:  # the camera's image when Claude opens it, though no frames come (the Mac's camera is off)
+        before.append({"matcher": "Read", "hooks": [{"type": "command", "command": hook("anyassistant-look", device or "")}]})
+    if before:
+        hooks = cache / (f"claude-settings-{device}.json" if device else "claude-settings.json")  # one per device
+        hooks.parent.mkdir(parents=True, exist_ok=True)
+        hooks.write_text(json.dumps({"hooks": {"PreToolUse": before}}))
+        args += ["--settings", str(hooks)]
     if allow:
         args += ["--allowedTools", *allow]
     if deny:

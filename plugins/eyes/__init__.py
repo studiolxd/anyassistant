@@ -165,3 +165,24 @@ async def _photo(request):
                     help="Only when you ask («what do you see?», «read this»); nothing leaves the Mac otherwise.")
 def _install(value):
     settings.save(plugins={**(settings.load().get("plugins") or {}), "eyes": bool(value)})
+
+
+@web.route("POST", "/eyes/now")
+async def _now(request):
+    """For Claude's Read hook (bin/anyassistant-look): a photo from that device into FRAME, now.
+    Only from this computer (the hook runs here)."""
+    if request.remote not in web.LOCAL:
+        return http.json_response({}, status=403)
+    data = await request.json()
+    session = hub.by_device(str(data.get("device") or "")) or hub.current()
+    if session is None:
+        return http.json_response({"photo": False})
+    token = hub.here.set(session)  # the photo is that device's
+    try:
+        if getattr(session, "brain", None) and hasattr(session.brain, "_state"):
+            session.brain._state("looking")
+        image = await photo()
+    finally:
+        hub.here.reset(token)
+    log.info("a photo for Claude to look at: %s", "yes" if image else "none came")
+    return http.json_response({"photo": bool(image)})
