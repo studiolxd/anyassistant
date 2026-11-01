@@ -8,7 +8,7 @@ import CoreImage
 import UIKit
 
 final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCapturePhotoCaptureDelegate {
-    private let session = AVCaptureSession()
+    let session = AVCaptureSession()
     private let video = AVCaptureVideoDataOutput()
     private let still = AVCapturePhotoOutput()
     private let queue = DispatchQueue(label: "camera")
@@ -101,5 +101,26 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         let done = photos.removeValue(forKey: photo.resolvedSettings.uniqueID)
         done?(photo.fileDataRepresentation() ?? Data())
+    }
+}
+
+/// The camera live, for «muestra la cámara» (a mirror: the front camera as you see yourself).
+final class PreviewView: UIView {
+    override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
+    var preview: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
+
+    func orient() {
+        guard let connection = preview.connection, connection.isVideoOrientationSupported else { return }
+        switch Camera.interface {
+        case .landscapeLeft: connection.videoOrientation = .landscapeLeft
+        case .landscapeRight: connection.videoOrientation = .landscapeRight
+        case .portraitUpsideDown: connection.videoOrientation = .portraitUpsideDown
+        default: connection.videoOrientation = .portrait
+        }
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        orient()
     }
 }

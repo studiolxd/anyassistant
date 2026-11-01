@@ -17,6 +17,8 @@ final class Link: NSObject, ObservableObject {
     var inFront = true  // the app is on screen (the camera only works then)
     weak var web: WKWebView?
     @Published private(set) var state = State.connecting
+    /// «Muestra la cámara»: where the face's camera block is (the app draws the camera there).
+    @Published private(set) var preview: (frame: CGRect, radius: CGFloat)?
 
     private var socket: URLSessionWebSocketTask?
     private var wanted = false
@@ -169,8 +171,23 @@ final class Link: NSObject, ObservableObject {
 
     // MARK: The camera
 
-    /// Awake, it looks (a frame a second); asleep, the camera is off.
+    private func showCamera(_ message: [String: Any]) {
+        func number(_ key: String) -> CGFloat { CGFloat((message[key] as? NSNumber)?.doubleValue ?? 0) }
+        if message["on"] as? Bool == true, inFront {
+            let border = number("border")
+            preview = (CGRect(x: number("x") + border, y: number("y") + border,
+                              width: number("width") - 2 * border, height: number("height") - 2 * border),
+                       max(0, number("radius") - border))
+            if !camera.running { camera.start() }
+        } else {
+            preview = nil
+            look(shown["state"]?["state"] as? String ?? "asleep")
+        }
+    }
+
+    /// Awake, it looks (a frame a second); asleep, the camera is off (unless it is being shown).
     private func look(_ state: String) {
+        if preview != nil, inFront { return }
         if eyes, inFront, state != "asleep", state != "error" {
             if !camera.running { camera.start() }
         } else if camera.running {
@@ -180,6 +197,7 @@ final class Link: NSObject, ObservableObject {
 
     func cameraAllowed(_ front: Bool) {
         inFront = front
+        if !front { preview = nil }
         look(shown["state"]?["state"] as? String ?? "asleep")
     }
 
@@ -251,6 +269,8 @@ final class Link: NSObject, ObservableObject {
         if message["type"] as? String == "ready" {
             pageReady = true
             showAgain()
+        } else if message["type"] as? String == "camera" {
+            showCamera(message)
         } else {
             if message["type"] as? String == "tap" { audio.hush() }  // quiet at once; the Mac stops too
             send(message)  // tap, skin, ping

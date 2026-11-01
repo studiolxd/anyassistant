@@ -359,6 +359,11 @@ function message(m) {
 // Also hidden when it goes to sleep.
 function showCamera(on) {
   var box = Skin.block('camera');
+  if (app && box) {  // the app has the camera: it draws it over the block, where the skin puts it
+    box.hidden = !on;
+    tellCamera();
+    return;
+  }
   var video = box.querySelector('video');
   if (on && media && media.getVideoTracks().length) {
     video.srcObject = media;
@@ -368,6 +373,18 @@ function showCamera(on) {
     video.srcObject = null;
   }
 }
+
+// Where the camera block is (in the app, which draws the camera over it), again if it moves.
+function tellCamera() {
+  var box = Skin.block('camera');
+  if (!app || !box) return;
+  if (box.hidden) return app.postMessage({ type: 'camera', on: false });
+  var r = box.getBoundingClientRect();
+  var style = getComputedStyle(box);
+  app.postMessage({ type: 'camera', on: true, x: r.left, y: r.top, width: r.width, height: r.height,
+                    radius: parseFloat(style.borderTopLeftRadius) || 0, border: parseFloat(style.borderTopWidth) || 0 });
+}
+window.addEventListener('resize', function () { setTimeout(tellCamera, 300); });
 
 // «Read this»: a photo at the camera's full resolution (the video may be 320×240).
 // ImageCapture where it works; else the camera at its largest size for a moment

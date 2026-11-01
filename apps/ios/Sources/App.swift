@@ -45,9 +45,17 @@ struct MainView: View {
     }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topLeading) {
             Color.black.ignoresSafeArea()
             Face(link: link).ignoresSafeArea()
+            if let preview = link.preview {  // over the face's camera block, its shape
+                CameraPreview(camera: link.camera)
+                    .frame(width: preview.frame.width, height: preview.frame.height)
+                    .clipShape(RoundedRectangle(cornerRadius: preview.radius))
+                    .offset(x: preview.frame.minX, y: preview.frame.minY)
+                    .allowsHitTesting(false)
+                    .ignoresSafeArea()
+            }
         }
         // The gear: on its own layer above the web view (which otherwise takes the taps), with
         // a finger-sized area to tap.
@@ -149,4 +157,17 @@ struct Orientation: View {
         let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
         Camera.interface = scene?.interfaceOrientation ?? .portrait
     }
+}
+
+struct CameraPreview: UIViewRepresentable {
+    let camera: Camera
+
+    func makeUIView(context: Context) -> PreviewView {
+        let view = PreviewView()
+        view.preview.session = camera.session
+        view.preview.videoGravity = .resizeAspectFill
+        return view
+    }
+
+    func updateUIView(_ view: PreviewView, context: Context) { view.orient() }
 }
