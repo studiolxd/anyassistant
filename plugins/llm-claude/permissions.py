@@ -132,7 +132,7 @@ def load(root: Path | None = None, servers: Path | None = None, device: str | No
                 log.warning("permissions.json allows %s, which doesn't exist", command)
                 continue
             allow.append(f"Bash({command}:*)")
-            relative = str(command.relative_to(app))
+            relative = command.relative_to(app).as_posix()  # «bin/gog», as the help says it, on Windows too
             # The relative path («bin/gog») becomes the full one, unless it already is.
             texts.append(re.sub(rf"(?<![\w/]){re.escape(relative)}", lambda _: str(command), command_help(command)))
         instructions = (
