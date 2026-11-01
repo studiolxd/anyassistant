@@ -44,6 +44,9 @@ jobs:
         with:
           path: packages
           merge-multiple: true
-      - run: gh release create "$GITHUB_REF_NAME" packages/* --repo "$GITHUB_REPOSITORY" --title "AnyAssistant $GITHUB_REF_NAME" --notes "Windows (unsigned: «More info» → «Run anyway» the first time) and Linux (AppImage, .deb). The Mac app and the phone apps are separate."
+      - run: |
+          gh release create "$GITHUB_REF_NAME" packages/* --repo "$GITHUB_REPOSITORY" \
+            --title "AnyAssistant $GITHUB_REF_NAME" \
+            --notes "Windows (unsigned: «More info» → «Run anyway» the first time) and Linux (AppImage, .deb). The Mac app and the phone apps are separate."
         env:
           GH_TOKEN: ${{ github.token }}
