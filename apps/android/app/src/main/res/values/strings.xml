@@ -30,4 +30,12 @@
     <string name="timer">Timer</string>
     <string name="stop">Stop</string>
     <string name="cancel">Cancel</string>
+    <string name="choose_server">Choose your server</string>
+    <string name="looking_for_servers">Looking for servers on this network…</string>
+    <string name="servers_here">AnyAssistant running on a computer of this network shows up here.</string>
+    <string name="type_host">Type its host</string>
+    <string name="server">Server</string>
+    <string name="port">Port</string>
+    <string name="next">Continue</string>
+    <string name="back">Back</string>
 </resources>

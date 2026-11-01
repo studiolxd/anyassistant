@@ -25,3 +25,9 @@
 "Cancel" = "Cancel";
 "Host" = "Host";
 "anyassistant.local or 192.168.1.10" = "anyassistant.local or 192.168.1.10";
+"Looking for servers on this network…" = "Looking for servers on this network…";
+"Choose your server" = "Choose your server";
+"AnyAssistant running on a computer of this network shows up here." = "AnyAssistant running on a computer of this network shows up here.";
+"Type its host" = "Type its host";
+"Continue" = "Continue";
+"Back" = "Back";

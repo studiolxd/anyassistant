@@ -78,6 +78,12 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
 
     enum Failure: Error { case unreachable, wrongCode, refused(String) }
 
+    /// Whether the server at its host asks for a code (nil: it doesn't answer).
+    func needsCode() async -> Bool? {
+        guard let (_, status) = await reachable({ URL(string: "http://\($0):\(self.port)")! }) else { return nil }
+        return status == 403
+    }
+
     /// Pairs with the code (if the Mac asks for one) and learns its HTTPS authority.
     func pair(code: String) async throws {
         guard let (name, status) = await reachable({ URL(string: "http://\($0):\(self.port)")! }) else {
@@ -253,3 +259,44 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         }
     }
 }
+
+#if !os(watchOS)
+/// The servers announcing themselves on this network (Bonjour «_anyassistant._tcp»), as they come
+/// and go: for the first pairing step.
+@MainActor
+final class ServerBrowser: ObservableObject {
+    struct Found: Identifiable, Equatable {
+        let id: String  // its announcement's name
+        let assistant: String  // «Eva»
+        let computer: String  // «MacBook-Air-de-Suvi»
+        let address: String
+        let port: Int
+        let pairing: Bool  // it asks for a code
+    }
+
+    @Published private(set) var servers: [Found] = []
+    private var browser: NWBrowser?
+
+    func start() {
+        guard browser == nil else { return }
+        let browser = NWBrowser(for: .bonjourWithTXTRecord(type: "_anyassistant._tcp", domain: nil), using: .tcp)
+        browser.browseResultsChangedHandler = { [weak self] results, _ in
+            let found: [Found] = results.compactMap { result in
+                guard case .service(let name, _, _, _) = result.endpoint, case .bonjour(let record) = result.metadata,
+                      let address = record["address"], !address.isEmpty else { return nil }
+                return Found(id: name, assistant: record["name"] ?? "AnyAssistant",
+                             computer: record["computer"] ?? name.replacingOccurrences(of: "AnyAssistant on ", with: ""),
+                             address: address, port: Int(record["port"] ?? "") ?? 8080, pairing: record["pairing"] != "0")
+            }
+            Task { @MainActor in self?.servers = found.sorted { $0.computer < $1.computer } }
+        }
+        browser.start(queue: .main)
+        self.browser = browser
+    }
+
+    func stop() {
+        browser?.cancel()
+        browser = nil
+    }
+}
+#endif

@@ -177,6 +177,13 @@ class Mac(private val context: Context) {
     // --- Pairing ---
 
     /** Pairs with the code (if the Mac asks for one) and learns its HTTPS authority. */
+    /** Whether the server at its host asks for a code (null: it doesn't answer). */
+    suspend fun needsCode(): Boolean? = withContext(Dispatchers.IO) {
+        runCatching {
+            plainClient(8).newCall(Request.Builder().url("http://$host:$port/status").build()).execute().use { it.code == 403 }
+        }.getOrNull()
+    }
+
     suspend fun pair(code: String) = withContext(Dispatchers.IO) {
         val names = linkedSetOf<String>()
         if (host.isNotEmpty()) names += host
@@ -217,5 +224,61 @@ class Mac(private val context: Context) {
             }
         }
         paired = true
+    }
+}
+
+/** The servers announcing themselves on this network (Bonjour «_anyassistant._tcp»), as they come
+ *  and go: for the first pairing step. Android resolves one at a time: they queue. */
+class Servers(context: Context) {
+    data class Found(val id: String, val assistant: String, val computer: String, val address: String,
+                     val port: Int, val pairing: Boolean)
+
+    val found = androidx.compose.runtime.mutableStateListOf<Found>()
+    private val nsd = context.getSystemService(Context.NSD_SERVICE) as NsdManager
+    private val waiting = ArrayDeque<NsdServiceInfo>()
+    private var resolving = false
+    private var listener: NsdManager.DiscoveryListener? = null
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
+
+    fun start() {
+        if (listener != null) return
+        val made = object : NsdManager.DiscoveryListener {
+            override fun onServiceFound(info: NsdServiceInfo) = main.post { waiting.add(info); next() }.let {}
+            override fun onServiceLost(info: NsdServiceInfo) = main.post { found.removeAll { it.id == info.serviceName } }.let {}
+            override fun onDiscoveryStarted(type: String) {}
+            override fun onDiscoveryStopped(type: String) {}
+            override fun onStartDiscoveryFailed(type: String, code: Int) {}
+            override fun onStopDiscoveryFailed(type: String, code: Int) {}
+        }
+        listener = made
+        nsd.discoverServices("_anyassistant._tcp", NsdManager.PROTOCOL_DNS_SD, made)
+    }
+
+    fun stop() {
+        listener?.let { runCatching { nsd.stopServiceDiscovery(it) } }
+        listener = null
+    }
+
+    private fun next() {
+        if (resolving) return
+        val info = waiting.removeFirstOrNull() ?: return
+        resolving = true
+        @Suppress("DEPRECATION")
+        nsd.resolveService(info, object : NsdManager.ResolveListener {
+            override fun onResolveFailed(info: NsdServiceInfo, code: Int) = main.post { resolving = false; next() }.let {}
+            override fun onServiceResolved(info: NsdServiceInfo) = main.post {
+                val text = { key: String -> info.attributes[key]?.let { String(it) } }
+                val address = text("address") ?: (if (Build.VERSION.SDK_INT >= 34) info.hostAddresses.firstOrNull() else info.host)
+                    ?.hostAddress?.takeIf { !it.contains(":") }
+                if (address != null) {
+                    found.removeAll { it.id == info.serviceName }
+                    found.add(Found(info.serviceName, text("name") ?: "AnyAssistant",
+                        text("computer") ?: info.serviceName.removePrefix("AnyAssistant on "), address,
+                        text("port")?.toIntOrNull() ?: info.port, text("pairing") != "0"))
+                }
+                resolving = false
+                next()
+            }.let {}
+        })
     }
 }

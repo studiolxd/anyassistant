@@ -25,3 +25,9 @@
 "Cancel" = "Cancelar";
 "Host" = "Host";
 "anyassistant.local or 192.168.1.10" = "anyassistant.local o 192.168.1.10";
+"Looking for servers on this network…" = "Buscando servidores en esta red…";
+"Choose your server" = "Elige tu servidor";
+"AnyAssistant running on a computer of this network shows up here." = "Aquí aparece AnyAssistant si está en marcha en un ordenador de esta red.";
+"Type its host" = "Escribir el host a mano";
+"Continue" = "Continuar";
+"Back" = "Atrás";

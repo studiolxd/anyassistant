@@ -29,4 +29,12 @@
     <string name="timer">Temporizador</string>
     <string name="stop">Parar</string>
     <string name="cancel">Cancelar</string>
+    <string name="choose_server">Elige tu servidor</string>
+    <string name="looking_for_servers">Buscando servidores en esta red…</string>
+    <string name="servers_here">Aquí aparece AnyAssistant si está en marcha en un ordenador de esta red.</string>
+    <string name="type_host">Escribir el host a mano</string>
+    <string name="server">Servidor</string>
+    <string name="port">Puerto</string>
+    <string name="next">Continuar</string>
+    <string name="back">Atrás</string>
 </resources>

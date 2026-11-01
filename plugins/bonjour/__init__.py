@@ -27,7 +27,8 @@ SERVICE = "_anyassistant._tcp"
 
 def record() -> list[str]:
     """The TXT record: what an app wants to know before connecting."""
-    found = [f"name={settings.get('name') or 'Jarvis'}", f"pairing={1 if kernel.enabled('pairing') else 0}"]
+    found = [f"name={settings.get('name') or 'Jarvis'}", f"pairing={1 if kernel.enabled('pairing') else 0}",
+             f"port={settings.get('port') or 8080}", f"computer={socket.gethostname().split('.')[0]}"]
     if kernel.enabled("https"):
         found.append(f"https={settings.get('https_port') or 443}")
     ip = address()
