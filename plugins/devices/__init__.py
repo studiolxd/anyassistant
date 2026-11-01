@@ -46,7 +46,7 @@ def _save(devices: dict):
 def kind(agent: str) -> str:
     """What a browser's User-Agent says the device is."""
     for pattern, name in ((r"Watch", "Apple Watch"), (r"iPad", "iPad"), (r"iPhone", "iPhone"), (r"Android.*Mobile", "Android phone"),
-                          (r"Android", "Android tablet"), (r"Macintosh|AnyAssistant Mac", "Mac"), (r"Windows", "PC")):
+                          (r"Android", "Android tablet"), (r"Macintosh|AnyAssistant Mac", "Mac"), (r"Windows|Linux|X11|CrOS", "PC")):
         if re.search(pattern, agent or ""):
             return name
     return "device"

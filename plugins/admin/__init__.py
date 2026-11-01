@@ -10,6 +10,7 @@ given an admin code (6 digits, 5 minutes, one browser: the page here, or
     GET  /admin/status     name, version, addresses, ports: to pair a device
     GET  /admin/qr?text=   a QR code (SVG)
     POST /admin/restart    restarts the server
+    POST /admin/stop       stops it, cleanly (the Windows and Linux app: no signals there)
 
     GET  /admin/settings   the options by group, each with its value, kind, choices and help
                            (in the active language: locale «options», «groups»)
@@ -322,3 +323,11 @@ async def _restart(request):
     log.info("restart, from the admin page")
     web.stop(restart=True)
     return http.json_response({"restarting": True})
+
+
+@web.route("POST", "/admin/stop")
+@_local
+async def _stop(request):
+    log.info("stop, from the admin page or the app")
+    web.stop()
+    return http.json_response({"stopping": True})

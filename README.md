@@ -43,6 +43,13 @@ fallback) or Whisper (`stt-faster-whisper`, CPU or an NVIDIA card), the voice Ko
 **Windows** for now runs from the project (`uv run server/main.py`); its app comes later. Apple's
 model is only on the Mac; the plan is in `TODO.md` («El servidor en Windows y Linux»).
 
+**The Windows and Linux app** (`apps/desktop`, Electron): in the tray, as the Mac app in the menu
+bar. It runs the server (or adopts the one running: Linux's systemd service), and «Show Eva» opens
+its face (the page, with Chromium's microphone, camera and echo cancellation); «Pair a device…» and
+«Administer…» open `/admin`; it can open at login. For now, from the project:
+`cd apps/desktop && npm install && npm start` (it needs Node.js and uv; your data goes to
+`%APPDATA%\AnyAssistant` on Windows, `~/.local/share/AnyAssistant` on Linux).
+
 **Administering it** without the Mac app: the page `/admin` (pair a device with its QR, devices,
 settings, plugins, voices, mail, admins): from the computer itself, or from another one's browser
 with an admin code (`bin/anyassistant admin-code`, over SSH on a Linux with no screen; or the

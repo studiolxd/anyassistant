@@ -19,3 +19,5 @@ jobs:
       - run: uv run pytest -q
         env:
           PYTHONUTF8: "1"
+      - name: The Windows and Linux app (apps/desktop) parses
+        run: node --check apps/desktop/main.js && node --check apps/desktop/server.js

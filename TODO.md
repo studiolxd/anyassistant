@@ -90,8 +90,13 @@ Java no tiene cancelación de eco).
   navegador con un código de administración (`bin/anyassistant admin-code` por SSH, o la
   página): de un solo uso, 5 minutos, cookie con su hash en `admins.json`, revocable; una
   tablet emparejada para hablar no puede administrar. Falta: probarla en tu Linux.
-- [ ] **4. La app de bandeja** (Electron): el servidor, la cara en una ventana, el menú, la
-  administración; al iniciar sesión.
+- [x] **4. La app de bandeja** (1 nov, `apps/desktop`, Electron 44): adopta el servidor que ya
+  funcione (el servicio de systemd) o arranca el suyo con uv y lo vigila (si se cae, otra vez;
+  tres veces en 5 minutos, «ha fallado»); lo para limpio (`/admin/stop`); «Mostrar a Eva» (la
+  página, con micrófono y cámara solo para 127.0.0.1), «Emparejar un dispositivo…» y
+  «Administrar…» (`/admin`); abrir al iniciar sesión (Windows, y `~/.config/autostart` en
+  Linux). Probada en el Mac (arranca su servidor, carga la cara, al salir lo para). Falta:
+  probarla en tu Windows y tu Linux; hoy necesita Node.js y uv (la fase 5 los mete dentro).
 - [ ] **5. Paquetes**: instalador de Windows firmado (sin firma, SmartScreen lo bloquea: hace
   falta un certificado de firma de código), AppImage y .deb para Linux, actualizaciones.
 
