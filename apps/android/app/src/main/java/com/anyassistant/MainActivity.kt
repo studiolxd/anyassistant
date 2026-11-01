@@ -174,7 +174,7 @@ class MainActivity : ComponentActivity() {
         var connectedTo by remember { mutableStateOf(link.mac.host) }  // the address when it opened
         val changed = host != connectedTo
         // Leaving the settings with another address connects to it.
-        val leave = { if (changed) link.restart(); close() }
+        val leave = { if (changed) { link.mac.moved(); link.restart() }; close() }
         AlertDialog(onDismissRequest = leave, confirmButton = { TextButton(onClick = leave) { Text(getString(R.string.done)) } },
             title = { Text(getString(R.string.settings)) },
             text = {
@@ -187,7 +187,7 @@ class MainActivity : ComponentActivity() {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         // «Connected» (nothing to do) while it is, at this address; «Connect» if not, or it changed.
                         val connected = link.state == Link.State.CONNECTED && !changed
-                        TextButton(onClick = { link.restart(); connectedTo = host }, enabled = !connected) {
+                        TextButton(onClick = { if (changed) link.mac.moved(); link.restart(); connectedTo = host }, enabled = !connected) {
                             Text(getString(if (connected) R.string.connected else R.string.connect))
                         }
                         TextButton(onClick = {
@@ -245,6 +245,7 @@ class MainActivity : ComponentActivity() {
         val next = {
             link.mac.host = host.trim()
             link.mac.port = port.toIntOrNull() ?: 8080
+            link.mac.moved()
             busy = true
             problem = null
             scope.launch {
@@ -288,6 +289,7 @@ class MainActivity : ComponentActivity() {
                             ListRow(Icons.Outlined.Dns, found.assistant, found.computer, enabled = !busy) {
                                 link.mac.host = found.address
                                 link.mac.port = found.port
+                                link.mac.moved()
                                 server = context.getString(R.string.on_computer, found.assistant, found.computer)
                                 if (found.pairing) { code = ""; step = Step.CODE } else withoutCode()
                             }

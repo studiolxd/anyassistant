@@ -126,7 +126,8 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
     /// Where it answers now (its name, else its IP), or nil. Neither answering (the Mac's IP changed,
     /// and its name isn't found from here): its address now, from its Bonjour announcement.
     func url() async -> URL? {
-        if let (name, _) = await reachable({ self.base($0) }) { return base(name) }
+        if let (name, _) = await reachable({ self.base($0) }) { exact = false; return base(name) }
+        if exact { return nil }  // moved by hand: there or nowhere (not the old one, nor another found)
         guard let found = await discover(), found != address else { return nil }
         for known in [host, address].compactMap({ $0 }) {  // the pairing's cookie, for the new address
             copyCookies(from: URL(string: "http://\(known):\(port)")!, to: found)
@@ -208,6 +209,14 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
     }
 
     /// Forgets the Mac it was paired with: its authority, its port and its IP too.
+    /// Moved by hand (another host or port, in the settings or pairing): the IP it had was the
+    /// old server's, and until it answers at the new place nothing else stands in for it.
+    func moved() {
+        address = nil
+        exact = true
+    }
+    private var exact = false
+
     func forget() {
         unpair()
         authority = nil

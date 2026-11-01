@@ -121,6 +121,7 @@ struct SettingsView: View {
                     // isn't, or the address or port changed (leaving the settings connects too).
                     let connected = link.state == .connected && !changed
                     Button(connected ? T("Connected") : T("Connect")) {
+                        if changed { mac.moved() }
                         link.restart()
                         connectedTo = (mac.host, mac.port)
                     }
@@ -131,7 +132,7 @@ struct SettingsView: View {
                 }
             }
             .onAppear { connectedTo = (mac.host, mac.port) }
-            .onDisappear { if changed { link.restart() } }
+            .onDisappear { if changed { mac.moved(); link.restart() } }
             .navigationTitle(T("Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button(T("Done")) { dismiss() } } }

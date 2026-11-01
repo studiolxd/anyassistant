@@ -123,6 +123,9 @@ class Mac(private val context: Context) {
     /** Where it answers now: what Bonjour finds, its IP, its name; null if none answers. */
     suspend fun url(): String? = withContext(Dispatchers.IO) {
         fun answers(name: String) = runCatching { quick.newCall(request(base(name) + "/status").build()).execute().use { it.code } }.isSuccess
+        if (exact && host.isNotEmpty()) {  // moved by hand: there or nowhere (not the old one, nor another found)
+            return@withContext if (answers(host)) { exact = false; lastGood = host; base(host) } else null
+        }
         lastGood?.let { if (answers(it)) return@withContext base(it) }  // the one that answered last: at once
         val names = linkedSetOf<String>()
         if (host.isNotEmpty()) names += host
@@ -134,6 +137,15 @@ class Mac(private val context: Context) {
     }
 
     @Volatile private var lastGood: String? = null
+    @Volatile private var exact = false
+
+    /** Moved by hand (another host or port, in the settings or pairing): the IP it had was the old
+     *  server's, and until it answers at the new place nothing else stands in for it. */
+    fun moved() {
+        address = null
+        lastGood = null
+        exact = host.isNotEmpty()
+    }
 
     // --- Bonjour ---
 
@@ -187,9 +199,11 @@ class Mac(private val context: Context) {
     suspend fun pair(code: String) = withContext(Dispatchers.IO) {
         val names = linkedSetOf<String>()
         if (host.isNotEmpty()) names += host
-        discover()?.let { names += it }
-        address?.let { names += it }
-        names += "anyassistant.local"
+        if (!exact) {
+            discover()?.let { names += it }
+            address?.let { names += it }
+            names += "anyassistant.local"
+        }
         val plainClient = plainClient(8)
         val name = names.firstOrNull { name ->
             runCatching { plainClient.newCall(Request.Builder().url("http://$name:$port/status").build()).execute().close() }.isSuccess

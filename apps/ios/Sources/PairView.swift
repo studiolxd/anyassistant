@@ -72,6 +72,7 @@ struct PairView: View {
     func connect(_ server: ServerBrowser.Found) {
         mac.host = server.address
         mac.port = server.port
+        mac.moved()
         connecting = server.id
         problem = nil
         Task {
@@ -98,11 +99,13 @@ struct OtherServerView: View {
                 Text(problem ?? T("The name or IP address of the server."))
                     .foregroundColor(problem == nil ? .secondary : .red)
             }
+        }
+        .background(  // pushed by «Next», not a row of the form
             NavigationLink(isActive: $showCode) {
                 CodeView(mac: mac, server: mac.host, host: mac.host, port: mac.port)
             } label: { EmptyView() }
             .hidden()
-        }
+        )
         .navigationTitle(T("Other server"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -118,6 +121,7 @@ struct OtherServerView: View {
     func next() async {
         checking = true
         problem = nil
+        mac.moved()
         defer { checking = false }
         switch await mac.needsCode() {
         case .some(true): showCode = true
@@ -191,6 +195,7 @@ struct CodeView: View {
         .onAppear {
             mac.host = host
             mac.port = port
+            mac.moved()
             typing = true
         }
     }
