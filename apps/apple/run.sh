@@ -1,10 +1,21 @@
 #!/bin/sh
 # Builds the iPhone and iPad app, installs it on the iPhone or iPad connected by cable (or the one
 # whose name or id is given: apps/apple/run.sh "iPad de…") and opens it. Developer Mode on it.
+# apps/apple/run.sh mac: the Mac client («AnyAssistant Client», the same app for the Mac), here.
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 cd "$HERE"
 WANTED="$1"
+if [ "$WANTED" = mac ]; then
+  xcodegen generate --quiet
+  xcodebuild -project AnyAssistant.xcodeproj -scheme AnyAssistant -destination 'platform=macOS,variant=Mac Catalyst' \
+    -derivedDataPath build -allowProvisioningUpdates -allowProvisioningDeviceRegistration -quiet build
+  APP="build/Build/Products/Debug-maccatalyst/AnyAssistant Client.app"
+  pkill -f "AnyAssistant Client.app/Contents/MacOS" 2>/dev/null || true
+  open "$APP"
+  echo "Open: $HERE/$APP"
+  exit 0
+fi
 # The one by cable first (even locked); one over Wi-Fi if not.
 LIST=$(mktemp)
 xcrun devicectl list devices --json-output "$LIST" >/dev/null 2>&1 || true

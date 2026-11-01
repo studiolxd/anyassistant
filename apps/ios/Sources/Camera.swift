@@ -51,7 +51,9 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
 
     private func configure() -> Bool {
         if configured { return true }
-        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
+        // The front camera (a Mac's has no side: whichever it has).
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front)
+                ?? AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: device) else { return false }
         session.beginConfiguration()
         session.automaticallyConfiguresApplicationAudioSession = false  // the audio is Audio's: don't touch it

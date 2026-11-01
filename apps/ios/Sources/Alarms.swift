@@ -3,6 +3,14 @@
 // Stopped on the phone, the Mac stops ringing too (a tap, as on its face); stopped on the Mac
 // («para»), it goes from the phone. Before iOS 26 they are notifications (Notices).
 
+import Foundation
+
+extension Notification.Name {
+    /// An alarm stopped on the phone: the Mac stops ringing too.
+    static let stopRinging = Notification.Name("stopRinging")
+}
+
+#if !targetEnvironment(macCatalyst)  // no AlarmKit on the Mac: notifications there
 import AlarmKit
 import AppIntents
 import SwiftUI
@@ -64,11 +72,6 @@ final class Alarms {
     }
 }
 
-extension Notification.Name {
-    /// An alarm stopped on the phone: the Mac stops ringing too.
-    static let stopRinging = Notification.Name("stopRinging")
-}
-
 /// The alarm's «Stop» on the phone.
 @available(iOS 26.0, *)
 struct StopRinging: LiveActivityIntent {
@@ -81,3 +84,5 @@ struct StopRinging: LiveActivityIntent {
         return .result()
     }
 }
+
+#endif

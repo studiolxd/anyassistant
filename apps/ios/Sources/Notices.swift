@@ -22,6 +22,9 @@ final class Notices: NSObject, UNUserNotificationCenterDelegate {
         switch message["type"] as? String {
         case "timers":
             let items = message["items"] as? [[String: Any]] ?? []
+            #if targetEnvironment(macCatalyst)
+            schedule(items)
+            #else
             if #available(iOS 26.0, *) {
                 Task {  // the phone's own alarms; notifications only if it doesn't let it
                     if await Alarms.shared.set(items) { self.schedule([]) } else { self.schedule(items) }
@@ -29,6 +32,7 @@ final class Notices: NSObject, UNUserNotificationCenterDelegate {
             } else {
                 schedule(items)
             }
+            #endif
         case "text":
             guard !foreground, message["author"] as? String == "assistant", message["partial"] as? Bool != true,
                   let text = message["text"] as? String, !text.isEmpty else { return }

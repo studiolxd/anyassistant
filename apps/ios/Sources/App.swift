@@ -10,7 +10,16 @@ import SwiftUI
 
 @main
 struct AnyAssistantApp: App {
-    @StateObject private var mac = Mac(agent: "AnyAssistant " + UIDevice.current.model)  // iPhone, iPad
+    @StateObject private var mac = Mac(agent: AnyAssistantApp.agent)
+
+    /// How it introduces itself to the Mac: «AnyAssistant iPhone», «… iPad», «… Mac».
+    static var agent: String {
+        #if targetEnvironment(macCatalyst)
+        return "AnyAssistant Mac"
+        #else
+        return "AnyAssistant " + UIDevice.current.model
+        #endif
+    }
 
     init() {
         Notices.shared.start()
