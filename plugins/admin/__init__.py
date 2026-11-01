@@ -228,7 +228,7 @@ async def _page(request):
 @web.route("GET", "/admin/web/{file}")
 async def _file(request):
     name = request.match_info["file"]
-    if name not in {"admin.js", "admin.css"}:
+    if name not in {"admin.js", "admin.css", "icon.png"}:
         raise http.HTTPNotFound()
     return http.FileResponse(WEB / name)
 

@@ -36,6 +36,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleDisplayName</key><string>AnyAssistant</string>
   <key>CFBundleIdentifier</key><string>com.anyassistant.app</string>
   <key>CFBundleExecutable</key><string>AnyAssistant</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.1</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
@@ -51,6 +52,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 cp -R "$HERE/Resources/"*.lproj "$APP/Contents/Resources/"  # its texts in each language
+cp "$HERE/Resources/AppIcon.icns" "$APP/Contents/Resources/"  # its icon (apps/icon/make.py)
 
 echo "Adding the program ($VERSION)…"
 PROGRAM="$APP/Contents/Resources/program"
