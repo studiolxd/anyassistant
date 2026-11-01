@@ -1,6 +1,7 @@
-"""AnyAssistant's icon: the Eyes skin's eyes at rest (awake, idle): two wide blue ovals,
-26×17, 5 apart on each side, tilted −7° and +7°, the skin's blue (#34aff7) on black. Every
-app's icon is made from here:
+"""AnyAssistant's icon: the Eyes skin's eyes while it speaks: happy arcs (^ ^). Each eye is a
+26×13 blue oval with a cover of the background's colour, the same oval 4 lower, over it: only
+its upper crescent shows. 5 apart on each side, tilted −7° and +7°, the skin's blue (#34aff7) on
+black. Every app's icon is made from here:
 
     uv run python apps/icon/make.py
 
@@ -22,9 +23,29 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[2]
 BLUE = (0x34, 0xAF, 0xF7, 255)
 BLACK = (0, 0, 0, 255)
-# The skin's measures (vmin): each eye 26 × 17, 5 of margin on each side, tilted 7°.
-EYE_W, EYE_H, MARGIN, TILT = 26, 17, 5, 7
+# The skin's measures (vmin), speaking: each eye 26 × 13, its cover 4 lower (and 1 % wider), 5 of
+# margin on each side, tilted 7°.
+EYE_W, EYE_H, COVER, MARGIN, TILT = 26, 13, 4, 5, 7
 SPAN = 2 * EYE_W + 2 * MARGIN  # from the left eye's edge to the right one's: 62
+
+
+def crescent(cx: float, cy: float, unit: float, tilt: float, steps: int = 120) -> list[tuple[float, float]]:
+    """One eye's outline (^): above, the oval's top; below, whichever is higher, its bottom or the
+    cover's top. Tilted as in the skin (CSS degrees: positive, clockwise; y goes down)."""
+    a, b = EYE_W / 2, EYE_H / 2
+    wide = a * 1.01  # the cover is a little wider: the crescent ends in points
+
+    def top(x):
+        return -b * math.sqrt(max(0.0, 1 - (x / a) ** 2))
+
+    def lower(x):
+        return min(-top(x), COVER - b * math.sqrt(max(0.0, 1 - (x / wide) ** 2)))
+
+    xs = [-a + 2 * a * i / steps for i in range(steps + 1)]
+    outline = [(x, top(x)) for x in xs] + [(x, lower(x)) for x in reversed(xs)]
+    t = math.radians(tilt)
+    return [(cx + unit * (x * math.cos(t) - y * math.sin(t)), cy + unit * (x * math.sin(t) + y * math.cos(t)))
+            for x, y in outline]
 
 
 def eyes(size: int, width: float, background=None, rounded: float = 0.0) -> Image.Image:
@@ -41,13 +62,10 @@ def eyes(size: int, width: float, background=None, rounded: float = 0.0) -> Imag
         else:
             draw.rectangle((0, 0, big, big), fill=background)
     unit = width * big / SPAN
-    for side, angle in ((-1, TILT), (1, -TILT)):  # the left one tilted back (CSS −7°), the right forward
-        cx, cy = big / 2 + side * (EYE_W / 2 + MARGIN) * unit, big / 2
-        layer = Image.new("RGBA", (big, big), (0, 0, 0, 0))
-        ImageDraw.Draw(layer).ellipse((cx - EYE_W * unit / 2, cy - EYE_H * unit / 2,
-                                       cx + EYE_W * unit / 2, cy + EYE_H * unit / 2), fill=BLUE)
-        layer = layer.rotate(angle, resample=Image.BICUBIC, center=(cx, cy))
-        image = Image.alpha_composite(image, layer)
+    draw = ImageDraw.Draw(image)
+    for side, tilt in ((-1, -TILT), (1, TILT)):  # as the skin: the left one −7°, the right +7°
+        cx = big / 2 + side * (EYE_W / 2 + MARGIN) * unit
+        draw.polygon(crescent(cx, big / 2 + EYE_H * unit / 4, unit, tilt), fill=BLUE)  # a little low: centred
     return image.resize((size, size), Image.LANCZOS)
 
 
@@ -62,16 +80,13 @@ def vector() -> str:
     """Android's one-colour icon (notifications, the quick settings tile): the same two ovals."""
     unit = 22 / SPAN
     shapes = []
-    for side, angle in ((-1, -TILT), (1, TILT)):
+    for side, tilt in ((-1, -TILT), (1, TILT)):
         cx = 12 + side * (EYE_W / 2 + MARGIN) * unit
-        rx, ry = EYE_W * unit / 2, EYE_H * unit / 2
-        shapes.append(
-            f'    <group android:rotation="{angle}" android:pivotX="{cx:.2f}" android:pivotY="12">\n'
-            f'        <path android:fillColor="#FFFFFFFF"\n'
-            f'            android:pathData="M{cx - rx:.2f},12a{rx:.2f},{ry:.2f} 0 1,0 {2 * rx:.2f},0'
-            f'a{rx:.2f},{ry:.2f} 0 1,0 {-2 * rx:.2f},0Z" />\n    </group>')
+        points = crescent(cx, 12 + EYE_H * unit / 4, unit, tilt, steps=24)
+        path = "M" + "L".join(f"{x:.2f},{y:.2f}" for x, y in points) + "Z"
+        shapes.append(f'    <path android:fillColor="#FFFFFFFF" android:pathData="{path}" />')
     return ('<?xml version="1.0" encoding="utf-8"?>\n'
-            '<!-- The Eyes skin\'s eyes at rest, for notifications and the quick settings tile (one colour, as\n'
+            '<!-- The Eyes skin\'s eyes while it speaks (^ ^), for notifications and the quick settings tile (one colour, as\n'
             '     Android wants). Made by apps/icon/make.py. -->\n'
             '<vector xmlns:android="http://schemas.android.com/apk/res/android"\n'
             '    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">\n'

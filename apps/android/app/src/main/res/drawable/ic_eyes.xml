@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Eyes skin's eyes at rest, for notifications and the quick settings tile (one colour, as
+<!-- The Eyes skin's eyes while it speaks (^ ^), for notifications and the quick settings tile (one colour, as
      Android wants). Made by apps/icon/make.py. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <group android:rotation="-7" android:pivotX="5.61" android:pivotY="12">
-        <path android:fillColor="#FFFFFFFF"
-            android:pathData="M1.00,12a4.61,3.02 0 1,0 9.23,0a4.61,3.02 0 1,0 -9.23,0Z" />
-    </group>
-    <group android:rotation="7" android:pivotX="18.39" android:pivotY="12">
-        <path android:fillColor="#FFFFFFFF"
-            android:pathData="M13.77,12a4.61,3.02 0 1,0 9.23,0a4.61,3.02 0 1,0 -9.23,0Z" />
-    </group>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M1.03,13.72L1.30,12.75L1.64,12.36L1.99,12.06L2.35,11.82L2.71,11.62L3.08,11.45L3.45,11.31L3.82,11.18L4.20,11.08L4.57,10.99L4.95,10.92L5.33,10.86L5.71,10.83L6.10,10.80L6.49,10.80L6.87,10.81L7.27,10.84L7.66,10.89L8.06,10.97L8.46,11.07L8.86,11.22L9.27,11.42L9.70,11.72L10.19,12.59L10.19,12.59L9.86,13.09L9.44,12.80L9.03,12.61L8.63,12.47L8.23,12.37L7.83,12.29L7.44,12.24L7.05,12.21L6.66,12.20L6.27,12.21L5.89,12.23L5.50,12.27L5.12,12.33L4.75,12.40L4.37,12.48L3.99,12.59L3.62,12.71L3.25,12.85L2.89,13.02L2.52,13.22L2.16,13.45L1.81,13.74L1.47,14.12L1.03,13.72Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M13.81,12.59L14.30,11.72L14.73,11.42L15.14,11.22L15.54,11.07L15.94,10.97L16.34,10.89L16.73,10.84L17.13,10.81L17.51,10.80L17.90,10.80L18.29,10.83L18.67,10.86L19.05,10.92L19.43,10.99L19.80,11.08L20.18,11.18L20.55,11.31L20.92,11.45L21.29,11.62L21.65,11.82L22.01,12.06L22.36,12.36L22.70,12.75L22.97,13.72L22.97,13.72L22.53,14.12L22.19,13.74L21.84,13.45L21.48,13.22L21.11,13.02L20.75,12.85L20.38,12.71L20.01,12.59L19.63,12.48L19.25,12.40L18.88,12.33L18.50,12.27L18.11,12.23L17.73,12.21L17.34,12.20L16.95,12.21L16.56,12.24L16.17,12.29L15.77,12.37L15.37,12.47L14.97,12.61L14.56,12.80L14.14,13.09L13.81,12.59Z" />
 </vector>
