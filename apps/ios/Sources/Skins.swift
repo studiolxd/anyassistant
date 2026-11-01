@@ -13,11 +13,19 @@ struct SkinView: View {
     @State private var faceEnd: CGFloat = 0  // where the skin's face and words end (FaceEnd)
 
     var body: some View {
-        GeometryReader { geometry in
-            let size = geometry.size
-            let v = min(size.width, size.height) / 100
-            ZStack(alignment: .top) {
-                face.background.ignoresSafeArea()
+        ZStack {
+            // The background to the screen's edges; the face, its words, the clock and the camera
+            // inside the safe area (not under the Dynamic Island, the home bar or a window's title).
+            face.background.ignoresSafeArea()
+            GeometryReader { geometry in
+                content(geometry.size)
+            }
+        }
+    }
+
+    @ViewBuilder func content(_ size: CGSize) -> some View {
+        let v = min(size.width, size.height) / 100
+        ZStack(alignment: .top) {
                 switch face.skin {
                 case "orb": OrbSkin(face: face, levels: levels, v: v, size: size)
                 case "bedside": BedsideSkin(face: face, levels: levels, v: v, size: size)
@@ -36,10 +44,6 @@ struct SkinView: View {
             }
             .coordinateSpace(name: "skin")
             .onPreferenceChange(FaceEnd.self) { faceEnd = $0 }
-        }
-        #if os(iOS)
-        .ignoresSafeArea()  // the whole screen; in a Mac window, under its title bar
-        #endif
     }
 }
 

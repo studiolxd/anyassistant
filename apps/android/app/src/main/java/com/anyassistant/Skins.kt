@@ -14,6 +14,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -85,7 +86,14 @@ val grey = Color(0xff888888)
 
 @Composable
 fun SkinView(face: FaceState, camera: Camera) {
-    BoxWithConstraints(Modifier.fillMaxSize().background(face.background)) {
+    // The background to the screen's edges; the face, its words, the clock and the camera inside
+    // the safe area (not under the camera's cutout, nor the system bars when they show).
+    Box(Modifier.fillMaxSize().background(face.background)) { SkinContent(face, camera) }
+}
+
+@Composable
+private fun SkinContent(face: FaceState, camera: Camera) {
+    BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
         val v = min(maxWidth.value, maxHeight.value) / 100
         val scope = Sizes(v, maxWidth, maxHeight, maxWidth > maxHeight)
         val end = remember { mutableStateOf(0f) }  // where the skin's face and words end (px, FaceEnd)
