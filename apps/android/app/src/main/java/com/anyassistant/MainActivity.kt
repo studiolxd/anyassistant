@@ -65,7 +65,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.FilterChip
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.combinedClickable
@@ -161,7 +160,6 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun Face() {
         var settings by remember { mutableStateOf(false) }
-        val settingsStyle = remember(settings) { prefs.getString("settingsStyle", "text") ?: "text" }
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             // A tap: it stops talking or wakes up; held: the settings, always, whatever the skin.
             Box(Modifier.fillMaxSize().combinedClickable(remember { MutableInteractionSource() }, null,
@@ -170,7 +168,7 @@ class MainActivity : ComponentActivity() {
             }
             // «Ajustes», only asleep or in error (where it's needed), inside the safe area: where the
             // skin puts it (its options «settings»: bottom, top, bottom-left…) in its colour
-            // («settings_color», else its accent); text or icon, this device's choice.
+            // («settings_color», else its accent), text or icon («settings_style»).
             val face = link.face
             if (face.look == "asleep" || face.look == "error") {
                 val tint = face.color("settings_color", face.color("accent", face.color("glow", Color.White)))
@@ -183,7 +181,7 @@ class MainActivity : ComponentActivity() {
                     else -> Alignment.BottomCenter
                 }
                 val where = Modifier.align(place).systemBarsPadding().padding(12.dp)
-                if (settingsStyle == "icon") {
+                if (face.options["settings_style"] == "icon") {
                     Icon(Icons.Filled.Settings, getString(R.string.settings), tint = tint.copy(alpha = 0.8f),
                         modifier = where.size(40.dp).clip(CircleShape).background(tint.copy(alpha = 0.14f))
                             .clickable { settings = true }.padding(9.dp))
@@ -217,15 +215,6 @@ class MainActivity : ComponentActivity() {
                     Toggle(getString(R.string.keep_listening), background) { background = it; prefs.edit().putBoolean("background", it).apply() }
                     Text(getString(R.string.keep_listening_note), fontSize = 13.sp, color = Color.Gray)
                     Toggle(getString(R.string.keep_screen_on), awake) { awake = it; prefs.edit().putBoolean("awake", it).apply(); keepAwake() }
-                    var style by remember { mutableStateOf(prefs.getString("settingsStyle", "text") ?: "text") }
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(getString(R.string.settings_button), Modifier.weight(1f))
-                        for ((value, label) in listOf("text" to R.string.settings_text, "icon" to R.string.settings_icon)) {
-                            FilterChip(style == value, { style = value; prefs.edit().putString("settingsStyle", value).apply() },
-                                { Text(getString(label)) })
-                        }
-                    }
-                    Text(getString(R.string.settings_button_note), fontSize = 13.sp, color = Color.Gray)
                     OutlinedTextField(host, { host = it; link.mac.host = it; problem = null }, label = { Text(getString(R.string.mac_address)) },
                         placeholder = { Text(getString(R.string.found_by_itself)) }, singleLine = true)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

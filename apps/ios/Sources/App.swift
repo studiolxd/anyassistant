@@ -87,17 +87,16 @@ struct MainView: View {
 
 /// «Ajustes», only asleep or in error (where it's needed: its address, pairing again…), inside
 /// the safe area. Where it goes and its colour are the skin's (its options «settings»: bottom, top,
-/// bottom-left… and «settings_color», else its accent); text or icon, this device's choice.
+/// bottom-left…; «settings_style»: text or icon; «settings_color», else its accent).
 /// Holding the screen opens it too, always.
 struct SettingsButton: View {
     @ObservedObject var face: FaceModel
     let open: () -> Void
-    @AppStorage("settingsStyle") private var style = "text"
 
     var body: some View {
         if face.look == "asleep" || face.look == "error" {
             Button(action: open) {
-                if style == "icon" {
+                if face.options["settings_style"] == "icon" {
                     Image(systemName: "gearshape.fill")
                         .font(.body)
                         .foregroundColor(tint.opacity(0.8))
@@ -144,7 +143,6 @@ struct SettingsView: View {
     var changed: Bool { connectedTo.map { $0.host != mac.host || $0.port != mac.port } ?? false }
     @AppStorage("background") private var background = true
     @AppStorage("awake") private var awake = true
-    @AppStorage("settingsStyle") private var settingsStyle = "text"
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -155,14 +153,6 @@ struct SettingsView: View {
                     Toggle(T("Keep the screen on"), isOn: $awake)
                 } footer: {
                     Text(T("With the screen off it listens as long as the app isn't closed; iOS shows the microphone in use."))
-                }
-                Section {
-                    Picker(T("Settings button"), selection: $settingsStyle) {
-                        Text(T("Text")).tag("text")
-                        Text(T("Icon")).tag("icon")
-                    }
-                } footer: {
-                    Text(T("It shows asleep or in error, where the skin puts it. Holding the screen opens the settings too."))
                 }
                 Section(T("Server")) { ServerFields(mac: mac) }
                 Section {

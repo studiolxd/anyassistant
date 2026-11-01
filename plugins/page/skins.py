@@ -20,7 +20,8 @@ has the microphone and the camera.
 
 In the apps (iPhone, iPad, Android) the skin also says where their «Ajustes» button goes,
 shown asleep or in error: options «settings» (bottom, top, bottom-left, bottom-right,
-top-left, top-right; bottom if not said) and «settings_color» (else its «accent»).
+top-left, top-right; bottom if not said), «settings_style» (text or icon; text if not said)
+and «settings_color» (else its «accent»).
 
     bin/anyassistant skin new <name> [--from orb]
 """

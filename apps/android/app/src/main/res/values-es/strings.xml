@@ -42,8 +42,4 @@
     <string name="host_hint">El nombre o la dirección IP del servidor.</string>
     <string name="pairing_code">Código de emparejamiento</string>
     <string name="connecting">Conectando…</string>
-    <string name="settings_button">Botón de ajustes</string>
-    <string name="settings_text">Texto</string>
-    <string name="settings_icon">Icono</string>
-    <string name="settings_button_note">Aparece en reposo o con un error, donde lo coloque la skin. Manteniendo pulsada la pantalla también se abren los ajustes.</string>
 </resources>
