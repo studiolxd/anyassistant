@@ -193,12 +193,17 @@ struct AnotherMacView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(T("Another Mac's server")).font(.title2.bold())
-            Text(T("This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code."))
+            Text(T("This device will only be used to talk to the assistant."))
                 .foregroundStyle(.secondary)
             Form {
-                TextField(T("Host"), text: $host)
-                TextField(T("Port"), value: $port, format: .number.grouping(.never))
-                TextField(T("Code"), text: $code)
+                Section {
+                    TextField(T("Host"), text: $host)
+                    TextField(T("Port"), value: $port, format: .number.grouping(.never))
+                    TextField(T("Code"), text: $code)
+                } footer: {
+                    Text(T("To get the code, open AnyAssistant on the server and select Connect another device."))
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
             }
             .formStyle(.grouped)
             if let problem { Text(problem).foregroundStyle(.red) }

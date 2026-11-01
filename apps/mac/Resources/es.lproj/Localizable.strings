@@ -143,7 +143,6 @@
 "The microphone is off" = "El micrófono está apagado";
 "Turn the microphone on" = "Encender el micrófono";
 "Another Mac's server" = "Conectarse a otro servidor";
-"This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "Este dispositivo solo se usará para hablar con el asistente. Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.";
 "Port" = "Puerto";
 "Code" = "Código";
 "Back" = "Atrás";
@@ -181,3 +180,5 @@
 "The general one (%@)" = "Por defecto (%@)";
 "Later" = "Ahora no";
 "Host" = "Host";
+"This device will only be used to talk to the assistant." = "Este dispositivo solo se usará para hablar con el asistente.";
+"To get the code, open AnyAssistant on the server and select Connect another device." = "Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.";
