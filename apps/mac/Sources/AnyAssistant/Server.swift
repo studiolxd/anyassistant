@@ -12,7 +12,7 @@ func T(_ english: String) -> String {
 
 /// An LLM's name as its maker writes it: «OpenAI», «OpenCode», «Claude».
 func llmName(_ id: String) -> String {
-    ["claude": "Claude", "codex": "Codex", "gemini": "Gemini", "opencode": "OpenCode", "openai": "OpenAI",
+    ["claude": "Claude", "codex": "Codex", "gemini": "Gemini", "opencode": "OpenCode", "openai": T("OpenAI-compatible"),
      "ollama": "Ollama", "hermes": "Hermes", "apple": "Apple"][id] ?? id.capitalized
 }
 

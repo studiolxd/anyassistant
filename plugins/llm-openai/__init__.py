@@ -41,6 +41,8 @@ log = logging.getLogger("llm")
 TOOL_ROUNDS = 6  # tool calls in a row, at most, before answering
 KEYCHAIN = "AnyAssistant LLM"
 
+options.add(Option("openai_key", None, "the API key for «openai» (saved in the system's keychain)", "assistant",
+                   kind="secret", keychain=(KEYCHAIN, "openai"), live=True))
 options.add(Option("openai_url", None, "the OpenAI-compatible service for «openai» (OpenRouter, Groq, LM Studio…)",
                    "assistant", empty="https://api.openai.com/v1"))
 
@@ -240,7 +242,7 @@ class OpenAI(Chat):
     @classmethod
     def ready(cls):
         if not (os.environ.get("OPENAI_API_KEY") or keychain.get(KEYCHAIN, "openai")):
-            return i18n.L.text("llm_ready.openai", "Needs an API key")
+            return i18n.L.text("llm_ready.openai", "Needs an API key (Settings → Assistant)")
         return None
 
     def _model(self):

@@ -171,6 +171,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `email_check_minutes` | `5` | every how many minutes it looks for new emails |
 | `read_photo` | `true` | a full-resolution photo when asked to read |
 | `llm_fallback` | `"auto"` | if the LLM can't answer, another one does: auto (Apple's local model if there is one), an LLM's name, or none |
+| `openai_key` | — | the API key for «openai» (saved in the system's keychain) |
 | `openai_url` | — | the OpenAI-compatible service for «openai» (OpenRouter, Groq, LM Studio…) *(restarts)* |
 | `mail_accounts` | `[]` | mail accounts besides Gmail (IMAP and SMTP); add them with `bin/anyassistant mail add you@domain.com` (the password goes to the Keychain) |
 

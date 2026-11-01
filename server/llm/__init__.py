@@ -35,6 +35,26 @@ def ready(name: str) -> str | None:
     return plugin.ready() if plugin else f"there is no LLM «{name}»"
 
 
+NAMES = {"claude": "Claude", "codex": "Codex", "gemini": "Gemini", "opencode": "OpenCode",
+         "openai": "OpenAI-compatible", "ollama": "Ollama", "hermes": "Hermes", "apple": "Apple"}
+
+
+def label(name: str) -> str:
+    """How an LLM is shown («Compatible con OpenAI (openrouter.ai)»), in the active language."""
+    import i18n
+    import settings
+
+    shown = i18n.L.text(f"choices.llm.{name}", NAMES.get(name, name.capitalize()))
+    url = settings.get("openai_url") if name == "openai" else None
+    if url:
+        from urllib.parse import urlparse
+
+        host = urlparse(url).hostname or url
+        if host != "api.openai.com":
+            shown += f" ({host})"
+    return shown
+
+
 def spoken_names() -> dict[str, list[str]]:
     return {name: get(name).spoken or [name] for name in available()}
 

@@ -95,17 +95,13 @@ def name(value):
     settings.save(name=str(value).strip() or "Jarvis")
 
 
-NAMES = {"claude": "Claude", "codex": "Codex", "gemini": "Gemini", "opencode": "OpenCode", "openai": "OpenAI",
-         "ollama": "Ollama", "hermes": "Hermes", "apple": "Apple"}  # as the apps show them
-
-
 def _llms():
     import llm
 
     found = []
     for name in llm.available():
         why = llm.ready(name)
-        shown = NAMES.get(name, name.capitalize())
+        shown = llm.label(name)
         found.append({"value": name, "label": shown if not why else f"{shown} — {why}"})
     return found
 
@@ -127,7 +123,7 @@ def choose_llm(value):
 
     settings.save(llm=value)
     why = llm.ready(value)
-    shown = NAMES.get(value, value.capitalize())
+    shown = llm.label(value)
     return shown + (_t("not_ready", " (not ready yet: {why})", why=why) if why else "")
 
 

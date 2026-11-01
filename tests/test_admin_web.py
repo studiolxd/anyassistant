@@ -78,3 +78,24 @@ def test_the_page_and_its_texts_are_for_anyone_the_data_only_for_the_owner():
 def test_the_qr_is_an_svg():
     answer = asyncio.run(admin._qr(request(path="/admin/qr?text=http://anyassistant.local:8080", remote="127.0.0.1")))
     assert answer.content_type == "image/svg+xml" and b"<svg" in answer.body
+
+
+def test_an_api_key_goes_to_the_keychain_never_to_the_file(monkeypatch, tmp_path):
+    import keychain
+    import settings
+
+    kernel.load("llm-openai")
+    stored = {}
+    monkeypatch.setattr(keychain, "put", lambda service, account, secret: stored.update({account: secret}))
+    monkeypatch.setattr(keychain, "forget", lambda service, account: stored.pop(account, None))
+    monkeypatch.setattr(keychain, "get", lambda service, account: stored.get(account))
+    monkeypatch.setattr(settings, "PATH", tmp_path / "settings.json")
+    monkeypatch.setattr(settings, "refresh", lambda: set())
+    asyncio.run(admin._save_settings(request("POST", remote="127.0.0.1", body={"openai_key": " sk-test "})))
+    assert stored == {"openai": "sk-test"}
+    assert "sk-test" not in (tmp_path / "settings.json").read_text()
+    listed = json.loads(asyncio.run(admin._settings(request(remote="127.0.0.1"))).text)
+    key = next(o for o in listed["options"] if o["name"] == "openai_key")
+    assert key["value"] is None and key["set"] is True  # it says it has one, never which
+    asyncio.run(admin._save_settings(request("POST", remote="127.0.0.1", body={"openai_key": None})))
+    assert stored == {}

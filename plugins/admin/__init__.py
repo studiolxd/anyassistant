@@ -62,8 +62,19 @@ def _named(text: str) -> str:
 
 
 def _value(option):
-    """What settings.json says (or the default): what the field shows."""
+    """What settings.json says (or the default): what the field shows. A secret: never (only «set»)."""
+    if option.kind == "secret":
+        return None
     return _json(settings.load().get(option.name, option.default))
+
+
+def _is_set(option) -> bool | None:
+    """A secret: whether the keychain has it."""
+    if option.kind != "secret":
+        return None
+    import keychain
+
+    return bool(keychain.get(*option.keychain))
 
 
 def _current(option):
@@ -89,6 +100,10 @@ def _labels(option) -> dict | None:
         return None
     if option.name == "language":
         return {str(c): i18n.native_name(c) for c in found}  # «English», «Español»
+    if option.name == "llm":
+        import llm
+
+        return {str(c): llm.label(c) for c in found}
     return {str(c): i18n.L.text(f"choices.{option.name}.{c}", str(c)) for c in found}
 
 
@@ -99,7 +114,7 @@ async def _settings(request):
               if g != "plugins"]
     found = [{"name": o.name, "group": o.group, "kind": o.kind, "live": o.live,
               "help": _named(i18n.L.text(f"options.{o.name}", o.help)), "default": _value_default(o),
-              "value": _value(o), "current": _current(o), "choices": _choices(o), "labels": _labels(o),
+              "value": _value(o), "current": None if o.kind == "secret" else _current(o), "set": _is_set(o), "choices": _choices(o), "labels": _labels(o),
               "empty": i18n.L.text(f"options_empty.{o.name}", o.empty) if o.empty else ""}
              for o in options.OPTIONS if o.group != "plugins"]
     return http.json_response({"groups": groups, "options": found})
@@ -123,6 +138,14 @@ async def _save_settings(request):
     problems = options.check(changes)
     if problems:
         return http.json_response({"error": "; ".join(problems)}, status=400)
+    import keychain
+
+    for key in [k for k in changes if options.BY_NAME[k].kind == "secret"]:  # to the keychain, not the file
+        value = changes.pop(key)
+        if value:
+            keychain.put(*options.BY_NAME[key].keychain, str(value).strip())
+        else:
+            keychain.forget(*options.BY_NAME[key].keychain)
     data = settings.load()
     for key, value in changes.items():
         if value is None:

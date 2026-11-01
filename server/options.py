@@ -18,13 +18,14 @@ class Option:
     default: object
     help: str
     group: str
-    kind: str = "text"  # text, bool, int, float, choice, json
+    kind: str = "text"  # text, bool, int, float, choice, json, secret (in the keychain, never in settings.json)
     choices: object = None  # a list, or a function that lists them (plugins, skins…)
     live: bool = False  # applies without restarting
     screen: bool = False  # the page shows it (sent in /config)
     flag: str = ""  # another command-line name (--lang)
     plugin: str | None = None  # the plugin that added it (None: the core's); its texts are in its locales
     empty: str = ""  # what happens when it isn't set («the language's voice»), for the app
+    keychain: tuple = ()  # a secret: (service, account) in the system's keychain
     prefer: tuple = ()  # an engine: the default is the first of these this computer has (resolve())
 
     def options(self) -> list:

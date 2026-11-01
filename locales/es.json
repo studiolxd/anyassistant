@@ -188,6 +188,9 @@
     "llm_fallback": {
       "auto": "Automático",
       "none": "Ninguno"
+    },
+    "llm": {
+      "openai": "Compatible con OpenAI"
     }
   },
   "language_native": "Español",
@@ -211,7 +214,7 @@
     "gemini": "Gemini CLI no está instalado",
     "gemini_login": "No has iniciado sesión en Gemini CLI",
     "opencode": "OpenCode no está instalado",
-    "openai": "Falta la clave de API",
+    "openai": "Falta la clave de API (Ajustes → Asistente)",
     "ollama": "Ollama no está en marcha o no tiene ningún modelo",
     "hermes": "La pasarela de Hermes no está en marcha"
   }

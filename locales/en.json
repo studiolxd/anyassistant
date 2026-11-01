@@ -78,6 +78,9 @@
     "llm_fallback": {
       "auto": "Automatic",
       "none": "None"
+    },
+    "llm": {
+      "openai": "OpenAI-compatible"
     }
   },
   "language_native": "English",
@@ -197,7 +200,7 @@
     "gemini": "Gemini CLI isn't installed",
     "gemini_login": "Gemini CLI isn't signed in",
     "opencode": "OpenCode isn't installed",
-    "openai": "Needs an API key",
+    "openai": "Needs an API key (Settings → Assistant)",
     "ollama": "Ollama isn't running or has no model",
     "hermes": "Hermes's gateway isn't running"
   }

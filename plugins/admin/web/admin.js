@@ -269,6 +269,16 @@ function option(o) {
       var chosen = o.choices.filter(function (c) { return String(c) === field.value; })[0];
       save(chosen);
     });
+  } else if (o.kind === 'secret') {  // to the keychain; what it has never comes back
+    field = el('input', { type: 'password', autocomplete: 'off',
+                          placeholder: o.set ? T('Saved in the keychain') : T('Not set') });
+    field.addEventListener('change', function () {
+      var text = field.value.trim();
+      if (!text) return;
+      save(text);
+      field.value = '';
+      field.placeholder = T('Saved in the keychain');
+    });
   } else if (o.kind === 'json' || o.kind === 'dict' || o.kind === 'longtext') {
     var shown = value === null || value === undefined ? '' : (typeof value === 'string' && o.kind === 'longtext' ? value : JSON.stringify(value, null, 2));
     field = el('textarea', { placeholder: o.empty || '' });

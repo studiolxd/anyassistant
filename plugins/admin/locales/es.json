@@ -111,6 +111,8 @@
     "Done, %s: it knows your voice.": "Listo, %s: ya conoce tu voz.",
     "Stand in front of the device you talk to most: its microphone is the one that will hear you. Then read the phrases shown here, one at a time.": "Ponte delante del dispositivo con el que más le hablas: es su micrófono el que te oirá. Luego lee las frases que salen aquí, una a una.",
     "Its LLM": "Su LLM",
-    "The general one": "Por defecto"
+    "The general one": "Por defecto",
+    "Saved in the keychain": "Guardada en el Llavero",
+    "Not set": "Sin indicar"
   }
 }

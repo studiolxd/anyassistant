@@ -18,6 +18,7 @@ final class OptionItem: ObservableObject, Identifiable {
     let choices: [String]?
     let labels: [String: String]  // how each choice is shown, in the active language
     let placeholder: String  // what an empty one uses: «Mónica · la del idioma»
+    @Published var isSet: Bool  // a secret: whether the keychain has it (its value never comes)
     @Published var text: String  // what the field shows
     @Published var flag: Bool
     @Published var pairs: [Pair]  // dict (and voice set per language)
@@ -34,6 +35,7 @@ final class OptionItem: ObservableObject, Identifiable {
         live = raw["live"] as? Bool ?? false
         choices = (raw["choices"] as? [Any])?.map { "\($0)" }
         labels = raw["labels"] as? [String: String] ?? [:]
+        isSet = raw["set"] as? Bool ?? false
         let value = raw["value"]
         flag = value as? Bool ?? false
         if let dict = value as? [String: Any] {
@@ -267,6 +269,20 @@ struct OptionRow: View {
                     ForEach(option.choices!, id: \.self) { Text(option.labels[$0] ?? $0).tag($0) }
                 }
                 .onChange(of: option.text) { _, _ in Task { await admin.save(option) } }
+            case "secret":
+                // Saved in the keychain when you leave the field (or press Return); what it has is never shown.
+                SecureField(label, text: $option.text,
+                            prompt: Text(option.isSet ? T("Saved in the keychain") : T("Not set")))
+                    .focused($editing)
+                    .onSubmit { saveSecret() }
+                    .onChange(of: editing) { _, now in if !now { saveSecret() } }
+                if option.isSet {
+                    Button(T("Remove"), role: .destructive) {
+                        option.text = ""
+                        Task { await admin.save(option); option.isSet = false }
+                    }
+                    .buttonStyle(.link)
+                }
             case "longtext":
                 Text(label)
                 TextEditor(text: $option.text)
@@ -304,6 +320,16 @@ extension OptionRow {
         guard option.text != saved else { return }
         saved = option.text
         Task { await admin.save(option) }
+    }
+
+    /// A secret: to the keychain, then the field empties (only «saved» shows).
+    func saveSecret() {
+        guard !option.text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        Task {
+            await admin.save(option)
+            option.text = ""
+            option.isSet = true
+        }
     }
 
     /// Saves it a second after the last keystroke.
