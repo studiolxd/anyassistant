@@ -86,3 +86,9 @@ def test_hermes_gets_the_image():
     content = Hermes._content("What's this?", b"jpeg")
     assert content[1]["image_url"]["url"].startswith("data:image/jpeg;base64,")
     assert Hermes._content("Hi", None) == "Hi"
+
+
+def test_every_llm_that_sees_knows_its_left_is_the_users_right(monkeypatch):
+    monkeypatch.setattr(eyes, "enabled", lambda: True)
+    assert "user's right" in eyes.instructions() and str(eyes.FRAME) in eyes.instructions()  # Claude
+    assert "user's right" in eyes.seeing() and str(eyes.FRAME) not in eyes.seeing()  # Hermes: no Read tool

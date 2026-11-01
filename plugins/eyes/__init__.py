@@ -36,15 +36,18 @@ from text import words
 
 log = logging.getLogger("eyes")
 FRAME = paths.EYES / "now.jpg"
-INSTRUCTIONS = """
+# For any LLM that sees (Claude, Hermes): what the image is.
+SEEING = """
 You can see through the camera of the device the user talks to. When a question
-comes with an image, that is what the camera sees right now. If one needs sight and
-has no image, read {frame} with the Read tool: it is the camera's view at the moment
-of the question. Describe only what matters, briefly, for speech. If there is no
-image or no file, the camera isn't available: say so.
+comes with an image, that is what the camera sees right now. Describe only what matters,
+briefly, for speech. If there is no image, the camera isn't available: say so.
 The camera faces the user and the image is not mirrored (text reads normally): what is on
 the image's left is on the user's right. Say left and right as the user sees them, from
 their side: their left hand, the object on their right."""
+# Only Claude: the image at the moment of the question, as a file its Read tool opens.
+READING = """
+If one needs sight and has no image, read {frame} with the Read tool: it is the camera's view
+at the moment of the question; if there is no file, the camera isn't available."""
 
 source = hub.jpeg  # the connected device's camera, as JPEG
 ask_device = hub.send  # a message to its page
@@ -127,7 +130,13 @@ def capture() -> bytes | None:
 
 
 def instructions() -> str:
-    return INSTRUCTIONS.format(frame=FRAME) if enabled() else ""
+    """Claude's: what the image is, and the file it may open."""
+    return SEEING + READING.format(frame=FRAME) if enabled() else ""
+
+
+def seeing() -> str:
+    """Any other LLM that sees (Hermes): what the image is, its left and right."""
+    return SEEING if enabled() else ""
 
 
 # --- In the web server ---

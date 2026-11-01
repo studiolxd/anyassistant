@@ -90,7 +90,7 @@ class Hermes(LLM):
             http = await self._client()
             body = {
                 "model": self.model, "stream": True,
-                "messages": [{"role": "system", "content": instructions()},
+                "messages": [{"role": "system", "content": instructions() + _seeing()},
                              {"role": "user", "content": self._content(text, image)}],
             }
             said = False
@@ -172,3 +172,11 @@ class Hermes(LLM):
         async with http.post(f"/v1/runs/{run_id}/approval", json={"choice": choice}) as r:
             if r.status != 200:
                 log.warning("Hermes rejected the approval: %s %s", r.status, (await r.text())[:200])
+
+
+def _seeing() -> str:
+    """With the plugin «eyes»: what the camera's image is (its left is the user's right)."""
+    import kernel
+
+    eyes = kernel.module("eyes")
+    return eyes.seeing() if eyes else ""
