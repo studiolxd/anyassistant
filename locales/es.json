@@ -99,7 +99,7 @@
   },
   "installer": {
     "computer": [
-      "Este ordenador",
+      "Dispositivo",
       ""
     ],
     "language": [
@@ -133,7 +133,10 @@
     "connect": [
       "Conectar otro dispositivo",
       ""
-    ]
+    ],
+    "not_set": "Sin indicar",
+    "packages_done": "Paquetes de {count} plugins",
+    "packages_yours": ", {count} tuyos"
   },
   "choices": {
     "bool": {

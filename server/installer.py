@@ -24,6 +24,7 @@ How it is shown:
   `--list --json` describes the steps and their questions, for the window's forms.
 """
 
+import i18n
 import json
 import sys
 import time
@@ -229,9 +230,10 @@ def run(view, answers: dict, only: list[str] | None = None, skip: set | None = N
                 if options and value not in [o["value"] for o in options]:
                     raise ValueError(f"«{value}» isn't one of {', '.join(str(o['value']) for o in options)}")
                 result = step.function(value)
-                if not isinstance(result, str):
-                    label = {True: "yes", False: "no"}.get(value, value) if isinstance(value, bool) else value
-                    result = str(label)
+                if not isinstance(result, str):  # what was chosen, as the question shows it
+                    label = next((o["label"] for o in options or [] if o["value"] == value), None)
+                    result = label if label is not None else (_label(step, value) if value not in ("", None)
+                                                               else i18n.L.text("installer.not_set", "Not set"))
             else:
                 result = step.function(progress)
             view.done(step, result if isinstance(result, str) else "")

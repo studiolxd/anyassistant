@@ -28,7 +28,7 @@ UNIT = os.path.expanduser("~/.config/systemd/user/anyassistant.service")  # Linu
 
 # --- The computer ---
 
-@task("computer", "This computer", order=0)
+@task("computer", "Device", order=0)
 def computer(progress):
     machine = platform.machine()
     if sys.platform.startswith("linux"):
@@ -70,7 +70,8 @@ def packages(progress):
                        capture_output=True, text=True)
     importlib.invalidate_caches()
     kernel._unfit.clear()  # what wasn't installed now is
-    return f"{len(system)} plugins' packages" + (f", {len(yours)} of yours" if yours else "")
+    found = i18n.L.text("installer.packages_done", "Packages for {count} plugins").format(count=len(system))
+    return found + (i18n.L.text("installer.packages_yours", ", {count} of yours").format(count=len(yours)) if yours else "")
 
 
 # --- Questions ---
@@ -89,13 +90,18 @@ def name(value):
     settings.save(name=str(value).strip() or "Jarvis")
 
 
+NAMES = {"claude": "Claude", "codex": "Codex", "gemini": "Gemini", "opencode": "OpenCode", "openai": "OpenAI",
+         "ollama": "Ollama", "hermes": "Hermes", "apple": "Apple"}  # as the apps show them
+
+
 def _llms():
     import llm
 
     found = []
     for name in llm.available():
         why = llm.ready(name)
-        found.append({"value": name, "label": name if not why else f"{name} — {why}"})
+        shown = NAMES.get(name, name.capitalize())
+        found.append({"value": name, "label": shown if not why else f"{shown} — {why}"})
     return found
 
 

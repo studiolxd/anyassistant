@@ -127,7 +127,7 @@
   },
   "installer": {
     "computer": [
-      "This computer",
+      "Device",
       ""
     ],
     "packages": [
@@ -161,7 +161,10 @@
     "connect": [
       "Connect another device",
       ""
-    ]
+    ],
+    "not_set": "Not set",
+    "packages_done": "Packages for {count} plugins",
+    "packages_yours": ", {count} of yours"
   },
   "options_empty": {
     "language": "the system's language",
