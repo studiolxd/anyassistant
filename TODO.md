@@ -165,6 +165,11 @@ Java no tiene cancelación de eco).
 
 ## Hecho
 
+- [x] **Codex con tu suscripción de ChatGPT** (1 nov, `llm-codex`): «usa Codex». Un proceso
+  `codex app-server` por dispositivo, un hilo por conversación, la respuesta en trozos y la
+  imagen de la cámara con la pregunta. Sus servidores MCP y las herramientas de Eva; antes de
+  cada herramienta MCP que cambia algo, Codex pregunta a Eva y espera tu «sí» (el mismo de
+  siempre, `confirmation`). Sin terminal ni archivos (sandbox de solo lectura, carpeta vacía).
 - [x] **Una sola app de Mac, servidor y cliente** (1 nov, `apps/mac`): la cara del asistente
   en una ventana («Mostrar a Eva»), su micrófono, altavoz y cámara (los mismos archivos que la
   app del iPhone: `Sources/AnyAssistant/Client`, enlaces a `apps/ios/Sources`), hablando con

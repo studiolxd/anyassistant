@@ -4,6 +4,7 @@
   refuses the call until you answer «yes» to exactly that call.
 - Claude Code: the hook bin/anyassistant-confirm (installed by llm-claude while this is on).
 - Hermes: its approvals wait here for your answer (llm-openai).
+- Codex, Gemini CLI, OpenCode: they ask Jarvis before each MCP tool (let_through()).
 
 The pending action and your answer live in store.py (files, so separate processes
 agree). While one waits, the face shows «question»; your next sentence answers it.
@@ -64,6 +65,20 @@ def _ask_first(name: str, arguments: dict):
         return
     store.ask(sign, f"anyassistant: {name} {json.dumps(arguments, ensure_ascii=False)}")
     raise ToolError(ASK)
+
+
+def let_through(server: str, tool: str, arguments: dict) -> bool:
+    """An LLM's CLI asks whether one of its MCP tools may run (Codex's approvals…), with the same
+    rule as Claude's hook: reads (get_, list_…) and Jarvis's own tools (they ask themselves) go
+    through; anything else only with your «yes» to exactly this call, once. Otherwise it is left
+    waiting (False): the CLI refuses it, the LLM asks you, and after your «yes» it calls it again."""
+    if server == "anyassistant" or tool.startswith(store.READS) or not asking():
+        return True
+    sign = store.signature(f"mcp__{server}__{tool}", arguments)
+    if store.confirmed(sign):
+        return True
+    store.ask(sign, f"{server}: {tool} {json.dumps(arguments, ensure_ascii=False)}")
+    return False
 
 
 def answer(text: str) -> bool | None:

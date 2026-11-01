@@ -4,7 +4,7 @@ An action that needs it is left pending (pending.json: its signature, what it
 is, when). When you answer, the plugin (its skill Answer, in __init__.py) either writes
 confirmed.json with that signature, valid for a while and for one use, or
 cancels it. Whoever asked (Jarvis's own tools, Claude Code's hook
-bin/anyassistant-confirm, Hermes's approvals) checks it with confirmed(). Files in
+bin/anyassistant-confirm, Hermes's approvals, Codex's…) checks it with confirmed(). Files in
 paths.CONFIRM, so separate processes agree. Plain Python 3.9 (the hook uses it).
 """
 
@@ -15,6 +15,8 @@ import time
 import paths
 
 WAIT = 120  # seconds to answer (settings «confirm_wait»)
+# MCP tools named like these only read: they never wait for a «yes» (any other one does).
+READS = ("get_", "list_", "search_", "find_", "preview_", "download_")
 VALID = 60  # seconds a «yes» stays valid (settings «confirm_valid»)
 
 

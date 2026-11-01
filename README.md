@@ -399,6 +399,21 @@ Groq, Mistral, LM Studio…); `llm_model` the model (gpt-5-mini by default). `"l
 models running on this computer with Ollama, no key. They get Jarvis's own tools (above), each
 asking for your «yes» when it changes something; Jarvis keeps their conversation.
 
+**With your subscriptions, through each vendor's CLI** (like `claude` with Claude Code: no API
+key, the CLI signed in with your account):
+
+- **Codex** (the plugin `llm-codex`; `"llm": "codex"`, or «usa Codex»): ChatGPT through OpenAI's
+  Codex CLI (`codex login` with your ChatGPT account). Each device's conversation is a thread of
+  one `codex app-server` process (its JSON-RPC protocol), the answer in pieces; `llm_model`, its
+  model (yours in Codex by default). It keeps its own MCP servers (`~/.codex/config.toml`,
+  untouched) and gets Jarvis's tools when `permissions.json` allows `anyassistant` (as Claude).
+  Before each MCP tool Codex asks Jarvis, who answers with the plugin `confirmation`, the same
+  rule as Claude's hook: reads (`get_`, `list_`…; or marked read-only by their server) and
+  Jarvis's own tools go through, anything else waits for your «yes» and Codex calls it again.
+  Its terminal, file tools, image viewer, browser, computer use, plugins and subagents are off,
+  in a read-only sandbox with an empty folder as its workspace: so no `commands` (`bin/gog`),
+  and it sees the camera only when the question comes with the image.
+
 **With Hermes**: add it to Hermes's MCP servers and restart its gateway:
 
 ```yaml
