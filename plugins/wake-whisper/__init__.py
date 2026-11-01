@@ -1,7 +1,7 @@
 """Wake word with a small Whisper: works for any word.
 
 Silero VAD cuts sentences; each one is transcribed with whisper-base (~140 ms on
-an M4) and the word is searched among the first ones, comparing by how it sounds
+an M4 with MLX; faster-whisper on Windows and Linux) and the word is searched among the first ones, comparing by how it sounds
 («Yarvis», «Harvis», «G&J Arbis»…). If the sentence goes on after the word
 ("Hey Jarvis, what time is it?"), it is left in heard_sentence to be
 transcribed in full.
@@ -51,13 +51,22 @@ def similarity(candidate: str, key: str) -> float:
 
 @register("whisper")
 class WhisperWakeWord(WakeWord):
-    def __init__(self, word=None, threshold=SIMILARITY, model="mlx-community/whisper-base-mlx"):
+    def __init__(self, word=None, threshold=SIMILARITY, model=None):
         super().__init__(word or settings.get("name", "Jarvis").lower(), threshold)
+        import kernel
         import vad
-        from plugins.stt_mlx_whisper import transcribe_mlx
 
-        self._transcribe = transcribe_mlx
-        self.model = model
+        if kernel.enabled("stt-mlx-whisper"):  # the Mac
+            from plugins.stt_mlx_whisper import transcribe_mlx as transcribe
+
+            self.model = model or "mlx-community/whisper-base-mlx"
+        elif kernel.enabled("stt-faster-whisper"):  # Windows, Linux
+            from plugins.stt_faster_whisper import transcribe_fw as transcribe
+
+            self.model = model or "base"
+        else:
+            raise RuntimeError("the Whisper wake word needs Whisper: the plugin stt-mlx-whisper or stt-faster-whisper")
+        self._transcribe = transcribe
         self.keys = words(self.word)
         # How it is said, to show it: «Hey, Eva», «Ey, Eva» (locale wake.phrase; only shown: the
         # word that wakes it is the name, said however you like).

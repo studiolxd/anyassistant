@@ -42,6 +42,9 @@ def main():
     if problems:
         parser.error("; ".join(problems))
 
+    if sys.platform == "win32":  # Windows' console and redirected logs aren't UTF-8: «», →, ñ
+        for stream in (sys.stdout, sys.stderr):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     logging.getLogger("aioice").setLevel(logging.WARNING)
     i18n.use(args.language or i18n.detect())  # before the plugins: they take its language and voice

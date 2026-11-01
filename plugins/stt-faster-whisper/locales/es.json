@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "stt-faster-whisper": [
+      "Whisper (faster-whisper)",
+      "Whisper de OpenAI en Windows y Linux (CTranslate2, en el procesador o en una NVIDIA): reconocimiento de voz, el respaldo cuando Parakeet se va a otro idioma y el de la palabra de activación."
+    ]
+  }
+}

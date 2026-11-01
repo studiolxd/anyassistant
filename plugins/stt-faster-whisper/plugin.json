@@ -1,0 +1,14 @@
+{
+  "name": "Whisper (faster-whisper)",
+  "description": "OpenAI's Whisper on Windows and Linux (CTranslate2, CPU or NVIDIA): speech recognition, the fallback when Parakeet drifts into another language, and the wake word's.",
+  "kind": "stt",
+  "needs": {
+    "python": [
+      "faster-whisper>=1.1; sys_platform != 'darwin'"
+    ],
+    "system": [
+      "linux",
+      "win32"
+    ]
+  }
+}

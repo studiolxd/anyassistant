@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "stt-parakeet-onnx": [
+      "Parakeet (ONNX)",
+      "Parakeet TDT v3 de NVIDIA en Windows y Linux (ONNX, en el procesador): reconocimiento de voz multilingüe, rápido con frases cortas."
+    ]
+  }
+}

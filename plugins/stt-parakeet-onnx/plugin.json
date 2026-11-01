@@ -1,0 +1,17 @@
+{
+  "name": "Parakeet (ONNX)",
+  "description": "NVIDIA's Parakeet TDT v3 on Windows and Linux (ONNX, on the CPU): multilingual speech recognition, fast on short sentences.",
+  "kind": "stt",
+  "requires": [
+    "stt-faster-whisper"
+  ],
+  "needs": {
+    "python": [
+      "onnx-asr[cpu,hub]>=0.7; sys_platform != 'darwin'"
+    ],
+    "system": [
+      "linux",
+      "win32"
+    ]
+  }
+}

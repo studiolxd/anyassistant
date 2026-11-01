@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "tts-kokoro": [
+      "Kokoro",
+      "Una voz natural en Windows y Linux: Kokoro-82M en ONNX, en el procesador (español, inglés, francés, italiano, portugués…)."
+    ]
+  }
+}

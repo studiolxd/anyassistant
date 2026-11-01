@@ -36,10 +36,12 @@ program and keeps your data.
 `~/.local/share/AnyAssistant`, the cache in `~/.cache/AnyAssistant`, and it starts with the
 computer as a systemd user service (`sudo loginctl enable-linger $USER` so it also starts at boot
 without anyone logging in: a server with no screen). Bonjour comes from Python's zeroconf, mail
-passwords go to the Secret Service (keyring), and PyTorch is the CPU one. **Windows** for now runs
-from the project (`uv run server/main.py`); its app comes later. What doesn't work outside the Mac
-yet: its own speech recognition and voice (MLX, AVSpeech) and Apple's model; the plan is in
-`TODO.md` («El servidor en Windows y Linux»).
+passwords go to the Secret Service (keyring), and PyTorch is the CPU one. Its own engines there:
+speech recognition with Parakeet v3 in ONNX (`stt-parakeet-onnx`, on the CPU, with Whisper as its
+fallback) or Whisper (`stt-faster-whisper`, CPU or an NVIDIA card), the voice Kokoro
+(`tts-kokoro`: ef_dora in Spanish, af_heart in English), the wake word with faster-whisper.
+**Windows** for now runs from the project (`uv run server/main.py`); its app comes later. Apple's
+model is only on the Mac; the plan is in `TODO.md` («El servidor en Windows y Linux»).
 
 ```sh
 ~/Applications/AnyAssistant/bin/anyassistant update      # the new version from where it was

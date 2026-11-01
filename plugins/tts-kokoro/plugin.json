@@ -1,0 +1,14 @@
+{
+  "name": "Kokoro",
+  "description": "A natural voice on Windows and Linux: Kokoro-82M in ONNX, on the CPU (Spanish, English, French, Italian, Portuguese…).",
+  "kind": "tts",
+  "needs": {
+    "python": [
+      "kokoro-onnx>=0.4; sys_platform != 'darwin'"
+    ],
+    "system": [
+      "linux",
+      "win32"
+    ]
+  }
+}

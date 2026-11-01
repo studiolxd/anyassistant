@@ -1,8 +1,5 @@
 {
   "name": "Wake word (Whisper)",
-  "description": "Any word as the wake word, heard with a small Whisper.",
-  "kind": "wake",
-  "requires": [
-    "stt-mlx-whisper"
-  ]
+  "description": "Any word as the wake word, heard with a small Whisper (MLX on the Mac, faster-whisper elsewhere).",
+  "kind": "wake"
 }

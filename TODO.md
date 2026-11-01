@@ -51,9 +51,14 @@ Java no tiene cancelación de eco).
   (`web.stop`); los motores por defecto, los que tenga cada equipo. Probado en Ubuntu 24.04
   (OrbStack): 500 tests, 4 solo de Mac saltados. Falta: los tests en Windows (no hay remoto
   de GitHub para Actions: a mano en tu PC).
-- [ ] **2. Motores portables**: `stt-parakeet-onnx`, `stt-faster-whisper`, `tts-kokoro`,
-  `tts-piper`, `wake-whisper` sin MLX; el instalador elige según el equipo (CPU, NVIDIA,
-  Raspberry). Resultado: un asistente completo en Linux y Windows, por la página web.
+- [x] **2. Motores portables** (1 nov): `stt-parakeet-onnx` (Parakeet v3 int8, 0,1–0,3 s por
+  frase en CPU; con el respaldo de Whisper si se va al inglés), `stt-faster-whisper` (CPU
+  int8, o NVIDIA si tiene sus librerías), `tts-kokoro` (Dora en español, ~4× tiempo real),
+  `wake-whisper` con faster-whisper fuera del Mac. Probado en Ubuntu: «¿Qué hora es?» por
+  `/talk` → «Son las 4 y 48 de la tarde» con la voz de Kokoro.
+- [ ] **2b. Lo que queda de los motores**: `tts-piper` (más ligero, para una Raspberry);
+  `set_voice` con las voces de Kokoro (hoy, solo las del Mac); probar Claude Code en Linux y
+  Windows; probarlo todo en un Windows de verdad.
 - [ ] **3. Linux sin pantalla** (un mini PC, un NAS, una Raspberry Pi 5): `install.sh` para
   Linux, el servicio de systemd y la administración web (ajustes, dispositivos, emparejar).
 - [ ] **4. La app de bandeja** (Electron): el servidor, la cara en una ventana, el menú, la
