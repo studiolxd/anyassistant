@@ -10,6 +10,7 @@
 #   bin/anyassistant pair                     a code to pair a device (with "pairing": true)
 #   bin/anyassistant unpair                   forgets every paired device
 #   bin/anyassistant admin-code               a code for a browser to administer it (/admin)
+#   bin/anyassistant llm-key openai           an LLM's API key, into the system's keychain
 #   bin/anyassistant skin list|new <name> [--from orb]   the screen's skins
 #   bin/anyassistant plugins [requirements [--all]]   which are on, what they lack; their Python packages
 #   bin/anyassistant mail add|list|test|remove   mail accounts besides Gmail (IMAP and SMTP)
@@ -198,6 +199,18 @@ d = json.load(sys.stdin)
 print("Admin code: %s  (valid %d minutes, for one browser): open /admin on this computer'"'"'s address and type it" % (d["code"], d["seconds"] // 60))
 '
     ;;
+  llm-key)
+    [ -n "$2" ] || { echo "Which one: bin/anyassistant llm-key openai"; exit 2; }
+    PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" -c '
+import getpass, sys
+import keychain
+key = getpass.getpass("Its API key (not shown; empty: forget it): ").strip()
+if key:
+    keychain.put("AnyAssistant LLM", sys.argv[1], key); print("Saved in the keychain: say «usa %s»." % sys.argv[1])
+else:
+    keychain.forget("AnyAssistant LLM", sys.argv[1]); print("Forgotten.")
+' "$2"
+    ;;
   plugins)
     shift
     PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/server/kernel.py" "$@"
@@ -215,7 +228,7 @@ print("Admin code: %s  (valid %d minutes, for one browser): open /admin on this 
     curl -s -m 3 -X POST "http://127.0.0.1:$PORT/pairing?forget=1" > /dev/null && echo "Every device forgotten: they'll need a new code."
     ;;
   *)
-    sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
     exit 2
     ;;
 esac

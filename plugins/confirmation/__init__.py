@@ -3,7 +3,7 @@
 - Jarvis's own tools marked needs_yes (@tool(…, needs_yes=True)): a gate in tools/
   refuses the call until you answer «yes» to exactly that call.
 - Claude Code: the hook bin/anyassistant-confirm (installed by llm-claude while this is on).
-- Hermes: its approvals wait here for your answer (llm-hermes).
+- Hermes: its approvals wait here for your answer (llm-openai).
 
 The pending action and your answer live in store.py (files, so separate processes
 agree). While one waits, the face shows «question»; your next sentence answers it.

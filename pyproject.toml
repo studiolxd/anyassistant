@@ -18,6 +18,7 @@ dependencies = [  # the core; each plugin's own are in its plugin.json «needs»
 bonjour = ["zeroconf>=0.136; sys_platform != 'darwin'"]
 eyes = ["pillow>=10"]
 mail = ["keyring>=25; sys_platform != 'darwin'"]
+llm-openai = ["keyring>=25; sys_platform != 'darwin'"]
 stt-faster-whisper = ["faster-whisper>=1.1; sys_platform != 'darwin'"]
 stt-mlx-whisper = ["mlx-whisper>=0.4.3; sys_platform == 'darwin'"]
 stt-parakeet = ["parakeet-mlx>=0.5.3; sys_platform == 'darwin'"]
@@ -30,7 +31,7 @@ wake-openwakeword = ["openwakeword>=0.4.0", "onnxruntime>=1.31.1"]
 [dependency-groups]
 dev = [  # while developing: every system plugin's packages too (uv run would remove them otherwise)
     "pytest>=8",
-    "anyassistant[bonjour,eyes,mail,stt-faster-whisper,stt-mlx-whisper,stt-parakeet,stt-parakeet-onnx,tts-kokoro,vad-silero,voices,wake-openwakeword]",
+    "anyassistant[bonjour,eyes,llm-openai,mail,stt-faster-whisper,stt-mlx-whisper,stt-parakeet,stt-parakeet-onnx,tts-kokoro,vad-silero,voices,wake-openwakeword]",
 ]
 
 [tool.uv]

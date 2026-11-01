@@ -232,6 +232,9 @@ bonjour = [
 eyes = [
     { name = "pillow" },
 ]
+llm-openai = [
+    { name = "keyring", marker = "sys_platform != 'darwin'" },
+]
 mail = [
     { name = "keyring", marker = "sys_platform != 'darwin'" },
 ]
@@ -266,7 +269,7 @@ wake-openwakeword = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "anyassistant", extra = ["bonjour", "eyes", "mail", "stt-faster-whisper", "stt-mlx-whisper", "stt-parakeet", "stt-parakeet-onnx", "tts-kokoro", "vad-silero", "voices", "wake-openwakeword"] },
+    { name = "anyassistant", extra = ["bonjour", "eyes", "llm-openai", "mail", "stt-faster-whisper", "stt-mlx-whisper", "stt-parakeet", "stt-parakeet-onnx", "tts-kokoro", "vad-silero", "voices", "wake-openwakeword"] },
     { name = "pytest" },
 ]
 
@@ -276,6 +279,7 @@ requires-dist = [
     { name = "aiortc", specifier = ">=1.9" },
     { name = "faster-whisper", marker = "sys_platform != 'darwin' and extra == 'stt-faster-whisper'", specifier = ">=1.1" },
     { name = "huggingface-hub", marker = "extra == 'voices'", specifier = ">=0.20" },
+    { name = "keyring", marker = "sys_platform != 'darwin' and extra == 'llm-openai'", specifier = ">=25" },
     { name = "keyring", marker = "sys_platform != 'darwin' and extra == 'mail'", specifier = ">=25" },
     { name = "kokoro-onnx", marker = "sys_platform != 'darwin' and extra == 'tts-kokoro'", specifier = ">=0.4" },
     { name = "mlx-whisper", marker = "sys_platform == 'darwin' and extra == 'stt-mlx-whisper'", specifier = ">=0.4.3" },
@@ -294,11 +298,11 @@ requires-dist = [
     { name = "torch", marker = "sys_platform != 'darwin' and extra == 'vad-silero'", specifier = ">=2.5", index = "https://download.pytorch.org/whl/cpu" },
     { name = "zeroconf", marker = "sys_platform != 'darwin' and extra == 'bonjour'", specifier = ">=0.136" },
 ]
-provides-extras = ["bonjour", "eyes", "mail", "stt-faster-whisper", "stt-mlx-whisper", "stt-parakeet", "stt-parakeet-onnx", "tts-kokoro", "vad-silero", "voices", "wake-openwakeword"]
+provides-extras = ["bonjour", "eyes", "mail", "llm-openai", "stt-faster-whisper", "stt-mlx-whisper", "stt-parakeet", "stt-parakeet-onnx", "tts-kokoro", "vad-silero", "voices", "wake-openwakeword"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "anyassistant", extras = ["bonjour", "eyes", "mail", "stt-faster-whisper", "stt-mlx-whisper", "stt-parakeet", "stt-parakeet-onnx", "tts-kokoro", "vad-silero", "voices", "wake-openwakeword"] },
+    { name = "anyassistant", extras = ["bonjour", "eyes", "llm-openai", "mail", "stt-faster-whisper", "stt-mlx-whisper", "stt-parakeet", "stt-parakeet-onnx", "tts-kokoro", "vad-silero", "voices", "wake-openwakeword"] },
     { name = "pytest", specifier = ">=8" },
 ]
 

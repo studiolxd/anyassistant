@@ -1,0 +1,10 @@
+{
+  "name": "OpenAI, Ollama and Hermes",
+  "description": "LLMs with OpenAI's API: OpenAI (or any compatible service), Ollama's local models and Hermes Agent. OpenAI's and Ollama's get Jarvis's own tools; Hermes, its own.",
+  "kind": "llm",
+  "needs": {
+    "python": [
+      "keyring>=25; sys_platform != 'darwin'"
+    ]
+  }
+}

@@ -95,7 +95,7 @@
     "plugins": "which plugins are on or off, if not as they come: {\"memory\": true, \"tap-to-wake\": false}",
     "name": "the assistant's name: its wake word, the page's title, what the LLM calls itself",
     "language": "en, es…: what it speaks and understands (default: the Mac's)",
-    "llm": "the LLM: claude, apple, hermes…",
+    "llm": "the LLM: claude, apple, openai, ollama, hermes…",
     "llm_model": "the LLM's model (for Claude: sonnet, opus, haiku…)",
     "mcp": ".mcp.json with the MCP servers (default: your data folder's)",
     "instructions": "yours, added to the LLM's (text or a list of lines): who you are, how to talk…",

@@ -1,0 +1,29 @@
+{
+  "plugins": {
+    "llm-openai": [
+      "OpenAI, Ollama y Hermes",
+      "LLM con la API de OpenAI: OpenAI (o cualquier servicio compatible), los modelos locales de Ollama y Hermes Agent. Los de OpenAI y Ollama usan las herramientas de Eva; Hermes, las suyas."
+    ]
+  },
+  "speech": {
+    "wait": [
+      "Un momento, lo miro.",
+      "Déjame ver.",
+      "Un segundo.",
+      "Lo compruebo.",
+      "Dame un momento.",
+      "Voy a mirarlo."
+    ],
+    "llm_failed": "Perdona, no he podido responder.",
+    "hermes_approval": "Hermes quiere hacer esto: {action}. ¿Lo hago?",
+    "llm_down": "No puedo hablar con {name}: ¿está en marcha?",
+    "llm_key": "{name} no acepta la clave: revísala con bin/anyassistant llm-key.",
+    "llm_limit": "{name} dice que he llegado a su límite de uso. Prueba en un rato."
+  },
+  "options": {
+    "openai_url": "el servicio compatible con OpenAI para «openai» (OpenRouter, Groq, LM Studio…)"
+  },
+  "options_empty": {
+    "openai_url": "https://api.openai.com/v1"
+  }
+}

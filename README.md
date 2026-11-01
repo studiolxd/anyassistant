@@ -155,7 +155,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 |---|---|---|
 | `name` | `"Jarvis"` | the assistant's name: its wake word, the page's title, what the LLM calls itself *(restarts)* |
 | `language` | — | en, es…: what it speaks and understands (default: the Mac's) *(restarts)* |
-| `llm` | `"claude"` | the LLM: claude, apple, hermes… *(restarts)* |
+| `llm` | `"claude"` | the LLM: claude, apple, openai, ollama, hermes… *(restarts)* |
 | `llm_model` | — | the LLM's model (for Claude: sonnet, opus, haiku…) *(restarts)* |
 | `mcp` | — | .mcp.json with the MCP servers (default: your data folder's) *(restarts)* |
 | `instructions` | — | yours, added to the LLM's (text or a list of lines): who you are, how to talk… |
@@ -171,6 +171,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `email_check_minutes` | `5` | every how many minutes it looks for new emails |
 | `read_photo` | `true` | a full-resolution photo when asked to read |
 | `llm_fallback` | `"auto"` | if the LLM can't answer, another one does: auto (Apple's local model if there is one), an LLM's name, or none |
+| `openai_url` | — | the OpenAI-compatible service for «openai» (OpenRouter, Groq, LM Studio…) *(restarts)* |
 | `mail_accounts` | `[]` | mail accounts besides Gmail (IMAP and SMTP); add them with `bin/anyassistant mail add you@domain.com` (the password goes to the Keychain) |
 
 **Memory**
@@ -255,6 +256,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `record` | `false` | saves everything that arrives to a WAV, in the cache's «recordings» (to debug) *(restarts)* |
 | `https_port` | `443` | the HTTPS port (the page with a certificate devices trust) *(restarts)* |
 | `https_redirect_port` | `80` | the HTTP port that sends to the HTTPS page (0: none) *(restarts)* |
+
 <!-- /options -->
 
 **How much it says**: `detail` is `concise` (one short sentence), `neutral` (one
@@ -389,6 +391,13 @@ skin», «what do you know about me?»):
 
 Tools that change something ask for your «yes» themselves (the server, not the
 LLM), so it holds for any LLM: with Claude, Hermes or another MCP client.
+
+**OpenAI, Ollama and other OpenAI-compatible LLMs** (the plugin `llm-openai`, which also brings
+Hermes): `"llm": "openai"` (or «usa OpenAI») with its key in the keychain (`bin/anyassistant
+llm-key openai`, or `OPENAI_API_KEY`); `openai_url` makes it any compatible service (OpenRouter,
+Groq, Mistral, LM Studio…); `llm_model` the model (gpt-5-mini by default). `"llm": "ollama"`: the
+models running on this computer with Ollama, no key. They get Jarvis's own tools (above), each
+asking for your «yes» when it changes something; Jarvis keeps their conversation.
 
 **With Hermes**: add it to Hermes's MCP servers and restart its gateway:
 

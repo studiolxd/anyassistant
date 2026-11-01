@@ -15,7 +15,7 @@ import wake
 @pytest.mark.parametrize("registry, expected", [  # {engine: its plugin}
     (stt, {"parakeet": "stt-parakeet", "mlx-whisper": "stt-mlx-whisper"}),
     (wake, {"whisper": "wake-whisper", "openwakeword": "wake-openwakeword"}),
-    (llm, {"claude": "llm-claude", "apple": "llm-apple", "hermes": "llm-hermes"}),
+    (llm, {"claude": "llm-claude", "apple": "llm-apple", "hermes": "llm-openai", "openai": "llm-openai"}),
     (tts, {"avspeech": "tts-avspeech", "macos": "tts-macos"}),
     (vad, {"silero": "vad-silero"}),
 ])

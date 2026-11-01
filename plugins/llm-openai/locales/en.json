@@ -1,0 +1,17 @@
+{
+  "speech": {
+    "wait": [
+      "One moment, let me check.",
+      "Let me look.",
+      "Just a second.",
+      "Checking.",
+      "Give me a moment.",
+      "Let me see."
+    ],
+    "llm_failed": "Sorry, I couldn't answer.",
+    "hermes_approval": "Hermes wants to do this: {action}. Shall I go ahead?",
+    "llm_down": "I can't reach {name}: is it running?",
+    "llm_key": "{name} doesn't take the key: check it with bin/anyassistant llm-key.",
+    "llm_limit": "{name} says I've reached its usage limit. Try again in a while."
+  }
+}

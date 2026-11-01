@@ -69,7 +69,7 @@ def test_off_takes_what_needs_it_off(yours):
 
 
 def test_turning_off_tools_and_engines(yours):
-    settings.active["plugins"] = {"skill-alarms": False, "llm-hermes": False}
+    settings.active["plugins"] = {"skill-alarms": False, "llm-openai": False}
     assert "set_timer" not in tools.available()
     import llm
 
