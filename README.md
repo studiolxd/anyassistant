@@ -46,9 +46,11 @@ model is only on the Mac; the plan is in `TODO.md` («El servidor en Windows y L
 **The Windows and Linux app** (`apps/desktop`, Electron): in the tray, as the Mac app in the menu
 bar. It runs the server (or adopts the one running: Linux's systemd service), and «Show Eva» opens
 its face (the page, with Chromium's microphone, camera and echo cancellation); «Pair a device…» and
-«Administer…» open `/admin`; it can open at login. For now, from the project:
-`cd apps/desktop && npm install && npm start` (it needs Node.js and uv; your data goes to
-`%APPDATA%\AnyAssistant` on Windows, `~/.local/share/AnyAssistant` on Linux).
+«Administer…» open `/admin`; it can open at login. Its packages (unsigned: on Windows, «More info»
+→ «Run anyway» the first time) are built on GitHub Actions («packages»): the installer `.exe`,
+the AppImage and the `.deb`, with the program and uv inside; the first time it makes its Python and
+downloads the models. Your data goes to `%APPDATA%\AnyAssistant` on Windows,
+`~/.local/share/AnyAssistant` on Linux. While developing: `cd apps/desktop && npm install && npm start`.
 
 **Administering it** without the Mac app: the page `/admin` (pair a device with its QR, devices,
 settings, plugins, voices, mail, admins): from the computer itself, or from another one's browser

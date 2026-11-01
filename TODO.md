@@ -97,8 +97,13 @@ Java no tiene cancelación de eco).
   «Administrar…» (`/admin`); abrir al iniciar sesión (Windows, y `~/.config/autostart` en
   Linux). Probada en el Mac (arranca su servidor, carga la cara, al salir lo para). Falta:
   probarla en tu Windows y tu Linux; hoy necesita Node.js y uv (la fase 5 los mete dentro).
-- [ ] **5. Paquetes**: instalador de Windows firmado (sin firma, SmartScreen lo bloquea: hace
-  falta un certificado de firma de código), AppImage y .deb para Linux, actualizaciones.
+- [x] **5. Paquetes, sin firmar** (1 nov): el instalador de Windows (.exe, NSIS, para tu
+  usuario), el AppImage y el .deb, con el programa y uv dentro (sin Node ni uv aparte), hechos
+  en GitHub Actions («packages»: a mano, o una etiqueta v* hace una versión en Releases).
+- [ ] **5b. Lo que queda de los paquetes**: firmar el de Windows cuando lo instale más gente
+  (Azure Artifact Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de
+  España); actualizarse sola (hoy, instalar la versión nueva encima); versiones ARM (Windows
+  en ARM, Raspberry Pi).
 
 
 ## Varios dispositivos, lo siguiente
