@@ -248,6 +248,12 @@ def test_it_keeps_learning_a_voice_from_what_it_is_sure_of(monkeypatch):
     for _ in range(15):
         voices.adapt(long, "Suvi")
     assert len(voices.people()[0]["recent"]) == voices.RECENT  # only the last ones
+    voices.learn("Suvi", [unit(0, 1)], device="iphone")  # another device: its own last ones
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(0.1, 1))  # as the iPhone hears her
+    for _ in range(3):
+        voices.adapt(long, "Suvi")
+    near = [r["near"] for r in voices.people()[0]["recent"]]
+    assert near.count("mac") == voices.RECENT and near.count("iphone") == 3
 
 
 def test_a_recent_print_cant_drift_to_someone_else(monkeypatch):

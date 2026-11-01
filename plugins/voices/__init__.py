@@ -13,7 +13,7 @@ voices.json in your data folder.
   already recognised (with a longer sentence) — never as an unknown.
 - The LLM hears who is talking («(Suvi is talking.)»), with the first sentence of each.
 - «voice_adapt» (on by default): it keeps learning each voice from what that person says
-  (only voice prints, never the audio): the last RECENT sentences it was sure of (long, clearly
+  (only voice prints, never the audio): the last RECENT sentences it was sure of on each device (long, clearly
   theirs, nobody else close) make a «recent» print beside the one learnt, per device. That one is
   never touched: a recent print only counts when the voice is also near it (FLOOR), so it can't
   drift off to someone else. Off: the recent ones are deleted; learning a voice again, too.
@@ -44,7 +44,7 @@ RATE = 16000
 SHORT = 1.2  # seconds: shorter sentences say little about who
 MIN_SAMPLE = 1.5  # seconds of a phrase when learning a voice
 PHRASES = 5
-RECENT = 10  # sentences kept, per person, to adapt their print
+RECENT = 10  # sentences kept, per person and device, to adapt their print
 SURE = 0.65  # how alike a sentence must be to be kept (well above voice_match)
 LONG = 2.0  # seconds a sentence must last to be kept
 APART = 0.15  # and how much nearer to them than to anyone else
@@ -206,11 +206,13 @@ def adapt(audio: np.ndarray, name: str):
         return
     everyone = people()
     person = next(p for p in everyone if p["name"] == name)
+    near = found[0][2]
     kept = person.setdefault("recent", [])
-    kept.append({"near": found[0][2], "print": [round(float(x), 6) for x in heard], "at": time.time()})
-    person["recent"] = kept[-RECENT:]
+    kept.append({"near": near, "print": [round(float(x), 6) for x in heard], "at": time.time()})
+    there = [r for r in kept if r["near"] == near]
+    person["recent"] = [r for r in kept if r["near"] != near] + there[-RECENT:]  # the last ones of each device
     _save(everyone)
-    log.info("voice adapted: %s (%.2f, %d recent)", name, found[0][0], len(person["recent"]))
+    log.info("voice adapted: %s on %s (%.2f, %d recent there)", name, near, found[0][0], min(len(there), RECENT))
 
 
 def drop_recent():
