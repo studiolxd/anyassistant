@@ -19,7 +19,7 @@ struct AnyAssistantApp: App {
         MenuBarExtra {
             MenuView(server: server, client: client)
         } label: {
-            Image(systemName: icon)
+            MenuBarIcon(symbol: icon)
         }
         Window("AnyAssistant", id: "face") {
             FaceWindow(client: client)
@@ -124,10 +124,34 @@ final class Delegate: NSObject, NSApplicationDelegate {
         Thread.sleep(forTimeInterval: 1)
     }
 
-    /// Opens one of the app's windows (a menu bar app has to bring itself forward).
+    /// Opens one of the app's windows (a menu bar app has to bring itself forward). The icon in
+    /// the menu bar opens it (it is there from the start, the menu only once clicked); asked before
+    /// the icon is drawn (just launched), it opens it as soon as it is.
+    @MainActor static var pending: String?
+
     @MainActor static func show(_ id: String) {
         NSApp.activate(ignoringOtherApps: true)
+        pending = id
         NotificationCenter.default.post(name: .open, object: id)
+    }
+}
+
+/// The icon in the menu bar; also what opens the windows asked for (Delegate.show).
+struct MenuBarIcon: View {
+    let symbol: String
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Image(systemName: symbol)
+            .onAppear { openPending() }
+            .onReceive(NotificationCenter.default.publisher(for: .open)) { _ in openPending() }
+    }
+
+    func openPending() {
+        guard let id = Delegate.pending else { return }
+        Delegate.pending = nil
+        NSApp.activate(ignoringOtherApps: true)
+        openWindow(id: id)
     }
 }
 
@@ -190,9 +214,6 @@ struct MenuView: View {
     var quit: some View {
         Button(T("Quit AnyAssistant")) { NSApp.terminate(nil) }
             .keyboardShortcut("q")
-            .onReceive(NotificationCenter.default.publisher(for: .open)) { note in
-                if let id = note.object as? String { openWindow(id: id) }
-            }
     }
 
     @ViewBuilder var serverMenu: some View {
@@ -302,9 +323,6 @@ struct SetupView: View {
             }
         }
         .padding(24)
-        .onReceive(NotificationCenter.default.publisher(for: .open)) { note in
-            if let id = note.object as? String { openWindow(id: id) }
-        }
     }
 
     var welcome: some View {
