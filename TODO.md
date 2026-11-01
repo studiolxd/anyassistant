@@ -86,6 +86,9 @@
   (`quiet_hours`), no mientras alguien le habla, con un tono suave antes.
   Y al llegar un email («Tienes un email nuevo de Ana», `email-notices`): los de Principal;
   de quién, también el asunto, o solo cuántos.
+- [x] **Otras cuentas de correo** (`mail`, IMAP y SMTP): avisos y la cuenta de la mañana
+  también de ellas; el LLM las lista, lee y envía (con tu «sí»). `bin/anyassistant mail add`,
+  la contraseña en el Llavero.
 - [x] **El menú de la app con varios dispositivos**: cuántos y cuáles, y con cuál hablas.
 - [x] **Varios dispositivos a la vez** (1 nov, probado con el iPad y la tablet) (`hub.py`,
   `devices`): contesta el que te oyó y, si

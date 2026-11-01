@@ -1,0 +1,6 @@
+{
+  "name": "Mail (IMAP and SMTP)",
+  "description": "Mail accounts besides Gmail: notices of new emails, the morning count, and for the LLM to read them and send (with your «yes»). bin/anyassistant mail add.",
+  "kind": "feature",
+  "needs": {"system": ["darwin"], "commands": ["security"]}
+}

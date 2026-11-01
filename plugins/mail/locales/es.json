@@ -1,0 +1,11 @@
+{
+  "plugins": {
+    "mail": [
+      "Correo (IMAP y SMTP)",
+      "Cuentas de correo además de Gmail: avisos de emails nuevos, la cuenta de la mañana, y para que el LLM los lea y envíe (con tu «sí»). bin/anyassistant mail add."
+    ]
+  },
+  "options": {
+    "mail_accounts": "cuentas de correo además de Gmail (IMAP y SMTP); añádelas con `bin/anyassistant mail add tu@dominio.com` (la contraseña va al Llavero)"
+  }
+}

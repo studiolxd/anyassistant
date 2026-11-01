@@ -1,6 +1,9 @@
 {
   "name": "Email notices",
-  "description": "«You have a new email from Ana.»: when an email arrives, politely (through the plugin «notices»); who it's from, its subject too, or only how many.",
+  "description": "«You have a new email from Ana.»: when an email arrives in Gmail or in another account (the plugin «mail»), politely (through the plugin «notices»); who it's from, its subject too, or only how many.",
   "kind": "feature",
-  "requires": ["google", "notices"]
+  "requires": [
+    "notices",
+    "skills-language"
+  ]
 }

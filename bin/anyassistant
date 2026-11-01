@@ -10,6 +10,7 @@
 #   bin/anyassistant unpair                   forgets every paired device
 #   bin/anyassistant skin list|check <folder>|new <name> [--from orb]   the screen's skins
 #   bin/anyassistant plugins [requirements [--all]]   which are on, what they lack; their Python packages
+#   bin/anyassistant mail add|list|test|remove   mail accounts besides Gmail (IMAP and SMTP)
 #   bin/anyassistant setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)
 #   bin/anyassistant run [server options]     in the foreground (what launchd runs)
 #   bin/anyassistant update             installed: the new version from where it came, then restarts
@@ -177,6 +178,10 @@ print("Code: %s  (valid %d minutes; type it on the device)" % (d["code"], d["sec
     shift
     PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/server/kernel.py" "$@"
     ;;
+  mail)
+    shift
+    PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/plugins/mail/cli.py" "$@"
+    ;;
   skin)
     shift
     PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/plugins/page/skins.py" "$@"
@@ -186,7 +191,7 @@ print("Code: %s  (valid %d minutes; type it on the device)" % (d["code"], d["sec
     curl -s -m 3 -X POST "http://127.0.0.1:$PORT/pairing?forget=1" > /dev/null && echo "Every device forgotten: they'll need a new code."
     ;;
   *)
-    sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
     exit 2
     ;;
 esac

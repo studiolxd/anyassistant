@@ -145,6 +145,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `email_check_minutes` | `5` | every how many minutes it looks for new emails |
 | `read_photo` | `true` | a full-resolution photo when asked to read |
 | `llm_fallback` | `"auto"` | if the LLM can't answer, another one does: auto (Apple's local model if there is one), an LLM's name, or none |
+| `mail_accounts` | `[]` | mail accounts besides Gmail (IMAP and SMTP); add them with `bin/anyassistant mail add you@domain.com` (the password goes to the Keychain) |
 
 **Memory**
 
@@ -633,7 +634,7 @@ day's holidays, the weather, what's on your calendar and how many unread emails
 (`unread_query`; to hear them, ask). Notices are polite: not during `quiet_hours`
 (23:00-08:00), not while someone is talking to it (it waits for a quiet moment), with a soft
 tone first, on every device or on the last one you talked to (`notices_where`).
-When an email arrives (`email-notices`): «Tienes un email nuevo de Ana.» (`email_notice_says`:
+When an email arrives, in Gmail or another account (`email-notices`): «Tienes un email nuevo de Ana.» (`email_notice_says`:
 who it's from, its subject too, or only how many), of the unread ones in Gmail's Primary tab
 (`email_notice_query`), looked at every `email_check_minutes`.
 
@@ -741,6 +742,22 @@ curl -X POST https://app.holded.com/api/v2/mcp/oauth/register -H "Content-Type: 
        "grant_types":["authorization_code","refresh_token"],"response_types":["code"],
        "token_endpoint_auth_method":"none"}'
 ```
+
+#### Other mail accounts: IMAP and SMTP (the plugin `mail`)
+
+For accounts that aren't Gmail (iCloud, Outlook, your domain's…):
+
+```sh
+bin/anyassistant mail add you@domain.com [--name Trabajo] [--imap host[:port]] [--smtp host[:port]]
+bin/anyassistant mail list | test | remove <name>
+```
+
+`add` guesses the servers of the known providers, asks for the password (an app password
+where the provider has them), tries IMAP and SMTP with it, and keeps it in the macOS Keychain
+(never in `settings.json`; the account goes to `mail_accounts`). Then new emails get a notice
+(`email-notices`), the morning summary counts them, and the LLM can list them (`list_mail`),
+read one (`read_mail`; nothing is marked read) and send (`send_mail`, with your «yes»; a copy
+goes to its Sent folder).
 
 #### Gmail, Calendar, Drive, Docs and Sheets (`bin/gog`)
 

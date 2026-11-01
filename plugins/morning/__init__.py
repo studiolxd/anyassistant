@@ -67,11 +67,19 @@ def _agenda(timed: list) -> list[str]:
     return parts
 
 
-def _emails(google) -> list[str]:
-    found = google.unread(settings.get("unread_query") or "is:unread in:inbox")
-    if found is None:
+def _emails(google, mail=None) -> list[str]:
+    """How many unread: Gmail's and the other accounts' (the plugin «mail»), together."""
+    count, more, read = 0, False, False
+    if google:
+        found = google.unread(settings.get("unread_query") or "is:unread in:inbox")
+        if found is not None:
+            count, more, read = found[0], found[1], True
+    for a in mail.accounts() if mail else []:
+        found = mail.unread_count(a)
+        if found is not None:
+            count, read = count + found, True
+    if not read:
         return []
-    count, more = found
     if more:
         return [i18n.L("speech.morning_more_emails", count=count)]
     if count == 0:
@@ -91,8 +99,7 @@ def summary(now: float | None = None) -> str:
         parts.append(weather.answer(0))
     if timed is not None:
         parts += _agenda(timed)
-    if google:
-        parts += _emails(google)
+    parts += _emails(google, kernel.module("mail"))
     return " ".join(parts)
 
 

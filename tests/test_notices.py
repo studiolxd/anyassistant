@@ -183,7 +183,7 @@ Email = google.Email
 
 
 def test_only_new_emails_are_told(monkeypatch):
-    monkeypatch.setattr(emails, "_seen", None)
+    monkeypatch.setattr(emails, "_seen", {})
     there = [Email("1", "Google", "Alerta de seguridad")]
     assert emails.new(there) == []  # already there when it started
     arrived = [Email("2", "Ana", "Cena"), *there]

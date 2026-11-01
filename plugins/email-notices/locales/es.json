@@ -2,7 +2,7 @@
   "plugins": {
     "email-notices": [
       "Avisos de email",
-      "«Tienes un email nuevo de Ana.»: cuando llega un email, con educación (con el plugin «Avisos»); de quién es, también su asunto, o solo cuántos."
+      "«Tienes un email nuevo de Ana.»: cuando llega un email a Gmail o a otra cuenta (el plugin «Correo»), con educación (con el plugin «Avisos»); de quién es, también su asunto, o solo cuántos."
     ]
   },
   "options": {
@@ -23,6 +23,7 @@
     "email_from": "Tienes un email nuevo de {sender}.",
     "email_from_some": "Tienes {count} emails nuevos: de {senders}.",
     "email_subject": "Tienes un email nuevo de {sender}: {subject}.",
-    "email_untitled": "sin asunto"
+    "email_untitled": "sin asunto",
+    "email_account": "En {account}: {sentence}"
   }
 }
