@@ -215,12 +215,12 @@ struct MenuView: View {
             Toggle(T("Listen on this Mac"), isOn: $client.listening)
             if client.refused { Button(M("Allow the microphone…")) { client.openPrivacy() } }
             if client.cameraRefused { Button(M("Allow the camera…")) { client.openPrivacy("Privacy_Camera") } }
-            Divider()
-            Button(M("Pair a device…")) { open("pair") }
-            Button(M("Devices…")) { open("devices") }
             Button(M("Skins…")) {  // every state of each skin, to see them (the plugin «skins»)
                 NSWorkspace.shared.open(URL(string: "http://127.0.0.1:\(server.port)/skins")!)
             }
+            Divider()
+            Button(M("Pair a device…")) { open("pair") }
+            Button(M("Devices…")) { open("devices") }
             Divider()
             Button(T("Show the log")) {
                 NSWorkspace.shared.open([server.log], withApplicationAt: URL(fileURLWithPath: "/System/Applications/Utilities/Console.app"),

@@ -154,6 +154,7 @@ function menu() {
     faceShown()  // «Hide Eva» while its window is open
       ? { label: T('Hide %s', name), click: () => windows.face.close() }
       : { label: T('Show %s', name), enabled: running, click: showFace },
+    { label: 'Skins', enabled: running, click: () => open('skins', '/skins', { width: 1100, height: 780, title: 'Skins', dark: true }) },
     ...(refused('microphone') ? [{ label: T('Allow the microphone'), click: () => shell.openExternal(PRIVACY.microphone) }] : []),
     ...(refused('camera') ? [{ label: T('Allow the camera'), click: () => shell.openExternal(PRIVACY.camera) }] : []),
     { label: T('Connect another device'), enabled: running, click: () => showAdmin('#pair') },
