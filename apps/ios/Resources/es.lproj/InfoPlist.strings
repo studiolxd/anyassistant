@@ -1,0 +1,3 @@
+NSMicrophoneUsageDescription = "Para oírte: lo que dices va a AnyAssistant en tu Mac, a ningún otro sitio.";
+NSLocalNetworkUsageDescription = "Para hablar con AnyAssistant en tu Mac.";
+NSAlarmKitUsageDescription = "Para que las alarmas, temporizadores y recordatorios que pones con AnyAssistant suenen en este iPhone, aunque esté en silencio.";

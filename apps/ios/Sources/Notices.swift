@@ -1,5 +1,5 @@
 // The phone's own notifications. Alarms, timers and reminders are scheduled on it as the Mac
-// tells them (they ring even with the app closed); while it is in the background, its answers
+// tells them (they ring even with the app closed; on iOS 26 or later they are alarms: Alarms); while it is in the background, its answers
 // and messages from other rooms appear as notifications too. With the app open, the Mac's
 // voice says them: no notification.
 
@@ -20,7 +20,14 @@ final class Notices: NSObject, UNUserNotificationCenterDelegate {
     func handle(_ message: [String: Any]) {
         switch message["type"] as? String {
         case "timers":
-            schedule(message["items"] as? [[String: Any]] ?? [])
+            let items = message["items"] as? [[String: Any]] ?? []
+            if #available(iOS 26.0, *) {
+                Task {  // the phone's own alarms; notifications only if it doesn't let it
+                    if await Alarms.shared.set(items) { self.schedule([]) } else { self.schedule(items) }
+                }
+            } else {
+                schedule(items)
+            }
         case "text":
             guard !foreground, message["author"] as? String == "assistant", message["partial"] as? Bool != true,
                   let text = message["text"] as? String, !text.isEmpty else { return }

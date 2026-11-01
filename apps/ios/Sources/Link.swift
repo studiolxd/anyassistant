@@ -158,6 +158,11 @@ final class Link: NSObject, ObservableObject {
         socket.send(.string(text)) { _ in }
     }
 
+    /// An alarm stopped on the phone: if the Mac is ringing, a tap stops it there too.
+    func stopRinging() {
+        if (shown["state"]?["state"] as? String) == "alarm" { send(["type": "tap"]) }
+    }
+
     /// «Talk to AnyAssistant»: as a tap on its face (it wakes up, or stops talking).
     func talk() {
         if state == .connected { send(["type": "tap"]) } else { tapWhenConnected = true; start() }

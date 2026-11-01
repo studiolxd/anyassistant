@@ -85,6 +85,7 @@ struct MainView: View {
         }
         .onChange(of: awake) { on in UIApplication.shared.isIdleTimerDisabled = on }
         .onReceive(NotificationCenter.default.publisher(for: .talk)) { _ in link.talk() }
+        .onReceive(NotificationCenter.default.publisher(for: .stopRinging)) { _ in link.stopRinging() }
     }
 }
 
