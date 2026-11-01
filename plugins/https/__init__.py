@@ -211,7 +211,7 @@ async def serve(app):
     log.info("HTTPS on https://%s:%s", NAME, port())
 
     async def renew():
-        """Its certificate again when its addresses change (another Wi-Fi, a new IP): new
+        """Its certificate again when its addresses change (another network, a new IP): new
         connections get the new one, without restarting."""
         while True:
             await asyncio.sleep(60)

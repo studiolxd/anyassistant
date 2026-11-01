@@ -1,6 +1,6 @@
 """Bonjour: the server announces itself on the local network as «_anyassistant._tcp», so
 the apps (the Mac's, Android's, iPhone's) find it without an address to type, and an
-address that changes (another Wi-Fi) doesn't matter.
+address that changes (another network) doesn't matter.
 
     dns-sd -B _anyassistant._tcp          to see it from the Mac's terminal
 
@@ -47,7 +47,7 @@ def address() -> str | None:
         return None
 
 
-CHECK = 60  # seconds between looks at its address (another Wi-Fi, a new IP from the router)
+CHECK = 60  # seconds between looks at its address (another network, a new IP from the router)
 
 
 @web.startup

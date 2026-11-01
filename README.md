@@ -3,7 +3,7 @@
 An old phone or tablet becomes the eyes, mouth and ears of a voice assistant;
 all the processing runs on the Mac. The assistant is called Jarvis until you give
 it another name (`name`: also its wake word, «Hey …»). WebRTC transport (Opus + Chrome's echo
-cancellation) over Wi-Fi.
+cancellation) over the local network.
 
 ## Phase 0 · Preparing the phone
 

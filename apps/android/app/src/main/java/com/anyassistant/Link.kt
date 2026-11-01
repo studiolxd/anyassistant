@@ -1,6 +1,6 @@
 // The connection with the Mac (the plugin «stream-api»): a WebSocket with the microphone going up
 // and its voice coming down, and the messages both ways, which change the face (FaceState). It
-// reconnects by itself (the Wi-Fi drops, the Mac restarts). The same as iOS's Link.swift; it lives
+// reconnects by itself (the network drops, the Mac restarts). The same as iOS's Link.swift; it lives
 // in the app (App.link), kept running by ListenService while the screen is off.
 
 package com.anyassistant

@@ -228,7 +228,7 @@ async function begin() {
   connect();
 }
 
-// If the server restarts or the Wi-Fi drops, it reconnects without reloading the page.
+// If the server restarts or the network drops, it reconnects without reloading the page.
 function reconnect() {
   if (retry || shutDown) return;
   fail(text('connection_lost'));

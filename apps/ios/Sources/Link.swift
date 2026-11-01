@@ -1,6 +1,6 @@
 // The connection with the Mac (the plugin «stream-api»): a WebSocket with the microphone going
 // up and its voice coming down, and the messages both ways, which change the face (FaceModel).
-// It reconnects by itself (the Wi-Fi drops, the Mac restarts); while disconnected in the
+// It reconnects by itself (the network drops, the Mac restarts); while disconnected in the
 // background, the microphone stays on so iOS keeps the app alive to reconnect.
 
 import Foundation
