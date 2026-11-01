@@ -21,6 +21,7 @@ from aiohttp import web as http
 import events
 import hub
 import paths
+import settings
 import tools
 import web
 from skills.tokens import tokens
@@ -60,6 +61,24 @@ def _unique(name: str, devices: dict, own: str) -> str:
         number += 1
         candidate = f"{name} {number}"
     return candidate
+
+
+def llm_of(device: str | None) -> str | None:
+    """The LLM a device uses if it has its own («usa Gemini aquí»); None: the general one."""
+    return load().get(device or "", {}).get("llm") or None
+
+
+def set_llm(device: str, name: str | None):
+    """A device's own LLM (None or "": back to the general one). ToolError if it isn't known."""
+    devices = load()
+    if device not in devices:
+        raise ToolError("no such device")
+    if name:
+        devices[device]["llm"] = name
+    else:
+        devices[device].pop("llm", None)
+    _save(devices)
+    log.info("%s: LLM %s", describe(device), name or "the general one")
 
 
 def describe(device: str | None) -> str:
@@ -121,8 +140,15 @@ def _listing() -> list[dict]:
     current = hub.current()
     return [{"id": i, "name": d.get("name", ""), "room": d.get("room", ""), "connected": i in connected,
              "current": bool(current and current.device == i), "seen": d.get("seen"),
-             "press": bool(d.get("press"))}
+             "press": bool(d.get("press")), "kind": kind(d.get("agent", "")), "llm": d.get("llm", "")}
             for i, d in load().items()]
+
+
+def _llms() -> dict:
+    """The LLMs a device may use, and the general one."""
+    import llm
+
+    return {"llms": llm.available(), "general": settings.get("llm") or "claude"}
 
 
 # --- For the LLM ---
@@ -189,7 +215,7 @@ def tell_device(where: str, text: str) -> str:
 async def _devices(request):
     if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
-    return http.json_response({"devices": _listing()})
+    return http.json_response({"devices": _listing(), **_llms()})
 
 
 @web.route("POST", "/devices")
@@ -205,9 +231,15 @@ async def _change(request):
         devices.pop(device, None)
         _save(devices)
         log.info("%s forgotten", device)
+    elif "llm" in data:  # its own LLM, or "" for the general one
+        import llm
+
+        if data["llm"] and data["llm"] not in llm.available():
+            return http.json_response({"error": f"LLMs: {', '.join(llm.available())}"}, status=400)
+        set_llm(device, data["llm"] if data["llm"] != settings.get("llm") else None)  # the general one: follows it
     else:
         try:
             change(device, data.get("name"), data.get("room"))
         except ToolError as e:
             return http.json_response({"error": str(e)}, status=400)
-    return http.json_response({"devices": _listing()})
+    return http.json_response({"devices": _listing(), **_llms()})

@@ -68,18 +68,36 @@ class Conversations:
     times; at most «conversations» (each costs memory): beyond that, the one used longest ago
     is closed (its device, if it was in a conversation, falls asleep)."""
 
-    def __init__(self, make):
-        self.make = make  # function() → a new LLM
+    def __init__(self, make, general: str = "claude"):
+        self.make = make  # function(name) → a new LLM
+        self.general = general  # the LLM of the devices without one of their own
         self.llms = {}  # device (or session id): LLM, the most recently used last
+
+    def wanted(self, device: str | None) -> str:
+        """The device's own LLM («usa Gemini aquí», the plugin «devices»), if it can be used; else
+        the general one."""
+        import llm as engines
+
+        devices = kernel.module("devices")
+        own = devices.llm_of(device) if devices and device else None
+        return own if own and own in engines.available() else self.general
 
     def __call__(self, assistant):
         session = hub.of(assistant)
         key = (session.device or session.id) if session else "?"
+        wanted = self.wanted(session.device if session else None)
         found = self.llms.pop(key, None)
+        turn = getattr(assistant, "turn", None)
+        busy = bool(turn and turn.locked())  # never in the middle of an answer
+        if found is not None and getattr(found, "chosen", self.general) != wanted and not busy:
+            log.info("%s: now %s", key, wanted)  # its LLM changed: from its next question
+            asyncio.ensure_future(found.close())
+            found = None
         if found is None:
-            found = self.make()
+            found = self.make(wanted)
+            found.chosen = wanted
             found.device = session.device if session else None  # its tools act on this device
-            log.info("a conversation of its own for %s (%d now)", key, len(self.llms) + 1)
+            log.info("a conversation of its own for %s with %s (%d now)", key, wanted, len(self.llms) + 1)
             self._room()
         self.llms[key] = found
         return found
@@ -126,7 +144,8 @@ class Assistant(Transcriber):
         """Its engines from the settings: how it listens, the LLM (one per device: Conversations)
         and the voice."""
         engine, wake_factory, ear = listening(args)
-        model = Conversations(lambda: llm.create(args.llm, model=args.llm_model, mcp=args.mcp))
+        model = Conversations(lambda name: llm.create(name, model=args.llm_model if name == args.llm else None,
+                                                      mcp=args.mcp), general=args.llm)
         log.info("LLM: %s (%s), a conversation per device", args.llm, args.llm_model or "default")
         voice = None
         if args.tts != "none":

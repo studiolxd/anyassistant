@@ -100,12 +100,21 @@ def get_llms() -> str:
     return "\n".join(lines)
 
 
-@tool("Switch to another LLM (claude, apple, hermes), optionally with a model (for Claude: sonnet, opus, "
-      "haiku…; empty for the default). Apple's can't use tools: to come back, the user says «use Claude».",
-      needs_yes=True)
-def set_llm(llm: str, model: str = "") -> str:
+@tool("Switch to another LLM (claude, codex, gemini, apple, openai…: get_llms), optionally with a model (for "
+      "Claude: sonnet, opus, haiku…; empty for the default); for every device, or only the one the user is "
+      "talking to (this_device: «usa Gemini aquí»; from its next question, no restart). Apple's can't use "
+      "tools: to come back, the user says «use Claude».", needs_yes=True)
+def set_llm(llm: str, model: str = "", this_device: bool = False) -> str:
     import llm as plugins
 
+    if this_device:
+        devices, device = kernel.module("devices"), tools.session()
+        if not devices or not device or not device.device:
+            raise ToolError("no device connected")
+        if llm != settings.get("llm") and llm not in plugins.available():
+            raise ToolError(f"installed LLMs: {', '.join(plugins.available())}")
+        devices.set_llm(device.device, None if llm == settings.get("llm") else llm)
+        return f"Saved: this device uses {llm} from its next question."
     if llm not in plugins.available():
         raise ToolError(f"installed LLMs: {', '.join(plugins.available())}")
     why = llm_ready(llm)

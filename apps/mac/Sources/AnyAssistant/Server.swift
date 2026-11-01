@@ -10,6 +10,36 @@ func T(_ english: String) -> String {
     NSLocalizedString(english, comment: "")
 }
 
+/// An LLM's name as its maker writes it: «OpenAI», «OpenCode», «Claude».
+func llmName(_ id: String) -> String {
+    ["claude": "Claude", "codex": "Codex", "gemini": "Gemini", "opencode": "OpenCode", "openai": "OpenAI",
+     "ollama": "Ollama", "hermes": "Hermes", "apple": "Apple"][id] ?? id.capitalized
+}
+
+/// A connected device, for the menu: its name, room, kind (its icon) and the LLM it uses.
+struct ConnectedDevice: Equatable {
+    let id: String
+    let name: String
+    let room: String
+    let kind: String
+    let llm: String
+    let current: Bool
+
+    /// Its kind's symbol: iPhone, iPad, Mac, Android, the watch, a PC.
+    var symbol: String {
+        switch kind {
+        case "iPhone": "iphone"
+        case "iPad": "ipad"
+        case "Mac": "laptopcomputer"
+        case "Apple Watch": "applewatch"
+        case "Android phone": "smartphone"
+        case "Android tablet": "rectangle.portrait"
+        case "PC": "pc"
+        default: "display"
+        }
+    }
+}
+
 enum ServerState: Equatable {
     case notInstalled, stopped, starting, running, failed(String)
 }
@@ -29,7 +59,7 @@ final class Server: ObservableObject {
 
     @Published var state: ServerState = .stopped
     @Published var connected = false
-    @Published var devices: [(name: String, current: Bool)] = []  // the connected ones
+    @Published var devices: [ConnectedDevice] = []  // the connected ones
     @Published var busy: String?  // «Updating…»: something the app is doing
 
     private var process: Process?
@@ -170,7 +200,9 @@ final class Server: ObservableObject {
         state = .running
         connected = status["connected"] as? Bool ?? false
         devices = (status["devices"] as? [[String: Any]] ?? []).map {
-            (name: $0["name"] as? String ?? "", current: $0["current"] as? Bool ?? false)
+            ConnectedDevice(id: $0["id"] as? String ?? "", name: $0["name"] as? String ?? "",
+                            room: $0["room"] as? String ?? "", kind: $0["kind"] as? String ?? "",
+                            llm: $0["llm"] as? String ?? "", current: $0["current"] as? Bool ?? false)
         }
     }
 

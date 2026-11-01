@@ -172,3 +172,10 @@
 "Allow the camera…" = "Permitir la cámara…";
 "Reload" = "Volver a cargar";
 "Open in the browser" = "Abrir en el navegador";
+
+/* The menu's devices; each one's LLM */
+"Running" = "Funcionando";
+"No device connected" = "Ningún dispositivo conectado";
+"and %d more" = "y %d más";
+"Its LLM" = "Su LLM";
+"The general one (%@)" = "El general (%@)";

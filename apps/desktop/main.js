@@ -18,7 +18,7 @@ const TEXTS = {
     'Preparándolo (la primera vez descarga Python y los modelos: unos minutos)…',
   'It failed': 'Ha fallado', 'Show %s': 'Mostrar a %s', 'Connect another device': 'Conectar otro dispositivo',
   'Administer': 'Administrar', 'Start': 'Arrancar', 'Stop': 'Parar', 'Restart': 'Reiniciar',
-  'Log': 'Registro', 'Allow the microphone': 'Permitir el micrófono', 'Allow the camera': 'Permitir la cámara', 'Hide %s': 'Ocultar a %s', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
+  'Log': 'Registro', 'No device connected': 'Ningún dispositivo conectado', 'and %s more': 'y %s más', 'Allow the microphone': 'Permitir el micrófono', 'Allow the camera': 'Permitir la cámara', 'Hide %s': 'Ocultar a %s', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
   'started by systemd': 'lo arranca systemd',
   'uv isn\'t installed: it brings Python and the server\'s packages.': 'uv no está instalado: trae Python y los paquetes del servidor.',
   'Install it and open AnyAssistant again:': 'Instálalo y vuelve a abrir AnyAssistant:',
@@ -130,6 +130,28 @@ function refused(what) {
 
 const PRIVACY = { microphone: 'ms-settings:privacy-microphone', camera: 'ms-settings:privacy-webcam' };
 
+// --- The connected devices, for the menu (its name, room and LLM) ---
+
+let connected = [];
+const LLM_NAMES = { claude: 'Claude', codex: 'Codex', gemini: 'Gemini', opencode: 'OpenCode', openai: 'OpenAI',
+                    ollama: 'Ollama', hermes: 'Hermes', apple: 'Apple' };
+
+async function followDevices() {
+  if (server.state !== 'running') { connected = []; return; }
+  try { connected = (await server.call('GET', '/status')).devices || []; } catch (e) { /* not now */ }
+}
+
+function deviceItems() {
+  if (server.state !== 'running') return [];
+  if (!connected.length) return [{ type: 'separator' }, { label: T('No device connected'), enabled: false }];
+  const items = connected.slice(0, 5).map((d) => ({
+    label: [d.name || '?', d.room, LLM_NAMES[d.llm] || d.llm].filter(Boolean).join(' · '),
+    click: () => showAdmin('#devices'),  // rename it, its room, its own LLM
+  }));
+  if (connected.length > 5) items.push({ label: T('and %s more', connected.length - 5), click: () => showAdmin('#devices') });
+  return [{ type: 'separator' }, ...items];
+}
+
 // --- The tray ---
 
 function status() {
@@ -145,6 +167,7 @@ function menu() {
   const running = server.state === 'running';
   const items = [
     { label: status(), enabled: false },
+    ...deviceItems(),
     // The server, right under how it is: start it when stopped (or failed); while it starts, only
     // stop it; running, restart or stop.
     ...(server.state === 'stopped' || server.state === 'failed' ? [{ label: T('Start'), click: () => server.start() }]
@@ -205,7 +228,7 @@ app.whenReady().then(async () => {
   tray = new Tray(icon);
   tray.on('click', () => (server.state === 'running' ? showFace() : null));  // Windows: a click shows it
   menu();
-  setInterval(menu, 10000);  // a permission changed in Windows' settings shows in the menu
+  setInterval(async () => { await followDevices(); menu(); }, 5000);  // devices, permissions: as they are
   await server.begin();
   if (server.state === 'running' && !opensAtLogin()) showFace();  // the first time: its face
 });

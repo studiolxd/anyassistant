@@ -172,3 +172,10 @@
 "Allow the camera…" = "Allow the camera…";
 "Reload" = "Reload";
 "Open in the browser" = "Open in the browser";
+
+/* The menu's devices; each one's LLM */
+"Running" = "Running";
+"No device connected" = "No device connected";
+"and %d more" = "and %d more";
+"Its LLM" = "Its LLM";
+"The general one (%@)" = "The general one (%@)";

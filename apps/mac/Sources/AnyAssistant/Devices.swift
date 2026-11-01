@@ -11,6 +11,7 @@ struct DeviceItem: Identifiable, Equatable {
     let current: Bool
     let seen: Date?
     let press: Bool  // talks a sentence at a time (the watch): never «connected»
+    var llm: String = ""  // its own LLM; "": the general one
 }
 
 @MainActor
@@ -18,6 +19,8 @@ final class Devices: ObservableObject {
     @Published var items: [DeviceItem] = []
     @Published var error: String?
     @Published var off = false  // the plugin «devices» is off (or the server is older)
+    @Published var llms: [String] = []  // the LLMs a device may use
+    @Published var general = "claude"  // the general one
 
     let server = Server.shared
 
@@ -54,9 +57,16 @@ final class Devices: ObservableObject {
                        room: $0["room"] as? String ?? "", connected: $0["connected"] as? Bool ?? false,
                        current: $0["current"] as? Bool ?? false,
                        seen: ($0["seen"] as? Double).map { Date(timeIntervalSince1970: $0) },
-                       press: $0["press"] as? Bool ?? false)
+                       press: $0["press"] as? Bool ?? false, llm: $0["llm"] as? String ?? "")
         }
         .sorted { ($0.connected ? 0 : 1, $0.name) < ($1.connected ? 0 : 1, $1.name) }
+        llms = answer["llms"] as? [String] ?? llms
+        general = answer["general"] as? String ?? general
+    }
+
+    /// Its own LLM ("": back to the general one), from its next question.
+    func setLLM(_ item: DeviceItem, _ llm: String) async {
+        if let answer = await call(["id": item.id, "llm": llm]) { show(answer) }
     }
 
     func save(_ item: DeviceItem) async {
@@ -109,7 +119,7 @@ struct DevicesView: View {
 
 struct DeviceRow: View {
     let item: DeviceItem
-    let devices: Devices
+    @ObservedObject var devices: Devices
     @State private var name = ""
     @State private var room = ""
     @FocusState private var editing: Bool
@@ -127,6 +137,17 @@ struct DeviceRow: View {
             HStack(alignment: .top, spacing: 16) {
                 field(T("Name"), text: $name, empty: "")
                 field(T("Room"), text: $room, empty: T("Not set yet"))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(T("Its LLM")).font(.caption).foregroundStyle(.secondary)
+                    Picker(T("Its LLM"), selection: Binding(get: { item.llm }, set: { new in
+                        Task { await devices.setLLM(item, new) }
+                    })) {
+                        Text(String(format: T("The general one (%@)"), llmName(devices.general))).tag("")
+                        ForEach(devices.llms.filter { $0 != devices.general }, id: \.self) { Text(llmName($0)).tag($0) }
+                    }
+                    .labelsHidden()
+                }
+                .frame(maxWidth: .infinity)
             }
             .onSubmit { save() }
             .onChange(of: editing) { _, now in if !now { save() } }  // leaving a field saves it

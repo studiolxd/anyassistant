@@ -12,6 +12,7 @@ import events
 import hub
 import i18n
 import kernel
+import settings
 from transport import Session
 
 brain = None  # brain(speaker, send): what each connection talks to; main.py chooses it (--mode)
@@ -127,9 +128,18 @@ async def status(request: web.Request) -> web.Response:
     return web.json_response({
         "connected": bool(connected),
         "frames": session.frames if session else 0,
-        "devices": [{"name": devices.describe(s.device) if devices else "", "current": s is session}
-                    for s in connected],
+        "llm": settings.get("llm"),
+        "devices": [_device(s, s is session, devices) for s in connected],
     })
+
+
+def _device(session, current: bool, devices) -> dict:
+    """A connected device, for the apps' menus: its name, room, kind (its icon) and LLM."""
+    known = devices.load().get(session.device or "", {}) if devices else {}
+    own = devices.llm_of(session.device) if devices else None
+    return {"id": session.device or session.id, "name": known.get("name", ""), "room": known.get("room", ""),
+            "kind": devices.kind(known.get("agent") or getattr(session, "agent", "")) if devices else "",
+            "llm": own or settings.get("llm"), "own_llm": bool(own), "current": current}
 
 
 def contributed(request: web.Request) -> dict:

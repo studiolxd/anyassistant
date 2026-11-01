@@ -196,10 +196,23 @@ struct MenuView: View {
     }
 
     @ViewBuilder var serverMenu: some View {
-        Text(status)
-        ForEach(Array(server.devices.enumerated()), id: \.offset) { _, device in  // which ones
-            Text("   " + (device.name.isEmpty ? T("a device") : device.name)
-                 + (device.current && server.devices.count > 1 ? " · " + T("talking to you") : ""))
+        Label(status, systemImage: statusSymbol)
+        if server.state == .running {
+            Divider()
+            if server.devices.isEmpty {
+                Text(T("No device connected"))
+            }
+            // Each connected one: its icon, name, room and LLM; a click opens Devices (rename it,
+            // its room, its own LLM).
+            ForEach(server.devices.prefix(5), id: \.id) { device in
+                Button { open("devices") } label: {
+                    Label([device.name.isEmpty ? T("a device") : device.name, device.room, llmName(device.llm)]
+                            .filter { !$0.isEmpty }.joined(separator: " · "), systemImage: device.symbol)
+                }
+            }
+            if server.devices.count > 5 {
+                Button(String(format: T("and %d more"), server.devices.count - 5)) { open("devices") }
+            }
         }
         if let busy = server.busy { Text(busy) }
         // The server, right under how it is: start it when stopped (or failed); while it starts,
@@ -243,13 +256,19 @@ struct MenuView: View {
         case .notInstalled: T("Not installed yet")
         case .stopped: T("Stopped")
         case .starting: T("Starting…")
-        case .running:
-            switch server.devices.count {
-            case 0: server.connected ? T("Running · a device connected") : T("Running · no device")
-            case 1: T("Running · a device connected")
-            default: String(format: T("Running · %d devices connected"), server.devices.count)
-            }
+        case .running: T("Running")
         case .failed(let why): why
+        }
+    }
+
+    /// How it is, at a glance (a menu draws its symbols in one colour).
+    var statusSymbol: String {
+        switch server.state {
+        case .notInstalled: "arrow.down.circle"
+        case .stopped: "stop.circle"
+        case .starting: "hourglass"
+        case .running: "checkmark.circle.fill"
+        case .failed: "exclamationmark.triangle.fill"
         }
     }
 

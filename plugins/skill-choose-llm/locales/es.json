@@ -2,13 +2,14 @@
   "plugins": {
     "skill-choose-llm": [
       "Elegir el LLM",
-      "«Usa Claude», «cambia a Hermes»."
+      "«Usa Claude», «cambia a Hermes»; «usa Gemini aquí», solo en este dispositivo."
     ]
   },
   "speech": {
     "llm_changing": "Vale, cambio a {llm}. Vuelvo en unos segundos.",
     "llm_same": "Ya estoy usando {llm}.",
-    "llm_unavailable": "{llm} no está disponible en este Mac."
+    "llm_unavailable": "{llm} no está disponible en este Mac.",
+    "llm_here": "Vale, aquí uso {llm} desde tu próxima pregunta."
   },
   "commands": {
     "switch": [
@@ -22,6 +23,12 @@
       "modelo",
       "llm",
       "favor"
+    ],
+    "here": [
+      "aquí",
+      "aqui",
+      "acá",
+      "aca"
     ]
   }
 }

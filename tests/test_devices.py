@@ -291,9 +291,9 @@ def test_the_llm_knows_where_you_are_talking_from(house, monkeypatch):
 class FakeLLM:
     made = 0
 
-    def __init__(self):
+    def __init__(self, name="claude"):
         FakeLLM.made += 1
-        self.closed = False
+        self.name, self.closed = name, False
 
     async def close(self):
         self.closed = True
@@ -320,6 +320,35 @@ def test_each_device_has_its_own_llm(monkeypatch):
     loop.run_until_complete(asyncio.sleep(0))
     loop.close()
     assert first.closed and not second.closed and set(pool.llms) == {"l", "d"}
+
+
+def test_a_device_may_use_its_own_llm(monkeypatch):
+    """«Usa Gemini aquí»: that device's next question goes to Gemini; the others keep the general one."""
+    import asyncio
+
+    import llm
+    from plugins.brain_assistant import Conversations
+
+    monkeypatch.setattr(settings, "active", {"conversations": 3})
+    monkeypatch.setattr(llm, "available", lambda: ["claude", "gemini"])
+    pool = Conversations(FakeLLM, general="claude")
+    kitchen, living = connect("a", "k"), connect("b", "l")
+    devices.change("k"), devices.change("l")  # known, as when they connect
+    first = pool(kitchen.brain)
+    assert first.name == "claude"
+    devices.set_llm("k", "gemini")
+    assert devices.llm_of("k") == "gemini" and devices.llm_of("l") is None
+
+    async def ask():
+        return pool(kitchen.brain), pool(living.brain)
+
+    now, other = asyncio.run(ask())
+    assert now.name == "gemini" and first.closed and other.name == "claude"
+    devices.set_llm("k", None)  # back to the general one
+    assert devices.llm_of("k") is None and asyncio.run(ask())[0].name == "claude"
+    monkeypatch.setattr(llm, "available", lambda: ["claude"])  # one that isn't there any more
+    devices.set_llm("k", "gemini")
+    assert pool.wanted("k") == "claude"
 
 
 def test_a_devices_work_happens_there():

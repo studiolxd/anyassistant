@@ -192,6 +192,17 @@ function devices(main) {
                     : el('span', { class: 'pill', text: d.seen ? T('seen') + ' ' + ago(d.seen) : T('not connected') });
         var name = el('input', { value: d.name, placeholder: T('Name') });
         var room = el('input', { value: d.room, placeholder: T('Room') });
+        // Its own LLM, or the general one: from its next question.
+        var llm = el('select', { title: T('Its LLM') }, [el('option', { value: '', text: T('The general one') + ' (' + data.general + ')' })]
+          .concat((data.llms || []).filter(function (l) { return l !== data.general; }).map(function (l) {
+            return el('option', { value: l, text: l });
+          })));
+        llm.value = d.llm || '';
+        llm.addEventListener('focus', function () { editing = true; });
+        llm.addEventListener('blur', function () { editing = false; });
+        llm.addEventListener('change', function () {
+          api('POST', '/devices', { id: d.id, llm: llm.value }).then(function (r) { flash(llm, !r.error); });
+        });
         [name, room].forEach(function (field) {
           field.addEventListener('focus', function () { editing = true; });
           field.addEventListener('change', function () {
@@ -203,7 +214,7 @@ function devices(main) {
           field.addEventListener('blur', function () { editing = false; });
         });
         box.appendChild(el('div', { class: 'row' }, [
-          el('div', { class: 'what' }, [name, ' ', room, state]),
+          el('div', { class: 'what' }, [name, ' ', room, ' ', llm, state]),
           el('button', { class: 'danger', text: T('Forget'), onclick: function () {
             if (confirm(T('Forget this device? It will need a new code if pairing is on.'))) {
               api('POST', '/devices', { id: d.id, forget: true }).then(load);

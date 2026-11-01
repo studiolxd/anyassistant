@@ -105,3 +105,15 @@ def test_llm_spanish(es, text, expected):
     from plugins.skill_choose_llm import command as llm_command
 
     assert llm_command(text) == expected
+
+
+@pytest.mark.parametrize("text, expected, only_here", [
+    ("Usa Gemini aquí", "gemini", True), ("Cambia a Claude aquí", "claude", True), ("Usa Gemini", "gemini", False),
+])
+def test_llm_here(es, monkeypatch, text, expected, only_here):
+    import llm
+
+    from plugins.skill_choose_llm import command as llm_command, here
+
+    monkeypatch.setattr(llm, "spoken_names", lambda: {"claude": ["claude"], "gemini": ["gemini"]})
+    assert llm_command(text) == expected and here(text) == only_here
