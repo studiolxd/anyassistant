@@ -1,0 +1,6 @@
+{
+  "name": "Streaming over WebSocket",
+  "description": "GET /stream: a device's microphone and speaker as raw audio over a WebSocket, with the same messages as the page: for the iPhone and iPad app, which keeps listening with the screen off.",
+  "kind": "feature",
+  "requires": ["brain-assistant"]
+}

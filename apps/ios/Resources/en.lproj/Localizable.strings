@@ -1,0 +1,22 @@
+/* AnyAssistant for iPhone and iPad, in English (the English is the key). */
+"Settings" = "Settings";
+"Keep listening with the screen off" = "Keep listening with the screen off";
+"Keep the screen on" = "Keep the screen on";
+"With the screen off it listens as long as the app isn't closed; iOS shows the microphone in use." = "With the screen off it listens as long as the app isn't closed; iOS shows the microphone in use.";
+"Mac" = "Mac";
+"Address" = "Address";
+"Port" = "Port";
+"Reconnect" = "Reconnect";
+"Pair again" = "Pair again";
+"Done" = "Done";
+"Pair" = "Pair";
+"Code from your Mac" = "Code from your Mac";
+"On your Mac, open AnyAssistant's menu and choose «Pair a device…»: it shows the code." = "On your Mac, open AnyAssistant's menu and choose «Pair a device…»: it shows the code.";
+"That code isn't right (or it expired)." = "That code isn't right (or it expired).";
+"Your Mac isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?" = "Your Mac isn't answering: is AnyAssistant running, and this device on the same Wi-Fi?";
+"Looking for your Mac…" = "Looking for your Mac…";
+"Alarm" = "Alarm";
+"Reminder" = "Reminder";
+"Timer" = "Timer";
+"Talk to AnyAssistant" = "Talk to AnyAssistant";
+"Opens AnyAssistant listening, as if you had said its name." = "Opens AnyAssistant listening, as if you had said its name.";

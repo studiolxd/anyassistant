@@ -1,0 +1,143 @@
+"""Streaming over WebSocket (the plugin «stream-api»): a device's microphone and speaker as raw
+audio, for the iPhone and iPad app. The page needs WebRTC; an app keeps listening with the
+screen off only with its own audio, so it sends it here. To everyone else it is a device like
+the page (its id, name and room, its conversation, alarms and «dile a la cocina…»).
+
+    GET /stream?device=<id>   (a WebSocket; pairing as for the page: its cookie)
+      → binary: its microphone, 16-bit mono PCM at 48 kHz (any length; 20 ms is usual)
+      ← binary: what it says, the same; to play in order
+      → / ← text: the page's JSON messages (state, text, timers, alarm, tap, ping/pong…),
+        and ← {"type": "hush"}: stop playing what is left (it was interrupted)
+"""
+
+import json
+import logging
+import time
+import uuid
+
+import numpy as np
+from aiohttp import WSMsgType
+from aiohttp import web as http
+
+import events
+import hub
+import web
+
+log = logging.getLogger("stream")
+RATE = 48000
+
+
+class Line:
+    """Its «connection»: up while the WebSocket is open."""
+
+    def __init__(self):
+        self.connectionState = "connected"
+
+
+class Voice:
+    """Its speaker: what it says goes out at once; it is «speaking» until the device has had
+    time to play it all."""
+
+    def __init__(self, socket):
+        self.socket, self.until = socket, 0.0
+
+    @property
+    def speaking(self) -> bool:
+        return time.time() < self.until
+
+    @property
+    def last_sound(self) -> float:
+        return min(time.time(), self.until)
+
+    def play(self, pcm):
+        pcm = np.asarray(pcm, np.int16)
+        if not len(pcm) or self.socket.closed:
+            return
+        self.until = max(time.time(), self.until) + len(pcm) / RATE
+        _soon(self.socket.send_bytes(pcm.tobytes()))
+
+    def stop(self):
+        if self.speaking and not self.socket.closed:
+            _soon(self.socket.send_str(json.dumps({"type": "hush"})))
+        self.until = 0.0
+
+
+def _soon(coroutine):
+    import asyncio
+
+    task = asyncio.ensure_future(coroutine)
+    task.add_done_callback(lambda t: t.cancelled() or t.exception())  # a closed socket: nothing to do
+
+
+class Streamer:
+    """A device on a WebSocket, as a transport.Session for everyone else."""
+
+    def __init__(self, socket, device: str, agent: str):
+        self.id = uuid.uuid4().hex[:6]
+        self.device, self.agent, self.socket = device, agent, socket
+        self.pc, self.speaker, self.channel = Line(), Voice(socket), None
+        self.frames, self.last_frame = 0, None
+        self.brain = web.brain(self.speaker, self.send)
+
+    def send(self, data: dict):
+        if not self.socket.closed:
+            _soon(self.socket.send_str(json.dumps(data)))
+
+    def jpeg(self):
+        return None  # no camera (yet)
+
+    def message(self, data: dict):
+        token = hub.here.set(self)  # what it starts (a tap, its skin…) is for this device
+        try:
+            if data.get("type") == "ping":
+                self.send({"type": "pong", "t": data.get("t")})
+            elif hasattr(self.brain, "on_message"):
+                self.brain.on_message(data)
+        finally:
+            hub.here.reset(token)
+
+    async def close(self):
+        self.pc.connectionState = "closed"
+        hub.remove(self)
+        if not self.socket.closed:
+            await self.socket.close()
+
+
+def pcm(raw: bytes) -> np.ndarray:
+    """Its microphone: 16-bit samples (an odd byte at the end is dropped)."""
+    return np.frombuffer(raw[: len(raw) // 2 * 2], np.int16)
+
+
+@web.route("GET", "/stream")
+async def _stream(request):
+    if refusal := web.refused(request):  # pairing, as for the page
+        return refusal
+    if web.brain is None:
+        return http.json_response({"error": "the server isn't running an assistant"}, status=503)
+    device = request.query.get("device", "")
+    if not device or len(device) > 64 or not device.replace("-", "").replace("_", "").isalnum():
+        return http.json_response({"error": "?device=<its id>"}, status=400)
+    socket = http.WebSocketResponse(heartbeat=20, max_msg_size=1 << 20)
+    await socket.prepare(request)
+    streamer = Streamer(socket, device, request.headers.get("User-Agent", ""))
+    for old in hub.add(streamer):  # the same device connecting again: its old connection goes
+        await old.close()
+    events.emit("connected", streamer)  # its name and room (devices)
+    hub.here.set(streamer)  # this task, and what it starts (transcribing, answering…), is for this device
+    if hasattr(streamer.brain, "on_connect"):
+        streamer.brain.on_connect()
+    log.info("[%s] streaming", streamer.id)
+    try:
+        async for message in socket:
+            if message.type == WSMsgType.BINARY:
+                streamer.brain.hear(pcm(message.data))
+            elif message.type == WSMsgType.TEXT:
+                try:
+                    streamer.message(json.loads(message.data))
+                except ValueError:
+                    pass
+    finally:
+        log.info("[%s] stream ended", streamer.id)
+        streamer.pc.connectionState = "closed"
+        hub.remove(streamer)
+    return socket

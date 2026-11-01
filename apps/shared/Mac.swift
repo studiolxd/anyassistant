@@ -1,4 +1,4 @@
-// Talking to the Mac: its address (anyassistant.local by default; its IP if the watch can't find
+// Shared by the watch and the iPhone/iPad apps (apps/shared). Talking to the Mac: its address (anyassistant.local by default; its IP if the watch can't find
 // it), pairing with the code, and one sentence at a time. Over HTTPS when the Mac has the plugin
 // «https»: the watch keeps the Mac's own certificate authority (fetched when pairing) and trusts
 // only it; otherwise HTTP, on the local network.
@@ -15,7 +15,16 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         didSet { UserDefaults.standard.set(port, forKey: "port") }
     }
 
-    /// This watch's id for the Mac (its name and room are in the Mac app's Devices).
+    /// How it introduces itself («AnyAssistant Watch», «AnyAssistant iPhone»…): the Mac's
+    /// devices tell what kind it is from this.
+    let agent: String
+
+    init(agent: String) {
+        self.agent = agent
+        super.init()
+    }
+
+    /// This device's id for the Mac (its name and room are in the Mac app's Devices).
     let device: String = {
         if let id = UserDefaults.standard.string(forKey: "device") { return id }
         let id = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
@@ -35,11 +44,11 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         set { UserDefaults.standard.set(newValue, forKey: "httpsPort") }
     }
 
-    private lazy var session: URLSession = {
+    lazy var session: URLSession = {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 90  // an answer may take a while
         configuration.httpCookieStorage = .shared  // the pairing's cookie
-        configuration.httpAdditionalHeaders = ["User-Agent": "AnyAssistant Watch"]
+        configuration.httpAdditionalHeaders = ["User-Agent": agent]
         return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
     }()
 
@@ -53,9 +62,9 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
     }
 
     /// Its name, then its IP: the first that answers soon (nil: none does).
-    private func reachable(_ url: (String) -> URL) async -> (String, Int)? {
+    func reachable(_ url: (String) -> URL) async -> (String, Int)? {
         for name in [host, address].compactMap({ $0 }) where !name.isEmpty {
-            var request = URLRequest(url: url(name).appending(path: "status"))
+            var request = URLRequest(url: url(name).appendingPathComponent("status"))
             request.timeoutInterval = 8
             if let (_, found) = try? await session.data(for: request), let status = (found as? HTTPURLResponse)?.statusCode {
                 return (name, status)
@@ -73,7 +82,7 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         }
         let plain = URL(string: "http://\(name):\(port)")!
         if status == 403 {  // pairing is on: the code
-            var request = URLRequest(url: plain.appending(path: "pair"))
+            var request = URLRequest(url: plain.appendingPathComponent("pair"))
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONSerialization.data(withJSONObject: ["code": code])
@@ -81,10 +90,10 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
             guard (answer as? HTTPURLResponse)?.statusCode == 200 else { throw Failure.wrongCode }
         }
         // HTTPS, if the Mac has it: its authority, to trust it (and nothing else) from now on.
-        if let (raw, answer) = try? await session.data(from: plain.appending(path: "https/info")),
+        if let (raw, answer) = try? await session.data(from: plain.appendingPathComponent("https/info")),
            (answer as? HTTPURLResponse)?.statusCode == 200,
            let info = try? JSONSerialization.jsonObject(with: raw) as? [String: Any],
-           let (der, got) = try? await session.data(from: plain.appending(path: "https/ca.crt")),
+           let (der, got) = try? await session.data(from: plain.appendingPathComponent("https/ca.crt")),
            (got as? HTTPURLResponse)?.statusCode == 200 {
             authority = der
             UserDefaults.standard.set(der, forKey: "authority")
@@ -92,7 +101,7 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
             copyCookies(from: plain, to: name)  // the pairing's cookie, for the HTTPS address too
         }
         // Its IP, for when its name isn't found (the certificate is for it too).
-        if let (raw, _) = try? await session.data(from: plain.appending(path: "https/info")),
+        if let (raw, _) = try? await session.data(from: plain.appendingPathComponent("https/info")),
            let info = try? JSONSerialization.jsonObject(with: raw) as? [String: Any],
            let found = (info["addresses"] as? [String])?.first(where: { $0 != "127.0.0.1" && !$0.contains(":") }) {
             address = found
@@ -102,6 +111,33 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         }
         paired = true
         UserDefaults.standard.set(true, forKey: "paired")
+    }
+
+    /// Where it answers now (its name, else its IP), or nil.
+    func url() async -> URL? {
+        guard let (name, _) = await reachable({ self.base($0) }) else { return nil }
+        return base(name)
+    }
+
+    /// The pairing's cookies, for a web view or a WebSocket to the same address.
+    func cookies(for url: URL) -> [HTTPCookie] {
+        HTTPCookieStorage.shared.cookies(for: url) ?? []
+    }
+
+    /// Whether a server's certificate is the Mac's own (its authority, kept when pairing).
+    nonisolated static func trusts(_ trust: SecTrust) -> Bool {
+        guard let der = UserDefaults.standard.data(forKey: "authority"),
+              let anchor = SecCertificateCreateWithData(nil, der as CFData) else { return false }
+        SecTrustSetAnchorCertificates(trust, [anchor] as CFArray)
+        SecTrustSetAnchorCertificatesOnly(trust, true)
+        return SecTrustEvaluateWithError(trust, nil)
+    }
+
+    /// The url with ?device=<its id>.
+    func with(_ url: URL, device: String) -> URL {
+        var parts = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        parts.queryItems = [URLQueryItem(name: "device", value: device)]
+        return parts.url!
     }
 
     func unpair() {
@@ -123,7 +159,7 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
     /// One sentence (a WAV) → what it heard, its answer and its voice.
     func talk(_ wav: Data) async throws -> Answer {
         guard let (name, _) = await reachable({ self.base($0) }) else { throw Failure.unreachable }
-        var request = URLRequest(url: base(name).appending(path: "talk").appending(queryItems: [.init(name: "device", value: device)]))
+        var request = URLRequest(url: with(base(name).appendingPathComponent("talk"), device: device))
         request.httpMethod = "POST"
         request.setValue("audio/wav", forHTTPHeaderField: "Content-Type")
         request.httpBody = wav
@@ -141,14 +177,11 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
                                 completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
               let trust = challenge.protectionSpace.serverTrust,
-              let der = UserDefaults.standard.data(forKey: "authority"),
-              let anchor = SecCertificateCreateWithData(nil, der as CFData) else {
+              UserDefaults.standard.data(forKey: "authority") != nil else {
             completionHandler(.performDefaultHandling, nil)
             return
         }
-        SecTrustSetAnchorCertificates(trust, [anchor] as CFArray)
-        SecTrustSetAnchorCertificatesOnly(trust, true)
-        if SecTrustEvaluateWithError(trust, nil) {
+        if Mac.trusts(trust) {
             completionHandler(.useCredential, URLCredential(trust: trust))
         } else {
             completionHandler(.cancelAuthenticationChallenge, nil)

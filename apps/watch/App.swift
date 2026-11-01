@@ -7,7 +7,7 @@ import SwiftUI
 
 @main
 struct AnyAssistantApp: App {
-    @StateObject private var mac = Mac()
+    @StateObject private var mac = Mac(agent: "AnyAssistant Watch")
 
     var body: some Scene {
         WindowGroup {
@@ -19,6 +19,3 @@ struct AnyAssistantApp: App {
         }
     }
 }
-
-/// A text in the watch's language (Resources/<lang>.lproj/Localizable.strings; the English is the key).
-func T(_ key: String) -> String { NSLocalizedString(key, comment: "") }

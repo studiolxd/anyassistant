@@ -9,6 +9,33 @@ var T = {};  // texts of the active language (locale «ui», and the skin's own)
 var settings = {};  // name, skin, video, screen…
 var lastState = 'connecting';
 
+// Inside the iPhone and iPad app: the app has the microphone and the speaker (it keeps
+// listening with the screen off), and passes the messages both ways; the page is the face.
+var app = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.anyassistant;
+
+// A message to the Mac: through the app, or the call's control channel.
+function tell(m) {
+  if (app) app.postMessage(m);
+  else if (channel && channel.readyState === 'open') channel.send(JSON.stringify(m));
+}
+
+// What the app passes on: the Mac's messages, and its own («link»: whether it is connected;
+// «level»: the microphone's volume, for the face).
+window.fromApp = function (m) {
+  if (m.type === 'link') {
+    if (m.state === 'connected') {
+      if (Skin.current() === 'error' || lastState === 'connecting') { Skin.state('connected'); status(text('connected')); }
+      tellSkin();
+    } else {
+      fail(text(m.state === 'unpaired' ? 'pair_needed' : 'connection_lost'));
+    }
+  } else if (m.type === 'level') {
+    Skin.voice(m.value);
+  } else {
+    message(m);
+  }
+};
+
 // The skin's blocks (they may be missing: a skin shows what it wants).
 function setText(name, value) {
   var box = Skin.block(name);
@@ -79,9 +106,7 @@ function redraw() {
 
 // The server plays the skin's sounds: it needs to know which one this device has.
 function tellSkin() {
-  if (channel && channel.readyState === 'open') {
-    channel.send(JSON.stringify({ type: 'skin', name: settings.skin.name }));
-  }
+  if (settings.skin) tell({ type: 'skin', name: settings.skin.name });
 }
 
 // What the screen shows (settings show_time, show_date, show_stats, clock…).
@@ -95,6 +120,12 @@ function showScreen(s) {
 
 // Loads the texts and then shows the start button (or the demo, or the pairing form).
 loadTexts().then(function () {
+  if (app) {  // the app paired it, and has the microphone: straight to the face
+    document.getElementById('screen').hidden = false;
+    status(text('connecting'));
+    app.postMessage({ type: 'ready' });
+    return;
+  }
   if (settings.paired === false) return askForCode();  // the pairing plugin's
   var start = document.getElementById('start');
   start.textContent = text('start');
@@ -139,8 +170,8 @@ document.getElementById('start').onclick = function () {
 
 // Tapping the face: goes back to full screen and, if it is speaking, stops it.
 document.getElementById('screen').onclick = function () {
-  if (!document.fullscreenElement) fullScreen();
-  if (channel && channel.readyState === 'open') channel.send(JSON.stringify({ type: 'tap' }));
+  if (!app && !document.fullscreenElement) fullScreen();
+  tell({ type: 'tap' });
 };
 
 function fullScreen() {
@@ -290,7 +321,7 @@ function iceGathered(pc) {
 }
 
 function ping() {
-  if (channel && channel.readyState === 'open') channel.send(JSON.stringify({ type: 'ping', t: performance.now() }));
+  tell({ type: 'ping', t: performance.now() });
 }
 
 var lastWake;

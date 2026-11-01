@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "stream-api": [
+      "Audio por WebSocket",
+      "GET /stream: el micrófono y el altavoz de un dispositivo como audio por un WebSocket, con los mismos mensajes que la página: para la app de iPhone y iPad, que sigue escuchando con la pantalla apagada."
+    ]
+  }
+}

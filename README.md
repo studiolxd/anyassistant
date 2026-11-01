@@ -277,14 +277,28 @@ and the LLM hears, with the first message of each conversation, which device and
 is («here» means there);
 `GET /devices` from the Mac lists them.
 
+**The iPhone and iPad app** (`apps/ios`, iOS 15 or later, and the plugin `stream-api`): the
+face is the Mac's own page (its skins) in a web view, but the microphone and the speaker are
+the app's, over a WebSocket (`GET /stream?device=…`: 16-bit mono PCM at 48 kHz both ways, and
+the page's JSON messages), with iOS's echo cancellation; so it keeps listening with the screen
+off (Settings in the app: the gear). Alarms, timers and reminders are also scheduled as the
+phone's own notifications (they ring with the app closed); in the background, answers and
+messages arrive as notifications. «Talk to AnyAssistant» for Siri, Shortcuts and the Action
+button (iOS 16 or later). Paired with the 6-digit code, HTTPS trusting only your Mac's
+authority. No camera yet.
+
 **The Apple Watch** (`apps/watch`, and the plugin `talk-api`): press to talk on your wrist.
-`apps/watch/build.sh` makes the Xcode project; open `apps/watch/AnyAssistantWatch.xcodeproj`,
-choose your watch and Run (once: Developer Mode on the watch). The first time it asks for the
+It goes inside the iPhone app, and also works on its own. The first time it asks for the
 6-digit code the Mac app shows («Pair a device…»), and finds the Mac at `anyassistant.local`
-(its IP in the watch app's settings, if not). With the plugin `https` it talks HTTPS, trusting
+(else its IP, learnt when pairing). With the plugin `https` it talks HTTPS, trusting
 only your Mac's own authority. Each sentence goes to `POST /talk?device=…` (a WAV) and comes back
 as text and voice; the watch is a device like the others (its name and room, its own
 conversation, its voice checked), a conversation lasting while you keep talking.
+
+Both are one Xcode project (xcodegen; `apps/shared` is their common code): `apps/apple/build.sh`
+makes `apps/apple/AnyAssistant.xcodeproj` and checks they build; `apps/apple/run.sh` installs the
+iPhone app on the iPhone connected by cable (Developer Mode on); `apps/apple/testflight.sh`
+uploads both to TestFlight.
 
 **Who is speaking** (the plugin `voices`): each person's voice print, made on the Mac (a
 WeSpeaker ONNX model, 26 MB, downloaded the first time) and kept in `voices.json`. «Aprende mi
