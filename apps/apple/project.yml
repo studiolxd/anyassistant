@@ -32,6 +32,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         NSMicrophoneUsageDescription: "To hear you: what you say goes to AnyAssistant on your Mac, nowhere else."
         NSLocalNetworkUsageDescription: "To talk to AnyAssistant on your Mac."
+        NSCameraUsageDescription: "So AnyAssistant can see what you show it when you ask («what do you see?», «read this»); only while it's awake."
         NSAlarmKitUsageDescription: "So the alarms, timers and reminders you set with AnyAssistant ring on this iPhone, even on silent."
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true

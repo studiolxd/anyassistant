@@ -7,9 +7,15 @@ the page (its id, name and room, its conversation, alarms and «dile a la cocina
       → binary: its microphone, 16-bit mono PCM at 48 kHz (any length; 20 ms is usual)
       ← binary: what it says, the same; to play in order
       → / ← text: the page's JSON messages (state, text, timers, alarm, tap, ping/pong…),
-        and ← {"type": "hush"}: stop playing what is left (it was interrupted)
+        and its own:
+        ← {"type": "hello", "eyes": true}: on connecting; whether it may use its camera
+        ← {"type": "hush"}: stop playing what is left (it was interrupted)
+        → {"type": "frame", "jpeg": "<base64>"}: what its camera sees (about once a second
+          while awake), for «¿qué ves?»; a full-resolution photo goes to POST /photo (eyes)
 """
 
+import base64
+import binascii
 import json
 import logging
 import time
@@ -21,10 +27,12 @@ from aiohttp import web as http
 
 import events
 import hub
+import kernel
 import web
 
 log = logging.getLogger("stream")
 RATE = 48000
+FRESH = 5  # seconds a camera frame is still «now»
 
 
 class Line:
@@ -57,7 +65,8 @@ class Voice:
         _soon(self.socket.send_bytes(pcm.tobytes()))
 
     def stop(self):
-        if self.speaking and not self.socket.closed:
+        # Always: what the device still has queued may outlast the estimate (its own buffering).
+        if not self.socket.closed:
             _soon(self.socket.send_str(json.dumps({"type": "hush"})))
         self.until = 0.0
 
@@ -77,6 +86,7 @@ class Streamer:
         self.device, self.agent, self.socket = device, agent, socket
         self.pc, self.speaker, self.channel = Line(), Voice(socket), None
         self.frames, self.last_frame = 0, None
+        self.picture, self.pictured = None, 0.0  # its camera's last frame (JPEG), and when
         self.brain = web.brain(self.speaker, self.send)
 
     def send(self, data: dict):
@@ -84,12 +94,22 @@ class Streamer:
             _soon(self.socket.send_str(json.dumps(data)))
 
     def jpeg(self):
-        return None  # no camera (yet)
+        """What its camera sees now (a frame from the last few seconds), or None."""
+        return self.picture if time.time() - self.pictured < FRESH else None
+
+    def framed(self, data: dict):
+        try:
+            self.picture = base64.b64decode(data.get("jpeg") or "", validate=True) or None
+        except (binascii.Error, ValueError):
+            return
+        self.pictured, self.frames = time.time(), self.frames + 1
 
     def message(self, data: dict):
         token = hub.here.set(self)  # what it starts (a tap, its skin…) is for this device
         try:
-            if data.get("type") == "ping":
+            if data.get("type") == "frame":
+                self.framed(data)
+            elif data.get("type") == "ping":
                 self.send({"type": "pong", "t": data.get("t")})
             elif hasattr(self.brain, "on_message"):
                 self.brain.on_message(data)
@@ -123,6 +143,7 @@ async def _stream(request):
     for old in hub.add(streamer):  # the same device connecting again: its old connection goes
         await old.close()
     events.emit("connected", streamer)  # its name and room (devices)
+    streamer.send({"type": "hello", "eyes": kernel.enabled("eyes")})
     hub.here.set(streamer)  # this task, and what it starts (transcribing, answering…), is for this device
     if hasattr(streamer.brain, "on_connect"):
         streamer.brain.on_connect()

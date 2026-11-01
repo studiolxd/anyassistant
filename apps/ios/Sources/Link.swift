@@ -12,6 +12,9 @@ final class Link: NSObject, ObservableObject {
 
     let mac: Mac
     let audio = Audio()
+    let camera = Camera()
+    private var eyes = false  // the Mac has «eyes» on: the camera may be used
+    var inFront = true  // the app is on screen (the camera only works then)
     weak var web: WKWebView?
     @Published private(set) var state = State.connecting
 
@@ -27,6 +30,9 @@ final class Link: NSObject, ObservableObject {
         self.mac = mac
         super.init()
         audio.onRestartNeeded = { [weak self] in Task { @MainActor in self?.restartAudio() } }
+        camera.onFrame = { [weak self] jpeg in
+            Task { @MainActor in self?.send(["type": "frame", "jpeg": jpeg.base64EncodedString()]) }
+        }
     }
 
     // MARK: Connecting
@@ -41,6 +47,7 @@ final class Link: NSObject, ObservableObject {
         socket?.cancel(with: .goingAway, reason: nil)
         socket = nil
         audio.stop()
+        camera.stop()
         set(.lost)
     }
 
@@ -113,10 +120,11 @@ final class Link: NSObject, ObservableObject {
 
     private func dropped(_ task: URLSessionWebSocketTask) {
         socket = nil
-        audio.stop()
+        camera.stop()
         if (task.response as? HTTPURLResponse)?.statusCode == 403 {  // unpaired on the Mac
             set(.unpaired)
             wanted = false
+            audio.stop()
             mac.unpair()
             return
         }
@@ -158,6 +166,38 @@ final class Link: NSObject, ObservableObject {
         socket.send(.string(text)) { _ in }
     }
 
+    // MARK: The camera
+
+    /// Awake, it looks (a frame a second); asleep, the camera is off.
+    private func look(_ state: String) {
+        if eyes, inFront, state != "asleep", state != "error" {
+            if !camera.running { camera.start() }
+        } else if camera.running {
+            camera.stop()
+        }
+    }
+
+    func cameraAllowed(_ front: Bool) {
+        inFront = front
+        look(shown["state"]?["state"] as? String ?? "asleep")
+    }
+
+    /// «Lee esto»: a full-resolution photo, to the Mac (POST /photo).
+    private func takePhoto(_ id: Any?) {
+        guard eyes, inFront, let id = id as? Int else { return }
+        camera.photo { [weak self] jpeg in
+            Task { @MainActor in
+                guard let self, let jpeg, !jpeg.isEmpty, let base = await self.mac.url() else { return }
+                var parts = URLComponents(url: base.appendingPathComponent("photo"), resolvingAgainstBaseURL: false)!
+                parts.queryItems = [URLQueryItem(name: "id", value: "\(id)"), URLQueryItem(name: "how", value: "photo")]
+                var request = URLRequest(url: parts.url!)
+                request.httpMethod = "POST"
+                request.httpBody = jpeg
+                _ = try? await self.mac.session.data(for: request)
+            }
+        }
+    }
+
     /// An alarm stopped on the phone: if the Mac is ringing, a tap stops it there too.
     func stopRinging() {
         if (shown["state"]?["state"] as? String) == "alarm" { send(["type": "tap"]) }
@@ -173,6 +213,12 @@ final class Link: NSObject, ObservableObject {
               let message = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let type = message["type"] as? String else { return }
         if type == "hush" { return audio.hush() }
+        if type == "hello" {
+            eyes = message["eyes"] as? Bool ?? false
+            return
+        }
+        if type == "photo" { return takePhoto(message["id"]) }
+        if type == "state" { look(message["state"] as? String ?? "") }
         if ["state", "timers", "alarm"].contains(type) { shown[type] = message }
         Notices.shared.handle(message)
         toPage(message)

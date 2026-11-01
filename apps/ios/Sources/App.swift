@@ -64,6 +64,8 @@ struct MainView: View {
                 .padding(.bottom, 6)
         }
         .statusBarHidden(true)
+        .modifier(Quiet())
+        .background(Orientation())
         .sheet(isPresented: $settings) { SettingsView(mac: mac, link: link) }
         .onAppear {
             link.start()
@@ -73,11 +75,13 @@ struct MainView: View {
             switch now {
             case .active:
                 Notices.shared.foreground = true
+                link.cameraAllowed(true)
                 UIApplication.shared.isIdleTimerDisabled = awake
                 link.start()
                 link.showAgain()
             case .background:
                 Notices.shared.foreground = false
+                link.cameraAllowed(false)
                 if !background { link.stop() }
             default:
                 break
@@ -118,5 +122,31 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button(T("Done")) { dismiss() } } }
         }
+    }
+}
+
+/// No home bar while it's the face (iOS 16 or later; it comes back with a swipe).
+struct Quiet: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.0, *) {
+            content.persistentSystemOverlays(.hidden)
+        } else {
+            content
+        }
+    }
+}
+
+/// Keeps the screen's orientation for the camera (upright photos).
+struct Orientation: View {
+    var body: some View {
+        GeometryReader { _ in
+            Color.clear.onAppear(perform: update)
+                .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in update() }
+        }
+    }
+
+    func update() {
+        let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        Camera.interface = scene?.interfaceOrientation ?? .portrait
     }
 }

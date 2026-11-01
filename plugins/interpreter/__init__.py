@@ -81,7 +81,7 @@ def enabled() -> bool:
 async def interpret(text: str) -> str | None:
     """The sentence to say, if the model understood a skill in it; None otherwise."""
     global _model
-    if not enabled() or not skills.sounds_like_one(text):
+    if not enabled() or not sounds_like_one(text):
         return None
     try:
         name = chosen()

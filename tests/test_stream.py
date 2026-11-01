@@ -1,6 +1,7 @@
 """The plugin «stream-api»: the iPhone and iPad app's audio over a WebSocket."""
 
 import asyncio
+import base64
 import json
 
 import numpy as np
@@ -63,6 +64,7 @@ def run(test):
 def test_its_microphone_in_and_its_voice_out():
     async def test(client):
         socket = await client.ws_connect("/stream?device=phone1", headers={"User-Agent": "AnyAssistant iOS"})
+        assert json.loads((await socket.receive()).data)["type"] == "hello"
         assert json.loads((await socket.receive()).data) == {"type": "state", "state": "asleep"}
         for _ in range(3):
             await socket.send_bytes(np.zeros(960, np.int16).tobytes())  # 20 ms
@@ -87,7 +89,9 @@ def test_connecting_again_replaces_the_old_one():
     async def test(client):
         first = await client.ws_connect("/stream?device=phone1")
         await first.receive()
+        await first.receive()
         second = await client.ws_connect("/stream?device=phone1")
+        await second.receive()
         await second.receive()
         assert len(hub.sessions) == 1
         assert (await first.receive(timeout=2)).type.name in ("CLOSE", "CLOSED", "CLOSING")
@@ -99,4 +103,23 @@ def test_a_bad_device():
     async def test(client):
         answer = await client.get("/stream?device=../x")
         assert answer.status == 400
+    run(test)
+
+
+def test_what_its_camera_sees():
+    async def test(client):
+        socket = await client.ws_connect("/stream?device=phone1")
+        await socket.receive()
+        await socket.receive()
+        streamer = next(iter(hub.sessions.values()))
+        assert streamer.jpeg() is None  # nothing yet
+        await socket.send_str(json.dumps({"type": "frame", "jpeg": base64.b64encode(b"\xff\xd8jpeg").decode()}))
+        await asyncio.sleep(0.05)
+        assert streamer.jpeg() == b"\xff\xd8jpeg" and streamer.frames == 1
+        streamer.pictured -= 60  # a minute ago: not «now» any more
+        assert streamer.jpeg() is None
+        await socket.send_str(json.dumps({"type": "frame", "jpeg": "not base64!"}))
+        await asyncio.sleep(0.05)
+        assert streamer.frames == 1
+        await socket.close()
     run(test)
