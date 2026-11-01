@@ -151,8 +151,11 @@ struct DeviceRow: View {
             }
             .onSubmit { save() }
             .onChange(of: editing) { _, now in if !now { save() } }  // leaving a field saves it
+            .onChange(of: name) { _, _ in later() }  // and a moment after typing (closing the window too)
+            .onChange(of: room) { _, _ in later() }
         }
         .onAppear { name = item.name; room = item.room }
+        .onDisappear { save() }
         .onChange(of: item) { _, new in if !editing { name = new.name; room = new.room } }
     }
 
@@ -175,8 +178,19 @@ struct DeviceRow: View {
         return state + " · " + (item.press ? T("last used") + " " : "") + seen.formatted(.relative(presentation: .named))
     }
 
+    @State private var pending: Task<Void, Never>?
+
+    /// Saved once you stop typing for a moment.
+    func later() {
+        pending?.cancel()
+        pending = Task {
+            try? await Task.sleep(nanoseconds: 900_000_000)
+            if !Task.isCancelled { save() }
+        }
+    }
+
     func save() {
-        guard name != item.name || room != item.room else { return }
+        guard name != item.name || room != item.room, !name.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         var changed = item
         changed.name = name
         changed.room = room
