@@ -9,6 +9,7 @@ import UserNotifications
 final class Notices: NSObject, UNUserNotificationCenterDelegate {
     static let shared = Notices()
     var foreground = true
+    var name = "AnyAssistant"  // the assistant's (the Mac's settings), for its notifications
     private let center = UNUserNotificationCenter.current()
     private let prefix = "anyassistant-"
 
@@ -32,7 +33,7 @@ final class Notices: NSObject, UNUserNotificationCenterDelegate {
             guard !foreground, message["author"] as? String == "assistant", message["partial"] as? Bool != true,
                   let text = message["text"] as? String, !text.isEmpty else { return }
             let content = UNMutableNotificationContent()
-            content.title = "AnyAssistant"
+            content.title = name
             content.body = text
             content.sound = .default
             center.add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))

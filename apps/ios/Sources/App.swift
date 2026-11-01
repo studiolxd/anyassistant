@@ -1,6 +1,7 @@
-// AnyAssistant on the iPhone and the iPad: the face is the Mac's own page (with its skins), in a
-// web view; the microphone and the speaker are the app's (plugin «stream-api»: a WebSocket), so
-// it keeps listening with the screen off. Alarms, timers and reminders are also the phone's own
+// AnyAssistant on the iPhone and the iPad, native: its face is one of the skins (Skins.swift,
+// drawn as the page's: Eyes, Orb, Bedside, Minimal), following the Mac's state, texts and
+// settings; the microphone and the speaker go over a WebSocket (plugin «stream-api»), so it
+// keeps listening with the screen off. Alarms, timers and reminders are also the phone's own
 // notifications (they ring with the app closed); answers and messages arrive as notifications
 // while it's in the background. Siri, Shortcuts and the Action button: «Talk to AnyAssistant».
 // Paired once with the 6-digit code the Mac app shows («Pair a device…»). iOS 15 or later.
@@ -45,59 +46,47 @@ struct MainView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            Color.black.ignoresSafeArea()
-            Face(link: link).ignoresSafeArea()
-            if let preview = link.preview {  // over the face's camera block, its shape
-                CameraPreview(camera: link.camera)
-                    .frame(width: preview.frame.width, height: preview.frame.height)
-                    .clipShape(RoundedRectangle(cornerRadius: preview.radius))
-                    .offset(x: preview.frame.minX, y: preview.frame.minY)
-                    .allowsHitTesting(false)
-                    .ignoresSafeArea()
+        SkinView(face: link.face, levels: link.levels, camera: link.camera)
+            .contentShape(Rectangle())
+            .onTapGesture { link.tap() }  // it stops talking, or wakes up
+            .overlay(alignment: .bottomTrailing) {
+                Image(systemName: "gearshape")
+                    .font(.title3)
+                    .foregroundColor(.white.opacity(0.35))
+                    .frame(width: 56, height: 56)
+                    .contentShape(Rectangle())
+                    .onTapGesture { settings = true }
+                    .accessibilityLabel(T("Settings"))
+                    .accessibilityAddTraits(.isButton)
+                    .padding(.trailing, 6)
+                    .padding(.bottom, 6)
             }
-        }
-        // The gear: on its own layer above the web view (which otherwise takes the taps), with
-        // a finger-sized area to tap.
-        .overlay(alignment: .bottomTrailing) {
-            Image(systemName: "gearshape")
-                .font(.title3)
-                .foregroundColor(.white.opacity(0.35))
-                .frame(width: 56, height: 56)
-                .contentShape(Rectangle())
-                .onTapGesture { settings = true }
-                .accessibilityLabel(T("Settings"))
-                .accessibilityAddTraits(.isButton)
-                .padding(.trailing, 6)
-                .padding(.bottom, 6)
-        }
-        .statusBarHidden(true)
-        .modifier(Quiet())
-        .background(Orientation())
-        .sheet(isPresented: $settings) { SettingsView(mac: mac, link: link) }
-        .onAppear {
-            link.start()
-            UIApplication.shared.isIdleTimerDisabled = awake
-        }
-        .onChange(of: phase) { now in
-            switch now {
-            case .active:
-                Notices.shared.foreground = true
-                link.cameraAllowed(true)
-                UIApplication.shared.isIdleTimerDisabled = awake
+            .statusBarHidden(true)
+            .modifier(Quiet())
+            .background(Orientation())
+            .sheet(isPresented: $settings) { SettingsView(mac: mac, link: link) }
+            .onAppear {
                 link.start()
-                link.showAgain()
-            case .background:
-                Notices.shared.foreground = false
-                link.cameraAllowed(false)
-                if !background { link.stop() }
-            default:
-                break
+                UIApplication.shared.isIdleTimerDisabled = awake
             }
-        }
-        .onChange(of: awake) { on in UIApplication.shared.isIdleTimerDisabled = on }
-        .onReceive(NotificationCenter.default.publisher(for: .talk)) { _ in link.talk() }
-        .onReceive(NotificationCenter.default.publisher(for: .stopRinging)) { _ in link.stopRinging() }
+            .onChange(of: phase) { now in
+                switch now {
+                case .active:
+                    Notices.shared.foreground = true
+                    UIApplication.shared.isIdleTimerDisabled = awake
+                    link.cameraAllowed(true)
+                    link.start()
+                case .background:
+                    Notices.shared.foreground = false
+                    link.cameraAllowed(false)
+                    if !background { link.stop() }
+                default:
+                    break
+                }
+            }
+            .onChange(of: awake) { on in UIApplication.shared.isIdleTimerDisabled = on }
+            .onReceive(NotificationCenter.default.publisher(for: .talk)) { _ in link.talk() }
+            .onReceive(NotificationCenter.default.publisher(for: .stopRinging)) { _ in link.stopRinging() }
     }
 }
 
@@ -159,15 +148,3 @@ struct Orientation: View {
     }
 }
 
-struct CameraPreview: UIViewRepresentable {
-    let camera: Camera
-
-    func makeUIView(context: Context) -> PreviewView {
-        let view = PreviewView()
-        view.preview.session = camera.session
-        view.preview.videoGravity = .resizeAspectFill
-        return view
-    }
-
-    func updateUIView(_ view: PreviewView, context: Context) { view.orient() }
-}

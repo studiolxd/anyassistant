@@ -9,32 +9,10 @@ var T = {};  // texts of the active language (locale «ui», and the skin's own)
 var settings = {};  // name, skin, video, screen…
 var lastState = 'connecting';
 
-// Inside the iPhone and iPad app: the app has the microphone and the speaker (it keeps
-// listening with the screen off), and passes the messages both ways; the page is the face.
-var app = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.anyassistant;
-
-// A message to the Mac: through the app, or the call's control channel.
+// A message to the Mac, on the call's control channel.
 function tell(m) {
-  if (app) app.postMessage(m);
-  else if (channel && channel.readyState === 'open') channel.send(JSON.stringify(m));
+  if (channel && channel.readyState === 'open') channel.send(JSON.stringify(m));
 }
-
-// What the app passes on: the Mac's messages, and its own («link»: whether it is connected;
-// «level»: the microphone's volume, for the face).
-window.fromApp = function (m) {
-  if (m.type === 'link') {
-    if (m.state === 'connected') {
-      if (Skin.current() === 'error' || lastState === 'connecting') { Skin.state('connected'); status(text('connected')); }
-      tellSkin();
-    } else {
-      fail(text(m.state === 'unpaired' ? 'pair_needed' : 'connection_lost'));
-    }
-  } else if (m.type === 'level') {
-    Skin.voice(m.value);
-  } else {
-    message(m);
-  }
-};
 
 // The skin's blocks (they may be missing: a skin shows what it wants).
 function setText(name, value) {
@@ -120,12 +98,6 @@ function showScreen(s) {
 
 // Loads the texts and then shows the start button (or the demo, or the pairing form).
 loadTexts().then(function () {
-  if (app) {  // the app paired it, and has the microphone: straight to the face
-    document.getElementById('screen').hidden = false;
-    status(text('connecting'));
-    app.postMessage({ type: 'ready' });
-    return;
-  }
   if (settings.paired === false) return askForCode();  // the pairing plugin's
   var start = document.getElementById('start');
   start.textContent = text('start');
@@ -170,7 +142,7 @@ document.getElementById('start').onclick = function () {
 
 // Tapping the face: goes back to full screen and, if it is speaking, stops it.
 document.getElementById('screen').onclick = function () {
-  if (!app && !document.fullscreenElement) fullScreen();
+  if (!document.fullscreenElement) fullScreen();
   tell({ type: 'tap' });
 };
 
@@ -359,11 +331,6 @@ function message(m) {
 // Also hidden when it goes to sleep.
 function showCamera(on) {
   var box = Skin.block('camera');
-  if (app && box) {  // the app has the camera: it draws it over the block, where the skin puts it
-    box.hidden = !on;
-    tellCamera();
-    return;
-  }
   var video = box.querySelector('video');
   if (on && media && media.getVideoTracks().length) {
     video.srcObject = media;
@@ -373,18 +340,6 @@ function showCamera(on) {
     video.srcObject = null;
   }
 }
-
-// Where the camera block is (in the app, which draws the camera over it), again if it moves.
-function tellCamera() {
-  var box = Skin.block('camera');
-  if (!app || !box) return;
-  if (box.hidden) return app.postMessage({ type: 'camera', on: false });
-  var r = box.getBoundingClientRect();
-  var style = getComputedStyle(box);
-  app.postMessage({ type: 'camera', on: true, x: r.left, y: r.top, width: r.width, height: r.height,
-                    radius: parseFloat(style.borderTopLeftRadius) || 0, border: parseFloat(style.borderTopWidth) || 0 });
-}
-window.addEventListener('resize', function () { setTimeout(tellCamera, 300); });
 
 // «Read this»: a photo at the camera's full resolution (the video may be 320×240).
 // ImageCapture where it works; else the camera at its largest size for a moment

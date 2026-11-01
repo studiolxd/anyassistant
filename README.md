@@ -277,15 +277,18 @@ and the LLM hears, with the first message of each conversation, which device and
 is («here» means there);
 `GET /devices` from the Mac lists them.
 
-**The iPhone and iPad app** (`apps/ios`, iOS 15 or later, and the plugin `stream-api`): the
-face is the Mac's own page (its skins) in a web view, but the microphone and the speaker are
-the app's, over a WebSocket (`GET /stream?device=…`: 16-bit mono PCM at 48 kHz both ways, and
-the page's JSON messages), with iOS's echo cancellation; so it keeps listening with the screen
-off (Settings in the app: the gear). Alarms, timers and reminders are also scheduled as the
-phone's own notifications (they ring with the app closed); in the background, answers and
-messages arrive as notifications. «Talk to AnyAssistant» for Siri, Shortcuts and the Action
-button (iOS 16 or later). Paired with the 6-digit code, HTTPS trusting only your Mac's
-authority. No camera yet.
+**The iPhone and iPad app** (`apps/ios`, iOS 15 or later, and the plugin `stream-api`): native.
+Its face is drawn as the page's skins (Eyes, Orb, Bedside, Minimal: `apps/ios/Sources/Skins.swift`,
+the same looks; a new skin has to be drawn there too, else it shows as Eyes), following the Mac's
+state, texts and screen settings (its `/config`). The microphone and the speaker go over a
+WebSocket (`GET /stream?device=…`: 16-bit mono PCM at 48 kHz both ways, and the page's JSON
+messages), with iOS's echo cancellation; so it keeps listening with the screen off (Settings in
+the app: the gear). With the plugin `eyes`, its camera: a frame a second while awake («¿qué ves?»),
+a full photo for «lee esto», live for «muestra la cámara». On iOS 26 or later, alarms, timers
+and reminders are the phone's own alarms (AlarmKit: they ring on silent); before, notifications.
+In the background, answers and messages arrive as notifications. «Talk to AnyAssistant» for
+Siri, Shortcuts and the Action button (iOS 16 or later). Paired with the 6-digit code, HTTPS
+trusting only your Mac's authority.
 
 **The Apple Watch** (`apps/watch`, and the plugin `talk-api`): press to talk on your wrist.
 It goes inside the iPhone app, and also works on its own. The first time it asks for the

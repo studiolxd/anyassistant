@@ -14,6 +14,8 @@ final class Audio {
     private(set) var running = false
     /// The audio was cut off (a call, headphones plugged in…): it has to start again.
     var onRestartNeeded: (() -> Void)?
+    /// How loud its own voice is now (0…1), for the face; about 20 times a second.
+    var onSpeech: ((Float) -> Void)?
 
     init() {
         engine.attach(player)
@@ -40,6 +42,13 @@ final class Audio {
         input.installTap(onBus: 0, bufferSize: 960, format: format) { [weak self] buffer, _ in
             if let (pcm, level) = self?.convert(buffer) { heard(pcm, level) }
         }
+        let mixer = engine.mainMixerNode
+        mixer.installTap(onBus: 0, bufferSize: 2048, format: mixer.outputFormat(forBus: 0)) { [weak self] buffer, _ in
+            guard let samples = buffer.floatChannelData?[0] else { return }
+            var peak: Float = 0
+            for i in 0..<Int(buffer.frameLength) { peak = max(peak, abs(samples[i])) }
+            self?.onSpeech?(min(1, peak))
+        }
         engine.prepare()
         try engine.start()
         player.play()
@@ -50,6 +59,8 @@ final class Audio {
         guard running else { return }
         running = false
         engine.inputNode.removeTap(onBus: 0)
+        engine.mainMixerNode.removeTap(onBus: 0)
+        onSpeech?(0)
         player.stop()
         engine.stop()
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)

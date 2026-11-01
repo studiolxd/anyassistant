@@ -1,10 +1,10 @@
 // The connection with the Mac (the plugin «stream-api»): a WebSocket with the microphone going
-// up and its voice coming down, and the page's messages both ways. It reconnects by itself
-// (the Wi-Fi drops, the Mac restarts), and keeps what the page shows to show it again when the
-// app comes back from the background.
+// up and its voice coming down, and the messages both ways, which change the face (FaceModel).
+// It reconnects by itself (the Wi-Fi drops, the Mac restarts); while disconnected in the
+// background, the microphone stays on so iOS keeps the app alive to reconnect.
 
 import Foundation
-import WebKit
+import UIKit
 
 @MainActor
 final class Link: NSObject, ObservableObject {
@@ -13,25 +13,23 @@ final class Link: NSObject, ObservableObject {
     let mac: Mac
     let audio = Audio()
     let camera = Camera()
-    private var eyes = false  // the Mac has «eyes» on: the camera may be used
-    var inFront = true  // the app is on screen (the camera only works then)
-    weak var web: WKWebView?
+    let face = FaceModel()
+    let levels = Levels()
     @Published private(set) var state = State.connecting
-    /// «Muestra la cámara»: where the face's camera block is (the app draws the camera there).
-    @Published private(set) var preview: (frame: CGRect, radius: CGFloat)?
 
     private var socket: URLSessionWebSocketTask?
     private var wanted = false
     private var dialing = false  // looking for the Mac (once at a time)
-    private var pageReady = false
     private var tapWhenConnected = false
-    private var shown: [String: [String: Any]] = [:]  // the last state, timers, alarm: for the page again
+    private var eyes = false  // the Mac has «eyes» on: the camera may be used
+    private var inFront = true  // the app is on screen (the camera only works then)
     private var lastLevel = Date.distantPast
 
     init(mac: Mac) {
         self.mac = mac
         super.init()
         audio.onRestartNeeded = { [weak self] in Task { @MainActor in self?.restartAudio() } }
+        audio.onSpeech = { [weak self] level in Task { @MainActor in self?.levels.speech = CGFloat(level) } }
         camera.onFrame = { [weak self] jpeg in
             Task { @MainActor in self?.send(["type": "frame", "jpeg": jpeg.base64EncodedString()]) }
         }
@@ -55,15 +53,13 @@ final class Link: NSObject, ObservableObject {
 
     func restart() {
         stop()
-        pageReady = false
         start()
-        loadPage()
     }
 
     private func connect() {
         guard wanted, socket == nil, !dialing else { return }
         dialing = true
-        set(.connecting)
+        if state != .lost { set(.connecting) }
         Task {
             let found = await mac.url()
             dialing = false
@@ -112,8 +108,9 @@ final class Link: NSObject, ObservableObject {
                 Task { @MainActor in self?.heard(pcm, level) }
             }
         } catch {
-            NSLog("AnyAssistant: no microphone: \(error)")
+            report("no microphone: \(error.localizedDescription)")
         }
+        Task { await configure() }
         if tapWhenConnected {
             tapWhenConnected = false
             send(["type": "tap"])
@@ -141,9 +138,13 @@ final class Link: NSObject, ObservableObject {
     }
 
     private func set(_ new: State) {
-        guard state != new else { return }
         state = new
-        toPage(["type": "link", "state": new.rawValue])
+        switch new {
+        case .connected: face.problem = nil
+        case .connecting: face.problem = nil; face.state = "connecting"
+        case .lost: face.problem = face.text("connection_lost") == "connection_lost" ? T("Looking for your Mac…") : face.text("connection_lost")
+        case .unpaired: face.problem = T("It has to be paired again.")
+        }
     }
 
     private func restartAudio() {
@@ -153,13 +154,26 @@ final class Link: NSObject, ObservableObject {
         connected()
     }
 
+    /// The face's texts, skin and screen settings: the Mac's /config (as the page's), for this
+    /// device's skin («pon la skin orb aquí»).
+    func configure() async {
+        guard let base = await mac.url() else { return }
+        var parts = URLComponents(url: base.appendingPathComponent("config"), resolvingAgainstBaseURL: false)!
+        if let skin = UserDefaults.standard.string(forKey: "skin") { parts.queryItems = [URLQueryItem(name: "skin", value: skin)] }
+        guard let (data, _) = try? await mac.session.data(from: parts.url!),
+              let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        face.configure(config)
+        Notices.shared.name = face.name
+        send(["type": "skin", "name": face.skin])  // its skin's sounds are played from the Mac
+    }
+
     // MARK: Both ways
 
     private func heard(_ pcm: Data, _ level: Float) {
         socket?.send(.data(pcm)) { _ in }
-        if Date().timeIntervalSince(lastLevel) > 0.05 {  // the face follows your voice
+        if Date().timeIntervalSince(lastLevel) > 0.033 {  // the face follows your voice
             lastLevel = Date()
-            toPage(["type": "level", "value": level])
+            levels.voice = CGFloat(level)
         }
     }
 
@@ -169,26 +183,57 @@ final class Link: NSObject, ObservableObject {
         socket.send(.string(text)) { _ in }
     }
 
-    // MARK: The camera
+    /// A tap on the face: it stops talking (quiet at once here), or wakes up.
+    func tap() {
+        audio.hush()
+        send(["type": "tap"])
+    }
 
-    private func showCamera(_ message: [String: Any]) {
-        func number(_ key: String) -> CGFloat { CGFloat((message[key] as? NSNumber)?.doubleValue ?? 0) }
-        if message["on"] as? Bool == true, inFront {
-            let border = number("border")
-            preview = (CGRect(x: number("x") + border, y: number("y") + border,
-                              width: number("width") - 2 * border, height: number("height") - 2 * border),
-                       max(0, number("radius") - border))
-            if !camera.running { camera.start() }
-        } else {
-            preview = nil
-            look(shown["state"]?["state"] as? String ?? "asleep")
+    /// «Talk to AnyAssistant»: as a tap on its face.
+    func talk() {
+        if state == .connected { tap() } else { tapWhenConnected = true; start() }
+    }
+
+    /// An alarm stopped on the phone: if the Mac is ringing, a tap stops it there too.
+    func stopRinging() {
+        if face.state == "alarm" { send(["type": "tap"]) }
+    }
+
+    private func handle(_ text: String) {
+        guard let data = text.data(using: .utf8),
+              let message = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let type = message["type"] as? String else { return }
+        switch type {
+        case "hush": audio.hush()
+        case "hello": eyes = message["eyes"] as? Bool ?? false
+        case "pong": break
+        case "photo": takePhoto(message["id"])
+        case "look": Task { await showPhoto() }
+        case "config": Task { await configure() }
+        case "skin":
+            let name = message["name"] as? String ?? ""
+            if name == "default" || name.isEmpty { UserDefaults.standard.removeObject(forKey: "skin") }
+            else { UserDefaults.standard.set(name, forKey: "skin") }
+            Task { await configure() }
+        default:
+            face.receive(message)
+            Notices.shared.handle(message)
+            if type == "state" || type == "camera" { look() }
         }
     }
 
-    /// Awake, it looks (a frame a second); asleep, the camera is off (unless it is being shown).
-    private func look(_ state: String) {
-        if preview != nil, inFront { return }
-        if eyes, inFront, state != "asleep", state != "error" {
+    /// A line in the Mac's log (stream-api), to see what happens inside the app.
+    func report(_ text: String) {
+        send(["type": "log", "text": text])
+    }
+
+    // MARK: The camera
+
+    /// Awake, it looks (a frame a second, for «¿qué ves?»); asleep, the camera is off. Shown
+    /// («muestra la cámara»), it's on whatever the state.
+    private func look() {
+        let state = face.look
+        if inFront, face.cameraShown || (eyes && state != "asleep" && state != "error") {
             if !camera.running { camera.start() }
         } else if camera.running {
             camera.stop()
@@ -197,8 +242,16 @@ final class Link: NSObject, ObservableObject {
 
     func cameraAllowed(_ front: Bool) {
         inFront = front
-        if !front { preview = nil }
-        look(shown["state"]?["state"] as? String ?? "asleep")
+        if !front { face.cameraShown = false }
+        look()
+    }
+
+    /// The photo it looks at, from the Mac (/eyes.jpg), on the face.
+    private func showPhoto() async {
+        guard let base = await mac.url(),
+              let (data, response) = try? await mac.session.data(from: base.appendingPathComponent("eyes.jpg")),
+              (response as? HTTPURLResponse)?.statusCode == 200, let image = UIImage(data: data) else { return }
+        face.show(photo: image)
     }
 
     /// «Lee esto»: a full-resolution photo, to the Mac (POST /photo).
@@ -215,95 +268,5 @@ final class Link: NSObject, ObservableObject {
                 _ = try? await self.mac.session.data(for: request)
             }
         }
-    }
-
-    /// An alarm stopped on the phone: if the Mac is ringing, a tap stops it there too.
-    func stopRinging() {
-        if (shown["state"]?["state"] as? String) == "alarm" { send(["type": "tap"]) }
-    }
-
-    /// «Talk to AnyAssistant»: as a tap on its face (it wakes up, or stops talking).
-    func talk() {
-        if state == .connected { send(["type": "tap"]) } else { tapWhenConnected = true; start() }
-    }
-
-    private func handle(_ text: String) {
-        guard let data = text.data(using: .utf8),
-              let message = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let type = message["type"] as? String else { return }
-        if type == "hush" { return audio.hush() }
-        if type == "hello" {
-            eyes = message["eyes"] as? Bool ?? false
-            return
-        }
-        if type == "photo" { return takePhoto(message["id"]) }
-        if type == "state" { look(message["state"] as? String ?? "") }
-        if ["state", "timers", "alarm"].contains(type) { shown[type] = message }
-        Notices.shared.handle(message)
-        toPage(message)
-    }
-
-    // MARK: The page
-
-    /// The Mac's page, as the face (paired: its cookie; HTTPS: only its authority is trusted).
-    func loadPage() {
-        guard let web else { return }
-        Task {
-            guard let base = await mac.url() else {
-                web.loadHTMLString(Link.waiting, baseURL: nil)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.loadPage() }
-                return
-            }
-            let store = web.configuration.websiteDataStore.httpCookieStore
-            for cookie in mac.cookies(for: base) { await store.setCookie(cookie) }
-            web.load(URLRequest(url: base))
-        }
-    }
-
-    func pageFailed() {
-        pageReady = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.loadPage() }
-    }
-
-    func fromPage(_ message: [String: Any]) {
-        if message["type"] as? String == "ready" {
-            pageReady = true
-            showAgain()
-        } else if message["type"] as? String == "camera" {
-            showCamera(message)
-        } else {
-            if message["type"] as? String == "tap" { audio.hush() }  // quiet at once; the Mac stops too
-            send(message)  // tap, skin, ping
-        }
-    }
-
-    /// What the page missed (it was in the background, or loading).
-    func showAgain() {
-        guard pageReady else { return }
-        toPage(["type": "link", "state": state.rawValue])
-        for type in ["alarm", "timers", "state"] { if let message = shown[type] { toPage(message) } }
-    }
-
-    private func toPage(_ message: [String: Any]) {
-        let type = message["type"] as? String ?? ""
-        if type == "state" || type == "link" {
-            report("to the page: \(type) \(message["state"] ?? "")" + (pageReady ? "" : " (page not ready)"))
-        }
-        guard pageReady, let web, let data = try? JSONSerialization.data(withJSONObject: message),
-              let json = String(data: data, encoding: .utf8) else { return }
-        web.evaluateJavaScript("window.fromApp && window.fromApp(\(json)); true") { [weak self] _, error in
-            if let error { self?.report("the page failed with \(type): \(error.localizedDescription)") }
-        }
-    }
-
-    /// A line in the Mac's log (stream-api), to see what happens inside the app.
-    func report(_ text: String) {
-        send(["type": "log", "text": text])
-    }
-
-    private static var waiting: String {
-        "<meta name=viewport content='width=device-width'><body style='background:#000;color:#999;"
-            + "font:17px -apple-system;display:flex;align-items:center;justify-content:center;height:90vh;"
-            + "text-align:center;padding:24px'>" + T("Looking for your Mac…") + "</body>"
     }
 }
