@@ -67,6 +67,7 @@ class Line:
 
 class Talker:
     """A device that talks by HTTP, as a transport.Session for everyone else."""
+    press_to_talk = True  # never «connected» between sentences: the devices say so
 
     def __init__(self, device: str, agent: str):
         self.id = uuid.uuid4().hex[:6]
@@ -104,7 +105,19 @@ def decode(raw: bytes) -> np.ndarray:
 
         g = gcd(16000, rate)
         pcm = resample_poly(pcm, 16000 // g, rate // g)
-    return pcm.astype(np.float32)
+    return louder(pcm.astype(np.float32))
+
+
+LOUD = 0.5  # the peak a quiet sentence is raised to
+MOST = 30.0  # at most this much louder (beyond, it is only noise)
+
+
+def louder(pcm: np.ndarray) -> np.ndarray:
+    """A watch's microphone records low: a quiet sentence is raised so the transcriber hears it."""
+    peak = float(np.abs(pcm).max()) if len(pcm) else 0.0
+    if 0 < peak < LOUD:
+        pcm = pcm * min(LOUD / peak, MOST)
+    return pcm
 
 
 def encode(chunks: list) -> bytes:
@@ -188,6 +201,7 @@ async def _talk(request):
     if talker is None or hub.sessions.get(talker.id) is not talker:
         talker = _talkers[device] = Talker(device, request.headers.get("User-Agent", ""))
         hub.add(talker)
-        events.emit("connected", talker)  # its name and room (devices)
-    log.info("[%s] a sentence (%.1f s)", talker.id, len(audio) / 16000)
+    events.emit("connected", talker)  # its name and room, when it was last seen (devices)
+    log.info("[%s] a sentence (%.1f s, peak %.2f)", talker.id, len(audio) / 16000,
+             float(np.abs(audio).max()) if len(audio) else 0.0)
     return http.json_response(await talk(talker, audio))

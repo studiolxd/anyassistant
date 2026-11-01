@@ -122,3 +122,24 @@ def test_a_bad_request():
 def test_the_watch_is_a_device():
     devices = kernel.load("devices")
     assert devices.kind("AnyAssistant Watch (watchOS 11)") == "Apple Watch"
+
+
+def test_a_quiet_watch_is_heard_louder():
+    quiet = np.full(1600, 0.02, np.float32)
+    assert abs(float(np.abs(talk.louder(quiet)).max()) - talk.LOUD) < 1e-6
+    loud = np.full(1600, 0.8, np.float32)
+    assert float(talk.louder(loud).max()) == pytest.approx(0.8)  # left as it is
+    hiss = np.full(1600, 0.001, np.float32)
+    assert float(talk.louder(hiss).max()) == pytest.approx(0.001 * talk.MOST)  # not noise made loud
+
+
+def test_a_forgotten_watch_comes_back_when_it_talks():
+    devices = kernel.load("devices")
+    post()
+    assert devices.load()["watch1"]["press"] is True
+    assert "only while pressed" in devices.get_devices()
+    known = devices.load()
+    known.pop("watch1")
+    devices._save(known)  # forgotten in the Mac app
+    post()
+    assert devices.load()["watch1"]["name"] == "Apple Watch"

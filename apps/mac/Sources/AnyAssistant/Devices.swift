@@ -10,6 +10,7 @@ struct DeviceItem: Identifiable, Equatable {
     let connected: Bool
     let current: Bool
     let seen: Date?
+    let press: Bool  // talks a sentence at a time (the watch): never «connected»
 }
 
 @MainActor
@@ -52,7 +53,8 @@ final class Devices: ObservableObject {
             DeviceItem(id: $0["id"] as? String ?? "", name: $0["name"] as? String ?? "",
                        room: $0["room"] as? String ?? "", connected: $0["connected"] as? Bool ?? false,
                        current: $0["current"] as? Bool ?? false,
-                       seen: ($0["seen"] as? Double).map { Date(timeIntervalSince1970: $0) })
+                       seen: ($0["seen"] as? Double).map { Date(timeIntervalSince1970: $0) },
+                       press: $0["press"] as? Bool ?? false)
         }
         .sorted { ($0.connected ? 0 : 1, $0.name) < ($1.connected ? 0 : 1, $1.name) }
     }
@@ -115,7 +117,7 @@ struct DeviceRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Circle().fill(item.connected ? .green : .secondary.opacity(0.4)).frame(width: 8, height: 8)
+                Circle().fill(item.connected ? .green : item.press ? .blue : .secondary.opacity(0.4)).frame(width: 8, height: 8)
                 Text(state).font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 Button(T("Forget")) { Task { await devices.forget(item) } }
@@ -147,8 +149,9 @@ struct DeviceRow: View {
     var state: String {
         if item.current && item.connected { return T("Connected · talking to you") }
         if item.connected { return T("Connected") }
-        guard let seen = item.seen else { return T("Not connected") }
-        return T("Not connected") + " · " + seen.formatted(.relative(presentation: .named))
+        let state = item.press ? T("Press to talk") : T("Not connected")
+        guard let seen = item.seen else { return state }
+        return state + " · " + (item.press ? T("last used") + " " : "") + seen.formatted(.relative(presentation: .named))
     }
 
     func save() {

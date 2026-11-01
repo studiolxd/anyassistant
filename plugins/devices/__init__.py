@@ -79,9 +79,13 @@ def _connected(session):
     if found is None:
         found = devices[session.device] = {"name": _unique(kind(session.agent), devices, session.device), "room": ""}
         log.info("new device: %s", found["name"])
+    known = found.get("seen")
     found.update(agent=(session.agent or "")[:200], seen=time.time())
+    if getattr(session, "press_to_talk", False):
+        found["press"] = True  # talks a sentence at a time (the watch): never «connected»
     _save(devices)
-    log.info("[%s] is %s", session.id, describe(session.device))
+    if known is None or not found.get("press"):
+        log.info("[%s] is %s", session.id, describe(session.device))
 
 
 def matches(device: str | None, where: str) -> bool:
@@ -117,7 +121,8 @@ def _listing() -> list[dict]:
     connected = {s.device for s in hub.all() if s.pc.connectionState == "connected"}
     current = hub.current()
     return [{"id": i, "name": d.get("name", ""), "room": d.get("room", ""), "connected": i in connected,
-             "current": bool(current and current.device == i), "seen": d.get("seen")}
+             "current": bool(current and current.device == i), "seen": d.get("seen"),
+             "press": bool(d.get("press"))}
             for i, d in load().items()]
 
 
@@ -129,7 +134,8 @@ def get_devices() -> str:
     if not found:
         return "no devices yet"
     return "; ".join(f"{d['name']}" + (f" in the {d['room']}" if d["room"] else ", room unknown")
-                     + (", connected" if d["connected"] else ", not connected")
+                     + (", connected" if d["connected"] else
+                        ", only while pressed to talk (it can't be told things)" if d["press"] else ", not connected")
                      + (" (you're talking through this one)" if d["current"] else "") for d in found)
 
 
