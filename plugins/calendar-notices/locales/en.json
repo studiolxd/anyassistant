@@ -1,0 +1,7 @@
+{
+  "speech": {
+    "calendar_soon": "In {duration}: {title}.",
+    "calendar_now": "Now: {title}.",
+    "calendar_untitled": "an event with no title"
+  }
+}

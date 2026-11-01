@@ -1,0 +1,22 @@
+{
+  "morning": {
+    "greetings": [
+      "good morning",
+      "morning"
+    ]
+  },
+  "speech": {
+    "morning_hello": "Good morning.",
+    "morning_date": "Today is {date}.",
+    "morning_nothing": "There's nothing on your calendar.",
+    "morning_one": "On your calendar: {items}.",
+    "morning_some": "You have {count} things on your calendar: {items}.",
+    "morning_item": "at {time}, {title}",
+    "morning_no_email": "You have no unread emails.",
+    "morning_one_email": "You have one unread email.",
+    "morning_emails": "You have {count} unread emails.",
+    "morning_more_emails": "You have more than {count} unread emails.",
+    "morning_untitled": "something untitled",
+    "morning_date_with": "Today is {date}: {items}."
+  }
+}

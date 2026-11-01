@@ -86,9 +86,13 @@ async def status(request: web.Request) -> web.Response:
     if refusal := refused(request):
         return refusal
     session = hub.current()
+    connected = [s for s in hub.all() if s.pc.connectionState == "connected"]
+    devices = kernel.module("devices")  # their names and rooms, if it's on
     return web.json_response({
-        "connected": bool(session and session.pc.connectionState == "connected"),
+        "connected": bool(connected),
         "frames": session.frames if session else 0,
+        "devices": [{"name": devices.describe(s.device) if devices else "", "current": s is session}
+                    for s in connected],
     })
 
 

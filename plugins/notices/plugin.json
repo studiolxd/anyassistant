@@ -1,0 +1,5 @@
+{
+  "name": "Notices",
+  "description": "What it says on its own (calendar notices…), politely: not while someone is talking to it, not at night (quiet_hours), with a soft tone first.",
+  "kind": "feature"
+}

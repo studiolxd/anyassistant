@@ -1,0 +1,33 @@
+{
+  "plugins": {
+    "morning": [
+      "Resumen de la mañana",
+      "«Buenos días» (o al parar la alarma de la mañana): la fecha, el tiempo, la agenda de hoy y cuántos emails sin leer, sin el LLM."
+    ]
+  },
+  "options": {
+    "morning_after_alarm": "el resumen de la mañana al parar la primera alarma del día (antes de las 12)",
+    "unread_query": "qué emails cuenta el resumen (una búsqueda de Gmail)"
+  },
+  "morning": {
+    "greetings": [
+      "buenos dias",
+      "buen dia",
+      "buenas dias"
+    ]
+  },
+  "speech": {
+    "morning_hello": "Buenos días.",
+    "morning_date": "Hoy es {date}.",
+    "morning_nothing": "No tienes nada en la agenda.",
+    "morning_one": "En la agenda tienes {items}.",
+    "morning_some": "En la agenda tienes {count} cosas: {items}.",
+    "morning_item": "a {time}, {title}",
+    "morning_no_email": "No tienes emails sin leer.",
+    "morning_one_email": "Tienes un email sin leer.",
+    "morning_emails": "Tienes {count} emails sin leer.",
+    "morning_more_emails": "Tienes más de {count} emails sin leer.",
+    "morning_untitled": "algo sin título",
+    "morning_date_with": "Hoy es {date}: {items}."
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "plugins": {
+    "notices": [
+      "Avisos",
+      "Lo que dice por su cuenta (avisos de la agenda…), con educación: no mientras alguien le habla, no de noche (quiet_hours), con un tono suave antes."
+    ]
+  },
+  "options": {
+    "quiet_hours": "horas en que no avisa de nada (p. ej. 23:00-08:00; vacío: a cualquier hora); las alarmas suenan igual",
+    "notices_where": "dónde avisa: en todos los dispositivos, o en el último con el que hablaste"
+  },
+  "choices": {
+    "notices_where": {
+      "everywhere": "En todos los dispositivos",
+      "last": "En el último con el que hablaste"
+    }
+  }
+}

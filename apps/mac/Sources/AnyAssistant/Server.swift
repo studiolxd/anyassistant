@@ -29,6 +29,7 @@ final class Server: ObservableObject {
 
     @Published var state: ServerState = .stopped
     @Published var connected = false
+    @Published var devices: [(name: String, current: Bool)] = []  // the connected ones
     @Published var busy: String?  // «Updating…»: something the app is doing
 
     private var process: Process?
@@ -137,6 +138,7 @@ final class Server: ObservableObject {
     private func ended() {
         process = nil
         connected = false
+        devices = []
         if stopping {
             state = .stopped
         } else {  // it fell: back in a moment, as launchd would
@@ -167,6 +169,9 @@ final class Server: ObservableObject {
         }
         state = .running
         connected = status["connected"] as? Bool ?? false
+        devices = (status["devices"] as? [[String: Any]] ?? []).map {
+            (name: $0["name"] as? String ?? "", current: $0["current"] as? Bool ?? false)
+        }
     }
 
     // MARK: Installing, updating

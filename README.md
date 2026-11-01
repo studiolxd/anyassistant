@@ -120,10 +120,6 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 <!-- options: made by `python server/options.py markdown`; a test checks it is current -->
 **Plugins**
 
-**Plugins**
-
-**Plugins**
-
 | Option | Default | |
 |---|---|---|
 | `plugins` | — | which plugins are on or off, if not as they come: {"memory": true, "tap-to-wake": false} |
@@ -141,6 +137,9 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `detail` | `"neutral"` | how much it says: concise, neutral, detailed or one of detail_levels |
 | `detail_levels` | — | more levels, or other texts for these: {"name": "instruction for the prompt"} |
 | `ignore_others` | `true` | the LLM stays quiet when what it hears is clearly not for it |
+| `quiet_hours` | `"23:00-08:00"` | hours when it doesn't give notices (e.g. 23:00-08:00; empty: any time); alarms ring anyway |
+| `notices_where` | `"everywhere"` | where notices are said: on every device, or on the last one you talked to |
+| `calendar_notice_minutes` | `10` | how many minutes before an event it gives notice |
 | `read_photo` | `true` | a full-resolution photo when asked to read |
 | `llm_fallback` | `"auto"` | if the LLM can't answer, another one does: auto (Apple's local model if there is one), an LLM's name, or none |
 
@@ -180,6 +179,8 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 |---|---|---|
 | `skills` | `true` | time, date, timers, alarms, reminders, sums, units and volume, without the LLM |
 | `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name |
+| `morning_after_alarm` | `true` | the morning summary when you stop the first alarm of the day (before 12) |
+| `unread_query` | `"is:unread in:inbox"` | which emails the summary counts (a Gmail search) |
 | `ring_seconds` | `60` | how long an alarm rings if nobody stops it, in seconds; 0: until someone stops it (at most 30 minutes) |
 | `snooze_minutes` | `5` | «snooze» without saying how long |
 | `alarm_rings` | `"everywhere"` | where timers, alarms and reminders ring: everywhere (every device) or where_set (the device they were set on) |
@@ -620,6 +621,15 @@ connected, on the Mac. With several devices it rings on every one (`alarm_rings`
 `everywhere`), or where it was set (`where_set`); «… en todos», «… en toda la casa» or
 «… en la cocina» (a room or a device's name, from `devices`) for that one.
 If that device isn't connected, it rings on every one; stopped on one, it stops on all.
+
+**On its own** (the plugins `notices`, `calendar-notices`, `morning`, with `google` reading
+Google through `bin/gog`, without the LLM): «Dentro de 10 minutos: dentista.», a while before
+each event of your calendar (`calendar_notice_minutes`); and the morning summary when you say
+«buenos días» or stop the first alarm of the day (`morning_after_alarm`): the date and the
+day's holidays, the weather, what's on your calendar and how many unread emails
+(`unread_query`; to hear them, ask). Notices are polite: not during `quiet_hours`
+(23:00-08:00), not while someone is talking to it (it waits for a quiet moment), with a soft
+tone first, on every device or on the last one you talked to (`notices_where`).
 
 **The interpreter**: what doesn't fit the usual ways of saying it («avísame dentro
 de un rato largo, como tres cuartos de hora») can go to an LLM, which turns it into

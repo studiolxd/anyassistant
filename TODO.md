@@ -18,8 +18,6 @@
 - [ ] **Una conversación por dispositivo**: hoy, una a la vez (el LLM es uno: un proceso
   de Claude); si hablan dos personas en dos habitaciones, la segunda corta la primera.
   Un LLM por conversación, con su coste.
-- [ ] **El menú de la app con varios**: dice «hay un dispositivo conectado»; cuántos y
-  cuáles.
 - [ ] **Afinar quién contesta**: el margen (1,5 s) y la comparación por volumen, con más
   uso real (el log dice `heard it louder` / `not woken`).
 
@@ -44,10 +42,8 @@
 
 ## Tomar la iniciativa
 
-- [ ] **Proactivo**: solo reacciona (salvo alarmas y recordatorios). Con Calendar y
-  Gmail: «tienes una reunión en 10 minutos», un resumen al despertarte, un email
-  importante. Necesita un planificador que mire esas fuentes y una forma educada de
-  interrumpir: no si hay gente hablando, no de noche.
+- [ ] **Más avisos**: un email importante (decidir qué es «importante»: quién lo manda, una
+  etiqueta…); los avisos de Home Assistant cuando lo haya. La base ya está (`notices`).
 
 ## Casa y multimedia
 
@@ -84,6 +80,12 @@
 
 ## Hecho
 
+- [x] **Toma la iniciativa** (1 nov): avisos de la agenda («Dentro de 10 minutos:
+  dentista», `calendar-notices`) y el resumen de la mañana («buenos días» o al parar la
+  primera alarma: la fecha y los festivos, el tiempo, la agenda y cuántos emails sin leer,
+  `morning`), sin el LLM (`google`: bin/gog). Con educación (`notices`): no de noche
+  (`quiet_hours`), no mientras alguien le habla, con un tono suave antes.
+- [x] **El menú de la app con varios dispositivos**: cuántos y cuáles, y con cuál hablas.
 - [x] **Varios dispositivos a la vez** (1 nov, probado con el iPad y la tablet) (`hub.py`,
   `devices`): contesta el que te oyó y, si
   te oyen dos, el que lo oyó más fuerte; una conversación a la vez; cada uno con nombre y

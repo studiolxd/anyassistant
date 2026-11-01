@@ -1,0 +1,6 @@
+{
+  "name": "Morning summary",
+  "description": "«Good morning» (or when you stop the morning alarm): the date, the weather, today's events and how many unread emails, without the LLM.",
+  "kind": "skill",
+  "requires": ["google", "skills-language"]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Google (to read it)",
+  "description": "The day's events and how many unread emails, for other plugins (calendar notices, the morning summary), without the LLM: through bin/gog.",
+  "kind": "library",
+  "needs": {"commands": ["gog"]}
+}

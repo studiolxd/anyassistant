@@ -8,7 +8,8 @@
 Only the handlers of plugins that are on are called; one failing doesn't stop the
 others. Events so far: «tap» (assistant): the screen was tapped; «asleep» (assistant, transcript):
 it fell asleep after a conversation (awaited with gather: memory reviews it before
-the next one is prepared); «connected» (session): a device connected (or again).
+the next one is prepared); «connected» (session): a device connected (or again);
+«alarm_stopped» (assistant, item): you stopped a timer, alarm or reminder on that device.
 """
 
 import asyncio

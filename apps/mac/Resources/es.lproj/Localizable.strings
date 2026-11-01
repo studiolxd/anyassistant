@@ -94,3 +94,6 @@
 "No device has connected yet: pair one from the menu." = "Aún no se ha conectado ningún dispositivo: conecta uno desde el menú.";
 "The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina»." = "La habitación es como la dices por voz: «pon una alarma en la cocina». También se cambia por voz desde el propio dispositivo: «esta es la de la cocina».";
 "Not set yet" = "Sin asignar";
+"Running · %d devices connected" = "Listo · %d dispositivos conectados";
+"a device" = "un dispositivo";
+"talking to you" = "hablando contigo";

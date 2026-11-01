@@ -85,6 +85,10 @@ struct MenuView: View {
 
     var body: some View {
         Text(status)
+        ForEach(Array(server.devices.enumerated()), id: \.offset) { _, device in  // which ones
+            Text("   " + (device.name.isEmpty ? T("a device") : device.name)
+                 + (device.current && server.devices.count > 1 ? " · " + T("talking to you") : ""))
+        }
         if let busy = server.busy { Text(busy) }
         Divider()
         if server.state == .notInstalled {
@@ -127,8 +131,12 @@ struct MenuView: View {
         case .notInstalled: T("Not installed yet")
         case .stopped: T("Stopped")
         case .starting: T("Starting…")
-        case .running: server.connected ? T("Running · a device connected")
-                                         : T("Running · no device")
+        case .running:
+            switch server.devices.count {
+            case 0: server.connected ? T("Running · a device connected") : T("Running · no device")
+            case 1: T("Running · a device connected")
+            default: String(format: T("Running · %d devices connected"), server.devices.count)
+            }
         case .failed(let why): why
         }
     }

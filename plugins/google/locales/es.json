@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "google": [
+      "Google (para leerlo)",
+      "Los eventos del día y cuántos emails sin leer, para otros plugins (avisos de la agenda, el resumen de la mañana), sin el LLM: con bin/gog."
+    ]
+  }
+}

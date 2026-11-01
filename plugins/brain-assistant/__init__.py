@@ -214,7 +214,9 @@ class Assistant(Transcriber):
         self.cut = self.number
         self.speaker.stop()
         if self.ringing:
+            item = self.ringing
             self._stop_ringing()
+            events.emit("alarm_stopped", self, item)  # stopped by you, here (the morning summary…)
         self._state(self._idle_state())
 
     def _woke_up(self):

@@ -1,0 +1,6 @@
+{
+  "name": "Calendar notices",
+  "description": "«In 10 minutes: meeting with Ana.»: your Google Calendar's events, a while before they start (through the plugin «notices»).",
+  "kind": "feature",
+  "requires": ["google", "notices", "skills-language"]
+}
