@@ -10,6 +10,7 @@ the page (its id, name and room, its conversation, alarms and «dile a la cocina
         and its own:
         ← {"type": "hello", "eyes": true}: on connecting; whether it may use its camera
         ← {"type": "hush"}: stop playing what is left (it was interrupted)
+        → {"type": "log", "text": "…"}: a line for this log (what happens inside the app)
         → {"type": "frame", "jpeg": "<base64>"}: what its camera sees (about once a second
           while awake), for «¿qué ves?»; a full-resolution photo goes to POST /photo (eyes)
 """
@@ -109,6 +110,8 @@ class Streamer:
         try:
             if data.get("type") == "frame":
                 self.framed(data)
+            elif data.get("type") == "log":  # what happens inside the app, to see it here
+                log.info("[%s] app: %s", self.id, str(data.get("text", ""))[:300])
             elif data.get("type") == "ping":
                 self.send({"type": "pong", "t": data.get("t")})
             elif hasattr(self.brain, "on_message"):

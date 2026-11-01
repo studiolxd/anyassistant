@@ -146,6 +146,7 @@ final class Link: NSObject, ObservableObject {
 
     private func restartAudio() {
         guard state == .connected else { return }
+        report("audio restarted (interrupted or its route changed)")
         audio.stop()
         connected()
     }
@@ -264,9 +265,20 @@ final class Link: NSObject, ObservableObject {
     }
 
     private func toPage(_ message: [String: Any]) {
+        let type = message["type"] as? String ?? ""
+        if type == "state" || type == "link" {
+            report("to the page: \(type) \(message["state"] ?? "")" + (pageReady ? "" : " (page not ready)"))
+        }
         guard pageReady, let web, let data = try? JSONSerialization.data(withJSONObject: message),
               let json = String(data: data, encoding: .utf8) else { return }
-        web.evaluateJavaScript("window.fromApp && window.fromApp(\(json))", completionHandler: nil)
+        web.evaluateJavaScript("window.fromApp && window.fromApp(\(json)); true") { [weak self] _, error in
+            if let error { self?.report("the page failed with \(type): \(error.localizedDescription)") }
+        }
+    }
+
+    /// A line in the Mac's log (stream-api), to see what happens inside the app.
+    func report(_ text: String) {
+        send(["type": "log", "text": text])
     }
 
     private static var waiting: String {

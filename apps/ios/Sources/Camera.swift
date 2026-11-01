@@ -54,6 +54,7 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
         guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
               let input = try? AVCaptureDeviceInput(device: device) else { return false }
         session.beginConfiguration()
+        session.automaticallyConfiguresApplicationAudioSession = false  // the audio is Audio's: don't touch it
         session.sessionPreset = .photo
         if session.canAddInput(input) { session.addInput(input) }
         video.alwaysDiscardsLateVideoFrames = true
