@@ -1,0 +1,10 @@
+{
+  "name": "OpenCode",
+  "description": "OpenCode with the providers you connected in it (OpenCode Go or Zen, your own…): its MCP servers and Jarvis's tools, asking for your «yes» before what changes something.",
+  "kind": "llm",
+  "needs": {
+    "commands": [
+      "opencode"
+    ]
+  }
+}

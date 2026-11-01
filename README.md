@@ -155,7 +155,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 |---|---|---|
 | `name` | `"Jarvis"` | the assistant's name: its wake word, the page's title, what the LLM calls itself *(restarts)* |
 | `language` | — | en, es…: what it speaks and understands (default: the Mac's) *(restarts)* |
-| `llm` | `"claude"` | the LLM: claude, apple, openai, ollama, hermes… *(restarts)* |
+| `llm` | `"claude"` | the LLM: claude, codex, gemini, opencode, apple, openai, ollama, hermes… *(restarts)* |
 | `llm_model` | — | the LLM's model (for Claude: sonnet, opus, haiku…) *(restarts)* |
 | `mcp` | — | .mcp.json with the MCP servers (default: your data folder's) *(restarts)* |
 | `instructions` | — | yours, added to the LLM's (text or a list of lines): who you are, how to talk… |
@@ -413,6 +413,27 @@ key, the CLI signed in with your account):
   Its terminal, file tools, image viewer, browser, computer use, plugins and subagents are off,
   in a read-only sandbox with an empty folder as its workspace: so no `commands` (`bin/gog`),
   and it sees the camera only when the question comes with the image.
+
+- **Gemini** (`llm-gemini`; «usa Gemini»): Google's Gemini CLI with your Google account (sign in
+  once with `gemini`), through its ACP mode (`gemini --acp`, the Agent Client Protocol editors
+  use). Jarvis's instructions replace its system prompt; a policy of Jarvis's, at the
+  administrator's level (`--admin-policy`, above yours), denies its file, terminal, web fetch and
+  memory tools (not even shown to it), keeps its web search, and makes every MCP tool ask Jarvis
+  first (if the policy ever fails to load, Jarvis doesn't use it). Google no longer accepts Gemini
+  CLI with some free accounts («Gemini Code Assist for individuals… migrate to Antigravity»): then
+  it says so.
+- **OpenCode** (`llm-opencode`; «usa OpenCode»): OpenCode with the providers you connected in it
+  (`opencode auth login`), through `opencode acp`; `llm_model` as `provider/model` (`opencode
+  models`). Its configuration for this run goes on top of yours (`OPENCODE_CONFIG_CONTENT`): every
+  tool asks Jarvis, who refuses its own tools (files, terminal, web fetch, subagents), allows its
+  web search, reads (`get_`, `list_`… of the servers it knows) and Jarvis's tools. Its instructions
+  go with each conversation's first message (its free models only answer with its own system
+  prompt and tools).
+
+With Gemini and OpenCode the agent waits for the answer before a tool: what changes something,
+Jarvis asks aloud («OpenCode quiere hacer esto: holded: create invoice. ¿Lo hago?») and your «yes»
+allows that call, once (the plugin `confirmation`, as with Hermes's approvals). Shared by both:
+`server/llm/acp.py`.
 
 **With Hermes**: add it to Hermes's MCP servers and restart its gateway:
 

@@ -1,0 +1,10 @@
+{
+  "name": "Gemini",
+  "description": "Gemini through Google's Gemini CLI, with your Google account: its MCP servers and Jarvis's tools, asking for your «yes» before what changes something.",
+  "kind": "llm",
+  "needs": {
+    "commands": [
+      "gemini"
+    ]
+  }
+}

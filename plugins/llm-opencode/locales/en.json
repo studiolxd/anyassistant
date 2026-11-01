@@ -1,0 +1,19 @@
+{
+  "speech": {
+    "wait": [
+      "One moment, let me check.",
+      "Let me look.",
+      "Just a second.",
+      "Checking.",
+      "Give me a moment.",
+      "Let me see."
+    ],
+    "llm_failed": "Sorry, I couldn't answer.",
+    "llm_cut": "Sorry, I lost the connection to {name}.",
+    "llm_signed_out": "I'm not signed in to {name}: run {command} in the terminal.",
+    "llm_limit": "{name} says I've reached its usage limit. Try again in a while.",
+    "llm_offline": "I can't reach {name}: is there an internet connection?",
+    "llm_approval": "{name} wants to do this: {action}. Shall I?",
+    "opencode_provider": "OpenCode isn't signed in to that model's provider: connect it with {command}, or choose another model in the settings."
+  }
+}

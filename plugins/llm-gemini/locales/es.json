@@ -1,0 +1,26 @@
+{
+  "plugins": {
+    "llm-gemini": [
+      "Gemini",
+      "Gemini a través de Gemini CLI, de Google, con tu cuenta de Google: sus servidores MCP y las herramientas de Eva, con tu «sí» antes de lo que cambia algo."
+    ]
+  },
+  "speech": {
+    "wait": [
+      "Un momento, lo miro.",
+      "Déjame ver.",
+      "Un segundo.",
+      "Lo compruebo.",
+      "Dame un momento.",
+      "Voy a mirarlo."
+    ],
+    "llm_failed": "Perdona, no he podido responder.",
+    "llm_cut": "Perdona, se me ha cortado la conexión con {name}.",
+    "llm_signed_out": "No tengo sesión en {name}: hay que ejecutar {command} en el terminal.",
+    "llm_limit": "{name} dice que he llegado a su límite de uso. Prueba en un rato.",
+    "llm_offline": "No puedo conectar con {name}: ¿hay conexión a internet?",
+    "llm_approval": "{name} quiere hacer esto: {action}. ¿Lo hago?",
+    "gemini_ineligible": "Google ya no deja usar Gemini CLI con esta cuenta: pide pasarse a Antigravity, o usar una cuenta o clave de pago.",
+    "gemini_unsafe": "Gemini no ha cargado las reglas de Eva, así que no lo uso: revisa el registro."
+  }
+}
