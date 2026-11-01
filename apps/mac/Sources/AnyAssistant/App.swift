@@ -129,6 +129,11 @@ extension Notification.Name {
 
 // MARK: - The menu
 
+/// A menu item's text: without the «…» (in the menu, an item says what it does, plainly).
+func M(_ english: String) -> String {
+    T(english).trimmingCharacters(in: CharacterSet(charactersIn: "…").union(.whitespaces))
+}
+
 struct MenuView: View {
     @ObservedObject var server: Server
     @ObservedObject var client: Client
@@ -146,9 +151,9 @@ struct MenuView: View {
         Divider()
         faceItem
         Toggle(T("Listen on this Mac"), isOn: $client.listening)
-        if client.refused { Button(T("Allow the microphone…")) { client.openPrivacy() } }
+        if client.refused { Button(M("Allow the microphone…")) { client.openPrivacy() } }
         Divider()
-        Button(T("Run the server on this Mac…")) {
+        Button(M("Run the server on this Mac…")) {
             client.useThisMac()
             if server.installed { server.launch() } else { open("setup") }
         }
@@ -190,15 +195,15 @@ struct MenuView: View {
         if let busy = server.busy { Text(busy) }
         Divider()
         if server.state == .notInstalled {
-            Button(T("Install…")) { open("setup") }
+            Button(M("Install…")) { open("setup") }
         } else {
             faceItem
             Toggle(T("Listen on this Mac"), isOn: $client.listening)
-            if client.refused { Button(T("Allow the microphone…")) { client.openPrivacy() } }
+            if client.refused { Button(M("Allow the microphone…")) { client.openPrivacy() } }
             Divider()
-            Button(T("Pair a device…")) { open("pair") }
-            Button(T("Devices…")) { open("devices") }
-            Button(T("Skins…")) {  // every state of each skin, to see them (the plugin «skins»)
+            Button(M("Pair a device…")) { open("pair") }
+            Button(M("Devices…")) { open("devices") }
+            Button(M("Skins…")) {  // every state of each skin, to see them (the plugin «skins»)
                 NSWorkspace.shared.open(URL(string: "http://127.0.0.1:\(server.port)/skins")!)
             }
             Divider()
@@ -212,9 +217,9 @@ struct MenuView: View {
                 NSWorkspace.shared.open([server.log], withApplicationAt: URL(fileURLWithPath: "/System/Applications/Utilities/Console.app"),
                                         configuration: NSWorkspace.OpenConfiguration())
             }
-            Button(T("Settings…")) { open("settings") }
+            Button(M("Settings…")) { open("settings") }
                 .keyboardShortcut(",")
-            Button(T("Install steps again…")) { open("setup") }
+            Button(M("Install steps again…")) { open("setup") }
             loginToggle
         }
         Divider()

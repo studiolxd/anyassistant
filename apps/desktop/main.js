@@ -16,8 +16,8 @@ const TEXTS = {
   'Starting…': 'Arrancando…', 'Running': 'Funcionando', 'Stopped': 'Parado',
   'Preparing it (the first time it downloads Python and the models: a few minutes)…':
     'Preparándolo (la primera vez descarga Python y los modelos: unos minutos)…',
-  'It failed': 'Ha fallado', 'Show %s': 'Mostrar a %s', 'Pair a device…': 'Emparejar un dispositivo…',
-  'Administer…': 'Administrar…', 'Start': 'Arrancar', 'Stop': 'Parar', 'Restart': 'Reiniciar',
+  'It failed': 'Ha fallado', 'Show %s': 'Mostrar a %s', 'Pair a device': 'Emparejar un dispositivo',
+  'Administer': 'Administrar', 'Start': 'Arrancar', 'Stop': 'Parar', 'Restart': 'Reiniciar',
   'Log': 'Registro', 'Hide %s': 'Ocultar a %s', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
   'started by systemd': 'lo arranca systemd',
   'uv isn\'t installed: it brings Python and the server\'s packages.': 'uv no está instalado: trae Python y los paquetes del servidor.',
@@ -140,8 +140,8 @@ function menu() {
     faceShown()  // «Hide Eva» while its window is open
       ? { label: T('Hide %s', name), click: () => windows.face.close() }
       : { label: T('Show %s', name), enabled: running, click: showFace },
-    { label: T('Pair a device…'), enabled: running, click: () => showAdmin('#pair') },
-    { label: T('Administer…'), enabled: running, click: () => showAdmin() },
+    { label: T('Pair a device'), enabled: running, click: () => showAdmin('#pair') },
+    { label: T('Administer'), enabled: running, click: () => showAdmin() },
     { type: 'separator' },
     server.state === 'stopped' || server.state === 'failed'
       ? { label: T('Start'), click: () => server.start() }
