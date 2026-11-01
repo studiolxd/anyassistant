@@ -55,10 +55,21 @@ def prefix(server: str) -> str:
     return "mcp__" + re.sub(r"[^A-Za-z0-9_-]", "_", server)
 
 
+def git_bash() -> str | None:
+    """Windows: Git Bash, where Claude Code runs commands (not WSL's System32\\bash.exe)."""
+    import os
+
+    if os.environ.get("CLAUDE_CODE_GIT_BASH_PATH"):
+        return os.environ["CLAUDE_CODE_GIT_BASH_PATH"]
+    git = shutil.which("git")  # …\Git\cmd\git.exe → …\Git\bin\bash.exe
+    found = Path(git).resolve().parent.parent / "bin" / "bash.exe" if git else None
+    return str(found) if found and found.exists() else None
+
+
 def command_help(command: Path) -> str:
     run = [str(command), "help"]
-    if sys.platform == "win32" and shutil.which("bash"):  # scripts (#!): Git Bash, as Claude Code runs them there
-        run = [shutil.which("bash"), command.as_posix(), "help"]
+    if sys.platform == "win32" and (bash := git_bash()):  # scripts (#!) don't run by themselves there
+        run = [bash, command.as_posix(), "help"]
     try:
         output = subprocess.run(run, capture_output=True, text=True, timeout=30).stdout
     except OSError as e:
