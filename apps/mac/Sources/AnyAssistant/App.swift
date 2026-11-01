@@ -60,6 +60,7 @@ struct AnyAssistantApp: App {
 
 final class Delegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        followWindows()
         Task { @MainActor in
             let server = Server.shared
             let client = Client.shared
@@ -72,6 +73,32 @@ final class Delegate: NSObject, NSApplicationDelegate {
                 Delegate.show("setup")
             }
         }
+    }
+
+    /// In the Dock (and ⌘⇥) while one of its windows is open; only in the menu bar otherwise.
+    private func followWindows() {
+        let center = NotificationCenter.default
+        center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { note in
+            guard let window = note.object as? NSWindow, window.styleMask.contains(.titled) else { return }
+            MainActor.assumeIsolated {
+                if NSApp.activationPolicy() != .regular { NSApp.setActivationPolicy(.regular) }
+            }
+        }
+        center.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { note in
+            let closing = note.object as? NSWindow
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    let open = NSApp.windows.contains { $0 !== closing && $0.isVisible && $0.styleMask.contains(.titled) }
+                    if !open { NSApp.setActivationPolicy(.accessory) }
+                }
+            }
+        }
+    }
+
+    /// Its icon in the Dock clicked with no window open: its face.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        if !hasVisibleWindows { MainActor.assumeIsolated { Delegate.show("face") } }
+        return true
     }
 
     func applicationWillTerminate(_ notification: Notification) {

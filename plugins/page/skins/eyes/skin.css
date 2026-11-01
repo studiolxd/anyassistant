@@ -64,8 +64,8 @@ body[data-look="asleep"] .stats { display: none; }
   position: absolute;
   top: 8%; left: 0; right: 0;
   margin: 0 auto;
-  width: 80vmin;
-  height: 60vmin;
+  width: min(80vmin, 60vh);  /* at most 45 % of the height: in a wide window, above the captions */
+  height: min(60vmin, 45vh);
   border-radius: 10px;
 }
 

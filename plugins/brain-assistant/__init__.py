@@ -399,7 +399,10 @@ class Assistant(Transcriber):
             message = {"type": "text", "author": "assistant", "id": number}
             eyes = kernel.module("eyes")
             image = eyes.capture() if eyes else None  # also for Claude's Read tool, if it decides to look
-            if image and settings.get("read_photo", True) and eyes.wants_to_read(text):  # small text
+            if eyes and not image and (eyes.wants_to_look(text) or eyes.wants_to_read(text)):
+                self._state("looking")  # no frames (the Mac's camera is off until shown): a photo now
+                image = await eyes.photo()
+            elif image and settings.get("read_photo", True) and eyes.wants_to_read(text):  # small text
                 self._state("looking")
                 image = await eyes.photo() or image
             look = image if image and (eyes.wants_to_look(text) or eyes.wants_to_read(text)) else None

@@ -25,7 +25,9 @@ struct SkinView: View {
                 Windows(face: face, camera: camera, v: v, size: size)
             }
         }
-        .ignoresSafeArea()
+        #if os(iOS)
+        .ignoresSafeArea()  // the whole screen; in a Mac window, under its title bar
+        #endif
     }
 }
 
@@ -146,7 +148,8 @@ struct Windows: View {
     let size: CGSize
 
     var body: some View {
-        let width = 80 * v, height = 60 * v
+        // 80 × 60 (vmin), at most 45 % of the height: in a wide window it stays above the captions.
+        let height = min(60 * v, size.height * 0.45), width = height * 4 / 3
         ZStack {
             if face.cameraShown {
                 CameraPreview(camera: camera)

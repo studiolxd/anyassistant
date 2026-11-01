@@ -235,10 +235,16 @@ final class Link: NSObject, ObservableObject {
     // MARK: The camera
 
     /// Awake, it looks (a frame a second, for «¿qué ves?»); asleep, the camera is off. Shown
-    /// («muestra la cámara»), it's on whatever the state.
+    /// («muestra la cámara»), it's on whatever the state. On the Mac, only shown: for «¿qué ves?»
+    /// the server asks for a photo.
     private func look() {
         let state = face.look
-        if inFront, face.cameraShown || (eyes && state != "asleep" && state != "error") {
+        #if os(macOS)
+        let watching = false  // on a Mac its light would be on all the time: only when shown (photos on request)
+        #else
+        let watching = eyes && state != "asleep" && state != "error"
+        #endif
+        if inFront, face.cameraShown || watching {
             if !camera.running { camera.start() }
         } else if camera.running {
             camera.stop()
@@ -261,7 +267,12 @@ final class Link: NSObject, ObservableObject {
 
     /// «Lee esto»: a full-resolution photo, to the Mac (POST /photo).
     private func takePhoto(_ id: Any?) {
-        guard eyes, inFront, let id = id as? Int else { return }
+        #if os(macOS)
+        let canSee = true  // a Mac's camera works with its window closed too (its light, a moment)
+        #else
+        let canSee = inFront  // iOS doesn't allow the camera in the background
+        #endif
+        guard eyes, canSee, let id = id as? Int else { return }
         camera.photo { [weak self] jpeg in
             Task { @MainActor in
                 guard let self, let jpeg, !jpeg.isEmpty, let base = await self.mac.url() else { return }
