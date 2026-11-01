@@ -62,14 +62,30 @@ def _save(found: list[dict]):
     FILE.chmod(0o600)
 
 
-def learn(name: str, prints: list[np.ndarray]):
-    """Adds (or replaces) a person with the average of their prints."""
+def learn(name: str, prints: list[np.ndarray], device: str | None = None):
+    """A person's voice print on a device (each microphone sounds different): the average of their
+    phrases there. Learnt again on the same device, it replaces that one; on another, it is added
+    (the same person, a print per device)."""
     mean = np.mean(prints, axis=0)
     mean = mean / np.linalg.norm(mean)
-    others = [p for p in people() if p["name"].lower() != name.lower()]
-    _save(others + [{"name": name, "print": [round(float(x), 6) for x in mean], "samples": len(prints),
-                     "since": time.time()}])
-    log.info("voice learnt: %s (%d phrases)", name, len(prints))
+    found = people()
+    person = next((p for p in found if p["name"].lower() == name.lower()), None)
+    if person is None:
+        person = {"name": name, "since": time.time(), "prints": {}}
+        found.append(person)
+    if "print" in person:  # before a print per device: the one it had, kept
+        person.setdefault("prints", {})["?"] = person.pop("print")
+    person.setdefault("prints", {})[device or "?"] = [round(float(x), 6) for x in mean]
+    person["samples"] = person.get("samples", 0) + len(prints)
+    _save(found)
+    log.info("voice learnt: %s on %s (%d phrases, %d devices)", name, device or "a device", len(prints),
+             len(person["prints"]))
+
+
+def prints_of(person: dict) -> list[np.ndarray]:
+    """A person's voice prints: one per device it was learnt on (an old one: its single print)."""
+    found = list(person.get("prints", {}).values()) or ([person["print"]] if "print" in person else [])
+    return [np.array(p) for p in found]
 
 
 def forget(name: str) -> bool:
@@ -131,7 +147,10 @@ def identify(audio: np.ndarray) -> tuple[str | None, float]:
     if not known:
         return None, 0.0
     heard = voice_print(audio)
-    scores = [(float(heard @ np.array(p["print"])), p["name"]) for p in known]
+    # Each person by their print closest to this voice (the one learnt with a microphone like this).
+    scores = [(max(float(heard @ one) for one in prints_of(p)), p["name"]) for p in known if prints_of(p)]
+    if not scores:
+        return None, 0.0
     score, name = max(scores)
     return name, score
 
@@ -267,7 +286,7 @@ class Learning:
         if len(self.prints) < PHRASES:
             self._next()
             return
-        learn(self.name, self.prints)
+        learn(self.name, self.prints, self.device)
         self.assistant.learning = None
         self.assistant.voice = self.name
         self._show("done")
@@ -317,7 +336,8 @@ def _listing():
     now = time.time()
     for device in [d for d, p in progress.items() if p["step"] in ("done", "cancelled") and now - p["at"] > 60]:
         progress.pop(device)  # an ended one stays a minute, for the guide to say so
-    return {"people": [{"name": p["name"], "samples": p.get("samples", 0), "since": p.get("since")} for p in people()],
+    return {"people": [{"name": p["name"], "samples": p.get("samples", 0), "since": p.get("since"),
+                        "devices": len(prints_of(p))} for p in people()],
             "check": checking(), "learning": progress}
 
 

@@ -236,7 +236,7 @@ async def _change(request):
 
         if data["llm"] and data["llm"] not in llm.available():
             return http.json_response({"error": f"LLMs: {', '.join(llm.available())}"}, status=400)
-        set_llm(device, data["llm"] if data["llm"] != settings.get("llm") else None)  # the general one: follows it
+        set_llm(device, data["llm"] or None)  # "": the default one (it follows it); a name: that one, fixed
     else:
         try:
             change(device, data.get("name"), data.get("room"))

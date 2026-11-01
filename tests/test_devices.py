@@ -393,3 +393,15 @@ def test_claude_reaches_its_tools_for_its_device(tmp_path, monkeypatch):
     config = json.loads((tmp_path / ".build" / "anyassistant-mcp-k.json").read_text())
     assert config["mcpServers"]["anyassistant"]["url"].endswith("/mcp?device=k")
     assert str(tmp_path / ".build" / "anyassistant-mcp-k.json") in found.arguments
+
+
+def test_fixed_on_the_default_llm_it_doesnt_follow_it(monkeypatch):
+    """«Claude» chosen for a device (not «Por defecto (Claude)»): the default changes, it stays."""
+    import llm
+    from plugins.brain_assistant import Conversations
+
+    monkeypatch.setattr(llm, "available", lambda: ["claude", "gemini"])
+    devices.change("k"), devices.change("l")
+    devices.set_llm("k", "claude")  # fixed
+    pool = Conversations(FakeLLM, general="gemini")  # the default became Gemini
+    assert pool.wanted("k") == "claude" and pool.wanted("l") == "gemini"

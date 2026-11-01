@@ -185,3 +185,22 @@ def test_the_real_model_tells_two_voices_apart(tmp_path):
     voices.learn("Mónica", [voices.voice_print(say(tmp_path, "Mónica", s)) for s in sentences])
     assert voices.identify(say(tmp_path, "Mónica", "Envía el correo a Ana, por favor."))[1] > 0.6
     assert voices.identify(say(tmp_path, "Paulina", "Envía el correo a Ana, por favor."))[1] < 0.5
+
+
+def test_a_print_per_device_for_the_same_person(monkeypatch):
+    """Learnt on the Mac and then on the iPhone: one person, two prints; each microphone matches its own."""
+    voices.learn("Suvi", [unit(1, 0)], device="mac")
+    voices.learn("suvi", [unit(0, 1)], device="iphone")  # the same person (any case)
+    assert [p["name"] for p in voices.people()] == ["Suvi"] and voices._listing()["people"][0]["devices"] == 2
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(0.05, 1))  # through the iPhone
+    assert voices.identify(SECOND) == ("Suvi", pytest.approx(1, abs=0.01))
+    voices.learn("Suvi", [unit(1, 0.1)], device="mac")  # the Mac's again: replaced, not added
+    assert voices._listing()["people"][0]["devices"] == 2
+
+
+def test_an_old_single_print_is_kept(monkeypatch):
+    voices._save([{"name": "Ana", "print": [float(x) for x in unit(1, 0)], "samples": 5, "since": 0}])
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 0))
+    assert voices.identify(SECOND)[0] == "Ana"
+    voices.learn("Ana", [unit(0, 1)], device="iphone")
+    assert voices._listing()["people"][0]["devices"] == 2  # the old one stays, the iPhone's added

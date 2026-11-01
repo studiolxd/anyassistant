@@ -49,14 +49,18 @@ class ChooseLLM(Skill):
         device = session.device if session else None
         own = devices.llm_of(device) if devices and device else None
         general = settings.get("llm")
-        if devices and device and (here(text) or (own and name == general)):  # this device's only
-            if name == (own or general):
+        if devices and device and here(text):  # this device's only, fixed (whatever the default becomes)
+            if name == own:
                 assistant.say(i18n.L("speech.llm_same", llm=name.capitalize()))
-            elif why and name != general:
+            elif why:
                 assistant.say(i18n.L("speech.llm_unavailable", llm=name.capitalize()))
             else:
-                devices.set_llm(device, None if name == general else name)
+                devices.set_llm(device, name)
                 assistant.say(i18n.L("speech.llm_here", llm=name.capitalize()))
+            return True
+        if devices and device and own and name == general:  # «usa Claude», the default: this one follows it again
+            devices.set_llm(device, None)
+            assistant.say(i18n.L("speech.llm_here", llm=name.capitalize()))
             return True
         if name == general:
             assistant.say(i18n.L("speech.llm_same", llm=name.capitalize()))

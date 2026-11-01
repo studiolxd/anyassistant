@@ -143,7 +143,7 @@ struct DeviceRow: View {
                         Task { await devices.setLLM(item, new) }
                     })) {
                         Text(String(format: T("The general one (%@)"), llmName(devices.general))).tag("")
-                        ForEach(devices.llms.filter { $0 != devices.general }, id: \.self) { Text(llmName($0)).tag($0) }
+                        ForEach(devices.llms, id: \.self) { Text(llmName($0)).tag($0) }  // fixed, whatever the default becomes
                     }
                     .labelsHidden()
                 }

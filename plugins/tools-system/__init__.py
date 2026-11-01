@@ -111,9 +111,9 @@ def set_llm(llm: str, model: str = "", this_device: bool = False) -> str:
         devices, device = kernel.module("devices"), tools.session()
         if not devices or not device or not device.device:
             raise ToolError("no device connected")
-        if llm != settings.get("llm") and llm not in plugins.available():
+        if llm not in plugins.available():
             raise ToolError(f"installed LLMs: {', '.join(plugins.available())}")
-        devices.set_llm(device.device, None if llm == settings.get("llm") else llm)
+        devices.set_llm(device.device, llm)  # fixed for it, whatever the default becomes
         return f"Saved: this device uses {llm} from its next question."
     if llm not in plugins.available():
         raise ToolError(f"installed LLMs: {', '.join(plugins.available())}")

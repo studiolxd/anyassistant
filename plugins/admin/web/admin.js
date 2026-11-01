@@ -194,7 +194,7 @@ function devices(main) {
         var room = el('input', { value: d.room, placeholder: T('Room') });
         // Its own LLM, or the general one: from its next question.
         var llm = el('select', { title: T('Its LLM') }, [el('option', { value: '', text: T('The general one') + ' (' + (LLM_NAMES[data.general] || data.general) + ')' })]
-          .concat((data.llms || []).filter(function (l) { return l !== data.general; }).map(function (l) {
+          .concat((data.llms || []).map(function (l) {  // fixed, whatever the default becomes
             return el('option', { value: l, text: LLM_NAMES[l] || l });
           })));
         llm.value = d.llm || '';
