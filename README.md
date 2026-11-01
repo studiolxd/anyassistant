@@ -140,6 +140,9 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `quiet_hours` | `"23:00-08:00"` | hours when it doesn't give notices (e.g. 23:00-08:00; empty: any time); alarms ring anyway |
 | `notices_where` | `"everywhere"` | where notices are said: on every device, or on the last one you talked to |
 | `calendar_notice_minutes` | `10` | how many minutes before an event it gives notice |
+| `email_notice_query` | `"is:unread in:inbox category:primary"` | which emails it gives notice of (a Gmail search; by default the Primary tab's unread ones) |
+| `email_notice_says` | `"sender"` | what it says of each new email |
+| `email_check_minutes` | `5` | every how many minutes it looks for new emails |
 | `read_photo` | `true` | a full-resolution photo when asked to read |
 | `llm_fallback` | `"auto"` | if the LLM can't answer, another one does: auto (Apple's local model if there is one), an LLM's name, or none |
 
@@ -630,6 +633,9 @@ day's holidays, the weather, what's on your calendar and how many unread emails
 (`unread_query`; to hear them, ask). Notices are polite: not during `quiet_hours`
 (23:00-08:00), not while someone is talking to it (it waits for a quiet moment), with a soft
 tone first, on every device or on the last one you talked to (`notices_where`).
+When an email arrives (`email-notices`): «Tienes un email nuevo de Ana.» (`email_notice_says`:
+who it's from, its subject too, or only how many), of the unread ones in Gmail's Primary tab
+(`email_notice_query`), looked at every `email_check_minutes`.
 
 **The interpreter**: what doesn't fit the usual ways of saying it («avísame dentro
 de un rato largo, como tres cuartos de hora») can go to an LLM, which turns it into

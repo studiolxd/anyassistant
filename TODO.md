@@ -42,8 +42,7 @@
 
 ## Tomar la iniciativa
 
-- [ ] **Más avisos**: un email importante (decidir qué es «importante»: quién lo manda, una
-  etiqueta…); los avisos de Home Assistant cuando lo haya. La base ya está (`notices`).
+- [ ] **Más avisos**: los de Home Assistant cuando lo haya. La base ya está (`notices`).
 
 ## Casa y multimedia
 
@@ -85,6 +84,8 @@
   primera alarma: la fecha y los festivos, el tiempo, la agenda y cuántos emails sin leer,
   `morning`), sin el LLM (`google`: bin/gog). Con educación (`notices`): no de noche
   (`quiet_hours`), no mientras alguien le habla, con un tono suave antes.
+  Y al llegar un email («Tienes un email nuevo de Ana», `email-notices`): los de Principal;
+  de quién, también el asunto, o solo cuántos.
 - [x] **El menú de la app con varios dispositivos**: cuántos y cuáles, y con cuál hablas.
 - [x] **Varios dispositivos a la vez** (1 nov, probado con el iPad y la tablet) (`hub.py`,
   `devices`): contesta el que te oyó y, si

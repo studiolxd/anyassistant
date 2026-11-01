@@ -1,0 +1,17 @@
+{
+  "choices": {
+    "email_notice_says": {
+      "sender": "Who it's from",
+      "subject": "Who it's from and its subject",
+      "count": "Only how many"
+    }
+  },
+  "speech": {
+    "email_one": "You have a new email.",
+    "email_some": "You have {count} new emails.",
+    "email_from": "You have a new email from {sender}.",
+    "email_from_some": "You have {count} new emails: from {senders}.",
+    "email_subject": "You have a new email from {sender}: {subject}.",
+    "email_untitled": "no subject"
+  }
+}

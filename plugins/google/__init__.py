@@ -73,6 +73,28 @@ def unread(query: str = "is:unread in:inbox", most: int = 100) -> tuple[int, boo
     return int(found.get("count") or len(found.get("threads") or [])), bool(found.get("has_more"))
 
 
+@dataclass
+class Email:
+    id: str
+    sender: str  # «Ana García» (the name, or the address if it has none)
+    subject: str
+
+
+def _sender(raw: str) -> str:
+    """«Ana García <ana@x.com>» → «Ana García»; «ana@x.com» → «ana@x.com»."""
+    name = raw.split("<")[0].strip().strip('"').strip()
+    return name or raw.strip("<> ")
+
+
+def unread_emails(query: str = "is:unread in:inbox", most: int = 50) -> list[Email] | None:
+    """The unread email threads (the newest first): who sends them and their subject."""
+    found = gog("gmail", "search", query, "--max", str(most))
+    if found is None:
+        return None
+    return [Email(t.get("id", ""), _sender(t.get("from", "")), (t.get("subject") or "").strip())
+            for t in found.get("threads") or []]
+
+
 def today_left(now: float | None = None) -> tuple[list[Event], list[Event]] | None:
     """Today's all-day events, and its timed ones still to come."""
     found = events(0, 1)

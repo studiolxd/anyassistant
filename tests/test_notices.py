@@ -174,3 +174,37 @@ def test_after_the_first_morning_alarm(monkeypatch):
     morning._after_the_alarm("assistant", {"kind": "alarm"})
     morning._after_the_alarm("assistant", {"kind": "alarm"})  # snoozed and stopped again: once a day
     assert given == ["assistant"]
+
+
+# --- Email notices ---
+
+emails = kernel.load("email-notices")
+Email = google.Email
+
+
+def test_only_new_emails_are_told(monkeypatch):
+    monkeypatch.setattr(emails, "_seen", None)
+    there = [Email("1", "Google", "Alerta de seguridad")]
+    assert emails.new(there) == []  # already there when it started
+    arrived = [Email("2", "Ana", "Cena"), *there]
+    assert emails.new(arrived) == [arrived[0]]
+    assert emails.new(arrived) == []  # told once
+
+
+def test_what_it_says(es):
+    ana, luis = Email("1", "Ana", "Cena el sábado"), Email("2", "Luis", "")
+    assert emails.sentence([ana]) == "Tienes un email nuevo de Ana."
+    assert emails.sentence([ana, luis]) == "Tienes 2 emails nuevos: de Ana y Luis."
+    settings.active["email_notice_says"] = "subject"
+    assert emails.sentence([ana]) == "Tienes un email nuevo de Ana: Cena el sábado."
+    assert emails.sentence([luis]) == "Tienes un email nuevo de Luis: sin asunto."
+    settings.active["email_notice_says"] = "count"
+    assert emails.sentence([ana, luis]) == "Tienes 2 emails nuevos."
+    settings.active["email_notice_says"] = "sender"
+    assert emails.sentence([ana] * 4) == "Tienes 4 emails nuevos."  # many at once: how many
+
+
+def test_the_sender_name():
+    assert google._sender("Ana García <ana@x.com>") == "Ana García"
+    assert google._sender('"Ana" <ana@x.com>') == "Ana"
+    assert google._sender("<ana@x.com>") == "ana@x.com"
