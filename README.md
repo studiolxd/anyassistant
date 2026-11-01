@@ -277,6 +277,15 @@ and the LLM hears, with the first message of each conversation, which device and
 is («here» means there);
 `GET /devices` from the Mac lists them.
 
+**The Apple Watch** (`apps/watch`, and the plugin `talk-api`): press to talk on your wrist.
+`apps/watch/build.sh` makes the Xcode project; open `apps/watch/AnyAssistantWatch.xcodeproj`,
+choose your watch and Run (once: Developer Mode on the watch). The first time it asks for the
+6-digit code the Mac app shows («Pair a device…»), and finds the Mac at `anyassistant.local`
+(its IP in the watch app's settings, if not). With the plugin `https` it talks HTTPS, trusting
+only your Mac's own authority. Each sentence goes to `POST /talk?device=…` (a WAV) and comes back
+as text and voice; the watch is a device like the others (its name and room, its own
+conversation, its voice checked), a conversation lasting while you keep talking.
+
 **Who is speaking** (the plugin `voices`): each person's voice print, made on the Mac (a
 WeSpeaker ONNX model, 26 MB, downloaded the first time) and kept in `voices.json`. «Aprende mi
 voz» on a device: it asks your name and five phrases to read (with the microphone it will

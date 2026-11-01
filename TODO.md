@@ -2,9 +2,10 @@
 
 ## Lo siguiente
 
-Orden (1 nov): la app del Apple Watch.
 
-- [ ] **La app del Apple Watch**: hablarle desde la muñeca (más que la de Android).
+- [ ] **El Apple Watch, lo siguiente**: probarla en tu reloj; los avisos en la muñeca
+  (alarmas, agenda, «la cocina dice…», con vibración: notificaciones push); fuera de casa
+  (el Mac accesible desde fuera: Tailscale…); una complicación para la esfera y el botón Acción.
 - [ ] **AnyAssistant para el Mac, lo siguiente**: su diseño e icono; el papel de cliente
   (hablarle desde el propio Mac; conectarse al servidor de otro Mac, encontrado con
   Bonjour); campos de ajustes como es debido para las opciones que son listas o JSON
@@ -65,6 +66,9 @@ Orden (1 nov): la app del Apple Watch.
 
 ## Hecho
 
+- [x] **La app del Apple Watch** (1 nov, `apps/watch`, `talk-api`): toca y habla; la frase al
+  Mac (`POST /talk`), la respuesta en texto y voz; emparejada con el código de 6 dígitos;
+  HTTPS fiándose solo de la autoridad del Mac. Un dispositivo más (su conversación, su voz).
 - [x] **Quién habla** (1 nov, `voices`): la huella de voz de cada persona («aprende mi voz»
   en el dispositivo, o desde la app); `voice_check` all (solo voces conocidas), actions (solo
   el «sí») u off; un «sí» desconocido se rechaza; el LLM sabe quién habla.

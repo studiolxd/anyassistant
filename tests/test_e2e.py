@@ -6,6 +6,7 @@ The voices are made with `say`, so no recordings live in the repository.
 
 import asyncio
 import fractions
+import io
 import json
 import os
 import shutil
@@ -415,3 +416,22 @@ def test_not_everything_is_for_it(server, tmp_path):
     assert final_texts(messages, "assistant") == [final_texts(messages, "assistant")[0]]  # only the question
     assert "París" in final_texts(messages, "assistant")[0]
     assert states(messages)[-1] == "asleep"
+
+
+def test_talking_by_http_like_the_watch(server, tmp_path):
+    """The plugin «talk-api»: one sentence as a WAV, the answer as text and voice (without the LLM)."""
+    import base64
+
+    url = server("--mode", "assistant", "--lang", "es", "--llm", "apple")
+    aiff, sentence = tmp_path / "s.aiff", tmp_path / "s.wav"
+    subprocess.run(["say", "-v", "Mónica", "-o", aiff, "¿Qué hora es?"], check=True)
+    subprocess.run(["afconvert", "-f", "WAVE", "-d", "LEI16@16000", "-c", "1", aiff, sentence], check=True)
+    request = urllib.request.Request(url + "/talk?device=watch1", data=sentence.read_bytes(), method="POST",
+                                     headers={"Content-Type": "audio/wav", "User-Agent": "AnyAssistant Watch"})
+    answer = json.loads(urllib.request.urlopen(request, timeout=60).read())
+    assert "hora" in answer["heard"].lower()
+    assert answer["answer"].startswith(("Son las", "Es la"))
+    with wave.open(io.BytesIO(base64.b64decode(answer["audio"]))) as w:
+        assert w.getframerate() == 24000 and w.getnframes() > 24000 * 0.5  # its voice, said
+    devices = json.loads(urllib.request.urlopen(url + "/devices", timeout=5).read())["devices"]
+    assert [d["name"] for d in devices] == ["Apple Watch"]

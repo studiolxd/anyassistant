@@ -1,0 +1,35 @@
+# The Apple Watch app (xcodegen): `apps/watch/build.sh` makes AnyAssistant.xcodeproj; open it
+# in Xcode and Run on your watch (paired with your iPhone) to install it.
+name: AnyAssistantWatch
+options:
+  bundleIdPrefix: com.anyassistant
+  deploymentTarget:
+    watchOS: "10.0"
+settings:
+  base:
+    DEVELOPMENT_TEAM: DJT8Y9Y7L4
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  AnyAssistant:
+    type: application
+    platform: watchOS
+    sources: [AnyAssistant]
+    info:
+      path: AnyAssistant/Info.plist
+      properties:
+        CFBundleDisplayName: AnyAssistant
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, es]
+        WKApplication: true
+        WKWatchOnly: true
+        NSMicrophoneUsageDescription: "To hear what you ask AnyAssistant: the sentence goes to your Mac, nowhere else."
+        NSLocalNetworkUsageDescription: "To talk to AnyAssistant on your Mac."
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant.watch
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait

@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "talk-api": [
+      "Hablar por HTTP",
+      "POST /talk: una frase hablada y la respuesta en texto y voz: para el Apple Watch (pulsar para hablar) y otros dispositivos que no mantienen una llamada abierta."
+    ]
+  }
+}

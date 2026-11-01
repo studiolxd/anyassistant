@@ -1,0 +1,6 @@
+{
+  "name": "Talking over HTTP",
+  "description": "POST /talk: one spoken sentence in, the answer out as text and voice: for the Apple Watch (press to talk) and other devices that don't keep a call open.",
+  "kind": "feature",
+  "requires": ["brain-assistant"]
+}
