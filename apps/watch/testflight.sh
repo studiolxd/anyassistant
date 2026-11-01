@@ -1,6 +1,6 @@
 #!/bin/sh
 # Uploads the watch app to TestFlight (App Store Connect, with the account signed in to Xcode).
-# Once, before: the app in App Store Connect with the bundle ID com.anyassistant.watch.
+# Once, before: the app in App Store Connect with the bundle ID com.anyassistant.
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 cd "$HERE"

@@ -24,7 +24,7 @@ targets:
     scheme: {}
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant.watch
+        PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: AnyAssistant
         INFOPLIST_KEY_UIRequiresFullScreen: YES
@@ -48,7 +48,7 @@ targets:
           NSAllowsLocalNetworking: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant.watch.watchkitapp
+        PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant.watchkitapp
         PRODUCT_NAME: AnyAssistant
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
