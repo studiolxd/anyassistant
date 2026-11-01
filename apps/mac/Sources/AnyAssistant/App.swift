@@ -131,6 +131,7 @@ struct MenuView: View {
     @ObservedObject var server: Server
     @ObservedObject var client: Client
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismissWindow) private var dismissWindow
     @State private var login = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -141,7 +142,7 @@ struct MenuView: View {
     @ViewBuilder var clientMenu: some View {
         Text(client.status)
         Divider()
-        Button(String(format: T("Show %@"), client.name)) { open("face") }
+        faceItem
         Toggle(T("Listen on this Mac"), isOn: $client.listening)
         if client.refused { Button(T("Allow the microphone…")) { client.openPrivacy() } }
         Divider()
@@ -152,6 +153,15 @@ struct MenuView: View {
         loginToggle
         Divider()
         quit
+    }
+
+    /// «Show Eva», or «Hide Eva» while its window is open.
+    @ViewBuilder var faceItem: some View {
+        if client.faceShown {
+            Button(String(format: T("Hide %@"), client.name)) { dismissWindow(id: "face") }
+        } else {
+            Button(String(format: T("Show %@"), client.name)) { open("face") }
+        }
     }
 
     var loginToggle: some View {
@@ -180,7 +190,7 @@ struct MenuView: View {
         if server.state == .notInstalled {
             Button(T("Install…")) { open("setup") }
         } else {
-            Button(String(format: T("Show %@"), client.name)) { open("face") }
+            faceItem
             Toggle(T("Listen on this Mac"), isOn: $client.listening)
             if client.refused { Button(T("Allow the microphone…")) { client.openPrivacy() } }
             Divider()

@@ -191,6 +191,9 @@ struct LearnVoiceView: View {
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .task { await devices.load() }
+        .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
+            if guide.step == .choose { Task { await devices.load() } }  // renamed, connected: as it is now
+        }
     }
 
     var choose: some View {

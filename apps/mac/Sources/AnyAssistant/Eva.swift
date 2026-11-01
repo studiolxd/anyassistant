@@ -19,6 +19,8 @@ final class Client: ObservableObject {
         didSet { UserDefaults.standard.set(role.rawValue, forKey: "role") }
     }
     /// Its microphone on: you can talk to it on this Mac (it says so in the menu bar).
+    /// Its face's window is open (the menu says «Hide Eva» then).
+    @Published var faceShown = false
     @Published var listening = UserDefaults.standard.object(forKey: "listening") as? Bool ?? true {
         didSet { UserDefaults.standard.set(listening, forKey: "listening"); update() }
     }
@@ -121,8 +123,8 @@ struct FaceWindow: View {
                 }
             }
             .navigationTitle(client.name)
-            .onAppear { link.cameraAllowed(true) }  // «¿qué ves?», «muestra la cámara»
-            .onDisappear { link.cameraAllowed(false) }
+            .onAppear { link.cameraAllowed(true); client.faceShown = true }  // «¿qué ves?», «muestra la cámara»
+            .onDisappear { link.cameraAllowed(false); client.faceShown = false }
     }
 }
 
