@@ -752,7 +752,9 @@ bin/anyassistant mail add you@domain.com [--name Trabajo] [--imap host[:port]] [
 bin/anyassistant mail list | test | remove <name>
 ```
 
-`add` guesses the servers of the known providers, asks for the password (an app password
+Or in the Mac app: Settings → Mail accounts, where you can also import the Mac's own (System
+Settings → Internet Accounts: their servers; their passwords you type, macOS keeps them to
+itself; it needs Full Disk Access). `add` guesses the servers of the known providers, asks for the password (an app password
 where the provider has them), tries IMAP and SMTP with it, and keeps it in the macOS Keychain
 (never in `settings.json`; the account goes to `mail_accounts`). Then new emails get a notice
 (`email-notices`), the morning summary counts them, and the LLM can list them (`list_mail`),

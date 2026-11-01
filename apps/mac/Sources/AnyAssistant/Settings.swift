@@ -182,6 +182,7 @@ struct SettingsView: View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
             List(selection: $section) {
                 Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
+                Label(T("Mail accounts"), systemImage: "envelope").tag("mail")
                 Section(T("Settings")) {
                     ForEach(admin.groups, id: \.id) { group in
                         Text(group.title).tag(group.id)
@@ -205,6 +206,8 @@ struct SettingsView: View {
                 }
                 if section == "plugins" {
                     PluginsView(admin: admin)
+                } else if section == "mail" {
+                    MailView()
                 } else if let section {
                     OptionsView(admin: admin, group: section)
                 }

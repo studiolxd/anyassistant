@@ -153,3 +153,65 @@ def test_the_morning_count_adds_them(es):
 
     assert morning._emails(Google(), mail) == ["Tienes 3 emails sin leer."]
     assert morning._emails(None, mail) == ["Tienes 2 emails sin leer."]
+
+
+# --- The Mac's accounts, and the app's routes ---
+
+def archived(value):
+    import plistlib
+
+    return plistlib.dumps({"$version": 100000, "$archiver": "NSKeyedArchiver", "$top": {},
+                           "$objects": ["$null", value]}, fmt=plistlib.FMT_BINARY)
+
+
+def test_importing_the_macs_accounts(tmp_path, monkeypatch):
+    import sqlite3
+
+    path = tmp_path / "Accounts4.sqlite"
+    db = sqlite3.connect(path)
+    db.executescript("""CREATE TABLE ZACCOUNTTYPE (Z_PK INTEGER, ZIDENTIFIER TEXT);
+        CREATE TABLE ZACCOUNT (Z_PK INTEGER, ZACCOUNTTYPE INTEGER, ZUSERNAME TEXT, ZACCOUNTDESCRIPTION TEXT);
+        CREATE TABLE ZACCOUNTPROPERTY (ZOWNER INTEGER, ZKEY TEXT, ZVALUE BLOB);
+        INSERT INTO ZACCOUNTTYPE VALUES (1, 'com.apple.account.IMAP'), (2, 'com.apple.account.SMTP'),
+                                        (3, 'com.apple.account.Exchange');
+        INSERT INTO ZACCOUNT VALUES (10, 1, 'hola@estudio.com', 'Estudio'), (11, 2, 'hola@estudio.com', ''),
+                                    (12, 3, 'yo@hotmail.com', 'Hotmail');""")
+    for owner, key, value in ((10, "Hostname", "mail.estudio.com"), (10, "PortNumber", 143),
+                              (11, "Hostname", "smtp.estudio.com"), (11, "PortNumber", 587)):
+        db.execute("INSERT INTO ZACCOUNTPROPERTY VALUES (?, ?, ?)", (owner, key, archived(value)))
+    db.commit()
+    monkeypatch.setattr(mail, "MAC_ACCOUNTS", str(path))
+    assert mail.on_the_mac() == [{"name": "Estudio", "address": "hola@estudio.com",
+                                  "imap": "mail.estudio.com:143", "smtp": "smtp.estudio.com:587"}]
+    monkeypatch.setattr(mail, "MAC_ACCOUNTS", str(tmp_path / "none.sqlite"))
+    assert mail.on_the_mac() is None  # can't be read: the app asks for Full Disk Access
+
+
+def test_the_apps_routes(monkeypatch):
+    import asyncio
+    import json
+
+    from aiohttp.test_utils import make_mocked_request
+
+    saved = {}
+    monkeypatch.setattr(mail, "save_password", lambda address, secret: saved.update({address: secret}))
+    monkeypatch.setattr(mail, "forget_password", lambda address: saved.pop(address, None))
+    monkeypatch.setattr(settings, "save", lambda **changes: settings.active.update(changes))
+    monkeypatch.setattr(settings, "refresh", lambda: set())
+    monkeypatch.setattr(mail, "check", lambda a, secret: [] if secret == "secreto" else ["IMAP: wrong password"])
+
+    def post(body, remote="127.0.0.1"):
+        request = make_mocked_request("POST", "/admin/mail", transport=type("T", (), {
+            "get_extra_info": lambda self, k, d=None: (remote, 1) if k == "peername" else d})())
+        request.json = lambda: asyncio.sleep(0, body)
+        answer = asyncio.run(mail._change(request))
+        return answer.status, json.loads(answer.body)
+
+    status, answer = post({"add": {"address": "ana@casa.es", "password": "mal"}})
+    assert status == 400 and answer["problems"] == ["IMAP: wrong password"] and not saved
+    status, answer = post({"add": {"address": "ana@casa.es", "password": "secreto", "name": "Casa"}})
+    assert status == 200 and saved == {"ana@casa.es": "secreto"}
+    assert [a["name"] for a in answer["accounts"]] == ["Trabajo", "Casa"]
+    assert "password" not in json.dumps(settings.active["mail_accounts"])  # never in settings.json
+    assert post({"remove": "Casa"})[1]["accounts"][-1]["name"] == "Trabajo"
+    assert post({"add": {}}, remote="192.168.1.5")[0] == 403  # only from the Mac

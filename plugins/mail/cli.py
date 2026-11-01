@@ -13,8 +13,6 @@ use an app password (the provider's account page), not your usual one.
 import argparse
 import getpass
 import os
-import smtplib
-import ssl
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "server"))
@@ -27,49 +25,16 @@ settings.active = {**settings.load()}
 mail = kernel.load("mail")
 
 
-def _save(found: list[dict]):
-    settings.save(mail_accounts=found)
-
-
-def _try(a: dict, secret: str) -> list[str]:
-    """What fails with these servers and password (empty: everything works)."""
-    problems = []
-    try:
-        box = mail._imap(a, secret)
-        box.logout()
-        print(f"  IMAP {a['imap']}: ok")
-    except Exception as e:
-        problems.append(f"IMAP {a['imap']}: {e}")
-    host, port = mail._server(a["smtp"], 465)
-    try:
-        server = (smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=mail.TIMEOUT)
-                  if port == 465 else smtplib.SMTP(host, port, timeout=mail.TIMEOUT))
-        with server:
-            if port != 465:
-                server.starttls(context=ssl.create_default_context())
-            server.login(a.get("user") or a["address"], secret)
-        print(f"  SMTP {a['smtp']}: ok")
-    except Exception as e:
-        problems.append(f"SMTP {a['smtp']}: {e}")
-    return problems
-
-
 def add(args):
-    imap, smtp = mail.guess(args.address)
-    a = {"name": args.name or args.address.split("@")[1].split(".")[0].capitalize(), "address": args.address,
-         "imap": args.imap or imap, "smtp": args.smtp or smtp}
-    if args.user:
-        a["user"] = args.user
+    a = mail.new_account(args.address, args.name or "", args.imap or "", args.smtp or "", args.user or "")
     print(f"{a['address']}: IMAP {a['imap']}, SMTP {a['smtp']}")
     secret = getpass.getpass("Password (an app password if your provider has them): ")
-    problems = _try(a, secret)
+    problems = mail.check(a, secret)
     if problems:
         print("It doesn't work:\n  " + "\n  ".join(problems))
         print("Check the password, or give the servers with --imap / --smtp.")
         sys.exit(1)
-    mail.save_password(a["address"], secret)
-    found = [x for x in mail.accounts() if x["address"].lower() != a["address"].lower()] + [a]
-    _save(found)
+    mail.keep(a, secret)
     print(f"Saved «{a['name']}» (the password, in the Keychain). It applies at once.")
 
 
@@ -85,15 +50,14 @@ def listing(args):
 def test(args):
     for a in mail.accounts() if not args.name else [mail.account(args.name)]:
         print(mail.label(a))
-        problems = _try(a, mail.password(a["address"]) or "")
-        for problem in problems:
+        problems = mail.check(a, mail.password(a["address"]) or "")
+        for problem in problems or ["IMAP and SMTP: ok"]:
             print("  " + problem)
 
 
 def remove(args):
     a = mail.account(args.name)
-    _save([x for x in mail.accounts() if x is not a])
-    mail.forget_password(a["address"])
+    mail.remove(a)
     print(f"Removed «{mail.label(a)}» and its password.")
 
 

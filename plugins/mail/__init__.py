@@ -6,7 +6,8 @@
 Optional per account: "user" (when the login isn't the address), "folder" (INBOX). The
 password is in the macOS Keychain (service «AnyAssistant mail», the address as account), never
 in settings.json: `bin/anyassistant mail add yo@dominio.com` asks for it, guesses the servers
-of the known providers, tries them and saves the account (plugins/mail/cli.py).
+of the known providers, tries them and saves the account (plugins/mail/cli.py); the Mac app
+does the same in its settings («Mail accounts», through /admin/mail, only from the Mac).
 
 What it brings:
 - unread(account): the unread emails (who, subject), without marking them read: for the
@@ -28,8 +29,11 @@ import subprocess
 from dataclasses import dataclass
 from email.message import EmailMessage
 
+from aiohttp import web as http
+
 import options
 import settings
+import web
 from options import Option
 from tools import ToolError, tool
 
@@ -259,6 +263,173 @@ def _keep_sent(a: dict, message: EmailMessage):
             box.logout()
     except Exception as e:
         log.info("no copy in Sent (%s): %r", label(a), e)
+
+
+# --- Adding, trying, removing (bin/anyassistant mail, the Mac app) ---
+
+def new_account(address: str, name: str = "", imap: str = "", smtp: str = "", user: str = "") -> dict:
+    """An account with the servers guessed where not given."""
+    address = address.strip()
+    guessed = guess(address)
+    a = {"name": name.strip() or address.split("@")[-1].split(".")[0].capitalize(), "address": address,
+         "imap": imap.strip() or guessed[0], "smtp": smtp.strip() or guessed[1]}
+    if user.strip():
+        a["user"] = user.strip()
+    return a
+
+
+def check(a: dict, secret: str) -> list[str]:
+    """What fails with these servers and password (empty: IMAP and SMTP work)."""
+    problems = []
+    try:
+        _imap(a, secret).logout()
+    except Exception as e:
+        problems.append(f"IMAP {a['imap']}: {e}")
+    host, port = _server(a["smtp"], 465)
+    try:
+        context = ssl.create_default_context()
+        server = (smtplib.SMTP_SSL(host, port, context=context, timeout=TIMEOUT) if port == 465
+                  else smtplib.SMTP(host, port, timeout=TIMEOUT))
+        with server:
+            if port != 465:
+                server.starttls(context=context)
+            server.login(a.get("user") or a["address"], secret)
+    except Exception as e:
+        problems.append(f"SMTP {a['smtp']}: {e}")
+    return problems
+
+
+def keep(a: dict, secret: str):
+    """Saves it (the password in the Keychain; the account, replacing one with its address)."""
+    save_password(a["address"], secret)
+    others = [x for x in accounts() if x["address"].lower() != a["address"].lower()]
+    settings.save(mail_accounts=others + [a])
+    settings.refresh()
+
+
+def remove(a: dict):
+    settings.save(mail_accounts=[x for x in accounts() if x["address"].lower() != a["address"].lower()])
+    settings.refresh()
+    forget_password(a["address"])
+
+
+# --- The Mac's own accounts (System Settings → Internet Accounts) ---
+
+MAC_ACCOUNTS = "~/Library/Accounts/Accounts4.sqlite"
+
+
+def _archived(blob):
+    """A value the Accounts database keeps archived (NSKeyedArchiver): the plain one."""
+    import plistlib
+
+    try:
+        found = plistlib.loads(blob)
+    except Exception:
+        return None
+    if isinstance(found, dict) and "$objects" in found:
+        objects = found["$objects"]
+        return objects[1] if len(objects) > 1 else None
+    return found
+
+
+def on_the_mac() -> list[dict] | None:
+    """The Mac's IMAP accounts, with their servers (not their passwords: macOS keeps those to itself);
+    None if it can't read them (AnyAssistant needs Full Disk Access)."""
+    import os
+    import sqlite3
+
+    path = os.path.expanduser(MAC_ACCOUNTS)
+    try:
+        db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        rows = db.execute("""SELECT a.Z_PK, t.ZIDENTIFIER, a.ZUSERNAME, a.ZACCOUNTDESCRIPTION, p.ZKEY, p.ZVALUE
+                             FROM ZACCOUNT a JOIN ZACCOUNTTYPE t ON a.ZACCOUNTTYPE = t.Z_PK
+                             LEFT JOIN ZACCOUNTPROPERTY p ON p.ZOWNER = a.Z_PK
+                             WHERE t.ZIDENTIFIER IN ('com.apple.account.IMAP', 'com.apple.account.SMTP')""").fetchall()
+        db.close()
+    except Exception as e:
+        log.info("the Mac's accounts can't be read: %r", e)
+        return None
+    found: dict = {}
+    for pk, kind, user, description, key, value in rows:
+        one = found.setdefault(pk, {"kind": kind.rsplit(".", 1)[-1], "user": user or "", "name": description or ""})
+        if key in ("Hostname", "PortNumber", "IdentityEmailAddress"):
+            one[key] = _archived(value)
+    smtp = {a["user"].lower(): a for a in found.values() if a["kind"] == "SMTP" and a.get("Hostname")}
+    accounts_ = []
+    for a in found.values():
+        if a["kind"] != "IMAP" or not a.get("Hostname") or not a["user"]:
+            continue
+        address = a.get("IdentityEmailAddress") or a["user"]
+        address = address[0] if isinstance(address, list) and address else address
+        if not isinstance(address, str) or "@" not in address:
+            address = a["user"]
+        sending = smtp.get(a["user"].lower())
+        accounts_.append({
+            "name": a["name"] if a["name"] and a["name"] != address else address,  # several on a domain: apart
+            "address": address,
+            "imap": f"{a['Hostname']}:{a.get('PortNumber') or 993}",
+            "smtp": f"{sending['Hostname']}:{sending.get('PortNumber') or 465}" if sending else guess(address)[1],
+            **({"user": a["user"]} if a["user"].lower() != address.lower() else {}),
+        })
+    return sorted(accounts_, key=lambda a: a["address"].lower())
+
+
+LOCAL = {"127.0.0.1", "::1"}
+
+
+def _shown(a: dict) -> dict:
+    return {**a, "password": bool(password(a["address"]))}
+
+
+@web.route("GET", "/admin/mail")
+async def _list(request):
+    if request.remote not in LOCAL:
+        return http.json_response({}, status=403)
+    if "guess" in request.query:  # the servers for an address, as you type it
+        imap, smtp = guess(request.query["guess"])
+        return http.json_response({"imap": imap, "smtp": smtp})
+    if "mac" in request.query:  # the Mac's own accounts, to import (not those already here)
+        import asyncio
+
+        found = await asyncio.get_running_loop().run_in_executor(None, on_the_mac)
+        if found is None:
+            return http.json_response({"error": "full disk access"}, status=403)
+        here = {a["address"].lower() for a in accounts()}
+        return http.json_response({"accounts": [a for a in found if a["address"].lower() not in here]})
+    return http.json_response({"accounts": [_shown(a) for a in accounts()]})
+
+
+@web.route("POST", "/admin/mail")
+async def _change(request):
+    """{"add": {address, password, name?, imap?, smtp?, user?}} tries it and saves it;
+    {"test": address}; {"remove": address}."""
+    import asyncio
+
+    if request.remote not in LOCAL:
+        return http.json_response({}, status=403)
+    data = await request.json()
+    loop = asyncio.get_running_loop()
+    try:
+        if "add" in data:
+            given = data["add"]
+            if "@" not in str(given.get("address", "")) or not given.get("password"):
+                return http.json_response({"error": "address and password"}, status=400)
+            a = new_account(given["address"], given.get("name", ""), given.get("imap", ""), given.get("smtp", ""),
+                            given.get("user", ""))
+            problems = await loop.run_in_executor(None, check, a, given["password"])
+            if problems:
+                return http.json_response({"problems": problems}, status=400)
+            keep(a, given["password"])
+            log.info("account added: %s", label(a))
+        elif "test" in data:
+            a = account(data["test"])
+            problems = await loop.run_in_executor(None, check, a, password(a["address"]) or "")
+            return http.json_response({"problems": problems, "accounts": [_shown(x) for x in accounts()]})
+        elif "remove" in data:
+            remove(account(data["remove"]))
+    except ToolError as e:
+        return http.json_response({"error": str(e)}, status=400)
+    return http.json_response({"accounts": [_shown(a) for a in accounts()]})
 
 
 # --- For the LLM ---
