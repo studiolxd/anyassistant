@@ -2,28 +2,28 @@
 
 "1. The certificate" = "1. El certificado";
 "2. The page" = "2. Conectar";
-"A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "Tu asistente de voz, aquí en tu Mac. Un móvil o una tablet que ya no uses le sirve de ojos, boca y oídos.";
+"A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "Un asistente de voz que funciona en este Mac. Puedes hablar con él aquí o desde un iPhone, un iPad o cualquier móvil o tablet.";
 "An old device (it doesn't open .local names): use the address" = "¿Es un dispositivo antiguo y no abre esa dirección? Usar la IP";
 "Another code" = "Pedir otro código";
 "AnyAssistant needs it to work as usual." = "AnyAssistant lo necesita para funcionar bien.";
 "Brain" = "Cerebro";
 "Cancel" = "Cancelar";
-"Copying the program and preparing Python…" = "Preparando lo necesario…";
+"Copying the program and preparing Python…" = "Preparando la instalación…";
 "Done: the page" = "Hecho, siguiente paso";
 "Features" = "Funciones";
 "If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)." = "¿No se instala solo? En Android, ve a Ajustes → Seguridad → Instalar desde almacenamiento y elige AnyAssistant.crt.";
 "Install" = "Instalar";
 "Install steps again…" = "Volver a configurar…";
 "Install the certificate" = "Primero, el certificado";
-"Install with what comes" = "Instalar ya, con lo recomendado";
-"Installed" = "¡Listo!";
-"Installed, with problems" = "Instalado, aunque algo no ha ido bien";
+"Install with what comes" = "Instalar";
+"Installed" = "Instalación completada";
+"Installed, with problems" = "Instalación completada con errores";
 "Installed; restarting." = "Instalado. Reiniciando…";
 "Installing what it needs…" = "Instalando lo que necesita…";
 "Installing…" = "Instalando…";
 "Install…" = "Instalar…";
 "It couldn't be saved." = "No se ha podido guardar.";
-"It couldn't prepare the program." = "Algo ha fallado al prepararlo. Prueba otra vez en un momento.";
+"It couldn't prepare the program." = "No se ha podido preparar la instalación. Inténtalo de nuevo.";
 "It is a security plugin: without it, that protection is gone." = "Protege tu asistente. Si lo apagas, esa protección desaparece.";
 "It stopped; starting it again…" = "Se ha parado. Lo vuelvo a encender…";
 "LLMs" = "Modelos de lenguaje (LLM)";
@@ -36,7 +36,7 @@
 "Open the page" = "Ahora, conecta el dispositivo";
 "Pair a device" = "Conectar otro dispositivo";
 "Pair a device…" = "Conectar otro dispositivo…";
-"Pair your tablet or phone" = "Conectar tu tablet o móvil";
+"Pair your tablet or phone" = "Conectar otro dispositivo";
 "Plugins" = "Plugins";
 "Quit AnyAssistant" = "Salir de AnyAssistant";
 "Restart" = "Reiniciar";
@@ -45,7 +45,7 @@
 "Running · no device" = "Listo · esperando a un dispositivo";
 "Saved." = "Guardado.";
 "Scan it with the tablet or phone: it pairs by itself. Or open" = "Escanea el código con la tablet o el móvil y listo: se conecta solo. También puedes abrir:";
-"Set it up step by step" = "Prefiero elegir cada cosa";
+"Set it up step by step" = "Personalizar…";
 "Settings" = "Ajustes";
 "Settings…" = "Ajustes…";
 "Show the log" = "Registro";
@@ -54,7 +54,7 @@
 "Speech recognition" = "Reconocimiento de voz";
 "Start" = "Encender";
 "Starting…" = "Encendiéndose…";
-"Step by step" = "Elige cómo lo quieres";
+"Step by step" = "Personalizar";
 "Stop" = "Apagar";
 "Stopped" = "Apagado";
 "Taking over from launchd…" = "Preparándolo todo…";
@@ -68,7 +68,7 @@
 "Waiting for the server…" = "Esperando a que el asistente arranque…";
 "Wake word" = "Palabra para despertarlo";
 "Yes" = "Sí";
-"You can change everything later. The speech models download once (a few hundred MB)." = "Podrás cambiar cualquier cosa más adelante. La primera vez descarga los modelos de voz (unos cientos de MB), así que puede tardar un poco.";
+"You can change everything later. The speech models download once (a few hundred MB)." = "Durante la instalación se descargan los modelos de voz (unos cientos de MB). Podrás cambiar cualquier ajuste más adelante.";
 "and type the code" = "y escribir este código:";
 "command not found:" = "falta instalar:";
 "needs a restart" = "se aplica al reiniciar";
@@ -142,15 +142,15 @@
 "Looking for the server…" = "Buscando el servidor…";
 "The microphone is off" = "El micrófono está apagado";
 "Turn the microphone on" = "Encender el micrófono";
-"Another Mac's server" = "El servidor de otro Mac";
-"This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "Este Mac solo pone el micrófono, el altavoz, la cámara y la pantalla. En el Mac con el servidor: AnyAssistant → Conectar otro dispositivo, para el código.";
+"Another Mac's server" = "Usar otro servidor";
+"This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "Este Mac solo se usará para hablar con el asistente. Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.";
 "Port" = "Puerto";
 "Code" = "Código";
 "Back" = "Atrás";
 "Connect" = "Conectar";
-"That code isn't right (or it's too old): ask for another." = "Ese código no vale (o ha caducado): pide otro.";
-"That Mac doesn't answer: is AnyAssistant running there, on this network?" = "Ese Mac no responde: ¿está AnyAssistant abierto allí, en esta red?";
-"The server is on another Mac: use this one only to talk to it" = "El servidor está en otro Mac: usar este solo para hablarle";
+"That code isn't right (or it's too old): ask for another." = "El código no es correcto o ha caducado.";
+"That Mac doesn't answer: is AnyAssistant running there, on this network?" = "El servidor no responde. Comprueba que AnyAssistant esté en marcha y que este Mac esté en la misma red.";
+"The server is on another Mac: use this one only to talk to it" = "Usar un servidor de otro ordenador…";
 "Allow the microphone…" = "Permitir el micrófono…";
 
 /* The guide to learn a voice (Voices.swift) */
@@ -179,3 +179,5 @@
 "and %d more" = "y %d más";
 "Its LLM" = "Su LLM";
 "The general one (%@)" = "Por defecto (%@)";
+"Later" = "Ahora no";
+"Host" = "Host";

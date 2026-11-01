@@ -28,6 +28,7 @@ struct StepRow: Identifiable {
 
 @MainActor
 final class Setup: ObservableObject {
+    static let shared = Setup()
     enum Phase { case welcome, another, preparing, questions, installing, finished }
 
     @Published var phase: Phase = .welcome

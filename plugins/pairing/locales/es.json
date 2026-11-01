@@ -7,8 +7,8 @@
   },
   "installer": {
     "pairing": [
-      "Pedir un código a cada dispositivo nuevo",
-      "La primera vez, cada dispositivo escribe un código. Así nadie de fuera puede usarlo. El servidor nunca lo necesita."
+      "Código para dispositivos nuevos",
+      "Cada dispositivo nuevo introduce un código la primera vez, para que nadie más pueda usarlo. Este ordenador no lo necesita."
     ]
   }
 }

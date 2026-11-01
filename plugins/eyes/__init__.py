@@ -160,9 +160,9 @@ async def _photo(request):
 
 # --- In the installer ---
 
-@installer.question("eyes", "Let it look through the device's camera", order=62, choices=lambda: [False, True],
+@installer.question("eyes", "Camera use", order=62, choices=lambda: [False, True],
                     default=lambda: bool((settings.load().get("plugins") or {}).get("eyes")), always=True,
-                    help="Only when you ask («what do you see?», «read this»); nothing leaves the server otherwise.")
+                    help="It only looks when you ask, for example «What do you see?» or «Read this».")
 def _install(value):
     settings.save(plugins={**(settings.load().get("plugins") or {}), "eyes": bool(value)})
 

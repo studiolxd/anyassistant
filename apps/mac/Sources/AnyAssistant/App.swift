@@ -12,11 +12,11 @@ import SwiftUI
 struct AnyAssistantApp: App {
     @StateObject private var server = Server.shared
     @StateObject private var client = Client.shared
-    @StateObject private var setup = Setup()
     @NSApplicationDelegateAdaptor private var delegate: Delegate
 
     var body: some Scene {
-        MenuBarExtra {
+        // Not installed yet (nor using another server): no menu, only the installer's window.
+        MenuBarExtra(isInserted: .constant(ready)) {
             MenuView(server: server, client: client)
         } label: {
             MenuBarIcon(symbol: icon)
@@ -26,11 +26,6 @@ struct AnyAssistantApp: App {
                 .frame(minWidth: 320, minHeight: 400)
         }
         .defaultSize(width: 480, height: 640)
-        Window("AnyAssistant", id: "setup") {
-            SetupView(setup: setup, client: client)
-                .frame(width: 520, height: 480)
-        }
-        .windowResizability(.contentSize)
         Window(T("Settings"), id: "settings") {
             SettingsView()
                 .frame(minWidth: 760, minHeight: 520)
@@ -54,6 +49,13 @@ struct AnyAssistantApp: App {
                 .frame(width: 660, height: 380)
         }
         .windowResizability(.contentSize)
+    }
+
+    /// Installed, or using another server: the menu bar's.
+    var ready: Bool {
+        if client.role == .client { return true }
+        if case .notInstalled = server.state { return false }
+        return true
     }
 
     var icon: String {
@@ -80,7 +82,7 @@ final class Delegate: NSObject, NSApplicationDelegate {
                 server.launch()
             } else {
                 server.state = .notInstalled
-                Delegate.show("setup")
+                Delegate.openSetup()
             }
         }
     }
@@ -128,6 +130,38 @@ final class Delegate: NSObject, NSApplicationDelegate {
     /// the menu bar opens it (it is there from the start, the menu only once clicked); asked before
     /// the icon is drawn (just launched), it opens it as soon as it is.
     @MainActor static var pending: String?
+    @MainActor static var setupWindow: NSWindow?
+
+    /// The installer: its own window (not a scene: before installing there is no menu to open it
+    /// from). Closed before installing (nor using another server), the app quits: opening it
+    /// again shows it again.
+    @MainActor static func openSetup() {
+        if Setup.shared.phase == .finished { Setup.shared.phase = .welcome }  // «Install steps again»
+        if let window = setupWindow {
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 520),
+                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        window.title = "AnyAssistant"
+        window.titlebarAppearsTransparent = true
+        window.isReleasedWhenClosed = false
+        window.contentView = NSHostingView(rootView: SetupView(setup: .shared, client: .shared) {
+            window.close()
+        }.frame(width: 520, height: 520))
+        window.center()
+        setupWindow = window
+        NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { _ in
+            MainActor.assumeIsolated {
+                setupWindow = nil
+                if case .notInstalled = Server.shared.state, Client.shared.role != .client { NSApp.terminate(nil) }
+            }
+        }
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+    }
 
     @MainActor static func show(_ id: String) {
         NSApp.activate(ignoringOtherApps: true)
@@ -188,7 +222,7 @@ struct MenuView: View {
         Divider()
         Button(M("Run the server on this Mac…")) {
             client.useThisMac()
-            if server.installed { server.launch() } else { open("setup") }
+            if server.installed { server.launch() } else { Delegate.openSetup() }
         }
         loginToggle
         Divider()
@@ -248,7 +282,7 @@ struct MenuView: View {
         }
         Divider()
         if server.state == .notInstalled {
-            Button(M("Install…")) { open("setup") }
+            Button(M("Install…")) { Delegate.openSetup() }
         } else {
             faceItem
             Toggle(T("Listen on this Mac"), isOn: $client.listening)
@@ -265,7 +299,7 @@ struct MenuView: View {
             }
             Button(M("Settings…")) { open("settings") }
                 .keyboardShortcut(",")
-            Button(M("Install steps again…")) { open("setup") }
+            Button(M("Install steps again…")) { Delegate.openSetup() }
             loginToggle
         }
         Divider()
@@ -304,8 +338,7 @@ struct MenuView: View {
 struct SetupView: View {
     @ObservedObject var setup: Setup
     @ObservedObject var client: Client
-    @Environment(\.openWindow) private var openWindow
-    @Environment(\.dismissWindow) private var dismissWindow
+    var close: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -313,51 +346,61 @@ struct SetupView: View {
             case .welcome: welcome
             case .another:
                 AnotherMacView(client: client, done: {
-                    dismissWindow(id: "setup")
-                    NSApp.activate(ignoringOtherApps: true)
-                    openWindow(id: "face")
+                    close()
+                    Delegate.show("face")
                 }, back: { setup.phase = .welcome })
             case .preparing: working(setup.note)
             case .questions: form
             case .installing, .finished: progress
             }
         }
-        .padding(24)
+        .padding(28)
     }
 
     var welcome: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(spacing: 14) {
+            Spacer(minLength: 8)
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable().frame(width: 112, height: 112)
             Text("AnyAssistant").font(.largeTitle.bold())
             Text(T("A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears."))
-                .foregroundStyle(.secondary)
+                .font(.title3).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             Spacer()
             Button {
                 Task { await setup.installWithDefaults() }
             } label: {
-                Label(T("Install with what comes"), systemImage: "bolt.fill")
-                    .frame(maxWidth: .infinity)
+                Text(T("Install with what comes")).frame(maxWidth: 240)
             }
-            .controlSize(.large).buttonStyle(.borderedProminent)
+            .controlSize(.large).buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
             Button {
                 Task { await setup.askQuestions() }
             } label: {
-                Label(T("Set it up step by step"), systemImage: "list.number")
-                    .frame(maxWidth: .infinity)
+                Text(T("Set it up step by step")).frame(maxWidth: 240)
             }
             .controlSize(.large)
             Text(T("You can change everything later. The speech models download once (a few hundred MB)."))
-                .font(.footnote).foregroundStyle(.secondary)
+                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Button(T("The server is on another Mac: use this one only to talk to it")) { setup.phase = .another }
-                .buttonStyle(.link)
+                .buttonStyle(.link).font(.footnote)
         }
+        .frame(maxWidth: .infinity)
     }
 
     func working(_ text: String) -> some View {
         VStack(spacing: 12) {
             Spacer()
-            ProgressView()
-            Text(text).foregroundStyle(.secondary)
+            if setup.failed {
+                Image(systemName: "exclamationmark.triangle.fill").font(.largeTitle).foregroundStyle(.orange)
+            } else {
+                ProgressView()
+            }
+            Text(text).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Spacer()
+            if setup.failed {
+                Button(T("Back")) { setup.failed = false; setup.phase = .welcome }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -383,8 +426,12 @@ struct SetupView: View {
                 Toggle(T("Open AnyAssistant at login"), isOn: $setup.startAtLogin)
             }
             .formStyle(.grouped)
-            Button(T("Install")) { Task { await setup.installWithAnswers() } }
-                .buttonStyle(.borderedProminent).frame(maxWidth: .infinity, alignment: .trailing)
+            HStack {
+                Button(T("Back")) { setup.phase = .welcome }
+                Spacer()
+                Button(T("Install")) { Task { await setup.installWithAnswers() } }
+                    .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+            }
         }
     }
 
@@ -411,12 +458,15 @@ struct SetupView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             if setup.phase == .finished {
-                Button(T("Pair your tablet or phone")) {
-                    dismissWindow(id: "setup")
-                    NSApp.activate(ignoringOtherApps: true)
-                    openWindow(id: "pair")
+                HStack {
+                    Button(T("Later"), action: close)
+                    Spacer()
+                    Button(T("Pair your tablet or phone")) {
+                        close()
+                        Delegate.show("pair")
+                    }
+                    .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
                 }
-                .buttonStyle(.borderedProminent).frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
     }

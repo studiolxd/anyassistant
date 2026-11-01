@@ -2,28 +2,28 @@
 
 "1. The certificate" = "1. The certificate";
 "2. The page" = "2. Connect";
-"A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "Your voice assistant, right on this Mac. A phone or tablet you no longer use becomes its eyes, mouth and ears.";
+"A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "A voice assistant that runs on this Mac. Talk to it here, or from an iPhone, an iPad or any phone or tablet.";
 "An old device (it doesn't open .local names): use the address" = "An older device that can't open that address? Use the IP instead";
 "Another code" = "Get another code";
 "AnyAssistant needs it to work as usual." = "AnyAssistant needs it to work properly.";
 "Brain" = "Brain";
 "Cancel" = "Cancel";
-"Copying the program and preparing Python…" = "Getting everything ready…";
+"Copying the program and preparing Python…" = "Preparing the installation…";
 "Done: the page" = "Done, next step";
 "Features" = "Features";
 "If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)." = "Doesn't it install by itself? On Android, go to Settings → Security → Install from storage and pick AnyAssistant.crt.";
 "Install" = "Install";
 "Install steps again…" = "Set it up again…";
 "Install the certificate" = "First, the certificate";
-"Install with what comes" = "Install now, the recommended way";
-"Installed" = "All set!";
-"Installed, with problems" = "Installed, but something didn't go right";
+"Install with what comes" = "Install";
+"Installed" = "Installation complete";
+"Installed, with problems" = "Installation completed with errors";
 "Installed; restarting." = "Installed. Restarting…";
 "Installing what it needs…" = "Installing what it needs…";
 "Installing…" = "Installing…";
 "Install…" = "Install…";
 "It couldn't be saved." = "That couldn't be saved.";
-"It couldn't prepare the program." = "Something went wrong while getting it ready. Try again in a moment.";
+"It couldn't prepare the program." = "The installation couldn't be prepared. Try again.";
 "It is a security plugin: without it, that protection is gone." = "It keeps your assistant safe. If you turn it off, that protection goes away.";
 "It stopped; starting it again…" = "It stopped. Turning it back on…";
 "LLMs" = "Language models (LLM)";
@@ -36,7 +36,7 @@
 "Open the page" = "Now, connect the device";
 "Pair a device" = "Connect another device";
 "Pair a device…" = "Connect another device…";
-"Pair your tablet or phone" = "Connect your tablet or phone";
+"Pair your tablet or phone" = "Connect another device";
 "Plugins" = "Plugins";
 "Quit AnyAssistant" = "Quit AnyAssistant";
 "Restart" = "Restart";
@@ -45,7 +45,7 @@
 "Running · no device" = "Ready · waiting for a device";
 "Saved." = "Saved.";
 "Scan it with the tablet or phone: it pairs by itself. Or open" = "Scan the code with the tablet or phone and that's it: it connects by itself. You can also open:";
-"Set it up step by step" = "Let me choose each thing";
+"Set it up step by step" = "Customize…";
 "Settings" = "Settings";
 "Settings…" = "Settings…";
 "Show the log" = "Log";
@@ -54,7 +54,7 @@
 "Speech recognition" = "Speech recognition";
 "Start" = "Turn on";
 "Starting…" = "Starting up…";
-"Step by step" = "Choose how you want it";
+"Step by step" = "Customize";
 "Stop" = "Turn off";
 "Stopped" = "Off";
 "Taking over from launchd…" = "Getting things ready…";
@@ -68,7 +68,7 @@
 "Waiting for the server…" = "Waiting for the assistant to start…";
 "Wake word" = "Wake word";
 "Yes" = "Yes";
-"You can change everything later. The speech models download once (a few hundred MB)." = "You can change anything later. The first time it downloads the voice models (a few hundred MB), so it may take a little while.";
+"You can change everything later. The speech models download once (a few hundred MB)." = "The speech models are downloaded during installation (a few hundred MB). You can change any setting later.";
 "and type the code" = "and type this code:";
 "command not found:" = "needs installing:";
 "needs a restart" = "applies after a restart";
@@ -142,15 +142,15 @@
 "Looking for the server…" = "Looking for the server…";
 "The microphone is off" = "The microphone is off";
 "Turn the microphone on" = "Turn the microphone on";
-"Another Mac's server" = "Another Mac's server";
-"This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code.";
+"Another Mac's server" = "Use another server";
+"This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "This Mac will only be used to talk to the assistant. To get the code, open AnyAssistant on the server and select Connect another device.";
 "Port" = "Port";
 "Code" = "Code";
 "Back" = "Back";
 "Connect" = "Connect";
-"That code isn't right (or it's too old): ask for another." = "That code isn't right (or it's too old): ask for another.";
-"That Mac doesn't answer: is AnyAssistant running there, on this network?" = "That Mac doesn't answer: is AnyAssistant running there, on this network?";
-"The server is on another Mac: use this one only to talk to it" = "The server is on another Mac: use this one only to talk to it";
+"That code isn't right (or it's too old): ask for another." = "The code is incorrect or has expired.";
+"That Mac doesn't answer: is AnyAssistant running there, on this network?" = "The server isn't responding. Make sure AnyAssistant is running and this Mac is on the same network.";
+"The server is on another Mac: use this one only to talk to it" = "Use a server on another computer…";
 "Allow the microphone…" = "Allow the microphone…";
 
 /* The guide to learn a voice (Voices.swift) */
@@ -179,3 +179,5 @@
 "and %d more" = "and %d more";
 "Its LLM" = "Its LLM";
 "The general one (%@)" = "Default (%@)";
+"Later" = "Not Now";
+"Host" = "Host";

@@ -33,9 +33,9 @@ options.add(Option("location", None, "your city, for the weather (e.g. Valencia)
                    empty="none: you say the city"))
 
 
-@installer.question("location", "Your city (for the weather)", order=63,
+@installer.question("location", "City", order=63,
                     default=lambda: settings.load().get("location") or "",
-                    help="«¿Qué tiempo hace?» answers for it; empty: you say the city each time.")
+                    help="For the weather. If you leave it empty, you'll have to say the city each time.")
 def _install(value):
     settings.save(location=(str(value).strip() or None))
 

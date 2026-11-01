@@ -10,8 +10,8 @@
   },
   "installer": {
     "eyes": [
-      "Que pueda mirar por la cámara",
-      "Solo cuando se lo pidas («¿qué ves?», «léeme esto»). Si no, nada sale del servidor."
+      "Uso de la cámara",
+      "Solo mira cuando se lo pides, por ejemplo «¿Qué ves?» o «Léeme esto»."
     ]
   },
   "commands": {

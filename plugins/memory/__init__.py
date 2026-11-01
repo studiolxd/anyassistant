@@ -272,10 +272,10 @@ def _current():
     return settings.load().get("memory") or "explicit"
 
 
-@installer.question("memory", "Remember you across conversations", order=61,
+@installer.question("memory", "Memory", order=61,
                     choices=lambda: ["off", "explicit", "auto"], default=_current, always=True,
-                    help="explicit: only what you ask it to remember; auto: also what it learns about you, "
-                         "when it falls asleep.")
+                    help="It remembers what you ask. With «Also what it learns», it also keeps what it learns "
+                         "about you in each conversation.")
 def _install(value):
     plugins = {**(settings.load().get("plugins") or {}), "memory": value != "off"}
     settings.save(plugins=plugins, **({"memory": value} if value != "off" else {}))

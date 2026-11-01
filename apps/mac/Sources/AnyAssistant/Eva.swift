@@ -196,7 +196,7 @@ struct AnotherMacView: View {
             Text(T("This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code."))
                 .foregroundStyle(.secondary)
             Form {
-                TextField(T("Address"), text: $host)
+                TextField(T("Host"), text: $host)
                 TextField(T("Port"), value: $port, format: .number.grouping(.never))
                 TextField(T("Code"), text: $code)
             }

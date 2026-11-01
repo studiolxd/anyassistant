@@ -104,34 +104,34 @@
     ],
     "language": [
       "Idioma",
-      "En el que te habla y te entiende. Puedes cambiarlo luego, también por voz."
+      "El idioma en el que habla y entiende. También puede cambiarse por voz."
     ],
     "name": [
-      "Cómo se llama",
-      "Es también la palabra para despertarlo: «Ey, …»."
+      "Nombre del asistente",
+      "Para activarlo, di «Ey» seguido de su nombre."
     ],
     "packages": [
-      "Lo que necesita cada parte",
-      "Se instala solo lo de las partes que tengas encendidas."
+      "Paquetes de los plugins",
+      "Solo se instalan los de los plugins activados."
     ],
     "llm": [
-      "Quién contesta",
-      "Claude necesita tener Claude Code instalado y con la sesión iniciada; el de Apple, macOS 26 con Apple Intelligence."
+      "Modelo de lenguaje",
+      "Claude requiere Claude Code instalado y con la sesión iniciada. El modelo de Apple requiere macOS 26 y Apple Intelligence."
     ],
     "bridges": [
-      "Componentes del Mac (el modelo de Apple, la voz)",
+      "Componentes de macOS",
       ""
     ],
     "models": [
       "Modelos de voz",
-      "Se descargan solo la primera vez: unos cientos de MB."
+      "Reconocimiento de voz, palabra de activación y detección de voz. Se descargan una sola vez (unos cientos de MB)."
     ],
     "service": [
-      "Encenderlo con el ordenador",
-      "Se queda funcionando en segundo plano y vuelve solo si se para."
+      "Iniciar con el ordenador",
+      "Funciona en segundo plano y se reinicia si se detiene."
     ],
     "connect": [
-      "Conecta tu tablet o móvil",
+      "Conectar otro dispositivo",
       ""
     ]
   },
