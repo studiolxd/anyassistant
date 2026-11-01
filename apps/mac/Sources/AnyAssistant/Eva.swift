@@ -179,56 +179,194 @@ struct WindowFinder: NSViewRepresentable {
     }
 }
 
-/// On a Mac without the server: the other Mac's address and its code.
+/// Connecting to another server (this device only talks to it), as the iPhone pairs: the servers
+/// announcing themselves on this network (Bonjour) or «Other server…» (its host and port), then its
+/// pairing code, if it asks for one. «Back» and the step's action at the bottom, as the installer's.
 struct AnotherMacView: View {
     @ObservedObject var client: Client
     var done: () -> Void
     var back: () -> Void
-    @State private var host = "anyassistant.local"
+
+    enum Step { case choose, manual, code }
+    @StateObject private var browser = ServerBrowser()
+    @State private var step = Step.choose
+    @State private var chosen: String?  // the server picked in the list (its id), or «other»
+    @State private var server = ""  // «Eva en MacBook-Air-de-Suvi», or the host typed
+    @State private var host = ""
     @State private var port = 8080
     @State private var code = ""
     @State private var working = false
     @State private var problem: String?
+    @FocusState private var typing: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            switch step {
+            case .choose: choose
+            case .manual: manual
+            case .code: codeStep
+            }
+            if let problem { Text(problem).foregroundStyle(.red).font(.callout) }
+            Spacer(minLength: 0)
+            HStack {
+                Button(T("Back")) {
+                    problem = nil
+                    switch step {
+                    case .choose: back()
+                    case .manual: step = .choose
+                    case .code: step = chosen == "other" ? .manual : .choose
+                    }
+                }
+                Spacer()
+                if working { ProgressView().controlSize(.small) }
+                Button(step == .code ? T("Pair") : T("Next")) { Task { await next() } }
+                    .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+                    .disabled(working || !ready)
+            }
+        }
+        .onAppear { browser.start() }
+        .onDisappear { browser.stop() }
+    }
+
+    var ready: Bool {
+        switch step {
+        case .choose: chosen != nil
+        case .manual: !host.trimmingCharacters(in: .whitespaces).isEmpty
+        case .code: code.count == 6
+        }
+    }
+
+    var choose: some View {
+        VStack(alignment: .leading, spacing: 6) {
             Text(T("Another Mac's server")).font(.title2.bold())
-            Text(T("This device will only be used to talk to the assistant."))
-                .foregroundStyle(.secondary)
+            Text(T("This device will only be used to talk to the assistant.")).foregroundStyle(.secondary)
             Form {
                 Section {
-                    TextField(T("Host"), text: $host)
-                    TextField(T("Port"), value: $port, format: .number.grouping(.never))
-                    TextField(T("Code"), text: $code)
+                    if browser.servers.isEmpty {
+                        HStack(spacing: 8) {
+                            ProgressView().controlSize(.small)
+                            Text(T("Searching…")).foregroundStyle(.secondary)
+                        }
+                    }
+                    ForEach(browser.servers) { found in
+                        row(found.assistant, found.computer, "server.rack", selected: chosen == found.id)
+                            .onTapGesture { chosen = found.id; problem = nil }
+                    }
+                } header: {
+                    Text(T("Servers on this network"))
                 } footer: {
-                    Text(T("To get the code, open AnyAssistant on the server and select Connect another device."))
-                        .font(.footnote).foregroundStyle(.secondary)
+                    Text(T("AnyAssistant servers on this network are shown here.")).font(.footnote).foregroundStyle(.secondary)
+                }
+                Section {
+                    row(T("Other server…"), nil, "ellipsis.circle", selected: chosen == "other")
+                        .onTapGesture { chosen = "other"; problem = nil }
                 }
             }
             .formStyle(.grouped)
-            if let problem { Text(problem).foregroundStyle(.red) }
-            Spacer()
-            HStack {
-                Button(T("Back"), action: back)
-                Spacer()
-                if working { ProgressView().controlSize(.small) }
-                Button(T("Connect")) { Task { await connect() } }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(working || host.isEmpty)
+        }
+    }
+
+    func row(_ title: String, _ detail: String?, _ symbol: String, selected: Bool) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol).font(.title3).foregroundStyle(Color.accentColor).frame(width: 26)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                if let detail { Text(detail).font(.callout).foregroundStyle(.secondary) }
             }
+            Spacer()
+            if selected { Image(systemName: "checkmark").foregroundStyle(Color.accentColor) }
+        }
+        .contentShape(Rectangle())
+    }
+
+    var manual: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(T("Other server")).font(.title2.bold())
+            Form {
+                Section {
+                    TextField(T("Host"), text: $host, prompt: Text("anyassistant.local"))
+                    TextField(T("Port"), value: $port, format: .number.grouping(.never))
+                } footer: {
+                    Text(T("The name or IP address of the server.")).font(.footnote).foregroundStyle(.secondary)
+                }
+            }
+            .formStyle(.grouped)
+        }
+    }
+
+    var codeStep: some View {
+        VStack(spacing: 22) {
+            VStack(spacing: 6) {
+                Text(T("Pairing code")).font(.title2.bold())
+                Text(server).foregroundStyle(.secondary)
+            }
+            .padding(.top, 24)
+            ZStack {
+                TextField("", text: $code)  // the real field, behind the boxes
+                    .focused($typing)
+                    .opacity(0.01)
+                    .onChange(of: code) { _, new in
+                        code = String(new.filter(\.isNumber).prefix(6))
+                        if code.count == 6 { Task { await next() } }
+                    }
+                HStack(spacing: 10) {
+                    ForEach(0..<6, id: \.self) { i in
+                        Text(i < code.count ? String(Array(code)[i]) : "")
+                            .font(.title.monospacedDigit().weight(.semibold))
+                            .frame(width: 46, height: 56)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.07)))
+                            .overlay(RoundedRectangle(cornerRadius: 10)
+                                .stroke(i == code.count && typing ? Color.accentColor : .clear, lineWidth: 2))
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture { typing = true }
+            }
+            Text(T("To get the code, open AnyAssistant on the server and select Connect another device."))
+                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .onAppear { typing = true }
+    }
+
+    func next() async {
+        guard !working else { return }
+        problem = nil
+        switch step {
+        case .choose:
+            if chosen == "other" { step = .manual; return }
+            guard let found = browser.servers.first(where: { $0.id == chosen }) else { return }
+            host = found.address
+            port = found.port
+            server = String(format: T("%@ on %@"), found.assistant, found.computer)
+            if found.pairing { code = ""; step = .code } else { await connect() }
+        case .manual:
+            host = host.trimmingCharacters(in: .whitespaces)
+            server = host
+            client.mac.host = host
+            client.mac.port = port
+            working = true
+            let asks = await client.mac.needsCode()
+            working = false
+            switch asks {
+            case .some(true): code = ""; step = .code
+            case .some(false): await connect()
+            case .none: problem = T("That Mac doesn't answer: is AnyAssistant running there, on this network?")
+            }
+        case .code:
+            await connect()
         }
     }
 
     func connect() async {
         working = true
-        problem = nil
         defer { working = false }
         do {
-            try await client.useAnother(host: host.trimmingCharacters(in: .whitespaces), port: port,
-                                        code: code.filter(\.isNumber))
+            try await client.useAnother(host: host, port: port, code: code)
             done()
         } catch Mac.Failure.wrongCode {
             problem = T("That code isn't right (or it's too old): ask for another.")
+            code = ""
         } catch {
             problem = T("That Mac doesn't answer: is AnyAssistant running there, on this network?")
         }

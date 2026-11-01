@@ -182,3 +182,13 @@
 "Host" = "Host";
 "This device will only be used to talk to the assistant." = "This device will only be used to talk to the assistant.";
 "To get the code, open AnyAssistant on the server and select Connect another device." = "To get the code, open AnyAssistant on the server and select Connect another device.";
+"Servers on this network" = "Servers on This Network";
+"Searching…" = "Searching…";
+"%@ on %@" = "%@ on %@";
+"AnyAssistant servers on this network are shown here." = "AnyAssistant servers on this network are shown here.";
+"Other server…" = "Other Server…";
+"Other server" = "Other Server";
+"Next" = "Next";
+"The name or IP address of the server." = "The name or IP address of the server.";
+"Pairing code" = "Pairing Code";
+"Pair" = "Pair";
