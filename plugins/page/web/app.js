@@ -151,10 +151,28 @@ function fullScreen() {
   if (el.requestFullscreen) el.requestFullscreen().catch(function () {});
 }
 
+// The screen stays on: the Wake Lock API, or, where there is none (Chrome before 84, as on
+// Android 4.4) or it says no, a tiny silent video playing in a loop (what a playing video does).
 function keepAwake() {
-  if (!('wakeLock' in navigator)) return;
+  var video = null;
+  var fallback = function () {
+    if (!video) {
+      video = document.createElement('video');
+      video.src = '/web/awake.mp4';
+      video.loop = true;
+      video.muted = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      // In the page and barely visible: a video out of sight may not keep the screen on.
+      video.style.cssText = 'position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:0.01;pointer-events:none';
+      document.body.appendChild(video);
+    }
+    var playing = video.play();
+    if (playing && playing.catch) playing.catch(function () {});
+  };
   var request = function () {
-    navigator.wakeLock.request('screen').catch(function () {});
+    if (!('wakeLock' in navigator)) return fallback();
+    navigator.wakeLock.request('screen').catch(fallback);
   };
   request();
   document.addEventListener('visibilitychange', function () {
