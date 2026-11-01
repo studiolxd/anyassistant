@@ -218,3 +218,17 @@ def test_only_a_known_voice_wakes_it(monkeypatch):
     assert not voices.may_wake(SECOND)
     settings.active["voice_check"] = "actions"  # only the «yes» needs a known voice: anyone wakes it
     assert voices.may_wake(SECOND)
+
+
+def test_apagate_needs_only_a_voice_not_clearly_a_strangers(monkeypatch, es):
+    """«Apágate» is short and harmless: as «Ey, Eva», only a voice clearly unlike everyone is refused."""
+    voices.learn("Suvi", [unit(1, 0)])
+    settings.active["voice_check"] = "all"
+    sleep = kernel.load("skill-sleep")
+    monkeypatch.setattr(voices, "kernel_module", lambda name: sleep if name == "skill-sleep" else None)
+    long = np.zeros(24000, np.float32)  # 1.5 s: too long for «short, as whoever was talking»
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 2))  # Suvi, quickly: ~0.45
+    assert not voices.screen(Assistant(), "Apágate.", {}, long, None)  # handled as usual: it sleeps
+    assert voices.screen(Assistant(), "¿Qué hora es?", {}, long, lambda *a: None)  # anything else: checked
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(0, 0, 1))  # a guest
+    assert voices.screen(Assistant(), "Apágate.", {}, long, lambda *a: None)  # checked, and dropped

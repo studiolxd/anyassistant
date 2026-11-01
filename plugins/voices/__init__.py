@@ -201,6 +201,13 @@ def screen(assistant, text: str, timings: dict, audio, handle) -> bool:
         if not (confirmation and confirmation.waiting() and confirmation.is_yes(text)):
             return False
 
+    sleep = kernel_module("skill-sleep")
+    if mode == "all" and sleep and sleep.is_sleep_command(text):
+        # «Apágate» is harmless and short (its print says less): as «Ey, Eva», only a voice clearly
+        # unlike everyone known is refused.
+        if may_wake(audio):
+            return False
+
     async def check():
         name, counts, why = await asyncio.get_running_loop().run_in_executor(
             None, judge, audio, getattr(assistant, "voice", None))
