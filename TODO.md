@@ -101,12 +101,13 @@ Java no tiene cancelación de eco).
 - [x] **5. Paquetes, sin firmar** (1 nov): el instalador de Windows (.exe, NSIS, para tu
   usuario), el AppImage y el .deb, con el programa y uv dentro (sin Node ni uv aparte), hechos
   en GitHub Actions («packages»: a mano, o una etiqueta v* hace una versión en Releases).
-  **v0.1.0 publicada** (1 nov). La siguiente: subir `version` en `apps/desktop/package.json`,
+  **v0.1.0 publicada** (1 nov), con la app del Mac también (`AnyAssistant-0.1.0-mac.dmg`, Apple
+  Silicon, firmada y notarizada). La siguiente: subir `version` en `apps/desktop/package.json`,
   `git tag v0.1.1 && git push origin v0.1.1`.
 - [ ] **5b. Lo que queda de los paquetes**: firmar el de Windows cuando lo instale más gente
   (Azure Artifact Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de
   España); actualizarse sola (hoy, instalar la versión nueva encima); versiones ARM (Windows
-  en ARM, Raspberry Pi); la app del Mac (el .dmg notarizado) también en Releases.
+  en ARM, Raspberry Pi); la app del Mac en Releases cada versión sin hacerlo a mano (hoy: `apps/mac/build.sh --release` en este Mac y `gh release upload`; en Actions haría falta el certificado como secreto).
 
 
 ## Varios dispositivos, lo siguiente
