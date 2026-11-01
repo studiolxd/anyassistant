@@ -34,8 +34,8 @@
 "Open AnyAssistant at login" = "Abrir AnyAssistant al encender el Mac";
 "Open at login" = "Abrir al encender el Mac";
 "Open the page" = "Ahora, conecta el dispositivo";
-"Pair a device" = "Conectar un dispositivo";
-"Pair a device…" = "Conectar una tablet o un móvil…";
+"Pair a device" = "Conectar otro dispositivo";
+"Pair a device…" = "Conectar otro dispositivo…";
 "Pair your tablet or phone" = "Conectar tu tablet o móvil";
 "Plugins" = "Plugins";
 "Quit AnyAssistant" = "Salir de AnyAssistant";
@@ -143,7 +143,7 @@
 "The microphone is off" = "El micrófono está apagado";
 "Turn the microphone on" = "Encender el micrófono";
 "Another Mac's server" = "El servidor de otro Mac";
-"This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "Este Mac solo pone el micrófono, el altavoz, la cámara y la pantalla. En el Mac con el servidor: AnyAssistant → Emparejar un dispositivo…, para el código.";
+"This Mac is only its microphone, speaker, camera and screen. On the Mac with the server: AnyAssistant → Pair a device…, for the code." = "Este Mac solo pone el micrófono, el altavoz, la cámara y la pantalla. En el Mac con el servidor: AnyAssistant → Conectar otro dispositivo, para el código.";
 "Port" = "Puerto";
 "Code" = "Código";
 "Back" = "Atrás";

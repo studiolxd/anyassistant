@@ -16,7 +16,7 @@ const TEXTS = {
   'Starting…': 'Arrancando…', 'Running': 'Funcionando', 'Stopped': 'Parado',
   'Preparing it (the first time it downloads Python and the models: a few minutes)…':
     'Preparándolo (la primera vez descarga Python y los modelos: unos minutos)…',
-  'It failed': 'Ha fallado', 'Show %s': 'Mostrar a %s', 'Pair a device': 'Emparejar un dispositivo',
+  'It failed': 'Ha fallado', 'Show %s': 'Mostrar a %s', 'Connect another device': 'Conectar otro dispositivo',
   'Administer': 'Administrar', 'Start': 'Arrancar', 'Stop': 'Parar', 'Restart': 'Reiniciar',
   'Log': 'Registro', 'Allow the microphone': 'Permitir el micrófono', 'Allow the camera': 'Permitir la cámara', 'Hide %s': 'Ocultar a %s', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
   'started by systemd': 'lo arranca systemd',
@@ -156,7 +156,7 @@ function menu() {
       : { label: T('Show %s', name), enabled: running, click: showFace },
     ...(refused('microphone') ? [{ label: T('Allow the microphone'), click: () => shell.openExternal(PRIVACY.microphone) }] : []),
     ...(refused('camera') ? [{ label: T('Allow the camera'), click: () => shell.openExternal(PRIVACY.camera) }] : []),
-    { label: T('Pair a device'), enabled: running, click: () => showAdmin('#pair') },
+    { label: T('Connect another device'), enabled: running, click: () => showAdmin('#pair') },
     { label: T('Administer'), enabled: running, click: () => showAdmin() },
     { type: 'separator' },
     { label: T('Log'), click: () => shell.openPath(server.log) },
