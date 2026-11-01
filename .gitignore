@@ -19,3 +19,5 @@ google-client.json
 .gog/
 apps/mac/.build/
 apps/mac/build/
+/devices.json
+/voices.json
