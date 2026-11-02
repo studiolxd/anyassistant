@@ -1,7 +1,8 @@
 // The devices (the plugin «devices», only from the Mac), as System Settings lists Bluetooth's: a
 // row each (its icon, name, room and state; the connected ones first) and «Conectar otro
-// dispositivo…»; a click opens its page: its state, name and room, its language model, and
-// «Olvidar este dispositivo».
+// dispositivo…»; a click opens its sheet (as a Bluetooth device's: no navigation in the window,
+// whose title bar it would break): its state, name and room, its language model, and «Olvidar
+// este dispositivo».
 
 import SwiftUI
 
@@ -85,9 +86,10 @@ final class Devices: ObservableObject {
 
 struct DevicesView: View {
     @StateObject private var devices = Devices()
+    @State private var open: String?  // the device whose sheet is open
 
     var body: some View {
-        NavigationStack {
+        Group {
             VStack(spacing: 0) {
                 if let error = devices.error {
                     Text(error).foregroundStyle(.red).padding(8)
@@ -103,7 +105,8 @@ struct DevicesView: View {
                                 Text(T("No device has connected yet.")).foregroundStyle(.secondary)
                             }
                             ForEach(devices.items) { item in
-                                NavigationLink(value: item.id) { DeviceRow(item: item) }
+                                Button { open = item.id } label: { DeviceRow(item: item) }
+                                    .buttonStyle(.plain)
                             }
                         }
                         Section {
@@ -113,8 +116,8 @@ struct DevicesView: View {
                     .formStyle(.grouped)
                 }
             }
-            .navigationDestination(for: String.self) { id in
-                if let item = devices.items.first(where: { $0.id == id }) {
+            .sheet(isPresented: Binding(get: { open != nil }, set: { if !$0 { open = nil } })) {
+                if let item = devices.items.first(where: { $0.id == open }) {
                     DeviceDetail(item: item, devices: devices)
                 }
             }
@@ -143,8 +146,10 @@ struct DeviceRow: View {
             }
             Spacer()
             if item.connected { Circle().fill(.green).frame(width: 8, height: 8) }
+            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
         }
         .padding(.vertical, 2)
+        .contentShape(Rectangle())
     }
 }
 
@@ -160,10 +165,18 @@ struct DeviceDetail: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        Form {
-            Section {
-                LabeledContent(T("State"), value: deviceState(item))
+        VStack(spacing: 0) {
+        HStack(spacing: 12) {
+            Image(systemName: deviceSymbol(item.kind)).font(.largeTitle)
+                .foregroundStyle(item.connected ? Color.accentColor : .secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name.isEmpty ? T("Unnamed device") : item.name).font(.title2.bold())
+                Text(deviceState(item)).foregroundStyle(.secondary)
             }
+            Spacer()
+        }
+        .padding([.horizontal, .top], 20)
+        Form {
             Section {
                 TextField(T("Name"), text: $name)
                 TextField(T("Room"), text: $room, prompt: Text(T("Not set yet")))
@@ -190,7 +203,13 @@ struct DeviceDetail: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(item.name.isEmpty ? T("Unnamed device") : item.name)
+        HStack {
+            Spacer()
+            Button(T("Done")) { save(); dismiss() }.keyboardShortcut(.defaultAction)
+        }
+        .padding([.horizontal, .bottom], 20)
+        }
+        .frame(width: 520)
         .alert(T("Forget this device?"), isPresented: $forgetting) {
             Button(T("Forget"), role: .destructive) { Task { await devices.forget(item); dismiss() } }
             Button(T("Cancel"), role: .cancel) {}
