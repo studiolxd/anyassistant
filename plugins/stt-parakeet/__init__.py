@@ -15,6 +15,7 @@ import re
 import numpy as np
 
 import i18n
+import models
 import settings
 from stt import GPU, Transcriber, register
 from text import words
@@ -52,7 +53,7 @@ class Parakeet(Transcriber):
 
         self._mx = mx
         self._logmel = get_logmel
-        self._model = from_pretrained(self.model)
+        self._model = from_pretrained(models.pinned(self.model))
 
     def warm_up(self):
         super().warm_up()

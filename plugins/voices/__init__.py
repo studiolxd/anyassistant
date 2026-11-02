@@ -28,6 +28,7 @@ import numpy as np
 
 import hub
 import i18n
+import models
 import options
 import paths
 import settings
@@ -122,9 +123,9 @@ def _session():
     global _model
     if _model is None:
         import onnxruntime
-        from huggingface_hub import hf_hub_download
 
-        _model = onnxruntime.InferenceSession(hf_hub_download(*MODEL), providers=["CPUExecutionProvider"])
+        path = models.fetch(MODEL[0]) / MODEL[1]  # pinned and checked (server/models.py)
+        _model = onnxruntime.InferenceSession(str(path), providers=["CPUExecutionProvider"])
     return _model
 
 

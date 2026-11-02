@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 
+import models
 from stt import GPU, Transcriber, register
 
 _models = {}
@@ -33,7 +34,7 @@ def transcribe_mlx(audio: np.ndarray, model: str, language: str, prompt: str | N
     with GPU:
         result = mlx_whisper.transcribe(
             audio,
-            path_or_hf_repo=model,
+            path_or_hf_repo=models.pinned(model),
             language=language,
             # Standalone sentences: without previous context it makes up less.
             condition_on_previous_text=False,

@@ -11,11 +11,16 @@ import threading
 
 import numpy as np
 
+import models
 from stt import Transcriber, register
 
 log = logging.getLogger("stt")
 _models = {}
 _loading = threading.Lock()
+# The sizes it uses, pinned in server/models.py (faster-whisper's own repos for them); another
+# size (--stt-model medium) is downloaded by faster-whisper, unpinned.
+REPOS = {"base": "Systran/faster-whisper-base", "small": "Systran/faster-whisper-small",
+         "large-v3-turbo": "mobiuslabsgmbh/faster-whisper-large-v3-turbo"}
 
 
 def gpu() -> bool:
@@ -35,12 +40,13 @@ def model(size: str):
             from faster_whisper import WhisperModel
 
             loaded = None
+            place = models.pinned(REPOS.get(size, size))  # its checked folder, or the size for faster-whisper
             if gpu():
                 try:
-                    loaded = WhisperModel(size, device="cuda", compute_type="float16")
+                    loaded = WhisperModel(place, device="cuda", compute_type="float16")
                 except Exception as e:  # a card, but not its CUDA libraries (cuBLAS, cuDNN)
                     log.warning("whisper %s: no GPU (%r); on the CPU", size, e)
-            _models[size] = loaded or WhisperModel(size, device="cpu", compute_type="int8")
+            _models[size] = loaded or WhisperModel(place, device="cpu", compute_type="int8")
         return _models[size]
 
 

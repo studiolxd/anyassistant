@@ -12,6 +12,7 @@ import logging
 import numpy as np
 
 import i18n
+import models
 import settings
 from plugins.stt_faster_whisper import transcribe_fw
 from plugins.stt_parakeet import wrong_language
@@ -29,7 +30,7 @@ class ParakeetOnnx(Transcriber):
         super().__init__(language, model or MODEL)
         import onnx_asr
 
-        self._model = onnx_asr.load_model(self.model, quantization="int8")
+        self._model = onnx_asr.load_model(self.model, path=models.folder(self.model), quantization="int8")
 
     def warm_up(self):
         super().warm_up()
