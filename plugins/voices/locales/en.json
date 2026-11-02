@@ -11,7 +11,9 @@
       "learn my voice",
       "learn a voice",
       "learn a new voice",
-      "remember my voice"
+      "remember my voice",
+      "train my voice",
+      "train a voice"
     ],
     "forget": [
       "forget my voice"
@@ -47,7 +49,8 @@
     },
     "learn_verbs": [
       "learn",
-      "register"
+      "register",
+      "train"
     ],
     "voice_words": [
       "voice"

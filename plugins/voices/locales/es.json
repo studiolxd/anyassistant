@@ -24,7 +24,9 @@
       "registra mi voz",
       "registra una voz",
       "aprende la voz",
-      "conoce mi voz"
+      "conoce mi voz",
+      "entrena mi voz",
+      "entrena una voz"
     ],
     "forget": [
       "olvida mi voz",
@@ -58,7 +60,8 @@
     },
     "learn_verbs": [
       "aprend",
-      "registr"
+      "registr",
+      "entren"
     ],
     "voice_words": [
       "voz",

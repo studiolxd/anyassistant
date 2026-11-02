@@ -278,3 +278,10 @@
 "Community updates (%d)…" = "Community updates (%d)…";
 "There's an update of %@ (%@)" = "There's an update of %@ (%@)";
 "There are updates of %d themes and plugins" = "There are updates of %d themes and plugins";
+"1 voice" = "1 voice";
+"%d voices" = "%d voices";
+"The voices learnt with this device's microphone. A new name is the person's on every device." = "The voices learnt with this device's microphone. A new name is the person's on every device.";
+"No voice learnt on this device yet." = "No voice learnt on this device yet.";
+"Learnt on %@" = "Learnt on %@";
+"Forget %@'s voice on this device?" = "Forget %@'s voice on this device?";
+"Only here: on other devices it is still recognised. If this was the only one, the voice is forgotten." = "Only here: on other devices it is still recognised. If this was the only one, the voice is forgotten.";

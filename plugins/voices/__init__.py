@@ -109,6 +109,7 @@ def learn(name: str, prints: list[np.ndarray], device: str | None = None):
     if "print" in person:  # before a print per device: the one it had, kept
         person.setdefault("prints", {})["?"] = person.pop("print")
     person.setdefault("prints", {})[device or "?"] = [round(float(x), 6) for x in mean]
+    person.setdefault("learnt", {})[device or "?"] = time.time()  # when, there (each device's page lists them)
     person["recent"] = [r for r in person.get("recent", []) if r["near"] != (device or "?")]  # learnt anew
     person.get("usual", {}).pop(device or "?", None)  # its usual score there starts over (and any warning)
     person["samples"] = person.get("samples", 0) + len(prints)
@@ -123,11 +124,33 @@ def prints_of(person: dict) -> list[np.ndarray]:
     return [np.array(p) for p in found]
 
 
-def forget(name: str) -> bool:
+def forget(name: str, device: str | None = None) -> bool:
+    """Forgets a voice; with a device, only its print there (what it learnt elsewhere stays: the
+    person is forgotten only if that was their last one). False if there was nothing to forget."""
     found = people()
-    kept = [p for p in found if p["name"].lower() != name.lower()]
-    _save(kept)
-    return len(kept) != len(found)
+    person = next((p for p in found if p["name"].lower() == name.lower()), None)
+    if person is None:
+        return False
+    if device is not None:
+        if device not in person.get("prints", {}):
+            return False
+        person["prints"].pop(device)
+        person.get("learnt", {}).pop(device, None)
+        person.get("usual", {}).pop(device, None)
+        person["recent"] = [r for r in person.get("recent", []) if r["near"] != device]
+        if person["prints"] or "print" in person:
+            _save(found)
+            log.info("voice forgotten on %s: %s", device, name)
+            return True
+    _save([p for p in found if p is not person])
+    log.info("voice forgotten: %s", name)
+    return True
+
+
+def on(device: str) -> list[dict]:
+    """The voices learnt on a device: their name and when (None: before it was kept)."""
+    return [{"name": p["name"], "learnt": p.get("learnt", {}).get(device)}
+            for p in people() if device in p.get("prints", {})]
 
 
 def rename(name: str, to: str) -> bool:
@@ -642,10 +665,20 @@ def _register(session):
 
 
 
-def _listing():
+def _tidy():
     now = time.time()
     for device in [d for d, p in progress.items() if p["step"] in ("done", "cancelled") and now - p["at"] > 60]:
         progress.pop(device)  # an ended one stays a minute, for the guide to say so
+
+
+def learning(device: str) -> dict | None:
+    """The learning going on (or just ended) on a device: its step, name, phrase…; None if none."""
+    _tidy()
+    return progress.get(device)
+
+
+def _listing():
+    _tidy()
     memory = kernel.module("memory")
     return {"people": [{"name": p["name"], "samples": p.get("samples", 0), "since": p.get("since"),
                         "devices": len(prints_of(p)), "relearn": relearn(p),
@@ -665,7 +698,8 @@ async def _change(request):
     """{"learn": device id, "name"?: «Ana»} starts it on that device; {"cancel": device id};
     {"rename": «Subi», "to": «Suvi»} (and what the plugin «memory» remembers of them);
     {"forget": «Ana», "memory"?: "delete"} (delete: what the plugin «memory» remembers of them too; else it
-    stays under their name). Where each learning is: «learning» in the answer (GET too)."""
+    stays under their name); {"forget": «Ana», "device": id}: only their print on that device (a device's
+    page). Where each learning is: «learning» in the answer (GET too)."""
     if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
     data = await request.json()
@@ -687,6 +721,8 @@ async def _change(request):
         memory = kernel.module("memory")
         if memory:
             memory.rename_person(old, to)  # what it remembers of them goes with the name
+    elif "forget" in data and data.get("device"):
+        forget(str(data["forget"]), str(data["device"]))
     elif "forget" in data:
         forget(str(data["forget"]))
         memory = kernel.module("memory")

@@ -186,6 +186,14 @@
     "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.": "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.",
     "Interface Language": "Interface Language",
     "System language": "System language",
-    "The language of its screen and its app. The assistant speaks the one in General.": "The language of its screen and its app. The assistant speaks the one in General."
+    "The language of its screen and its app. The assistant speaks the one in General.": "The language of its screen and its app. The assistant speaks the one in General.",
+    "1 voice": "1 voice",
+    "%d voices": "%d voices",
+    "The voices learnt with this device's microphone. A new name is the person's on every device.": "The voices learnt with this device's microphone. A new name is the person's on every device.",
+    "No voice learnt on this device yet.": "No voice learnt on this device yet.",
+    "Learnt on %s": "Learnt on %s",
+    "New name for %s:": "New name for %s:",
+    "Forget %s's voice on this device?": "Forget %s's voice on this device?",
+    "Only here: on other devices it is still recognised. If this was the only one, the voice is forgotten.": "Only here: on other devices it is still recognised. If this was the only one, the voice is forgotten."
   }
 }

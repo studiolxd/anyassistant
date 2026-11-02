@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import time
 import shutil
 import subprocess
 
@@ -161,7 +162,8 @@ def test_the_skill_to_start_it(es):
     assert not voices.LearnVoice().hear("¿Qué hora es?", Assistant())
 
 
-@pytest.mark.parametrize("said", ["Apréndeme voz.", "apréndete mi voz", "registra mi vos"])
+@pytest.mark.parametrize("said", ["Apréndeme voz.", "apréndete mi voz", "registra mi vos",
+                                  "Entrena mi voz.", "entréname la voz", "Oye, entrena una voz"])
 def test_the_skill_to_start_it_as_transcribed(es, said):
     assert voices.LearnVoice().hear(said, Assistant())
 
@@ -585,3 +587,26 @@ def test_renaming_a_voice_and_merging_it_with_one_of_that_name(tmp_path, monkeyp
     memory.rename_person("Ana", "suvi")
     assert memory.load()["people"] == {"suvi": ["Has a dog, Toby.", "Likes jazz."]}
     assert not voices.rename("Nobody", "X") and not voices.rename("suvi", " ")
+
+
+def test_the_skill_in_english(en):
+    assert voices.LearnVoice().hear("Train my voice", Assistant())
+
+
+def test_each_device_lists_the_voices_learnt_there(monkeypatch):
+    monkeypatch.setattr(time, "time", lambda: 1000.0)
+    voices.learn("Suvi", [unit(1, 0)], device="mac")
+    voices.learn("Suvi", [unit(0, 1)], device="iphone")
+    voices.learn("Ana", [unit(0, 1)], device="iphone")
+    assert voices.on("iphone") == [{"name": "Suvi", "learnt": 1000.0}, {"name": "Ana", "learnt": 1000.0}]
+    assert voices.on("mac") == [{"name": "Suvi", "learnt": 1000.0}] and voices.on("watch") == []
+
+
+def test_forgetting_a_voice_on_one_device(monkeypatch):
+    voices.learn("Suvi", [unit(1, 0)], device="mac")
+    voices.learn("Suvi", [unit(0, 1)], device="iphone")
+    assert voices.forget("suvi", "iphone")
+    assert voices.on("iphone") == [] and [p["name"] for p in voices.people()] == ["Suvi"]  # still known on the Mac
+    assert not voices.forget("Suvi", "iphone")  # nothing there any more
+    assert voices.forget("Suvi", "mac") and voices.people() == []  # its last one: forgotten
+

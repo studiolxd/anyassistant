@@ -301,6 +301,12 @@ function deviceState(d) {
   return d.seen ? state + ' · ' + ago(d.seen) : state;
 }
 
+// «2 voces»: how many voices were learnt with its microphone ("" none).
+function voicesCount(d) {
+  var n = (d.voices || []).length;
+  return !n ? '' : n === 1 ? T('1 voice') : T('%d voices').replace('%d', n);
+}
+
 function devices(main) {
   main.appendChild(el('h1', { text: T('Devices') }));
   var box = el('div', { class: 'card' });
@@ -315,7 +321,7 @@ function devices(main) {
           box.appendChild(el('div', { class: 'row link', onclick: function () { show('device/' + d.id); } }, [
             el('span', { class: 'kind' + (d.connected ? ' on' : '') }, [deviceIcon(d.kind, 26)]),
             el('div', { class: 'what' }, [el('b', { text: d.name || T('Unnamed device') }),
-              el('div', { class: 'muted', text: [d.room, deviceState(d)].filter(Boolean).join(' · ') })]),
+              el('div', { class: 'muted', text: [d.room, deviceState(d), voicesCount(d)].filter(Boolean).join(' · ') })]),
             d.connected ? el('span', { class: 'dot ok' }) : null,
             el('span', { class: 'chevron', text: '›' })
           ]));
@@ -331,7 +337,9 @@ function devices(main) {
 }
 
 // A device's page: its state, name and room, its language model, its room's noise («Calibrate»),
-// «Forget This Device». What can't be saved (a name already taken) goes by the fields.
+// the voices learnt there (learning one there: the guide; renaming one, the person's everywhere;
+// forgetting one: only its print there), «Forget This Device». What can't be saved (a name
+// already taken) goes by the fields.
 function devicePage(main, id) {
   api('GET', '/devices').then(function (data) {
     var d = data.devices.filter(function (x) { return x.id === id; })[0];
@@ -400,6 +408,7 @@ function devicePage(main, id) {
     noiseCard.appendChild(row(T('Room noise'), T('A few seconds of silence measured on the device: how it tells your voice from the room\'s noise.'),
       el('span', {}, [el('span', { class: 'muted' + (noise.step === 'talking' ? ' warn' : ''), text: noiseText + ' ' }), calibrate])));
     main.appendChild(noiseCard);
+    main.appendChild(deviceVoices(d, row));
     main.appendChild(el('div', { class: 'card' }, [row(T('Forget This Device'), T('It is forgotten here; if it connects again it is a new device.'),
       el('button', { class: 'danger', text: T('Forget'), onclick: function () {
         if (confirm(T('Forget this device?') + '\n\n' + T('It is forgotten here; if it connects again it is a new device.'))) {
@@ -407,6 +416,37 @@ function devicePage(main, id) {
         }
       } }))]));
   }).catch(function () {});
+}
+
+// The voices learnt with a device's microphone (the plugin «voices»): when; another name (the
+// person's, on every device); forgetting it here only; learning one there (the guide, on it).
+function deviceVoices(d, row) {
+  var box = el('div', { class: 'card' });
+  var again = function () { show('device/' + d.id); };
+  var learn = d.connected && !d.press ? el('button', { class: 'secondary', text: T('Learn a voice…'),
+    onclick: function () { guide(box, again, d.id); } }) : el('span');
+  box.appendChild(row(T('Voices'), T('The voices learnt with this device\'s microphone. A new name is the person\'s on every device.'), learn));
+  if (!(d.voices || []).length) box.appendChild(el('div', { class: 'row' }, [el('div', { class: 'what muted', text: T('No voice learnt on this device yet.') })]));
+  (d.voices || []).forEach(function (v) {
+    box.appendChild(el('div', { class: 'row' }, [
+      el('div', { class: 'what' }, [el('b', { text: v.name }),
+        v.learnt ? el('div', { class: 'muted', text: T('Learnt on %s').replace('%s',
+          new Date(v.learnt * 1000).toLocaleDateString(document.documentElement.lang || undefined, { day: 'numeric', month: 'short' })) }) : null]),
+      el('span', {}, [
+        el('button', { class: 'secondary', text: T('Rename…'), onclick: function () {
+          var to = (prompt(T('New name for %s:').replace('%s', v.name), v.name) || '').trim();
+          if (to && to !== v.name) api('POST', '/admin/voices', { rename: v.name, to: to }).then(again);
+        } }), ' ',
+        el('button', { class: 'danger', text: T('Forget'), onclick: function () {
+          if (confirm(T('Forget %s\'s voice on this device?').replace('%s', v.name) + '\n\n' +
+                      T('Only here: on other devices it is still recognised. If this was the only one, the voice is forgotten.'))) {
+            api('POST', '/admin/voices', { forget: v.name, device: d.id }).then(again);
+          }
+        } })
+      ])
+    ]));
+  });
+  return box;
 }
 
 // --- Settings: «General», the core's by topic; the search over everything ---
@@ -700,8 +740,8 @@ function voicesPage(main) {
 }
 
 // The guide: on which device (a connected one) and whose; then the phrase to read now, which one,
-// and what happens, until it ends.
-function guide(learn, drawPeople) {
+// and what happens, until it ends. From a device's page: that device chosen, and «Close» back to it.
+function guide(learn, drawPeople, on) {
   learn.innerHTML = '';
   var box = el('div', { class: 'padded' });
   learn.appendChild(box);
@@ -728,7 +768,7 @@ function guide(learn, drawPeople) {
       connected.forEach(function (d) {
         device.appendChild(el('option', { value: d.id, text: d.room ? d.name + ' (' + d.room + ')' : d.name || d.id }));
       });
-      device.value = chosen || '';
+      device.value = chosen || on || '';
       start.disabled = !device.value;
     }).catch(function () {});
   }
@@ -769,10 +809,10 @@ function guide(learn, drawPeople) {
           box.appendChild(el('h2', { text: now.step === 'done' ? T('Done, %s: it knows your voice.').replace('%s', now.name)
                                                                : T('Cancelled: nothing was learnt.') }));
           box.appendChild(el('p', {}, [
-            el('button', { class: 'secondary', text: T('Learn another'), onclick: function () { guide(learn, drawPeople); } }), ' ',
-            el('button', { text: T('Close'), onclick: function () { show('voices'); } })
+            el('button', { class: 'secondary', text: T('Learn another'), onclick: function () { guide(learn, drawPeople, on); } }), ' ',
+            el('button', { text: T('Close'), onclick: function () { show(on ? 'device/' + on : 'voices'); } })
           ]));
-          api('GET', '/admin/voices').then(drawPeople).catch(function () {});
+          if (!on) api('GET', '/admin/voices').then(drawPeople).catch(function () {});  // a device's page: back to it on «Close»
         }
       }).catch(function () {});
     }, 700);

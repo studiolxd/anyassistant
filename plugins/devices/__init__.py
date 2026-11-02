@@ -174,11 +174,13 @@ def _listing() -> list[dict]:
     connected = {s.device for s in hub.all() if s.pc.connectionState == "connected"}
     current = hub.current()
     calibration = kernel.module("calibration")  # its room's noise, if measured, and a calibration going on
+    voices = kernel.module("voices")  # the voices learnt there, and one being learnt there now
     return [{"id": i, "name": d.get("name", ""), "room": d.get("room", ""), "connected": i in connected,
              "current": bool(current and current.device == i), "seen": d.get("seen"),
              "press": bool(d.get("press")), "kind": kind(d.get("agent", "")), "llm": d.get("llm", ""),
              "ui_language": d.get("ui_language") or "auto",
-             "noise": calibration.summary(i) if calibration else {}}
+             "noise": calibration.summary(i) if calibration else {},
+             "voices": voices.on(i) if voices else [], "learning": voices.learning(i) if voices else None}
             for i, d in load().items()]
 
 

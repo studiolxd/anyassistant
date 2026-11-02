@@ -285,3 +285,10 @@
 "System language" = "Idioma del sistema";
 "The language of this app and its screen. The assistant speaks the one chosen in «Language»." = "El idioma de esta app y de su pantalla. El asistente habla el elegido en «Idioma».";
 "The language of its screen and its app. The assistant speaks the one in General." = "El idioma de su pantalla y de su app. El asistente habla el de General.";
+"1 voice" = "1 voz";
+"%d voices" = "%d voces";
+"The voices learnt with this device's microphone. A new name is the person's on every device." = "Las voces aprendidas con el micrófono de este dispositivo. Un nombre nuevo es el de la persona en todos los dispositivos.";
+"No voice learnt on this device yet." = "Aún no se ha aprendido ninguna voz en este dispositivo.";
+"Learnt on %@" = "Aprendida el %@";
+"Forget %@'s voice on this device?" = "¿Olvidar la voz de %@ en este dispositivo?";
+"Only here: on other devices it is still recognised. If this was the only one, the voice is forgotten." = "Solo aquí: en los demás dispositivos se la sigue reconociendo. Si era el único, se olvida la voz.";

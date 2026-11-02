@@ -3,10 +3,18 @@
 // dispositivo…»; a click opens its sheet (as a Bluetooth device's: no navigation in the window,
 // whose title bar it would break): its state, name and room, its language model, its interface's
 // language («Idioma de la interfaz»: its screen and its app), its room's noise
-// (the plugin «calibration»: «Calibrar» measures a few seconds of silence there), and «Olvidar este
+// (the plugin «calibration»: «Calibrar» measures a few seconds of silence there), the voices
+// learnt with its microphone (the plugin «voices»: «Aprender una voz…» there opens the guide on it;
+// a new name is the person's everywhere; «Olvidar» forgets only its print there), and «Olvidar este
 // dispositivo».
 
 import SwiftUI
+
+/// A voice learnt with a device's microphone, and when (nil: before that was kept).
+struct DeviceVoice: Equatable, Hashable {
+    let name: String
+    let learnt: Date?
+}
 
 struct DeviceItem: Identifiable, Equatable {
     let id: String
@@ -24,6 +32,7 @@ struct DeviceItem: Identifiable, Equatable {
     var calibratedAt: Date?
     var calibrating: String = ""  // a calibration going on there: asking, measuring; or just ended: done, talking
     var measuredBy: Date?  // measuring: when it ends (counted down)
+    var voices: [DeviceVoice] = []  // learnt with its microphone
 }
 
 @MainActor
@@ -79,7 +88,11 @@ final class Devices: ObservableObject {
                        noiseDb: ($0["noise"] as? [String: Any])?["db"] as? Double,
                        calibratedAt: (($0["noise"] as? [String: Any])?["at"] as? Double).map { Date(timeIntervalSince1970: $0) },
                        calibrating: ($0["noise"] as? [String: Any])?["step"] as? String ?? "",
-                       measuredBy: (($0["noise"] as? [String: Any])?["left"] as? Double).map { Date().addingTimeInterval($0) })
+                       measuredBy: (($0["noise"] as? [String: Any])?["left"] as? Double).map { Date().addingTimeInterval($0) },
+                       voices: ($0["voices"] as? [[String: Any]] ?? []).map {
+                           DeviceVoice(name: $0["name"] as? String ?? "",
+                                       learnt: ($0["learnt"] as? Double).map { Date(timeIntervalSince1970: $0) })
+                       })
         }
         .sorted { ($0.connected ? 0 : 1, $0.name) < ($1.connected ? 0 : 1, $1.name) }
         llms = answer["llms"] as? [String] ?? llms
@@ -106,6 +119,18 @@ final class Devices: ObservableObject {
 
     func forget(_ item: DeviceItem) async {
         if let answer = await call(["id": item.id, "forget": true]) { show(answer) }
+    }
+
+    /// A voice's new name: the person's, on every device (and what the plugin «memory» remembers of them).
+    func renameVoice(_ name: String, to: String) async {
+        _ = await call(["rename": name, "to": to], path: "/admin/voices")
+        await load()
+    }
+
+    /// Forgets a voice only on this device (its print there); its last one: the voice.
+    func forgetVoice(_ name: String, on item: DeviceItem) async {
+        _ = await call(["forget": name, "device": item.id], path: "/admin/voices")
+        await load()
     }
 
     /// Measures its room's noise there (the plugin «calibration»): it asks for silence on the
@@ -174,7 +199,7 @@ struct DeviceRow: View {
                 .foregroundStyle(item.connected ? Color.accentColor : .secondary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.name.isEmpty ? T("Unnamed device") : item.name)
-                Text([item.room, deviceState(item)].filter { !$0.isEmpty }.joined(separator: " · "))
+                Text([item.room, deviceState(item), voicesCount(item)].filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.callout).foregroundStyle(.secondary)
             }
             Spacer()
@@ -193,7 +218,11 @@ struct DeviceDetail: View {
     @State private var name = ""
     @State private var room = ""
     @State private var forgetting = false
+    @State private var forgettingVoice: String?  // whose voice here, while it asks
+    @State private var renamingVoice: String?
+    @State private var newName = ""
     @State private var pending: Task<Void, Never>?
+    @Environment(\.openWindow) private var openWindow
     @FocusState private var editing: Bool
     @Environment(\.dismiss) private var dismiss
 
@@ -261,6 +290,39 @@ struct DeviceDetail: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section {
+                if item.voices.isEmpty {
+                    Text(T("No voice learnt on this device yet.")).foregroundStyle(.secondary)
+                }
+                ForEach(item.voices, id: \.self) { voice in
+                    HStack {
+                        Image(systemName: "person.wave.2")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(voice.name)
+                            if let learnt = voice.learnt {
+                                Text(String(format: T("Learnt on %@"), learnt.formatted(.dateTime.day().month())))
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                        Button(T("Rename…")) { newName = voice.name; renamingVoice = voice.name }
+                        Button(T("Forget")) { forgettingVoice = voice.name }.foregroundStyle(.red)
+                    }
+                }
+                if item.connected && !item.press {
+                    Button(T("Learn a voice…")) {  // the guide, on this device
+                        LearnGuide.shared.reset()
+                        LearnGuide.shared.device = item.id
+                        NSApp.activate(ignoringOtherApps: true)
+                        openWindow(id: "learn-voice")
+                    }
+                }
+            } header: {
+                Text(T("Voices"))
+            } footer: {
+                Text(T("The voices learnt with this device's microphone. A new name is the person's on every device."))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section {
                 Button(T("Forget This Device"), role: .destructive) { forgetting = true }
             } footer: {
                 Text(T("It is forgotten here; if it connects again it is a new device.")).font(.caption).foregroundStyle(.secondary)
@@ -279,6 +341,25 @@ struct DeviceDetail: View {
             Button(T("Cancel"), role: .cancel) {}
         } message: {
             Text(T("It is forgotten here; if it connects again it is a new device."))
+        }
+        .alert(String(format: T("Forget %@'s voice on this device?"), forgettingVoice ?? ""),
+               isPresented: Binding(get: { forgettingVoice != nil }, set: { if !$0 { forgettingVoice = nil } }),
+               presenting: forgettingVoice) { voice in
+            Button(T("Forget"), role: .destructive) { Task { await devices.forgetVoice(voice, on: item) } }
+            Button(T("Cancel"), role: .cancel) {}
+        } message: { _ in
+            Text(T("Only here: on other devices it is still recognised. If this was the only one, the voice is forgotten."))
+        }
+        .alert(T("Rename"), isPresented: Binding(get: { renamingVoice != nil }, set: { if !$0 { renamingVoice = nil } }),
+               presenting: renamingVoice) { voice in
+            TextField(T("Name"), text: $newName)
+            Button(T("Rename")) {
+                let to = newName.trimmingCharacters(in: .whitespaces)
+                if !to.isEmpty, to != voice { Task { await devices.renameVoice(voice, to: to) } }
+            }
+            Button(T("Cancel"), role: .cancel) {}
+        } message: { _ in
+            Text(T("What it remembers about them keeps the new name too."))
         }
         .onAppear { name = item.name; room = item.room }
         .onDisappear { save() }
@@ -323,6 +404,15 @@ struct DeviceDetail: View {
         changed.name = name
         changed.room = room
         Task { await devices.save(changed) }
+    }
+}
+
+/// «2 voces»: how many voices were learnt with its microphone ("" none).
+func voicesCount(_ item: DeviceItem) -> String {
+    switch item.voices.count {
+    case 0: return ""
+    case 1: return T("1 voice")
+    default: return String(format: T("%d voices"), item.voices.count)
     }
 }
 
