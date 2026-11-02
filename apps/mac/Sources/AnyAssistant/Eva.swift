@@ -246,6 +246,13 @@ struct AnotherMacView: View {
         .onDisappear { browser.stop() }
     }
 
+    /// The servers found, but not this Mac's own (if it is one too): this device talks to another.
+    var others: [ServerBrowser.Found] {
+        let own = try? String(contentsOf: Server.shared.data.appending(path: "server-id"), encoding: .utf8)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return browser.servers.filter { $0.server == nil || $0.server != own }
+    }
+
     var ready: Bool {
         switch step {
         case .choose: chosen != nil
@@ -260,13 +267,13 @@ struct AnotherMacView: View {
             Text(T("This device will only be used to talk to the assistant.")).foregroundStyle(.secondary)
             Form {
                 Section {
-                    if browser.servers.isEmpty {
+                    if others.isEmpty {
                         HStack(spacing: 8) {
                             ProgressView().controlSize(.small)
                             Text(T("Searching…")).foregroundStyle(.secondary)
                         }
                     }
-                    ForEach(browser.servers) { found in
+                    ForEach(others) { found in
                         row(found.assistant, found.computer, "server.rack", selected: chosen == found.id)
                             .onTapGesture { chosen = found.id; problem = nil }
                     }

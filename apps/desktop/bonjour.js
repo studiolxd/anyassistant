@@ -70,7 +70,7 @@ function parse(message) {
   return records;
 }
 
-/// browser.servers: [{id, assistant, computer, address, port, pairing}]; «change» when they change.
+/// browser.servers: [{id, assistant, computer, address, port, pairing, server}]; «change» when they change.
 class Browser extends EventEmitter {
   constructor() {
     super();
@@ -89,6 +89,7 @@ class Browser extends EventEmitter {
         computer: s.txt.computer || id.replace(/^AnyAssistant on /, ''),
         address: s.txt.address || this.addresses[s.srv.target] || s.srv.target.replace(/\.$/, ''),
         port: parseInt(s.txt.port, 10) || s.srv.port, pairing: s.txt.pairing !== '0',
+        server: s.txt.id || null,  // which server it is
       }))
       .sort((a, b) => a.computer.localeCompare(b.computer));
   }

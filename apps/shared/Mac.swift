@@ -357,6 +357,7 @@ final class ServerBrowser: ObservableObject {
         let address: String
         let port: Int
         let pairing: Bool  // it asks for a code
+        var server: String? = nil  // which server it is (its id: the TXT's «id»)
     }
 
     @Published private(set) var servers: [Found] = []
@@ -371,7 +372,8 @@ final class ServerBrowser: ObservableObject {
                       let address = record["address"], !address.isEmpty else { return nil }
                 return Found(id: name, assistant: record["name"] ?? "AnyAssistant",
                              computer: record["computer"] ?? name.replacingOccurrences(of: "AnyAssistant on ", with: ""),
-                             address: address, port: Int(record["port"] ?? "") ?? 8080, pairing: record["pairing"] != "0")
+                             address: address, port: Int(record["port"] ?? "") ?? 8080, pairing: record["pairing"] != "0",
+                             server: record["id"])
             }
             Task { @MainActor in self?.servers = found.sorted { $0.computer < $1.computer } }
         }

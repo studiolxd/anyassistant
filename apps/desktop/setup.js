@@ -123,10 +123,17 @@ async function pair(host, port, code, pairing) {
   return { paired: true };
 }
 
+// The servers found, but not this computer's own (if it is one too): this device talks to another.
+function others() {
+  let own = null;
+  try { own = require('fs').readFileSync(path.join(given.server.data, 'server-id'), 'utf8').trim(); } catch (e) {}
+  return (browser ? browser.servers : []).filter((s) => !s.server || s.server !== own);
+}
+
 function browse(on) {
   if (on && !browser) {
     browser = new Browser();
-    browser.on('change', () => say('setup:servers', browser.servers));
+    browser.on('change', () => say('setup:servers', others()));
     browser.start();
   } else if (!on && browser) {
     browser.stop();
@@ -138,7 +145,7 @@ ipcMain.handle('setup:install-defaults', () => installWithDefaults());
 ipcMain.handle('setup:ask-questions', () => askQuestions());
 ipcMain.handle('setup:install', (e, answers, startAtLogin) => installWithAnswers(answers, startAtLogin));
 ipcMain.handle('setup:phase', (e, next) => { phase = next; browse(next === 'another'); });
-ipcMain.handle('setup:servers', () => (browser ? browser.servers : []));
+ipcMain.handle('setup:servers', () => others());
 ipcMain.handle('setup:probe', (e, host, port) => probe(host, port));
 ipcMain.handle('setup:pair', async (e, host, port, code, pairing) => {
   const answer = await pair(host, port, code, pairing);
