@@ -165,10 +165,13 @@ function keepAwake() {
       video.muted = true;
       video.setAttribute('muted', '');
       video.setAttribute('playsinline', '');
-      // In the page and barely visible: a video out of sight, or too small, may not keep the
-      // screen on (Chrome takes its wake lock only for a video it counts as seen).
-      video.style.cssText = 'position:fixed;left:0;bottom:0;width:64px;height:64px;opacity:0.01;pointer-events:none';
+      // Seen, for Chrome: it pauses a muted video it counts as unseen (transparent, tiny, out of
+      // sight), and a paused one doesn't keep the screen on. It is black, opaque, behind the theme.
+      video.style.cssText = 'position:fixed;left:0;bottom:0;width:64px;height:64px;z-index:-1;pointer-events:none';
       document.body.appendChild(video);
+      video.addEventListener('pause', function () {  // paused by the browser: again in a moment
+        setTimeout(function () { if (video.paused) video.play().catch(function () {}); }, 1000);
+      });
     }
     var playing = video.play();
     if (playing && playing.then) {
@@ -189,7 +192,9 @@ function keepAwake() {
     while (notes.length) tell({ type: 'log', text: notes.shift() });
   };
   setInterval(function () {  // and whether it still plays, every minute (a paused video lets it sleep)
-    if (video) note('keeping the screen on: the video ' + (video.paused ? 'is paused' : 'plays') + ' at ' + video.currentTime.toFixed(1));
+    if (!video) return;
+    note('keeping the screen on: the video ' + (video.paused ? 'is paused' : 'plays') + ' at ' + video.currentTime.toFixed(1));
+    if (video.paused) video.play().catch(function (e) { note('keeping the screen on: play again: ' + e); });
   }, 60000);
   request();
   document.addEventListener('visibilitychange', function () {
