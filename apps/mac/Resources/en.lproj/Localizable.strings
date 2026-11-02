@@ -229,7 +229,7 @@
 "Try Again" = "Try Again";
 "Calibrate" = "Calibrate";
 "A few seconds of silence measured on the device: how it tells your voice from the room's noise." = "A few seconds of silence measured on the device: how it tells your voice from the room's noise.";
-"It couldn't start the calibration: is the plugin «Calibration» on?" = "It couldn't start the calibration: is the plugin «Calibration» on?";
+"It couldn't start the calibration: is the plugin «Calibration» on?" = "The calibration couldn\'t start. Make sure the plugin «Calibration» is on.";
 "Measuring: keep silent near the device…" = "Measuring: keep silent near the device…";
 "It heard talking: try again in silence." = "It heard talking: try again in silence.";
 "Room noise: not measured" = "Room noise: not measured";
