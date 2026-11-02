@@ -4,6 +4,7 @@
 
 import AppKit
 import Foundation
+import SwiftUI
 
 /// A text in the Mac's language: the English one is the key (Resources/<lang>.lproj/Localizable.strings).
 func T(_ english: String) -> String {
@@ -14,6 +15,34 @@ func T(_ english: String) -> String {
 func llmName(_ id: String) -> String {
     ["claude": "Claude", "codex": "Codex", "gemini": "Gemini", "opencode": "OpenCode", "openai": T("OpenAI-compatible"),
      "ollama": "Ollama", "hermes": "Hermes", "apple": "Apple"][id] ?? id.capitalized
+}
+
+/// What a window shows when the server doesn't answer: in the middle, what is wrong and what to do
+/// (start it, if it is stopped; else try again), instead of a red line over an empty window.
+struct ServerUnavailable: View {
+    @ObservedObject var server = Server.shared
+    var retry: () -> Void
+
+    var stopped: Bool {
+        switch server.state {
+        case .stopped, .failed: true
+        default: false
+        }
+    }
+
+    var body: some View {
+        ContentUnavailableView {
+            Label(T("The server isn't responding"), systemImage: "bolt.horizontal.circle")
+        } description: {
+            Text(stopped ? T("AnyAssistant's server is stopped.") : T("Make sure AnyAssistant is running."))
+        } actions: {
+            if stopped {
+                Button(T("Start the Server")) { server.start() }.buttonStyle(.borderedProminent)
+            } else {
+                Button(T("Try Again"), action: retry)
+            }
+        }
+    }
 }
 
 /// A device's icon, by its kind («iPhone», «Mac»…).

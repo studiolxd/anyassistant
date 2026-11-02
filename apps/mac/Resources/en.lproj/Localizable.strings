@@ -58,7 +58,7 @@
 "Stop" = "Turn off";
 "Stopped" = "Off";
 "Taking over from launchd…" = "Getting things ready…";
-"The server isn't answering: is it running?" = "I can't reach the assistant. Is it on?";
+"The server isn't answering: is it running?" = "The server isn't responding. Make sure AnyAssistant is running.";
 "Turn it off" = "Turn it off";
 "Turn it off?" = "Turn it off?";
 "Updating…" = "Updating…";
@@ -233,3 +233,8 @@
 "Forget This Device" = "Forget This Device";
 "Forget this device?" = "Forget this device?";
 "Done" = "Done";
+"The server isn't responding" = "The Server Isn't Responding";
+"AnyAssistant's server is stopped." = "AnyAssistant's server is stopped.";
+"Make sure AnyAssistant is running." = "Make sure AnyAssistant is running.";
+"Start the Server" = "Start the Server";
+"Try Again" = "Try Again";

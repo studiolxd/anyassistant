@@ -122,7 +122,8 @@ final class Admin: ObservableObject {
     @Published var communityOn = true  // the plugin «community» answers
     @Published var communityError: String?  // the catalog couldn't be read
     @Published var note: String?
-    @Published var error: String?
+    @Published var error: String?  // a change that couldn't be saved: at the bottom, by «Saved.»
+    @Published var unreachable = false  // the server doesn't answer: the window says so in the middle
     @Published var restartNeeded = false
 
     let server = Server.shared
@@ -146,9 +147,10 @@ final class Admin: ObservableObject {
         }
         guard let (raw, response) = try? await URLSession.shared.data(for: request),
               let answer = try? JSONSerialization.jsonObject(with: raw) as? [String: Any] else {
-            if !quiet { error = T("The server isn't answering: is it running?") }
+            if !quiet { unreachable = true }
             return nil
         }
+        unreachable = false
         if (response as? HTTPURLResponse)?.statusCode != 200 {
             if !quiet { error = answer["error"] as? String ?? T("It couldn't be saved.") }
             return nil
@@ -284,12 +286,11 @@ struct SettingsView: View {
                     }
                     .padding(10).background(.yellow.opacity(0.2))
                 }
-                if let error = admin.error {
-                    Text(error).foregroundStyle(.red).padding(8)
-                }
                 NavigationStack(path: $path) {
                     Group {
-                        if !search.trimmingCharacters(in: .whitespaces).isEmpty {
+                        if admin.unreachable {
+                            ServerUnavailable { Task { await admin.load() } }
+                        } else if !search.trimmingCharacters(in: .whitespaces).isEmpty {
                             SearchResults(admin: admin, search: search)
                         } else if section == "plugins" {
                             PluginsView(admin: admin)
@@ -303,7 +304,10 @@ struct SettingsView: View {
                         }
                     }
                 }
-                if let note = admin.note {
+                if let error = admin.error {  // what couldn't be saved, where «Saved.» goes
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption).foregroundStyle(.red).padding(6)
+                } else if let note = admin.note {
                     Text(note).font(.caption).foregroundStyle(.secondary).padding(6)
                 }
             }

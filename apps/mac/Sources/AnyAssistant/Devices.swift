@@ -21,7 +21,8 @@ struct DeviceItem: Identifiable, Equatable {
 @MainActor
 final class Devices: ObservableObject {
     @Published var items: [DeviceItem] = []
-    @Published var error: String?
+    @Published var error: String?  // a change that couldn't be saved: in the device's sheet, by its fields
+    @Published var unreachable = false  // the server doesn't answer: the window says so in the middle
     @Published var off = false  // the plugin «devices» is off (or the server is older)
     @Published var llms: [String] = []  // the LLMs a device may use
     @Published var general = "claude"  // the general one
@@ -36,9 +37,10 @@ final class Devices: ObservableObject {
             request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         }
         guard let (raw, response) = try? await URLSession.shared.data(for: request) else {
-            error = T("The server isn't answering: is it running?")
+            unreachable = true
             return nil
         }
+        unreachable = false
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         off = status == 404 && body == nil
         guard status == 200, let answer = try? JSONSerialization.jsonObject(with: raw) as? [String: Any] else {
@@ -91,10 +93,9 @@ struct DevicesView: View {
     var body: some View {
         Group {
             VStack(spacing: 0) {
-                if let error = devices.error {
-                    Text(error).foregroundStyle(.red).padding(8)
-                }
-                if devices.off {
+                if devices.unreachable {
+                    ServerUnavailable { Task { await devices.load() } }
+                } else if devices.off {
                     Text(T("Turn on the plugin «Devices» in the settings to see them here."))
                         .foregroundStyle(.secondary).padding(24)
                     Spacer()
@@ -181,8 +182,14 @@ struct DeviceDetail: View {
                 TextField(T("Name"), text: $name)
                 TextField(T("Room"), text: $room, prompt: Text(T("Not set yet")))
             } footer: {
-                Text(T("The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina»."))
-                    .font(.caption).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    if let error = devices.error {  // a name already taken…: by the fields
+                        Label(error, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
+                    }
+                    Text(T("The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina»."))
+                        .foregroundStyle(.secondary)
+                }
+                .font(.caption)
             }
             .focused($editing)
             .onSubmit { save() }

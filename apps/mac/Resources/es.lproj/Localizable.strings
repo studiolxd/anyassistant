@@ -58,7 +58,7 @@
 "Stop" = "Apagar";
 "Stopped" = "Apagado";
 "Taking over from launchd…" = "Preparándolo todo…";
-"The server isn't answering: is it running?" = "No consigo hablar con el asistente. ¿Está encendido?";
+"The server isn't answering: is it running?" = "El servidor no responde. Comprueba que AnyAssistant esté en marcha.";
 "Turn it off" = "Apagarlo";
 "Turn it off?" = "¿Seguro que quieres apagarlo?";
 "Updating…" = "Actualizando…";
@@ -233,3 +233,8 @@
 "Forget This Device" = "Olvidar este dispositivo";
 "Forget this device?" = "¿Olvidar este dispositivo?";
 "Done" = "Listo";
+"The server isn't responding" = "El servidor no responde";
+"AnyAssistant's server is stopped." = "El servidor de AnyAssistant está detenido.";
+"Make sure AnyAssistant is running." = "Comprueba que AnyAssistant esté en marcha.";
+"Start the Server" = "Iniciar el servidor";
+"Try Again" = "Reintentar";
