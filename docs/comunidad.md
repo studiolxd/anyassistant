@@ -17,9 +17,8 @@ Esta guía explica el formato del índice y cómo publicar un paquete.
 - **Temas**: la ventana «Temas» de la app del Mac y de la app de Windows y Linux (la página
   `/themes`), al final, «De la comunidad»: cada tema con su captura, instalar, actualizar y quitar.
   El tema recién instalado se muestra al momento.
-- **Plugins**: en el Mac, Ajustes → Plugins → «De la comunidad». En Windows y Linux, y desde otro
-  navegador con código de administración, la página `/admin` tiene la sección «Comunidad» con
-  temas y plugins.
+- **Plugins**: Ajustes → Plugins → «De la comunidad», en el Mac y en la administración web
+  (`/admin`, la de Windows y Linux y cualquier navegador con código de administración).
 - Lo instalado desde el catálogo queda apuntado en `community.json` (en la carpeta de datos), con
   su versión: así la app sabe qué hay instalado, cuándo hay una actualización, y qué puede quitar.
   Un tema o plugin tuyo que no venga del catálogo nunca se toca.
