@@ -5,13 +5,13 @@
 - [ ] **Hacer un modo demo para la revisión de la App Store** (el revisor no tiene tu servidor), solo si
   se publica fuera de TestFlight.
 - [ ] **Publicar la app de Android** (Google Play, o el APK firmado para instalar a mano).
-- [ ] **Publicar las versiones en GitHub Releases** con lo que lleva cada una (install.sh copia hoy el
-  checkout de git, o la copia de la app).
 - [ ] **Firmar el instalador de Windows** cuando lo instale más gente (Azure Artifact
   Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de España).
 - [ ] **Que las apps se actualicen solas** (hoy, instalar la versión nueva encima).
 - [ ] **Versión para Windows en ARM.**
 - [ ] **Versión para Raspberry Pi** (Linux en ARM).
+- [ ] **Publicar las versiones en GitHub Releases** con lo que lleva cada una (install.sh copia hoy el
+  checkout de git, o la copia de la app).
 - [ ] **Subir la app del Mac a Releases** en cada versión sin hacerlo a mano (hoy:
   `apps/mac/build.sh --release` en este Mac y `gh release upload`; en Actions haría falta el
   certificado como secreto).
@@ -20,8 +20,6 @@
 
 ## Las apps
 
-- [ ] **Probar la app de Android en un Android 8 real** (el micrófono y la cancelación de eco, Bonjour,
-  la alarma con la pantalla bloqueada, la cámara).
 - [ ] **Probar la app del Mac como cliente de otro servidor.**
 - [ ] **El Apple Watch**: usarlo fuera de casa (el servidor accesible desde fuera: Tailscale…; afecta a
   todos los dispositivos).
@@ -92,6 +90,8 @@ LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
 - [x] **El Apple Watch emparejado como el iPhone** (2 nov): el iPhone le pasa la IP del servidor, el
   certificado y el emparejamiento (el reloj no tiene Bonjour ni resuelve `.local`); sin teclado ni
   ajustes de servidor. Habla con el servidor directamente y sigue encendido mientras contesta.
+- [x] **La app de Android en un Android 8 real** (2 nov): el micrófono y la cancelación de eco,
+  Bonjour, la alarma con la pantalla bloqueada y la cámara.
 - [x] **La app en el iPhone 7** (iOS 15), desde TestFlight: funciona (2 nov).
 - [x] **Los avisos en la muñeca** (2 nov): los avisos (agenda, correo…) se guardan para los
   dispositivos que no estaban conectados y les llegan al conectarse; el reloj los pide (al abrirse, en
