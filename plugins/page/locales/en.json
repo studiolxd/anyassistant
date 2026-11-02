@@ -74,7 +74,7 @@
     "app": "Open in the app",
     "continue": "Continue in the browser",
     "connect": "Connect",
-    "wrong": "Wrong or expired code: ask for another on the server.",
+    "wrong": "The code isn't valid or has expired. Use the one the server shows now.",
     "no_code": "No code needed: this server asks for none.",
     "certificate": "First, install the certificate",
     "certificate_how": "Once per device, so the browser trusts the server (it needs that for the microphone).",
