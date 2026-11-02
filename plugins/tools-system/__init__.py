@@ -8,8 +8,6 @@ would cut off the LLM while it is still using the tool.
 """
 
 import re
-import subprocess
-import sys
 
 import i18n
 import kernel
@@ -18,18 +16,14 @@ import tools
 from tools import ToolError, tool
 
 
-def voices() -> dict[str, str]:
-    """{name: locale} of the Mac's voices, from `say -v ?` (none elsewhere, for now)."""
-    if sys.platform != "darwin":
-        return {}
-    output = subprocess.run(["say", "-v", "?"], capture_output=True, text=True).stdout
-    found = {}
-    for line in output.splitlines():
-        match = re.match(r"(.+?)\s+([a-z]{2}_[A-Z]{2})\s+#", line)
-        if match:
-            name = match.group(1).strip()
-            found[name] = found[name.split(" (")[0]] = match.group(2)  # «Mónica (Español (España))» or «Mónica»
-    return found
+def voices() -> str:
+    """The voice engine in use's voices in this language, as said and as named: «Dora (ef_dora), Alex (em_alex)»."""
+    import tts
+
+    engine = tts.engine()
+    if not engine:
+        return "-"
+    return ", ".join(v if engine.label(v) == v else f"{engine.label(v)} ({v})" for v in tts.voices()) or "-"
 
 
 @tool("Whether the device and its camera are connected, the language, the LLM, eyes and memory.")
@@ -47,20 +41,23 @@ def get_settings() -> str:
     
     return (f"name: {settings.get('name')}; theme: {settings.get('theme')} (themes: {', '.join(page.themes.available()) if (page := kernel.module('page')) else '-'}); "
             f"detail: {settings.get('detail') or 'neutral'} (levels: {', '.join(llm.detail_levels())}); "
-            f"voice: {settings.get('voice') or 'the language default'}; language: {i18n.L.code} "
+            f"voice: {settings.get('voice') or 'the language default'} (voices: {voices()}); language: {i18n.L.code} "
             f"(available: {', '.join(i18n.available())})")
 
 
-@tool("Your voice in the current language: a macOS voice name (e.g. Mónica, Samantha).", needs_yes=True)
+@tool("Your voice in the current language: one of the voice engine's (get_settings lists them: Dora, "
+      "Mónica, Claude…), by its name or the one in brackets.", needs_yes=True)
 def set_voice(voice: str) -> str:
-    found = voices()
-    if voice not in found:
-        raise ToolError(f"there is no voice «{voice}» on this Mac")
-    if not found[voice].startswith(i18n.L.code):
-        raise ToolError(f"«{voice}» speaks {found[voice]}, not {i18n.L.code}")
+    import tts
+
+    if not tts.engine():
+        raise ToolError("there is no voice engine in use")
+    found = tts.find(voice)
+    if not found:
+        raise ToolError(f"there is no voice «{voice}» in {i18n.L.code}; voices: {voices()}")
     current = settings.load().get("voice")
     current = current if isinstance(current, dict) else ({} if current is None else {i18n.L.code: current})
-    settings.save(voice={**current, i18n.L.code: voice.split(" (")[0]})
+    settings.save(voice={**current, i18n.L.code: found})
     return "Saved: it restarts with the new voice when you finish answering."
 
 

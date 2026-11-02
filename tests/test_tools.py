@@ -39,7 +39,8 @@ def test_settings_are_saved_for_after_the_answer(env):
 
 
 @mac_only  # the Mac's voices
-def test_voice_must_exist_and_speak_the_language(env):
+def test_voice_must_exist_and_speak_the_language(env, monkeypatch):
+    monkeypatch.setitem(settings.active, "tts", "avspeech")
     tools.call("set_voice", {"voice": "Mónica"})
     assert saved(env)["voice"] == {"es": "Mónica"}
     with pytest.raises(tools.ToolError):

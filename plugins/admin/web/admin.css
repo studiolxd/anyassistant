@@ -43,6 +43,7 @@ input[type=text], input[type=number], input[type=password], input[type=search], 
   font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; }
 textarea { width: 100%; min-height: 90px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
 .row .field textarea { width: 380px; max-width: 100%; }
+.row .field .stack { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 input.saved, select.saved, textarea.saved { border-color: var(--ok); }
 input.bad, textarea.bad { border-color: var(--bad); }
 button { font: inherit; border: 0; border-radius: 7px; padding: 7px 14px; background: var(--accent); color: var(--accent-text); cursor: pointer; }
