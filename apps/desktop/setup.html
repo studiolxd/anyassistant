@@ -58,6 +58,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .big { font-size: 46px; line-height: 1; }
     .ok { color: var(--ok); } .warn { color: var(--warn); }
+    .say { font-size: 24px; font-weight: 600; line-height: 1.3; max-width: 440px; margin: 14px 0 6px; }
   </style>
 </head>
 <body>
@@ -105,6 +106,32 @@
       <div class="right">
         <button id="progress-close" data-t="Close"></button>
         <button class="main" id="progress-pair" data-t="Pair your tablet or phone"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="device" class="phase centered" hidden>
+    <div class="grow"></div>
+    <div id="device-offer" class="stack">
+      <img class="icon small" src="icons/icon.png" alt="">
+      <h2 id="device-title" style="margin:6px 0 0"></h2>
+      <p class="lead" id="device-help"></p>
+    </div>
+    <div id="device-waiting" class="stack" hidden>
+      <div class="spinner"></div>
+      <p class="muted" data-t="Waiting for the server…"></p>
+    </div>
+    <div id="device-running" class="stack" hidden>
+      <h3 id="device-now"></h3>
+      <progress id="device-bar" value="0" max="1"></progress>
+      <p class="say" id="device-text"></p>
+      <p class="muted" id="device-detail"></p>
+    </div>
+    <div class="grow"></div>
+    <div class="buttons" style="width:100%">
+      <div class="right">
+        <button id="device-skip"></button>
+        <button class="main" id="device-start"></button>
       </div>
     </div>
   </div>
@@ -190,10 +217,12 @@
       } else if (data.phase === 'questions') { questions = data.questions || []; drawQuestions(); showOnly('questions'); }
       else if (data.phase === 'installing') { steps = []; total = 0; drawProgress(false, false); showOnly('progress'); }
       else if (data.phase === 'finished') { drawProgress(true, data.failed); showOnly('progress'); }
+      else if (data.phase === 'device') { drawDevice(data); showOnly('device'); }
     });
 
     setup.on('event', function (event) {
       if (event.event === 'step') { total = event.total || total; steps.push({ id: event.id, title: event.title || event.id, status: 'running', text: '' }); }
+      else if (event.event === 'device') { total = event.total || total; steps.push({ id: event.id, title: event.title || event.id, status: 'later', text: '' }); }
       else {
         var step = steps.filter(function (s) { return s.id === event.id; })[0];
         if (!step) return;
@@ -225,6 +254,27 @@
       setup.install(answers, $('start-at-login').checked);
     };
     $('progress-close').onclick = function () { setup.close(); };
+    $('device-start').onclick = function () { setup.startDevice(); };
+    $('device-skip').onclick = function () { setup.skipDevice(); };
+
+    // --- A «device» step, right after installing (your voice): its button, or «Not now»; then what to do now ---
+
+    function drawDevice(data) {
+      var step = data.step || {};
+      $('device-offer').hidden = data.stage !== 'offer';
+      $('device-waiting').hidden = data.stage !== 'waiting';
+      $('device-running').hidden = data.stage !== 'running';
+      $('device-title').textContent = step.title || '';
+      $('device-help').textContent = step.help || '';
+      $('device-now').textContent = data.title || '';
+      $('device-bar').hidden = data.fraction === null || data.fraction === undefined;
+      $('device-bar').value = data.fraction || 0;
+      $('device-text').textContent = data.text || '';
+      $('device-detail').textContent = data.detail || '';
+      $('device-start').hidden = data.stage !== 'offer';
+      $('device-start').textContent = step.action || '';
+      $('device-skip').textContent = data.stage === 'running' ? T('Cancel') : T('Not now');
+    }
     $('progress-pair').onclick = function () { setup.pairWindow(); };
 
     // --- Step by step: the installer's questions ---
@@ -283,8 +333,8 @@
     function drawSteps() {
       var box = $('steps');
       box.innerHTML = '';
-      var marks = { running: '…', done: '✓', skipped: '–', failed: '✗' };
-      var colors = { running: 'muted', done: 'ok', skipped: 'muted', failed: 'error' };
+      var marks = { running: '…', done: '✓', skipped: '–', failed: '✗', later: '◷' };
+      var colors = { running: 'muted', done: 'ok', skipped: 'muted', failed: 'error', later: 'muted' };
       steps.forEach(function (s) {
         var row = document.createElement('div');
         row.className = 'row';

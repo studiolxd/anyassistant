@@ -399,6 +399,7 @@ app.whenReady().then(async () => {
   permissions();
   setup.configure({ server, T,
     installed: () => { showTray(); server.begin(); menu(); },  // installed now: the menu, and the server runs
+    listenHere: () => (state.listening ? face(false) : showFace()),  // a «device» step (your voice): its microphone
     connected: useAnother, pair: showPair, setOpensAtLogin, quitUnlessReady: () => { if (!ready()) app.quit(); } });
   if (!ready()) return setup.open();  // not installed yet (nor using another server): no menu, the installer
   if (process.env.ANYASSISTANT_SETUP) setup.open();  // developing: the installer's window, to see it
