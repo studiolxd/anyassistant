@@ -4,7 +4,7 @@
 "Settings" = "Ajustes";
 "It needs the microphone (Settings → Privacy)." = "Necesita el micrófono (Ajustes → Privacidad).";
 "It didn't catch that." = "No te he entendido.";
-"The server isn't answering: is AnyAssistant running, and the watch on the same network?" = "El servidor no contesta: ¿está AnyAssistant en marcha y el reloj en la misma red?";
+"The server isn't answering: is AnyAssistant running, and the watch on the same network?" = "El servidor no responde. Comprueba que AnyAssistant esté en marcha y que el reloj esté en la misma red.";
 "It has to be paired again." = "Hay que volver a emparejarlo.";
 "Server" = "Servidor";
 "Address" = "Dirección";
@@ -12,4 +12,4 @@
 "Pair again" = "Emparejar de nuevo";
 "Code from the server" = "Código del servidor";
 "Server: " = "Servidor: ";
-"That code isn't right (or it expired)." = "Ese código no es correcto (o ha caducado).";
+"That code isn't right (or it expired)." = "El código no es correcto o ha caducado.";

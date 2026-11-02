@@ -4,7 +4,7 @@
 "Settings" = "Settings";
 "It needs the microphone (Settings → Privacy)." = "It needs the microphone (Settings → Privacy).";
 "It didn't catch that." = "It didn't catch that.";
-"The server isn't answering: is AnyAssistant running, and the watch on the same network?" = "The server isn't answering: is AnyAssistant running, and the watch on the same network?";
+"The server isn't answering: is AnyAssistant running, and the watch on the same network?" = "The server isn't responding. Make sure AnyAssistant is running and the watch is on the same network.";
 "It has to be paired again." = "It has to be paired again.";
 "Server" = "Server";
 "Address" = "Address";
@@ -12,4 +12,4 @@
 "Pair again" = "Pair again";
 "Code from the server" = "Code from the server";
 "Server: " = "Server: ";
-"That code isn't right (or it expired)." = "That code isn't right (or it expired).";
+"That code isn't right (or it expired)." = "The code is incorrect or has expired.";

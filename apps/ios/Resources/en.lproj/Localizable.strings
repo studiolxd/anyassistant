@@ -10,8 +10,8 @@
 "Pair again" = "Pair again";
 "Done" = "Done";
 "Pair" = "Pair";
-"That code isn't right (or it expired)." = "That code isn't right (or it expired).";
-"The server isn't answering: is AnyAssistant running and this device on the same network?" = "The server isn't answering: is AnyAssistant running and this device on the same network?";
+"That code isn't right (or it expired)." = "The code is incorrect or has expired.";
+"The server isn't answering: is AnyAssistant running and this device on the same network?" = "The server isn't responding. Make sure AnyAssistant is running and this device is on the same network.";
 "Looking for the server…" = "Looking for the server…";
 "Alarm" = "Alarm";
 "Reminder" = "Reminder";
