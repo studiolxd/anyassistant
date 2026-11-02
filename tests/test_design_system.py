@@ -1,0 +1,86 @@
+"""The design system (plugins/page/web/tokens.css): the tokens and components of the pages around
+the face (themes, the web admin, pairing, the QR page), and those pages using only them."""
+
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+WEB = ROOT / "plugins/page/web"
+TOKENS = (WEB / "tokens.css").read_text()
+PAGES = {
+    "themes": ROOT / "plugins/themes/themes.html",
+    "admin": ROOT / "plugins/admin/web/index.html",
+    "device": WEB / "index.html",
+    "connect": WEB / "connect.html",
+}
+STYLESHEETS = [ROOT / "plugins/themes/themes.css", ROOT / "plugins/admin/web/admin.css"]
+
+
+def without_comments(css: str) -> str:
+    return re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+
+def declared(block: str) -> dict[str, str]:
+    return dict(re.findall(r"(--[a-z0-9-]+)\s*:\s*([^;]+);", block))
+
+
+def test_the_tokens_are_there_dark_and_light():
+    dark_block, light_block = without_comments(TOKENS).split("@media (prefers-color-scheme: light)")[:2]
+    dark, light = declared(dark_block), declared(light_block.split(".ui")[0])
+    assert dark["--color-primary"] == "#34AFF7" and light["--color-primary"] == "#0A8FD8"
+    colours = ["primary", "primary-text", "background", "surface", "surface-raised", "border", "text",
+               "text-secondary", "success", "warning", "danger"]
+    assert all(f"--color-{c}" in dark and f"--color-{c}" in light for c in colours)
+    others = ["--font-family", "--font-mono", "--weight-regular", "--weight-medium", "--weight-semibold",
+              "--shadow", "--duration", "--easing", "--content-width"]
+    others += [f"--text-{s}" for s in ("xs", "sm", "md", "lg", "xl", "2xl", "code")]
+    others += [f"--space-{n}" for n in range(1, 9)] + [f"--radius-{r}" for r in ("sm", "md", "lg", "full")]
+    assert all(name in dark for name in others), [n for n in others if n not in dark]
+    assert [dark[f"--space-{n}"] for n in range(1, 9)] == ["4px", "8px", "12px", "16px", "20px", "24px", "32px", "48px"]
+
+
+def test_the_components_apply_only_inside_ui():
+    """The device's page also shows a theme (someone else's HTML): .card, .row… must stay its own."""
+    components = without_comments(TOKENS).split("@media (prefers-color-scheme: light)")[1]
+    components = components[components.index("}", components.index("}") + 1) + 1:]  # after the light block
+    selectors = re.findall(r"([^{}]+)\{", components)
+    assert selectors
+    for group in selectors:
+        for selector in group.split(","):
+            assert selector.strip().startswith(".ui"), selector
+    for name in ("button", "secondary", "danger", "link", "field", "card", "row", "segmented", "badge", "header"):
+        assert f".{name}" in components, name
+
+
+def test_every_page_links_the_tokens_first():
+    for name, page in PAGES.items():
+        html = page.read_text()
+        sheets = re.findall(r'<link rel="stylesheet" href="([^"]+)"', html)
+        assert sheets and re.fullmatch(r"/web/tokens\.css\?v=\d+", sheets[0]), name
+        assert html.index(sheets[0]) < (html.index("<style>") if "<style>" in html else len(html)), name
+
+
+def test_the_logo_is_on_every_page():
+    for name, page in PAGES.items():
+        html = page.read_text()
+        assert re.search(r'<img class="logo( large)?" src="/web/favicon.png"', html), name
+    assert 'class="ui"' in PAGES["device"].read_text()  # the pairing form, not the theme's screen
+
+
+def test_the_pages_use_tokens_not_their_own_colours():
+    """Only the face's black (behind a view of it, a screenshot) and the QR's and the switch's white."""
+    connect = re.search(r"<style>(.*)</style>", PAGES["connect"].read_text(), re.S).group(1)
+    system = (WEB / "system.css").read_text()
+    pairing = system[system.index("#start {"):system.index("/* Settings show_time")]
+    for css in [p.read_text() for p in STYLESHEETS] + [connect, pairing]:
+        colours = set(re.findall(r"#[0-9a-fA-F]{3,8}\b|rgba?\(", without_comments(css)))
+        assert colours <= {"#000", "#fff"}, colours
+
+
+def test_old_chrome_can_read_what_the_device_page_loads():
+    """Chrome 81 (the oldest tablets) has no `inset` and no flex `gap`."""
+    for css in (TOKENS, (WEB / "system.css").read_text()):
+        css = without_comments(css)
+        assert not re.search(r"(^|[;{\s])inset\s*:", css)
+        assert not re.search(r"(^|[;{\s])gap\s*:", css)
+        assert "color-mix" not in css
