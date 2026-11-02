@@ -233,7 +233,9 @@ function community() {
     if (p.screenshot) {
       var img = document.createElement('img');
       img.src = '/admin/community/image?kind=theme&id=' + encodeURIComponent(p.id);
-      img.alt = '';
+      img.alt = p.name;
+      img.className = 'zoomable';
+      img.onclick = function () { enlarge(img.src, p.name); };
       made.appendChild(img);
     }
     var about = document.createElement('div');
@@ -241,11 +243,12 @@ function community() {
     var title = document.createElement('b');
     title.textContent = p.name;
     about.appendChild(title);
-    if (p.installed) {
-      var state = document.createElement('span');
-      state.className = 'badge ' + (p.update ? 'warning' : 'success');
-      state.textContent = p.update ? T('update available') : p.installed;  // its version
-      about.appendChild(state);
+    if (p.installed) {  // the version you have; with a newer one, «1.0.0 → 1.1.0»
+      var version = document.createElement('span');
+      version.className = 'badge ' + (p.update ? 'warning' : 'success');
+      version.textContent = p.update ? p.installed + ' → ' + p.version : p.installed;
+      if (p.update) version.title = T('update available');
+      about.appendChild(version);
     }
     var meta = document.createElement('div');
     meta.className = 'muted';
@@ -295,4 +298,27 @@ function community() {
     }
     return made;
   }
+}
+
+// A screenshot, large (the design system's lightbox): a tap, Esc or ✕ closes it.
+function enlarge(src, name) {
+  var box = document.createElement('div');
+  box.className = 'lightbox';
+  var img = document.createElement('img');
+  img.src = src;
+  img.alt = name;
+  var close = document.createElement('button');
+  close.className = 'button secondary close';
+  close.textContent = '✕';
+  close.setAttribute('aria-label', T('Close'));
+  box.appendChild(img);
+  box.appendChild(close);
+  var done = function () {
+    document.removeEventListener('keydown', esc);
+    box.remove();
+  };
+  var esc = function (ev) { if (ev.key === 'Escape') done(); };
+  box.onclick = done;
+  document.addEventListener('keydown', esc);
+  document.body.appendChild(box);
 }

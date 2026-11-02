@@ -131,7 +131,7 @@ Un paquete se añade **por pull request** al repositorio del catálogo. **Cada p
 antes de aceptarlo**: se lee su código entero (un plugin se ejecuta en el equipo de quien lo
 instala), se comprueba que un tema pasa la revisión del servidor, y que los SHA-256 del índice
 corresponden a los archivos. Un cambio en un paquete ya publicado es otra pull request, con la
-versión subida y los SHA-256 nuevos; así, quien lo tenga instalado ve «hay una actualización».
+versión subida y los SHA-256 nuevos; así, quien lo tenga instalado ve «Actualización disponible».
 
 1. **Haz el tema o el plugin** como uno propio (README: «Themes», «Plugins») y pruébalo en tu
    AnyAssistant. Pon en `theme.json` o `plugin.json` su `name`, `author`, `version` y

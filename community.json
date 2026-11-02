@@ -4,8 +4,8 @@
       "kind": "theme",
       "id": "orb",
       "name": "Orb",
-      "version": "1.0.0",
-      "installed": 1793630328.7705421,
+      "version": "1.1.0",
+      "installed": 1793631389.4120479,
       "files": [
         "locales/es.json",
         "preview.png",
@@ -28,6 +28,39 @@
         "theme.html",
         "theme.json"
       ]
+    },
+    "theme:bedside": {
+      "kind": "theme",
+      "id": "bedside",
+      "name": "Bedside",
+      "version": "1.0.0",
+      "installed": 1793631398.1349618,
+      "files": [
+        "locales/es.json",
+        "preview.png",
+        "sounds/alarm.wav",
+        "sounds/sleep.wav",
+        "sounds/wake.wav",
+        "theme.css",
+        "theme.html",
+        "theme.json"
+      ]
     }
+  },
+  "announced": {
+    "theme:orb": "1.1.0"
+  },
+  "notice": {
+    "id": 1793631372,
+    "time": 1793631372.265711,
+    "updates": [
+      {
+        "kind": "theme",
+        "id": "orb",
+        "name": "Orb",
+        "from": "1.0.0",
+        "to": "1.1.0"
+      }
+    ]
   }
 }
