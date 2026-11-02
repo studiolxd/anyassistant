@@ -188,10 +188,11 @@ async def no_cache(request: web.Request, handler):
     response.headers["Cache-Control"] = "no-store"
     if request.path in ("/", "/themes"):
         # Themes are someone else's HTML and CSS on a page with the microphone and the camera:
-        # nothing from outside, and no scripts but Jarvis's own.
+        # nothing from outside, and no scripts but Jarvis's own. Media from data: (NoSleep.js
+        # carries its silent video so: it keeps the screen on), still nothing from outside.
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' blob: data:; media-src 'self' blob: mediastream:; font-src 'self'; "
+            "img-src 'self' blob: data:; media-src 'self' blob: data: mediastream:; font-src 'self'; "
             "connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'")
     response.force_close()
     return response
