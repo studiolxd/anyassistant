@@ -87,10 +87,10 @@ def test_a_wrong_or_expired_code_shows_the_form_again_with_the_reason(pairing):
     code = pairing.new_code()
     wrong = "000000" if code != "000000" else "111111"
     answer = post(form={"code": wrong})
-    assert answer.status == 200 and "Wrong or expired" in answer.text and "<form" in answer.text
+    assert answer.status == 200 and "has expired" in answer.text and "<form" in answer.text
     assert pairing.COOKIE not in answer.cookies
     pairing._code["until"] = time.time() - 1
-    assert "Wrong or expired" in post(form={"code": code}).text
+    assert "has expired" in post(form={"code": code}).text
 
 
 def test_the_qr_opened_on_a_phone_offers_the_app_with_the_code_or_the_browser(pairing):
