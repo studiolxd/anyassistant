@@ -45,10 +45,13 @@ class Speaker(MediaStreamTrack):
     def speaking(self) -> bool:
         return len(self._queue) > 0
 
-    def play(self, pcm: np.ndarray):
+    def play(self, pcm: np.ndarray) -> float:
+        """Queues it; returns when it starts playing (after what is queued)."""
         pcm = pcm.astype(np.int16)
-        self.trail.add(pcm, time.time() + len(self._queue) / RATE)  # it plays after what is queued
+        starts = time.time() + len(self._queue) / RATE
+        self.trail.add(pcm, starts)
         self._queue = np.concatenate([self._queue, pcm])
+        return starts
 
     def stop(self):
         self._queue = np.zeros(0, dtype=np.int16)

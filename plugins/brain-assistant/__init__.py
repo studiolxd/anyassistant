@@ -5,6 +5,10 @@ it falls asleep. The answer reaches the screen in pieces as it is generated
 ("text" messages with the same id and partial=True until the last one), and as
 soon as a sentence is complete it is synthesized and played while the next one
 arrives. While it speaks it doesn't listen; tapping the screen stops it.
+
+The screen follows the voice: when a sentence starts playing on the device (its speaker's
+play() says when: after what was already queued), {"type": "speaking", "id", "start", "end"}
+tells it which characters of the answer's text it is saying, so the captions scroll to them.
 """
 
 import asyncio
@@ -179,7 +183,9 @@ class Assistant(Transcriber):
         # overwrite an old one the page still shows with the same id.
         self.number = int(time.time() * 1000)
         self.cut = 0  # number of the answer that was told to stop
-        self.sentences = asyncio.Queue()  # (number, sentence); sentence None = end of answer
+        # (number, sentence[, where]); sentence None = end of answer; where: the sentence's first
+        # character in the answer's text, for the screen («speaking»)
+        self.sentences = asyncio.Queue()
         if tts:
             asyncio.ensure_future(self._mouth())
 
@@ -406,7 +412,7 @@ class Assistant(Transcriber):
         self.number += 1
         self.send({"type": "text", "author": "assistant", "id": self.number, "text": text, "partial": False})
         if self.tts:
-            self.sentences.put_nowait((self.number, text))
+            self.sentences.put_nowait((self.number, text, 0))
             self.sentences.put_nowait((self.number, None))
         else:
             self._state(self._idle_state())
@@ -458,6 +464,7 @@ class Assistant(Transcriber):
             start = time.time()
             first = None
             answer = rest = ""
+            said = 0  # where in the answer the next sentence is looked for (its place, for the screen)
             # Even if cut off, the whole answer is read: the plugin has to finish it.
             quiet = settings.get("ignore_others", True) is not False
             held = ""  # the start of the answer, until it is clear it isn't SILENCE
@@ -475,7 +482,7 @@ class Assistant(Transcriber):
                 if self.tts:
                     sentences, rest = split(rest + piece)
                     for sentence in sentences:
-                        self.sentences.put_nowait((number, sentence))
+                        said = self._queue(number, sentence, answer, said)
             if quiet and held is not None and held.strip().startswith(SILENCE):
                 log.info("not for it: no answer")
                 if self.transcript and self.transcript[-1][0] == "user":
@@ -488,7 +495,7 @@ class Assistant(Transcriber):
                 rest += held
             if self.tts:
                 if rest.strip():
-                    self.sentences.put_nowait((number, rest.strip()))
+                    self._queue(number, rest.strip(), answer, said)
                 self.sentences.put_nowait((number, None))
             timings = {
                 "llm_first_ms": round((first or 0) * 1000),
@@ -501,6 +508,33 @@ class Assistant(Transcriber):
             if not self.tts and self.cut != number:
                 self._state(self._idle_state())
             await self._apply_settings()
+
+    def _queue(self, number: int, sentence: str, answer: str, after: int) -> int:
+        """A sentence to say, with where it is in the answer (from `after` on); returns where the
+        next one is looked for."""
+        at = answer.find(sentence, after)
+        if at < 0:
+            self.sentences.put_nowait((number, sentence))
+            return after
+        self.sentences.put_nowait((number, sentence, at))
+        return at + len(sentence)
+
+    def _speaking(self, number: int, sentence: str, at, starts):
+        """The screen follows the voice: when this sentence starts playing on the device (`starts`,
+        what its speaker's play() said; now if it can't tell), which characters of the answer it is."""
+        if at is None:
+            return
+        message = {"type": "speaking", "id": number, "start": at, "end": at + len(sentence)}
+
+        def tell():
+            if number != self.cut:  # stopped meanwhile: it won't be said
+                self.send(message)
+
+        wait = starts - time.time() if isinstance(starts, (int, float)) else 0
+        if wait > 0.01:
+            asyncio.get_running_loop().call_later(wait, tell)
+        else:
+            tell()
 
     async def _apply_settings(self):
         """After an answer (in which the LLM may have used its own tools): what changed in
@@ -571,7 +605,7 @@ class Assistant(Transcriber):
         """Says the sentences in order as they arrive; synthesizes one while the previous plays."""
         loop = asyncio.get_running_loop()
         while True:
-            number, sentence = await self.sentences.get()
+            number, sentence, *where = await self.sentences.get()
             if number == self.cut:
                 continue
             if sentence is None:  # end of the answer: wait until it finishes playing
@@ -587,6 +621,7 @@ class Assistant(Transcriber):
             if not self.speaker.speaking:
                 self._state("speaking")
             self.saying += words(sentence)
-            self.speaker.play(normalize(pcm, 0.95 * volume()))
+            starts = self.speaker.play(normalize(pcm, 0.95 * volume()))
+            self._speaking(number, sentence, where[0] if where else None, starts)
             asyncio.ensure_future(self._still_thinking(number))
             log.info("voice «%s» (%d ms)", settings.private(sentence), (time.time() - start) * 1000)

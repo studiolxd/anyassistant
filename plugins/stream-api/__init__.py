@@ -10,6 +10,8 @@ the page (its id, name and room, its conversation, alarms and «dile a la cocina
         and its own:
         ← {"type": "hello", "eyes": true}: on connecting; whether it may use its camera
         ← {"type": "hush"}: stop playing what is left (it was interrupted)
+        ← {"type": "speaking", "id", "start", "end"}: the sentence that starts playing now
+          (characters of the answer «text» with that id): the captions follow it
         → {"type": "log", "text": "…"}: a line for this log (what happens inside the app)
         → {"type": "frame", "jpeg": "<base64>"}: what its camera sees (about once a second
           while awake), for «¿qué ves?»; a full-resolution photo goes to POST /photo (eyes)
@@ -101,13 +103,15 @@ class Voice:
         return min(time.time(), self.until)
 
     def play(self, pcm):
+        """Sends it; returns when the device starts playing it (after what it already has)."""
         pcm = np.asarray(pcm, np.int16)
         if not len(pcm) or self.socket.closed:
-            return
+            return None
         start = max(time.time(), self.until)
         self.trail.add(pcm, start)
         self.until = start + len(pcm) / RATE
         _soon(self.socket.send_bytes(pcm.tobytes()))
+        return start
 
     def stop(self):
         # Always: what the device still has queued may outlast the estimate (its own buffering).
