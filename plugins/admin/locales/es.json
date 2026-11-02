@@ -138,17 +138,11 @@
     "by": "de",
     "version": "versión",
     "Admins": "Administradores",
-    "The browsers that may change all this, besides this computer itself. A device paired to talk can't.": "Los navegadores que pueden cambiar todo esto, además de este mismo equipo. Un dispositivo emparejado para hablar no puede.",
     "Only this computer.": "Solo este equipo.",
     "this browser": "este navegador",
     "since": "desde hace",
     "Log out": "Cerrar sesión",
     "Revoke": "Revocar",
-    "A code for another browser": "Un código para otro navegador",
-    "Make a code": "Crear un código",
-    "On the other computer or phone, open": "En el otro equipo o móvil, abre",
-    "and type": "y escribe",
-    "Valid for 5 minutes, for one browser.": "Vale 5 minutos, para un navegador.",
     "Search": "Buscar",
     "General": "General",
     "Restart the server now?": "¿Reiniciar el servidor ahora?",
@@ -192,8 +186,11 @@
     "Community themes": "Temas de la comunidad",
     "Uninstall": "Desinstalar",
     "Uninstall «%s»?": "¿Desinstalar «%s»?",
-    "Type the admin code the server shows in Admins → «A code for another browser», or in its terminal with bin/anyassistant admin-code.": "Escribe el código de administración que muestra el servidor en Administradores → «Un código para otro navegador», o en su terminal con bin/anyassistant admin-code.",
     "Admin code": "Código de administración",
-    "The code isn't valid or has expired. Use the one the server shows now.": "El código no es válido o ha caducado. Usa el que muestra ahora el servidor."
+    "The code isn't valid or has expired. Use the one the server shows now.": "El código no es válido o ha caducado. Usa el que muestra ahora el servidor.",
+    "Administer from another browser": "Administrar desde otro navegador",
+    "Scan the code with the other computer's or phone's camera: it opens the administration with the code.": "Escanea el código con la cámara del otro equipo o móvil: abre la administración con el código puesto.",
+    "Or open %s in the other browser and type the code.": "O abre %s en el otro navegador y escribe el código.",
+    "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.": "Escribe el código de administración que muestra el servidor en Administradores → «Administrar desde otro navegador», o en su terminal con bin/anyassistant admin-code."
   }
 }

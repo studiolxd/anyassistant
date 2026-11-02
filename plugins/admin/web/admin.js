@@ -137,7 +137,7 @@ function showLogin() {
   var box = $('#login');
   box.hidden = false;
   $('h1', box).textContent = T('Administer AnyAssistant');
-  $('.description', box).textContent = T('Type the admin code the server shows in Admins → «A code for another browser», or in its terminal with bin/anyassistant admin-code.');
+  $('.description', box).textContent = T('Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.');
   $('label', box).textContent = T('Admin code');
   $('button', box).textContent = T('Enter');
   $('form', box).onsubmit = function (e) {
@@ -145,11 +145,17 @@ function showLogin() {
     fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ code: $('input', box).value }) })
       .then(function (r) {
-        if (r.ok) location.reload();
+        if (r.ok) location.replace(location.pathname);  // in, without the code in the address
         else $('.error', box).textContent = T('The code isn\'t valid or has expired. Use the one the server shows now.');
       });
   };
   $('input', box).focus();
+  // The QR from «Administrar desde otro navegador» brings the code (?code=…): in, nothing to type.
+  var given = new URLSearchParams(location.search).get('code');
+  if (given) {
+    $('input', box).value = given;
+    $('form', box).onsubmit(new Event('submit'));
+  }
 }
 
 // --- The sections ---
@@ -935,7 +941,6 @@ function packageRow(p, reload) {
 
 function adminsPage(main) {
   main.appendChild(el('h1', { text: T('Admins') }));
-  main.appendChild(el('p', { class: 'lead', text: T('The browsers that may change all this, besides this computer itself. A device paired to talk can\'t.') }));
   var box = el('div', { class: 'card' });
   main.appendChild(box);
   function draw(data) {
@@ -954,19 +959,30 @@ function adminsPage(main) {
     });
   }
   api('GET', '/admin/admins').then(draw).catch(function () {});
-  main.appendChild(el('h2', { text: T('A code for another browser') }));
-  var shown = el('div');
-  main.appendChild(el('div', { class: 'card' }, [el('div', { class: 'padded' }, [
-    el('button', { text: T('Make a code'), onclick: function () {
-      api('POST', '/admin/code').then(function (r) {
-        shown.innerHTML = '';
-        shown.appendChild(el('p', { text: T('On the other computer or phone, open') }));
-        shown.appendChild(el('p', { class: 'mono', text: location.origin.replace('127.0.0.1', 'anyassistant.local').replace('localhost', 'anyassistant.local') + '/admin' }));
-        shown.appendChild(el('p', { text: T('and type') }));
-        shown.appendChild(el('div', { class: 'code', text: r.code }));
-        shown.appendChild(el('p', { class: 'muted', text: T('Valid for 5 minutes, for one browser.') }));
-      });
-    } }), shown])]));
+  // Another browser: a code at once, as «Conectar otro dispositivo» (a QR that brings it, the code
+  // big, the address to type it by hand; «Otro código» for a new one).
+  main.appendChild(el('h2', { text: T('Administer from another browser') }));
+  var card = el('div', { class: 'card' });
+  main.appendChild(card);
+  function make() {
+    Promise.all([api('POST', '/admin/code'), api('GET', '/admin/status')]).then(function (found) {
+      var code = found[0].code, status = found[1];
+      var address = status.address || location.hostname;
+      var url = 'http://' + address + ':' + status.port + '/admin?code=' + code;
+      card.innerHTML = '';
+      card.appendChild(el('div', { class: 'pair' }, [
+        el('img', { src: '/admin/qr?text=' + encodeURIComponent(url), alt: url }),
+        el('div', { class: 'grow' }, [
+          el('p', { text: T('Scan the code with the other computer\'s or phone\'s camera: it opens the administration with the code.') }),
+          el('h2', { text: T('Admin code') }), el('div', { class: 'code', text: code }),
+          el('p', { class: 'muted' }, [T('Valid for 5 minutes') + ' · ',
+            el('a', { href: '#admins', text: T('Another code'), onclick: function (e) { e.preventDefault(); make(); } })])
+        ])
+      ]));
+      card.appendChild(el('p', { class: 'muted' }, [T('Or open %s in the other browser and type the code.').replace('%s', (status.local || 'http://anyassistant.local:' + status.port) + '/admin')]));
+    });
+  }
+  make();
 }
 
 // --- The sidebar: the search on top; the sections, as the Mac's windows ---

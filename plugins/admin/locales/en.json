@@ -132,17 +132,11 @@
     "by": "by",
     "version": "version",
     "Admins": "Admins",
-    "The browsers that may change all this, besides this computer itself. A device paired to talk can't.": "The browsers that may change all this, besides this computer itself. A device paired to talk can't.",
     "Only this computer.": "Only this computer.",
     "this browser": "this browser",
     "since": "since",
     "Log out": "Log out",
     "Revoke": "Revoke",
-    "A code for another browser": "A code for another browser",
-    "Make a code": "Make a code",
-    "On the other computer or phone, open": "On the other computer or phone, open",
-    "and type": "and type",
-    "Valid for 5 minutes, for one browser.": "Valid for 5 minutes, for one browser.",
     "Search": "Search",
     "General": "General",
     "Restart the server now?": "Restart the server now?",
@@ -186,8 +180,11 @@
     "Community themes": "Community themes",
     "Uninstall": "Uninstall",
     "Uninstall «%s»?": "Uninstall «%s»?",
-    "Type the admin code the server shows in Admins → «A code for another browser», or in its terminal with bin/anyassistant admin-code.": "Type the admin code the server shows in Admins → «A code for another browser», or in its terminal with bin/anyassistant admin-code.",
     "Admin code": "Admin code",
-    "The code isn't valid or has expired. Use the one the server shows now.": "The code isn't valid or has expired. Use the one the server shows now."
+    "The code isn't valid or has expired. Use the one the server shows now.": "The code isn't valid or has expired. Use the one the server shows now.",
+    "Administer from another browser": "Administer from another browser",
+    "Scan the code with the other computer's or phone's camera: it opens the administration with the code.": "Scan the code with the other computer's or phone's camera: it opens the administration with the code.",
+    "Or open %s in the other browser and type the code.": "Or open %s in the other browser and type the code.",
+    "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.": "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code."
   }
 }
