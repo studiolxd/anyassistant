@@ -1,6 +1,9 @@
-# The Windows and Linux app's packages (apps/desktop): the installer (.exe, unsigned) and the
-# AppImage and .deb. By hand (Actions → packages → Run), or with a tag (git tag v0.1.0 && git push
-# --tags): then they also become a GitHub release.
+# A version's release (apps/release.sh v0.2.0 pushes its tag, then adds the Mac's .dmg): the
+# Windows and Linux app's packages (apps/desktop: the installer, unsigned; the AppImage and the
+# .deb) with the version of the tag, and what their updater reads (latest.yml, latest-linux.yml);
+# the program alone (AnyAssistant-program.tar.gz, for install.sh without a copy) and install.sh;
+# and its notes, docs/versiones/<tag>.md (else the commits since the last version).
+# By hand (Actions → packages → Run): only the packages, as a test, no release.
 name: packages
 on:
   workflow_dispatch:
@@ -26,27 +29,60 @@ jobs:
         with:
           node-version: 24
       - run: npm ci --no-audit --no-fund
+      - name: The tag's version (v0.2.0 → 0.2.0)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
       - run: npm run dist
       - uses: actions/upload-artifact@v5
         with:
           name: anyassistant-${{ matrix.os }}
           path: |
             apps/desktop/dist/*.exe
+            apps/desktop/dist/*.exe.blockmap
             apps/desktop/dist/*.AppImage
             apps/desktop/dist/*.deb
+            apps/desktop/dist/latest*.yml
+          if-no-files-found: error
+  program:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - run: node apps/desktop/scripts/prepare.js --program-only
+      - run: |
+          mkdir packages
+          tar -czf packages/AnyAssistant-program.tar.gz -C apps/desktop/build program
+          cp install.sh packages/
+      - uses: actions/upload-artifact@v5
+        with:
+          name: anyassistant-program
+          path: packages/*
           if-no-files-found: error
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [build, program]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v5
         with:
           path: packages
           merge-multiple: true
+      - name: Its notes
+        run: |
+          NOTES="docs/versiones/$GITHUB_REF_NAME.md"
+          if [ ! -f "$NOTES" ]; then
+            PREVIOUS="$(git describe --tags --abbrev=0 --match 'v*' "$GITHUB_REF_NAME^" 2>/dev/null || true)"
+            { echo "## Changes"; git log --format='- %s' ${PREVIOUS:+$PREVIOUS..}"$GITHUB_REF_NAME"; } > notes.md
+            NOTES=notes.md
+          fi
+          echo "NOTES=$NOTES" >> "$GITHUB_ENV"
       - run: |
           gh release create "$GITHUB_REF_NAME" packages/* --repo "$GITHUB_REPOSITORY" \
-            --title "AnyAssistant $GITHUB_REF_NAME" \
-            --notes "Windows (unsigned: «More info» → «Run anyway» the first time) and Linux (AppImage, .deb). The Mac app and the phone apps are separate."
+            --title "AnyAssistant $GITHUB_REF_NAME" --notes-file "$NOTES"
         env:
           GH_TOKEN: ${{ github.token }}

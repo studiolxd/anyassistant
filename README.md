@@ -19,10 +19,23 @@ cancellation) over the local network.
 
 ## Installing
 
+The apps are in the [releases](https://github.com/studiolxd/anyassistant/releases): the Mac's
+`.dmg`, Windows' installer and Linux's AppImage or `.deb`, each with the server inside. Without an
+app (a Linux server with no screen), one line brings the latest version's program and installs it:
+
+```sh
+curl -fsSL https://github.com/studiolxd/anyassistant/releases/latest/download/install.sh | sh
+```
+
+From a copy of this repository:
+
 ```sh
 ./install.sh              # asks each step; Enter keeps what comes
 ./install.sh --defaults   # everything as it comes
 ```
+
+Publishing a version (from the Mac): its notes in `docs/versiones/v0.2.0.md`, then
+`apps/release.sh v0.2.0`.
 
 It copies the program to `~/Applications/AnyAssistant`, gets its own Python (uv,
 no administrator rights), keeps your data in `~/Library/Application Support/AnyAssistant`

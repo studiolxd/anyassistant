@@ -81,7 +81,14 @@
         "libxss1",
         "libasound2t64 | libasound2"
       ]
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "studiolxd",
+        "repo": "anyassistant"
+      }
+    ]
   },
   "allowScripts": {
     "electron-winstaller": false

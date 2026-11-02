@@ -6,6 +6,7 @@
 #                                one (the same app for macOS each time: its Local Network permission
 #                                stays), not notarized (not needed for a build opened on this Mac)
 #   apps/mac/build.sh --release  to share it: signed and notarized by Apple (a few minutes)
+#   RELEASE_VERSION=0.2.0        the version it shows (apps/release.sh: the tag's); else the last tag's
 #   SIGN="…" NOTARY=…            another identity, or another notarytool profile
 #                                (made once with `xcrun notarytool store-credentials anyassistant`)
 set -e
@@ -20,6 +21,9 @@ ROOT="$(cd "$HERE/../.." && pwd)"
 OUT="$HERE/build"
 APP="$OUT/AnyAssistant.app"
 VERSION="$(git -C "$ROOT" rev-list --count HEAD)-$(git -C "$ROOT" rev-parse --short HEAD)"  # as install.sh
+# The version people see (0.2.0): the release's, or the last one published before this build.
+SHORT="${RELEASE_VERSION:-$(git -C "$ROOT" describe --tags --abbrev=0 --match 'v*' 2>/dev/null | sed 's/^v//')}"
+SHORT="${SHORT:-0.1.0}"
 
 echo "Building the app…"
 (cd "$HERE" && swift build -c release --quiet)
@@ -38,7 +42,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleExecutable</key><string>AnyAssistant</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1</string>
+  <key>CFBundleShortVersionString</key><string>$SHORT</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>

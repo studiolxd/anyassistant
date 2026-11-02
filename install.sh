@@ -3,6 +3,8 @@
 # steps of bin/anyassistant setup (language, name, LLM, models, starting with the Mac…).
 #
 #   ./install.sh                   asks each step (Enter keeps what comes)
+#   curl -fsSL https://github.com/studiolxd/anyassistant/releases/latest/download/install.sh | sh
+#                                  without a copy: the program comes from the latest release
 #   ./install.sh --defaults        everything as it comes, no questions
 #   ./install.sh --json …          for the app's window (one JSON event per line)
 #   --to <folder>                  where the program goes (default ~/Applications/AnyAssistant;
@@ -29,6 +31,18 @@ case "$(uname)" in
     CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/AnyAssistant" ;;
   *) echo "This installer is for macOS and Linux (on Windows, the AnyAssistant app)."; exit 1 ;;
 esac
+
+# On its own (curl … | sh, or this file alone): the program comes from the latest release (its
+# AnyAssistant-program.tar.gz: the server's files and its VERSION), and that copy installs it.
+if [ ! -f "$SOURCE/server/main.py" ]; then
+  RELEASE="${ANYASSISTANT_RELEASE:-https://github.com/studiolxd/anyassistant/releases/latest/download}"
+  FETCHED="$(mktemp -d)"
+  echo "Downloading AnyAssistant…"
+  curl -fsSL -o "$FETCHED/program.tar.gz" "$RELEASE/AnyAssistant-program.tar.gz" \
+    || { echo "It couldn't download AnyAssistant ($RELEASE/AnyAssistant-program.tar.gz)."; exit 1; }
+  tar -xzf "$FETCHED/program.tar.gz" -C "$FETCHED"
+  exec sh "$FETCHED/program/install.sh" "$@"
+fi
 PASS=""
 UPDATE=0
 SETUP=1

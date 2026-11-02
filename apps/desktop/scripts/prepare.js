@@ -2,6 +2,7 @@
 //   build/program   the server (the committed files it needs, and VERSION «<commits>-<hash>»)
 //   build/uv        uv for this system (Python and the packages, the first time it runs)
 // Run on the system it packages for (GitHub Actions: Windows and Linux).
+//   --program-only  only build/program: the release's AnyAssistant-program.tar.gz (install.sh without a copy)
 
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -27,6 +28,10 @@ execFileSync('tar', ['-xf', tar, '-C', path.join(build, 'program')]);
 fs.rmSync(tar);
 const version = `${git('rev-list', '--count', 'HEAD')}-${git('rev-parse', '--short', 'HEAD')}`;
 fs.writeFileSync(path.join(build, 'program', 'VERSION'), version + '\n');
+if (process.argv.includes('--program-only')) {
+  console.log(`program ${version}`);
+  process.exit(0);
+}
 
 // uv for this system.
 const arch = os.arch() === 'arm64' ? 'aarch64' : 'x86_64';
