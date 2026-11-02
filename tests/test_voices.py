@@ -446,13 +446,18 @@ class Session:
         self.pc = type("PC", (), {"connectionState": "connected"})()
 
 
-def test_the_installer_registers_the_voice_on_this_computer(monkeypatch, es):
+def test_the_installer_registers_the_voice_on_this_computer(monkeypatch, tmp_path, es):
     """The installer's «Your voice» (a device step), through /setup/device/voice: started on this
     computer's own device (not a tablet), followed, cancelled."""
+    import sys
+
     import hub
+    import installer
     import web
     from test_admin_web import request
 
+    voices = sys.modules[installer.STEPS["voice"].function.__module__]  # the plugin as loaded last
+    monkeypatch.setattr(voices, "FILE", tmp_path / "voices.json")
     monkeypatch.setattr(voices, "progress", {})
     here, tablet = Assistant(), Assistant()
     monkeypatch.setattr(hub, "sessions", {"mac1": Session("mac1", "127.0.0.1", here),
