@@ -39,7 +39,8 @@ without anyone logging in: a server with no screen). Bonjour comes from Python's
 passwords go to the Secret Service (keyring), and PyTorch is the CPU one. Its own engines there:
 speech recognition with Parakeet v3 in ONNX (`stt-parakeet-onnx`, on the CPU, with Whisper as its
 fallback) or Whisper (`stt-faster-whisper`, CPU or an NVIDIA card), the voice Kokoro
-(`tts-kokoro`: ef_dora in Spanish, af_heart in English), the wake word with faster-whisper.
+(`tts-kokoro`: ef_dora in Spanish, af_heart in English) or the lighter Piper (`tts-piper`, for a
+Raspberry Pi), the wake word with faster-whisper.
 **Windows** for now runs from the project (`uv run server/main.py`); its app comes later. Apple's
 model is only on the Mac; how each piece was made, in `docs/windows-y-linux.md`.
 
@@ -198,7 +199,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `stt` | `"parakeet"` | speech recognition: parakeet, mlx-whisper… *(restarts)* |
 | `stt_model` | — | its model *(restarts)* |
 | `stt_unload_minutes` | `30` | minutes without transcribing before the speech recognition model leaves memory (0: never); it comes back when needed |
-| `tts` | `"avspeech"` | its voice engine: avspeech, macos… or none *(restarts)* |
+| `tts` | `"avspeech"` | its voice engine: avspeech, macos, kokoro, piper… or none *(restarts)* |
 | `voice` | — | the voice (default: the language's); one, or one per language: {"es": "Mónica", "en": "Samantha"} *(restarts)* |
 | `rate` | — | words per minute *(restarts)* |
 | `volume` | `100` | its voice and sounds, 5–100 % |
@@ -1111,20 +1112,30 @@ Windows' microphone consent store, PipeWire or PulseAudio). The face shows «En 
 micrófono» (drawn as asleep), its name doesn't wake it, the follow-up clock stops, and it listens
 again when the other app lets go. A page in a browser can't know this by itself.
 
-Two plugins with macOS voices (the language's voice by default: Samantha in
-English, Mónica in Spanish; `say -v '?'` lists them):
+The voice engines (`tts`; each computer starts with the first it has, in this order):
 
-- **`avspeech`** (default): AVSpeechSynthesizer in a Swift bridge that keeps the
-  voice loaded, ~50 ms per sentence. If you download the enhanced version of a voice
-  (System Settings → Accessibility → Spoken Content), it uses it.
-- `macos`: `say`, ~600 ms per sentence (it starts every time).
+| Engine | Where | Voices | |
+|---|---|---|---|
+| **`avspeech`** | Mac | the Mac's (`say -v '?'`): Mónica in Spanish, Samantha in English | AVSpeechSynthesizer in a Swift bridge that keeps the voice loaded, ~50 ms per sentence; with the enhanced version of a voice downloaded (System Settings → Accessibility → Spoken Content), it uses it |
+| `kokoro` | Windows, Linux | ef_dora (Dora), em_alex, em_santa in Spanish; af_heart, af_bella, am_michael, bf_emma, bm_george… in English; also French, Italian, Portuguese, Hindi, Japanese and Chinese | Kokoro-82M in ONNX on the CPU, the most natural; its model (88 MB) and voices (27 MB) download once |
+| `piper` | Raspberry Pi (Linux ARM), Linux, Windows, Mac | es_ES-davefx-medium (Davefx), es_ES-carlfm-x_low, es_MX-claude-high, es_MX-ald-medium, es_AR-daniela-high in Spanish; en_US-lessac-medium (Lessac), en_US-amy-medium, en_US-ryan-medium, en_GB-alba-medium, en_GB-alan-medium in English | Piper (VITS in ONNX) on the CPU: lighter and faster than Kokoro (~60 ms per sentence on a Mac); each voice is its own model (~63 MB; carlfm, 28 MB), downloaded the first time it speaks, pinned in `server/models.py` |
+| `macos` | Mac | the Mac's | `say`, ~600 ms per sentence (it starts every time) |
 
-Other engines are plugins in `server/tts/` with `synthesize(text)` → int16 mono at
-48 kHz.
+Each language has its engine's default voice (the first above). **Another voice**: by voice
+(«usa otra voz», «pon la voz de Dora»: the LLM's `set_voice`, with your «yes», among the engine
+in use's voices in this language: by what it is called, «Dora», or its name, «ef_dora»), in
+Settings → Voice → «Choose a voice» (the Mac app and `/admin`: the same list), or `voice` in
+`settings.json` (one per language: `{"es": "ef_dora", "en": "af_heart"}`). A voice another
+engine doesn't have (the Mac's «Mónica» with Kokoro) gets that engine's default. It applies after
+restarting.
+
+Other engines are plugins with `synthesize(text)` → int16 mono at 48 kHz, and `voices(language)`
+and `label(name)` to list and name their voices (`server/tts/`).
 
 ```
 uv run server/main.py --voice Eddy --rate 200   # another voice, faster
 uv run server/main.py --tts macos               # with `say`
+uv run server/main.py --tts piper               # Piper (the Mac's too)
 uv run server/main.py --tts none                # text only
 ```
 
