@@ -14,6 +14,7 @@ An engine lists its voices without loading (voices(language), as the settings na
 settings' list use the engine in use's (voices(), find()).
 """
 
+import logging
 import re
 import subprocess
 import sys
@@ -41,7 +42,12 @@ class Voice:
         self.rate = rate  # words per minute
 
     def warm_up(self):
-        self.synthesize(i18n.L("speech.warm_up"))
+        """Its model ready before the first answer. If it can't be (its download failed: no network, a
+        certificate…), the server starts anyway and says why; the first answer tries again."""
+        try:
+            self.synthesize(i18n.L("speech.warm_up"))
+        except Exception as e:
+            logging.getLogger("tts").warning("the voice isn't ready yet (%s): it will try again when it speaks", e)
 
     def synthesize(self, text: str) -> np.ndarray:
         raise NotImplementedError

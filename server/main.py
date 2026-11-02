@@ -21,6 +21,7 @@ from aiohttp import web as aiohttp_web
 
 import i18n
 import options
+import trust
 import settings
 import web
 import brain
@@ -28,6 +29,7 @@ import brain
 
 
 def main():
+    trust.system_certificates()  # HTTPS checked by the system (Windows: its store, as a browser)
     parser = options.parser()
     preferences = settings.load()
     if "face" in preferences:  # before themes, «face» chose between the eyes and the orb

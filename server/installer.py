@@ -312,6 +312,9 @@ def main(argv: list[str]) -> int:
     _quiet()
     import i18n
     import settings
+    import trust
+
+    trust.system_certificates()  # its downloads (models, packages' files) checked by the system
 
     try:  # its texts in your language (the one chosen, or the Mac's)
         i18n.use(settings.load().get("language") or i18n.detect())

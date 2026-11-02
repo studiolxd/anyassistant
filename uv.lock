@@ -223,6 +223,7 @@ dependencies = [
     { name = "packaging" },
     { name = "scipy" },
     { name = "segno" },
+    { name = "truststore" },
 ]
 
 [package.optional-dependencies]
@@ -301,6 +302,7 @@ requires-dist = [
     { name = "silero-vad", marker = "extra == 'vad-silero'", specifier = ">=6.2.3" },
     { name = "torch", marker = "sys_platform == 'darwin' and extra == 'vad-silero'", specifier = ">=2.5" },
     { name = "torch", marker = "sys_platform != 'darwin' and extra == 'vad-silero'", specifier = ">=2.5", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "truststore", specifier = ">=0.10" },
     { name = "zeroconf", marker = "sys_platform != 'darwin' and extra == 'bonjour'", specifier = ">=0.136" },
 ]
 provides-extras = ["bonjour", "eyes", "mail", "llm-openai", "stt-faster-whisper", "stt-mlx-whisper", "stt-parakeet", "stt-parakeet-onnx", "tts-kokoro", "tts-piper", "vad-silero", "voices", "wake-openwakeword"]
