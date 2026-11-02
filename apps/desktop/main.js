@@ -136,11 +136,11 @@ function face(show = true) {
     e.preventDefault();
     made.hide();
   });
-  // Listening: «Start» pressed for you, once the page shows it (after its texts come).
+  // Listening: the page's «Pulsa para empezar» tapped for you, once it waits (after its texts come).
   made.webContents.on('did-finish-load', () => {
     if (state.listening && made.webContents.getURL().startsWith('http')) {
       made.webContents.executeJavaScript('(function () { var tries = 0; var wait = setInterval(function () {' +
-        ' var b = document.getElementById("start"); if (b && !b.hidden) { b.click(); clearInterval(wait); }' +
+        ' var s = document.getElementById("screen"); if (s && s.classList.contains("waiting")) { s.click(); clearInterval(wait); }' +
         ' if (++tries > 40) clearInterval(wait); }, 250); })()').catch(() => {});
     }
   });

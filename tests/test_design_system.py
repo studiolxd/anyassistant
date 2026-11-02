@@ -73,7 +73,7 @@ def test_the_pages_use_tokens_not_their_own_colours():
     """Only the face's black (behind a view of it, a screenshot) and the QR's and the switch's white."""
     connect = re.search(r"<style>(.*)</style>", PAGES["connect"].read_text(), re.S).group(1)
     system = (WEB / "system.css").read_text()
-    pairing = system[system.index("#start {"):system.index("/* Settings show_time")]
+    pairing = system[system.index("#pair {"):system.index("/* Settings show_time")]
     for css in [p.read_text() for p in STYLESHEETS] + [connect, pairing]:
         colours = set(re.findall(r"#[0-9a-fA-F]{3,8}\b|rgba?\(", without_comments(css)))
         assert colours <= {"#000", "#fff"}, colours

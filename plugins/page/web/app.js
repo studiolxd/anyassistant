@@ -109,15 +109,18 @@ function showScreen(s) {
   Theme.clock(s.clock);
 }
 
-// Loads the texts and then shows the start button (or the demo, or the pairing form).
+// Loads the texts and then shows the theme asleep, «Pulsa para empezar»: a tap anywhere starts it
+// (the browser needs one for the microphone and the sound). Or the demo, or the pairing form.
+var waitingTap = false;
 loadTexts().then(function () {
   if (APP) return appMode();
   if (settings.paired === false) return askForCode();  // the pairing plugin's
-  var start = document.getElementById('start');
-  start.textContent = text('start');
-  status(text('connecting'));
-  if (new URLSearchParams(location.search).has('demo')) demo();
-  else start.hidden = false;
+  if (new URLSearchParams(location.search).has('demo')) return demo();
+  document.getElementById('screen').hidden = false;
+  Theme.state('asleep');
+  status(text('tap_to_start'));
+  waitingTap = true;
+  document.getElementById('screen').classList.add('waiting');
 });
 
 // Pairing (the plugin «pairing»): the code that «bin/anyassistant pair» shows on the Mac.
@@ -146,9 +149,8 @@ function askForCode() {
   }
 }
 
-document.getElementById('start').onclick = function () {
-  this.hidden = true;
-  document.getElementById('screen').hidden = false;
+function start() {
+  status(text('connecting'));
   begin();  // full screen once it may use the microphone and camera: in full screen, Safari
             // on the iPad doesn't show the permission prompt, and it stays «connecting»
   try {  // still in the tap (its video may play); whatever it does, it never stops the page
@@ -167,6 +169,12 @@ function tellLater(text) {
 // Tapping the face: goes back to full screen and, if it is speaking, stops it. A drag
 // (scrolling the captions) isn't a tap.
 document.getElementById('screen').onclick = function () {
+  if (waitingTap) {  // the first tap: it starts
+    waitingTap = false;
+    this.classList.remove('waiting');
+    start();
+    return;
+  }
   if (Words.dragged() || held) { held = false; return; }
   if (!document.fullscreenElement && !APP) fullScreen();
   tell({ type: 'tap' });

@@ -20,24 +20,9 @@ html, body {
 /* In an app (?app): holding the face is its settings, not selecting words. */
 body.app { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
-/* Starting and pairing use the design system (tokens.css, linked before this). Old Chrome (81)
-   too: no `inset`, no flex `gap` (margins instead). */
-#start {
-  position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;  /* no `inset`: Chrome 81 doesn't have it */
-  margin: auto;
-  width: 60%;
-  max-width: 360px;
-  height: 72px;
-  font-family: var(--font-family);
-  font-size: var(--text-xl);
-  font-weight: var(--weight-semibold);
-  color: var(--color-primary-text);
-  background: var(--color-primary);
-  border: 0;
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-}
+/* Pairing uses the design system (tokens.css, linked before this). Old Chrome (81) too: no
+   `inset`, no flex `gap` (margins instead). Starting is the theme itself, asleep: a tap anywhere. */
+#screen.waiting { cursor: pointer; }
 
 /* Pairing: the code from «bin/anyassistant pair», the logo above it, on the page's background. */
 #pair {

@@ -1,6 +1,5 @@
 {
   "ui": {
-    "start": "Empezar",
     "connecting": "Conectando…",
     "connected": "Conectado",
     "connection_lost": "Conexión perdida, reintentando…",
@@ -33,7 +32,8 @@
     "demo_alarm": "Llamar a mamá",
     "demo_reminder": "Sacar la ropa",
     "demo_heard": "¿Qué puedo hacer de cena con arroz, dos huevos, unas espinacas y media cebolla?",
-    "demo_answer": "Un arroz salteado queda muy bien con eso. Pica la cebolla y póchala en un poco de aceite durante tres minutos. Añade el arroz, frío si es del día anterior, y remueve hasta que esté caliente. Aparta el arroz a un lado, cuaja los huevos en el hueco y mézclalo todo. Echa las espinacas al final para que se ablanden, y sazona con soja o sal. Tarda unos quince minutos."
+    "demo_answer": "Un arroz salteado queda muy bien con eso. Pica la cebolla y póchala en un poco de aceite durante tres minutos. Añade el arroz, frío si es del día anterior, y remueve hasta que esté caliente. Aparta el arroz a un lado, cuaja los huevos en el hueco y mézclalo todo. Echa las espinacas al final para que se ablanden, y sazona con soja o sal. Tarda unos quince minutos.",
+    "tap_to_start": "Pulsa para empezar"
   },
   "plugins": {
     "page": [
