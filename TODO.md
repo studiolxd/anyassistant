@@ -7,14 +7,10 @@
 - [ ] **Publicar la app de Android** (Google Play, o el APK firmado para instalar a mano).
 - [ ] **Firmar el instalador de Windows** cuando lo instale más gente (Azure Artifact
   Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de España).
-- [ ] **Que las apps se actualicen solas** (hoy, instalar la versión nueva encima).
+- [ ] **Que las apps se actualicen solas**: hecho (Sparkle en el Mac; electron-updater en Windows y
+  Linux), falta probar una actualización real de la 0.2.0 a la siguiente en cada sistema.
 - [ ] **Versión para Windows en ARM.**
 - [ ] **Versión para Raspberry Pi** (Linux en ARM).
-- [ ] **Publicar las versiones en GitHub Releases** con lo que lleva cada una (install.sh copia hoy el
-  checkout de git, o la copia de la app).
-- [ ] **Subir la app del Mac a Releases** en cada versión sin hacerlo a mano (hoy:
-  `apps/mac/build.sh --release` en este Mac y `gh release upload`; en Actions haría falta el
-  certificado como secreto).
 
 # Desarrollo
 
@@ -90,6 +86,9 @@ LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
 - [x] **El Apple Watch emparejado como el iPhone** (2 nov): el iPhone le pasa la IP del servidor, el
   certificado y el emparejamiento (el reloj no tiene Bonjour ni resuelve `.local`); sin teclado ni
   ajustes de servidor. Habla con el servidor directamente y sigue encendido mientras contesta.
+- [x] **Las versiones en GitHub Releases** (2 nov, v0.2.0): `apps/release.sh v0.2.0` publica todo
+  (Windows y Linux en GitHub Actions, el Mac firmado y notarizado aquí, sus notas de
+  `docs/versiones`, el programa para `curl … | sh` y lo que leen los actualizadores).
 - [x] **La app de Android en un Android 8 real** (2 nov): el micrófono y la cancelación de eco,
   Bonjour, la alarma con la pantalla bloqueada y la cámara.
 - [x] **La app en el iPhone 7** (iOS 15), desde TestFlight: funciona (2 nov).
