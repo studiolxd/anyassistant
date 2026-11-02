@@ -143,3 +143,37 @@ def test_a_forgotten_watch_comes_back_when_it_talks():
     devices._save(known)  # forgotten in the Mac app
     post()
     assert devices.load()["watch1"]["name"] == "Apple Watch"
+
+
+def a_timers_list(monkeypatch, items):
+    """skill-alarms with these pending."""
+    module = kernel.module
+    fake = type("Alarms", (), {"timers": type("Timers", (), {"pending": staticmethod(lambda kind=None: items)})})
+    monkeypatch.setattr(kernel, "module", lambda name: fake if name == "skill-alarms" else module(name))
+
+
+def test_the_answer_says_what_is_next(monkeypatch):
+    a_timers_list(monkeypatch, [
+        {"id": 2, "kind": "alarm", "at": 2000.0, "label": "", "set": 10.0, "device": "x", "where": "all"},
+        {"id": 1, "kind": "timer", "at": 1000.0, "label": "pasta", "set": 900.0}])
+    status, answer = post()
+    assert status == 200
+    assert answer["timers"] == [{"kind": "timer", "at": 1000.0, "label": "pasta", "set": 900.0},
+                                {"kind": "alarm", "at": 2000.0, "label": "", "set": 10.0}]  # soonest first
+
+
+def test_what_is_next_without_talking(monkeypatch):
+    from aiohttp.test_utils import make_mocked_request
+
+    a_timers_list(monkeypatch, [{"id": 1, "kind": "reminder", "at": 5.0, "label": "llamar a mamá", "set": 1.0}])
+    request = make_mocked_request("GET", "/timers", transport=type("T", (), {"get_extra_info": lambda self, k, d=None:
+                                                                            ("192.168.1.9", 1) if k == "peername" else d})())
+    answer = asyncio.run(talk._timers(request))
+    assert answer.status == 200
+    assert json.loads(answer.body) == {"timers": [{"kind": "reminder", "at": 5.0, "label": "llamar a mamá", "set": 1.0}]}
+
+
+def test_nothing_is_next_without_alarms(monkeypatch):
+    module = kernel.module
+    monkeypatch.setattr(kernel, "module", lambda name: None if name == "skill-alarms" else module(name))
+    assert talk.pending() == []

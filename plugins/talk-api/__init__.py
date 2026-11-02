@@ -5,7 +5,12 @@ own conversation, its voice checked by «voices», «dile a la cocina…»), onl
 sentence at a time, when you press.
 
     POST /talk?device=<id>   a WAV (16-bit mono, any rate)
-      → {"heard": "¿qué hora es?", "answer": "Son las 10 y 20.", "audio": "<a WAV, 24 kHz, base64>"}
+      → {"heard": "¿qué hora es?", "answer": "Son las 10 y 20.", "audio": "<a WAV, 24 kHz, base64>",
+         "timers": [{"kind": "timer", "at": 1793…, "label": "pasta", "set": 1793…}, …]}
+    GET /timers              → {"timers": […]}: what is next (the watch's complication), without talking
+
+«timers» are the timers, alarms and reminders pending (skill-alarms), soonest first: after a
+sentence that set one, the watch shows it at once.
 
 Pairing (the plugin «pairing») as for the page: POST /pair {"code"} once, then its cookie.
 A conversation lasts while you keep talking (follow_up seconds between sentences); after
@@ -27,6 +32,7 @@ from scipy.signal import resample_poly
 
 import events
 import hub
+import kernel
 import settings
 import web
 
@@ -181,7 +187,23 @@ async def talk(talker: Talker, audio: np.ndarray) -> dict:
     heard = next((m["text"] for m in talker.sent if m.get("type") == "text" and "author" not in m), "")
     answer = " ".join(m["text"] for m in talker.sent
                       if m.get("type") == "text" and m.get("author") == "assistant" and not m.get("partial"))
-    return {"heard": heard, "answer": answer, "audio": base64.b64encode(encode(talker.speaker.pcm)).decode()}
+    return {"heard": heard, "answer": answer, "audio": base64.b64encode(encode(talker.speaker.pcm)).decode(),
+            "timers": pending()}
+
+
+def pending() -> list[dict]:
+    """The timers, alarms and reminders to come, soonest first (none without skill-alarms)."""
+    alarms = kernel.module("skill-alarms")
+    items = alarms.timers.pending() if alarms else []
+    return [{key: item[key] for key in ("kind", "at", "label", "set") if key in item}
+            for item in sorted(items, key=lambda i: i["at"])]
+
+
+@web.route("GET", "/timers")
+async def _timers(request):
+    if refusal := web.refused(request):  # pairing, as for /talk
+        return refusal
+    return http.json_response({"timers": pending()})
 
 
 @web.route("POST", "/talk")

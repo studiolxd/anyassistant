@@ -3,7 +3,8 @@
 // as WatchConnectivity's application context: the watch has the latest even if its app wasn't
 // open. Sent again when it changes (paired or not, the server's IP: Mac.handoffChanged), and
 // given when the watch asks (iOS wakes this app for it). The watch then talks to the server
-// itself, as its own device; nothing it says goes through here.
+// itself, as its own device; nothing it says goes through here. The timers, alarms and reminders
+// the server sends here go to the watch too, for its complication (at once when it is on the face).
 
 #if os(iOS)
 import WatchConnectivity
@@ -17,6 +18,20 @@ final class WatchBridge: NSObject, WCSessionDelegate {
         WCSession.default.activate()
         NotificationCenter.default.addObserver(forName: Mac.handoffChanged, object: nil, queue: .main) { [weak self] _ in
             self?.send()
+        }
+        NotificationCenter.default.addObserver(forName: FaceModel.timersArrived, object: nil, queue: .main) { [weak self] note in
+            self?.timers(note.object as? [[String: Any]] ?? [])
+        }
+    }
+
+    private func timers(_ items: [[String: Any]]) {
+        let session = WCSession.default
+        guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else { return }
+        let next = items.map { item in item.filter { ["kind", "at", "label", "set"].contains($0.key) } }
+        if session.isComplicationEnabled {
+            session.transferCurrentComplicationUserInfo(["timers": next])  // wakes the watch's app: shown at once
+        } else {
+            session.transferUserInfo(["timers": next])
         }
     }
 

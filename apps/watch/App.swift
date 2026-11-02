@@ -1,13 +1,16 @@
 // AnyAssistant on the Apple Watch: Eyes' face, listening while you look at it. Each sentence goes
 // to your server (POST /talk, the plugin «talk-api»), which answers in voice, as on any other device: its own
 // conversation, your voice checked, «dile a la cocina…». Paired as its iPhone is (Companion):
-// nothing to type here.
+// nothing to type here. What is next (timers, alarms, reminders) for the complication: asked when
+// it opens and now and then in the background (GET /timers), and with each answer.
 
 import SwiftUI
+import WatchKit
 
 @main
 struct AnyAssistantApp: App {
     @StateObject private var mac = Mac(agent: "AnyAssistant Watch")
+    @Environment(\.scenePhase) private var phase
 
     var body: some Scene {
         WindowGroup {
@@ -20,6 +23,20 @@ struct AnyAssistantApp: App {
             }
             .onAppear { Companion.shared.start(mac) }
         }
+        .onChange(of: phase) { _, now in
+            if now == .active { Task { await AnyAssistantApp.refresh() } }
+        }
+        .backgroundTask(.appRefresh("timers")) {
+            await AnyAssistantApp.refresh()
+        }
+    }
+
+    /// What is next, from the server (paired only); and again in a while, in the background.
+    @MainActor static func refresh() async {
+        let mac = Mac(agent: "AnyAssistant Watch")
+        if mac.paired, let timers = await mac.timers() { Upcoming.keep(timers) }
+        WKApplication.shared().scheduleBackgroundRefresh(withPreferredDate: Date().addingTimeInterval(15 * 60),
+                                                         userInfo: "timers" as NSString) { _ in }
     }
 }
 

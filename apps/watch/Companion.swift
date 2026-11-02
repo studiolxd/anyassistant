@@ -1,7 +1,8 @@
 // The pairing comes from the iPhone (its app's WatchBridge): the server's IP, port, HTTPS
 // authority and the pairing's cookie, as WatchConnectivity's application context (the latest,
 // even if this app wasn't open), and asked for when the app opens unpaired. Not paired there: not
-// paired here either. The watch then talks to the server itself.
+// paired here either. The watch then talks to the server itself. The iPhone also passes on the
+// timers, alarms and reminders the server tells it about (for the complication).
 
 import WatchConnectivity
 
@@ -41,6 +42,11 @@ final class Companion: NSObject, WCSessionDelegate {
 
     func session(_ session: WCSession, didReceiveApplicationContext context: [String: Any]) {
         adopt(context)
+    }
+
+    /// The timers, alarms and reminders, as the server just told the iPhone: for the complication.
+    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
+        if let timers = userInfo["timers"] as? [[String: Any]] { Upcoming.keep(timers) }
     }
 
     /// The iPhone came near (or its app woke): asked again if still unpaired.

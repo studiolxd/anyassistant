@@ -29,6 +29,9 @@ final class FaceModel: ObservableObject {
         var id: String { "\(kind)-\(at)" }
     }
 
+    /// The server's timers, alarms and reminders arrived (object: its items): the iPhone gives them to the watch.
+    nonisolated static let timersArrived = Notification.Name("timersArrived")
+
     @Published var state = "connecting"
     @Published var problem: String?  // not connected: what to say instead of the state
     @Published var name = "AnyAssistant"
@@ -118,6 +121,7 @@ final class FaceModel: ObservableObject {
                 said = Said(id: id, start: start, end: (message["end"] as? NSNumber)?.intValue)
             }
         case "timers":
+            NotificationCenter.default.post(name: FaceModel.timersArrived, object: message["items"])  // the watch's too
             items = (message["items"] as? [[String: Any]] ?? []).compactMap { item in
                 guard let at = (item["at"] as? NSNumber)?.doubleValue else { return nil }
                 return Item(kind: item["kind"] as? String ?? "timer", at: at, label: item["label"] as? String ?? "")

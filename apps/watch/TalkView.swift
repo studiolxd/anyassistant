@@ -122,6 +122,7 @@ struct TalkView: View {
             }
             do {
                 let found = try await mac.talk(wav)
+                if let timers = found.timers { Upcoming.keep(timers) }  // «pon un temporizador»: on the face at once
                 guard !Task.isCancelled else { return }
                 voice.play(found.audio)  // nothing heard, nothing said: it listens again
             } catch where Task.isCancelled {

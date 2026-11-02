@@ -370,7 +370,16 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         }
     }
 
-    struct Answer { let heard: String; let answer: String; let audio: Data }
+    /// «timers»: the timers, alarms and reminders to come, as the server has them now (nil: it didn't say).
+    struct Answer { let heard: String; let answer: String; let audio: Data; var timers: [[String: Any]]? = nil }
+
+    /// The timers, alarms and reminders to come (GET /timers; nil: it doesn't answer).
+    func timers() async -> [[String: Any]]? {
+        guard let base = await url(),
+              let (raw, response) = try? await session.data(from: with(base.appendingPathComponent("timers"), device: device)),
+              (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+        return (try? JSONSerialization.jsonObject(with: raw) as? [String: Any])?["timers"] as? [[String: Any]]
+    }
 
     /// One sentence (a WAV) → what it heard, its answer and its voice.
     func talk(_ wav: Data) async throws -> Answer {
@@ -385,7 +394,8 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         if status == 403 { unpair(); throw Failure.wrongCode }
         guard status == 200 else { throw Failure.refused(found["error"] as? String ?? "\(status)") }
         return Answer(heard: found["heard"] as? String ?? "", answer: found["answer"] as? String ?? "",
-                      audio: Data(base64Encoded: found["audio"] as? String ?? "") ?? Data())
+                      audio: Data(base64Encoded: found["audio"] as? String ?? "") ?? Data(),
+                      timers: found["timers"] as? [[String: Any]])
     }
 
     // Only the Mac's own authority is trusted for its HTTPS address.

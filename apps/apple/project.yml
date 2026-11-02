@@ -59,7 +59,16 @@ targets:
   AnyAssistantWatch:
     type: application
     platform: watchOS
-    sources: [../watch, ../shared]
+    sources:
+      - path: ../watch
+        excludes: ["Complication/Complication.swift", "Complication/Info.plist", "Complication/*.entitlements"]  # the complication's own (Upcoming is both's)
+      - ../shared
+    dependencies:
+      - target: AnyAssistantComplication
+    entitlements:
+      path: ../watch/AnyAssistant.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.anyassistant]  # what is next, for the complication
     info:
       path: ../watch/Info.plist
       properties:
@@ -81,3 +90,28 @@ targets:
         PRODUCT_NAME: AnyAssistant
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+  # The watch's complication (WidgetKit): what is next, a timer, an alarm or a reminder, on the face.
+  AnyAssistantComplication:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - ../watch/Complication
+      - path: ../watch/Resources
+        excludes: ["*/AppShortcuts.strings"]  # the app's Siri phrases, not the complication's
+    entitlements:
+      path: ../watch/Complication/Complication.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.anyassistant]
+    info:
+      path: ../watch/Complication/Info.plist
+      properties:
+        CFBundleDisplayName: AnyAssistant
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, es]
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant.watchkitapp.complication
+        PRODUCT_NAME: AnyAssistantComplication
+        SKIP_INSTALL: true
