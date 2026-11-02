@@ -163,28 +163,47 @@ function fullScreen() {
   if (el.requestFullscreen) el.requestFullscreen().catch(function () {});
 }
 
-// The screen stays on: NoSleep.js (nosleep.js, MIT): the Wake Lock API, or, where there is
-// none (Chrome before 84, as on Android 4.4), a short silent video playing in a loop, the one it
-// carries (tested on many old devices). Started by a tap (the start button). What it uses, and
-// whether its video plays, goes to the server's log.
+// The screen stays on: the Wake Lock API, or, where there is none (Chrome before 84, as on
+// Android 4.4) or it says no, a tiny silent video playing in a loop (what a playing video does).
 function keepAwake() {
-  if (typeof NoSleep === 'undefined') return;
-  var noSleep = new NoSleep();
-  var video = noSleep.noSleepVideo || null;
-  var note = function (text) { tellLater('keeping the screen on: ' + text); };
-  var enable = function () {
-    noSleep.enable().then(function () { note(video ? 'the video plays' : 'wake lock'); },
-                          function (e) { note('it can\'t (' + e + ')'); });
+  var video = null;
+  var fallback = function () {
+    if (!video) {
+      video = document.createElement('video');
+      video.src = '/web/awake.mp4';
+      video.loop = true;
+      video.muted = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      // Seen, for Chrome: it pauses a muted video it counts as unseen (transparent, tiny, out of
+      // sight), and a paused one doesn't keep the screen on. It is black, opaque, behind the theme.
+      video.style.cssText = 'position:fixed;left:0;bottom:0;width:64px;height:64px;z-index:-1;pointer-events:none';
+      document.body.appendChild(video);
+      video.addEventListener('pause', function () {  // paused by the browser: again in a moment
+        setTimeout(function () { if (video.paused) video.play().catch(function () {}); }, 1000);
+      });
+    }
+    var playing = video.play();
+    if (playing && playing.then) {
+      playing.then(function () { note('keeping the screen on: the video plays'); },
+                   function (e) { note('keeping the screen on: the video does not play (' + e + ')'); });
+    }
   };
-  enable();
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible' && video && video.paused) enable();
-  });
-  setInterval(function () {  // whether its video still plays, every minute; paused, again
+  var request = function () {
+    if (!('wakeLock' in navigator)) return fallback();
+    navigator.wakeLock.request('screen').then(function () { note('keeping the screen on: wake lock'); },
+      function (e) { note('keeping the screen on: no wake lock (' + e + '), the video'); fallback(); });
+  };
+  var note = tellLater;  // to the server's log, once connected
+  setInterval(function () {  // and whether it still plays, every minute (a paused video lets it sleep)
     if (!video) return;
-    note('the video ' + (video.paused ? 'is paused' : 'plays') + ' at ' + video.currentTime.toFixed(1));
-    if (video.paused) enable();
+    note('keeping the screen on: the video ' + (video.paused ? 'is paused' : 'plays') + ' at ' + video.currentTime.toFixed(1));
+    if (video.paused) video.play().catch(function (e) { note('keeping the screen on: play again: ' + e); });
   }, 60000);
+  request();
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') request();
+  });
 }
 
 // Camera constraints for each quality.

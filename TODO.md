@@ -24,11 +24,11 @@ releases: el instalador .exe, el AppImage y el .deb), y la app de Android en un 
 - [ ] **El Apple Watch**: los avisos en la muñeca (alarmas, agenda, «la cocina dice…», con
   vibración: notificaciones push); fuera de casa (el Mac accesible desde fuera: Tailscale…);
   una complicación para la esfera y el botón Acción.
-- [ ] **La tablet con Android 4.4** (la página web): comprobar que NoSleep.js
-  (`web/nosleep.js`, su vídeo) mantiene la pantalla encendida; el log del servidor dice si su
-  vídeo avanza («keeping the screen on: …»). Nuestro vídeo de 16 × 16 no avanzaba (en 0,0). Si
-  tampoco, la opción de Android «Pantalla activa» (Opciones de desarrollador) con la tablet
-  enchufada.
+- [ ] **La tablet con Android 4.4** (la página web): la pantalla no se mantiene encendida.
+  Ningún vídeo avanza en ella (el nuestro, 16 × 16, y el de NoSleep.js se quedaban en 0,0; con
+  NoSleep además no llegaba a conectar). Con la tablet enchufada: la opción de Android «Pantalla
+  activa» (Opciones de desarrollador). El log del servidor dice qué usa la página («keeping the
+  screen on: …»).
 - [ ] **Tele**: no por ahora (sin micrófono que puedan usar las apps); si acaso, Android TV
   como pantalla y altavoz, con la app de Android.
 - [ ] **Diseño de las páginas web**: darles un diseño cuidado a la página de temas
