@@ -28,8 +28,9 @@ struct AnyAssistantApp: App {
         .defaultSize(width: 480, height: 640)
         Window(T("Settings"), id: "settings") {
             SettingsView()
-                .frame(minWidth: 760, minHeight: 520)
+                .frame(minWidth: 780, minHeight: 520)
         }
+        .defaultSize(width: 940, height: 640)
         Window(T("Devices"), id: "devices") {
             DevicesView()
                 .frame(minWidth: 440, minHeight: 320)
