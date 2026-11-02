@@ -160,7 +160,9 @@ final class Admin: ObservableObject {
 
     /// A route of the admin's; nil if it failed (and «error» says so, unless quiet: a plugin that is off).
     private func call(_ path: String, _ body: [String: Any]? = nil, quiet: Bool = false) async -> [String: Any]? {
-        var request = URLRequest(url: URL(string: "http://127.0.0.1:\(server.port)/admin/\(path)")!)
+        var parts = URLComponents(string: "http://127.0.0.1:\(server.port)/admin/\(path)")!
+        parts.queryItems = (parts.queryItems ?? []) + [URLQueryItem(name: "ui", value: Interface.code)]  // its texts in this app's language
+        var request = URLRequest(url: parts.url!)
         if let body {
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -495,8 +497,35 @@ struct OptionsView: View {
             ForEach(admin.options.filter { $0.group == group && $0.plugin == nil }) { option in
                 OptionRow(option: option, admin: admin)
             }
+            if group == "assistant" { InterfaceLanguageRow(admin: admin) }
         }
         .formStyle(.grouped)
+    }
+}
+
+/// This app's interface language (its menus, windows and face), apart from the one the assistant
+/// speaks («Idioma»): Automático is the Mac's. Kept on the server for this Mac's device too.
+struct InterfaceLanguageRow: View {
+    let admin: Admin
+    @State private var chosen = Interface.chosen
+
+    var body: some View {
+        Section {
+            Picker(T("Interface Language"), selection: $chosen) {
+                Text(T("Automatic")).tag("auto")
+                Text("English").tag("en")
+                Text("Español").tag("es")
+            }
+        } footer: {
+            Text(T("The language of this app and its screen. The assistant speaks the one chosen in «Language».")).font(.caption).foregroundStyle(.secondary)
+        }
+        .onChange(of: chosen) { _, new in
+            guard new != Interface.chosen else { return }
+            Interface.choose(new)
+            Client.shared.interfaceLanguageChanged()
+            Task { await admin.load() }  // the settings' texts in it
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Interface.changed)) { _ in chosen = Interface.chosen }
     }
 }
 

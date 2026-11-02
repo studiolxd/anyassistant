@@ -7,8 +7,12 @@ name and a room, kept in devices.json by the page's own id.
   this one the bedside»), and sees which ones there are and which are connected.
 - A message to another one («dile a la cocina que bajo ya»): said aloud there and shown on
   its screen, nothing more (tell_device).
+- Its interface's language («ui_language»: "auto", "es", "en"), apart from the one the assistant
+  speaks: its page and its app's face are in it (web.ui_language).
 - From the Mac itself, for the Mac app: GET /devices lists them; POST /devices {"id", "name",
-  "room"} changes one, {"id", "forget": true} forgets it (it gets a new name if it comes back).
+  "room"} changes one, {"id", "ui_language"} its interface's language, {"id", "forget": true}
+  forgets it (it gets a new name if it comes back). A paired device sets its own interface's
+  language with POST /devices/ui_language {"device", "ui_language"} (the app's own setting).
 """
 
 import json
@@ -81,6 +85,34 @@ def set_llm(device: str, name: str | None):
     log.info("%s: LLM %s", describe(device), name or "the general one")
 
 
+def ui_language(device: str | None) -> str:
+    """A device's own interface language ("es", "en"); "": automatic (its browser's or system's)."""
+    return load().get(device or "", {}).get("ui_language") or ""
+
+
+def set_ui_language(device: str, code: str | None, agent: str = ""):
+    """A device's interface language ("auto", "" or None: automatic). ValueError if there are no
+    interface texts in it. A device not seen yet is added (an app sets it before it connects)."""
+    import i18n
+
+    code = (code or "").strip().lower()
+    if code in ("", "auto"):
+        code = ""
+    elif code not in i18n.interface_languages():
+        raise ValueError(f"interface languages: auto, {', '.join(i18n.interface_languages())}")
+    devices = load()
+    found = devices.setdefault(device, {"name": _unique(kind(agent), devices, device), "room": ""})
+    if code:
+        found["ui_language"] = code
+    else:
+        found.pop("ui_language", None)
+    _save(devices)
+    log.info("%s: interface in %s", describe(device), code or "its own language")
+    for session in hub.all():  # on its screen now
+        if session.device == device and session.pc.connectionState == "connected":
+            session.send({"type": "config"})
+
+
 def describe(device: str | None) -> str:
     """«iPad (living room)», for the logs and the LLM."""
     found = load().get(device or "", {})
@@ -144,6 +176,7 @@ def _listing() -> list[dict]:
     return [{"id": i, "name": d.get("name", ""), "room": d.get("room", ""), "connected": i in connected,
              "current": bool(current and current.device == i), "seen": d.get("seen"),
              "press": bool(d.get("press")), "kind": kind(d.get("agent", "")), "llm": d.get("llm", ""),
+             "ui_language": d.get("ui_language") or "auto",
              "noise": calibration.summary(i) if calibration else {}}
             for i, d in load().items()]
 
@@ -152,7 +185,10 @@ def _llms() -> dict:
     """The LLMs a device may use, and the general one."""
     import llm
 
-    return {"llms": llm.available(), "general": settings.get("llm") or "claude"}
+    import i18n
+
+    return {"llms": llm.available(), "general": settings.get("llm") or "claude",
+            "ui_languages": {code: i18n.native_name(code) for code in i18n.interface_languages()}}
 
 
 # --- For the LLM ---
@@ -245,9 +281,30 @@ async def _change(request):
         if data["llm"] and data["llm"] not in llm.available():
             return http.json_response({"error": f"LLMs: {', '.join(llm.available())}"}, status=400)
         set_llm(device, data["llm"] or None)  # "": the default one (it follows it); a name: that one, fixed
+    elif "ui_language" in data:
+        try:
+            set_ui_language(device, data["ui_language"])
+        except ValueError as e:
+            return http.json_response({"error": str(e)}, status=400)
     else:
         try:
             change(device, data.get("name"), data.get("room"))
         except ToolError as e:
             return http.json_response({"error": str(e)}, status=400)
     return http.json_response({"devices": _listing(), **_llms()})
+
+
+@web.route("POST", "/devices/ui_language")
+async def _own_ui_language(request):
+    """A paired device's own interface language, from its app's setting: {"device", "ui_language"}."""
+    if refusal := web.refused(request):
+        return refusal
+    data = await request.json()
+    device = str(data.get("device") or "")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", device):
+        return http.json_response({"error": "no device"}, status=400)
+    try:
+        set_ui_language(device, data.get("ui_language"), request.headers.get("User-Agent", ""))
+    except ValueError as e:
+        return http.json_response({"error": str(e)}, status=400)
+    return http.json_response({"ui_language": ui_language(device) or "auto"})

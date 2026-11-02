@@ -59,6 +59,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -96,8 +97,18 @@ class MainActivity : ComponentActivity() {
     private val ask = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { begin() }
     private val askCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { scanAllowed = it }
 
+    // The interface's language chosen in the app (before Android 13; from 13, Android's own per-app language).
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(Interface.wrap(newBase))
+
+    override fun onDestroy() {
+        if (link.interfaceLanguageShown != null) link.interfaceLanguageShown = null
+        super.onDestroy()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Changed from the server (the Mac's Devices): the screen made again in it (from Android 13, Android does it).
+        link.interfaceLanguageShown = { if (Build.VERSION.SDK_INT < 33) runOnUiThread { recreate() } }
         paired = link.mac.paired
         WindowCompat.setDecorFitsSystemWindows(window, false)
         link.camera.attach(this)
@@ -197,7 +208,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
     @Composable
     private fun Face() {
-        var settings by remember { mutableStateOf(false) }
+        var settings by rememberSaveable { mutableStateOf(false) }  // kept when the screen is made again (its language)
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             // A tap: it stops talking or wakes up; held: the settings, always, whatever the theme.
             ThemeView(link.face, link.camera, link.web, tap = { link.tap() }, settings = { settings = true })
@@ -258,6 +269,7 @@ class MainActivity : ComponentActivity() {
                 Toggle(getString(R.string.keep_listening), background) { background = it; prefs.edit().putBoolean("background", it).apply() }
                 Toggle(getString(R.string.keep_screen_on), awake) { awake = it; prefs.edit().putBoolean("awake", it).apply(); keepAwake() }
                 Text(getString(R.string.keep_listening_note), fontSize = 13.sp, color = Color.Gray)
+                LanguageChoice()
                 Text(getString(R.string.server), Modifier.padding(top = 16.dp), color = Color.Gray, fontSize = 13.sp)
                 ServerFields(host, port, { host = it; link.mac.host = it; problem = null },
                     { port = it; it.toIntOrNull()?.let { number -> link.mac.port = number }; problem = null })
@@ -288,6 +300,30 @@ class MainActivity : ComponentActivity() {
                 Spacer(Modifier.height(16.dp))
             }
         }
+    }
+
+    /** «Idioma de la interfaz»: Automático (the phone's), English, Español. The app's texts, its face's
+     *  (the server's) and the server's record for this device; the screen is made again in it. */
+    @Composable
+    private fun LanguageChoice() {
+        var chosen by remember { mutableStateOf(Interface.chosen(this)) }
+        Text(getString(R.string.interface_language), Modifier.padding(top = 16.dp), color = Color.Gray, fontSize = 13.sp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("auto" to getString(R.string.automatic), "en" to "English", "es" to "Español").forEach { (code, name) ->
+                val on = chosen == code
+                Text(name, Modifier.weight(1f).clip(RoundedCornerShape(50))
+                    .background(if (on) Color(0xff34aff7) else Color.White.copy(alpha = 0.08f))
+                    .clickable {
+                        if (on) return@clickable
+                        chosen = code
+                        Interface.choose(this@MainActivity, code)
+                        link.interfaceLanguageChanged()
+                        if (Build.VERSION.SDK_INT < 33) recreate()  // from 13, Android makes it again itself
+                    }.padding(vertical = 10.dp),
+                    color = if (on) Color.Black else Color.White, textAlign = TextAlign.Center, fontSize = 15.sp)
+            }
+        }
+        Text(getString(R.string.interface_language_note), fontSize = 13.sp, color = Color.Gray)
     }
 
     @Composable

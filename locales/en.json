@@ -97,7 +97,7 @@
   "options": {
     "plugins": "which plugins are on or off, if not as they come: {\"memory\": true, \"tap-to-wake\": false}",
     "name": "To wake it, say «Hey» followed by its name. It's also the name it introduces itself with.",
-    "language": "The language it speaks and understands. If not set, the system's.",
+    "language": "The language it speaks and understands. Each device chooses the language of its screen (Interface Language). If not set, the system's.",
     "llm": "The one that answers what the basic skills don't.",
     "llm_model": "For example, for Claude: sonnet, opus or haiku. If not set, the model's own.",
     "mcp": "A .mcp.json file with external tools. If not set, the one in your data folder.",

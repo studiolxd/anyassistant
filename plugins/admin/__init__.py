@@ -97,9 +97,10 @@ def _choices(option):
         return None
 
 
-def _labels(option) -> dict | None:
-    """How each choice is shown, in the active language (locale «choices.<option>.<value>»);
+def _labels(option, texts=None) -> dict | None:
+    """How each choice is shown, in the interface's language (locale «choices.<option>.<value>»);
     one without a text, as it is."""
+    texts = texts or i18n.L
     found = _choices(option)
     if found is None:
         return None
@@ -109,7 +110,7 @@ def _labels(option) -> dict | None:
         import llm
 
         return {str(c): llm.label(c) for c in found}
-    return {str(c): i18n.L.text(f"choices.{option.name}.{c}", str(c)) for c in found}
+    return {str(c): texts.text(f"choices.{option.name}.{c}", str(c)) for c in found}
 
 
 def _voices(option) -> list | None:
@@ -142,13 +143,14 @@ def _order(option) -> int:
 @_local
 async def _settings(request):
     core = {o.group for o in options.OPTIONS if not o.plugin}  # the core's, by topic; a plugin's: on its page
-    groups = [{"id": g, "title": i18n.L.text(f"groups.{g}", title)} for g, title in options.GROUPS.items()
+    texts = web.ui(request)  # this browser's or app's interface language, not the assistant's
+    groups = [{"id": g, "title": texts.text(f"groups.{g}", title)} for g, title in options.GROUPS.items()
               if g != "plugins" and g in core]
     found = [{"name": o.name, "group": o.group, "plugin": o.plugin, "kind": o.kind, "live": o.live,
-              "title": _named(i18n.L.text(f"options_title.{o.name}", "")),
-              "help": _named(i18n.L.text(f"options.{o.name}", o.help)), "default": _value_default(o),
-              "value": _value(o), "current": None if o.kind == "secret" else _current(o), "set": _is_set(o), "choices": _choices(o), "labels": _labels(o),
-              "empty": i18n.L.text(f"options_empty.{o.name}", o.empty) if o.empty else "",
+              "title": _named(texts.text(f"options_title.{o.name}", "")),
+              "help": _named(texts.text(f"options.{o.name}", o.help)), "default": _value_default(o),
+              "value": _value(o), "current": None if o.kind == "secret" else _current(o), "set": _is_set(o), "choices": _choices(o), "labels": _labels(o, texts),
+              "empty": texts.text(f"options_empty.{o.name}", o.empty) if o.empty else "",
               "voices": _voices(o)}
              for o in sorted(options.OPTIONS, key=_order) if o.group != "plugins" and not o.hidden]
     return http.json_response({"groups": groups, "options": found})
@@ -196,10 +198,11 @@ async def _save_settings(request):
 @_local
 async def _plugins(request):
     found = []
+    texts = web.ui(request)
     for p in kernel.describe():
         plugin = kernel.plugin(p["id"])
-        found.append({**p, "name": i18n.L.text(f"plugins.{p['id']}.0", p["name"]),
-                      "description": i18n.L.text(f"plugins.{p['id']}.1", p["description"]),
+        found.append({**p, "name": texts.text(f"plugins.{p['id']}.0", p["name"]),
+                      "description": texts.text(f"plugins.{p['id']}.1", p["description"]),
                       "locked": plugin.locked, "wanted": kernel.wanted(p["id"])})
     return http.json_response({"plugins": found})
 
@@ -279,7 +282,7 @@ def _admin_browser(request) -> bool:
 
 @web.route("GET", "/admin")
 async def _page(request):
-    return web.page(WEB / "index.html")
+    return web.page(WEB / "index.html", request)
 
 
 @web.route("GET", "/admin/web/{file}")
@@ -292,9 +295,13 @@ async def _file(request):
 
 @web.route("GET", "/admin/me")
 async def _me(request):
-    """Whether this browser may administer; the page's texts in the active language."""
+    """Whether this browser may administer; the page's texts in its interface's language (its cookie
+    «ui_language», set by the selector, else its own; not necessarily the one the assistant speaks)."""
+    texts = web.ui(request)
     return http.json_response({"owner": web.owner(request), "here": request.remote in web.LOCAL,
-                               "lang": i18n.L.code, "texts": i18n.L.data.get("admin_page", {})})
+                               "lang": texts.code, "texts": texts.data.get("admin_page", {}),
+                               "ui_language": request.cookies.get(web.UI_COOKIE) or "auto",
+                               "ui_languages": {c: i18n.native_name(c) for c in i18n.interface_languages()}})
 
 
 @web.route("POST", "/admin/login")

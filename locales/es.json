@@ -66,7 +66,7 @@
   "options": {
     "plugins": "qué plugins están encendidos o apagados, si no como vienen",
     "name": "Para activarlo, di «Ey» seguido de su nombre. También es el nombre con el que se presenta.",
-    "language": "El idioma en el que habla y entiende. Si no se indica, el del sistema.",
+    "language": "El idioma en el que habla y entiende. Cada dispositivo elige el de su pantalla (Idioma de la interfaz). Si no se indica, el del sistema.",
     "llm": "El que responde a lo que no resuelven las habilidades básicas.",
     "llm_model": "Por ejemplo, para Claude: sonnet, opus o haiku. Si no se indica, la del propio modelo.",
     "mcp": "Archivo .mcp.json con herramientas externas. Si no se indica, el de tu carpeta de datos.",

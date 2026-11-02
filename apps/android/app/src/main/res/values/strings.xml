@@ -47,4 +47,7 @@
     <string name="camera_needed">Allow the camera in Settings to scan the code.</string>
     <string name="connecting_to">Connecting to %1$s…</string>
     <string name="microphone_needed">AnyAssistant needs the microphone. Allow it in Settings → Apps → AnyAssistant → Permissions.</string>
+    <string name="interface_language">Interface language</string>
+    <string name="automatic">Automatic</string>
+    <string name="interface_language_note">The language of this app and its screen. The assistant speaks the server\'s.</string>
 </resources>

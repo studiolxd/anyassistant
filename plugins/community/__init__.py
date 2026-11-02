@@ -255,13 +255,15 @@ def _newer(catalog_version: str, installed_version: str) -> bool:
         return catalog_version != installed_version
 
 
-def _description(entry: dict) -> str:
-    """Its description in the active language (the entry's «descriptions», from its locales), else the catalog's."""
-    found = (entry.get("descriptions") or {}).get(i18n.L.code) if isinstance(entry.get("descriptions"), dict) else None
+def _description(entry: dict, language: str | None = None) -> str:
+    """Its description in that language (the interface's; the entry's «descriptions», from its
+    locales), else the catalog's."""
+    descriptions = entry.get("descriptions")
+    found = descriptions.get(language or i18n.L.code) if isinstance(descriptions, dict) else None
     return found if isinstance(found, str) and found else entry.get("description", "")
 
 
-def describe(packages: list[dict]) -> list[dict]:
+def describe(packages: list[dict], language: str | None = None) -> list[dict]:
     """Each package for the app: what it is, what is installed, whether an update exists, and why
     it can't be installed here (if it can't)."""
     have, here = installed(), version_here()
@@ -277,7 +279,7 @@ def describe(packages: list[dict]) -> list[dict]:
         elif here is not None and int(entry.get("min_version", 0)) > here:
             why = _text("needs_version", version=entry["min_version"])
         found.append({"kind": kind, "id": package_id, "name": entry["name"], "author": entry.get("author", ""),
-                      "version": entry["version"], "description": _description(entry),
+                      "version": entry["version"], "description": _description(entry, language),
                       "homepage": entry.get("homepage", ""), "screenshot": bool(entry.get("screenshot")),
                       "min_version": entry.get("min_version"), "installed": mine["version"] if mine else None,
                       "update": bool(mine) and _newer(entry["version"], mine["version"]),
@@ -503,7 +505,7 @@ async def _list(request):
         return http.json_response({"catalog": settings.get("community_catalog") or DEFAULT_CATALOG,
                                    "version": version_here(), "packages": [], "error": str(e)})
     return http.json_response({"catalog": found["url"], "version": version_here(),
-                               "packages": describe(found["packages"]), "problems": found["problems"]})
+                               "packages": describe(found["packages"], web.ui_language(request)), "problems": found["problems"]})
 
 
 @web.route("POST", "/admin/community")

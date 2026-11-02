@@ -230,21 +230,46 @@ final class Link: NSObject, ObservableObject {
     }
 
     /// The face's texts, theme and screen settings: the Mac's /config (as the page's), for this
-    /// device's theme («pon el tema orb aquí»).
-    func configure() async {
+    /// device's theme («pon el tema orb aquí») and its interface's language (the app's setting, kept
+    /// on the server for this device too: a choice made here goes there; one made there, in the
+    /// Mac's Devices, comes here).
+    func configure(again: Bool = true) async {
         guard let base = await mac.url() else { return }
+        if Interface.unsaved { await saveInterfaceLanguage(base) }
         var parts = URLComponents(url: base.appendingPathComponent("config"), resolvingAgainstBaseURL: false)!
-        if let theme = UserDefaults.standard.string(forKey: "theme") { parts.queryItems = [URLQueryItem(name: "theme", value: theme)] }
+        parts.queryItems = [URLQueryItem(name: "device", value: mac.device), URLQueryItem(name: "ui", value: Interface.code)]
+        if let theme = UserDefaults.standard.string(forKey: "theme") { parts.queryItems?.append(URLQueryItem(name: "theme", value: theme)) }
         guard let (data, _) = try? await mac.session.data(from: parts.url!),
               let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        if let theirs = config["ui_language"] as? String, theirs != Interface.chosen, !Interface.unsaved, again {
+            Interface.choose(theirs, fromServer: true)  // changed in the Mac's Devices: this app too
+            return await configure(again: false)
+        }
         web.configured(base: base, cookies: mac.cookies(for: base))
         face.configure(config)
-        web.forward(["type": "config"])  // the page reads its texts and settings again
+        web.forward(["type": "config", "ui": face.lang])  // the page reads its texts and settings again
         #if os(iOS)
         Notices.shared.name = face.name
         await Notices.shared.fetchAlarmSound(from: base, theme: face.theme, session: mac.session)
         #endif
         send(["type": "theme", "name": face.theme])  // its theme's sounds are played from the Mac
+    }
+
+    /// The interface's language chosen in the app's settings: saved on the server for this device,
+    /// and the face's texts in it.
+    func interfaceLanguageChanged() {
+        Task { await configure(again: false) }
+    }
+
+    private func saveInterfaceLanguage(_ base: URL) async {
+        var request = URLRequest(url: base.appendingPathComponent("devices/ui_language"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["device": mac.device, "ui_language": Interface.chosen])
+        if let (_, response) = try? await mac.session.data(for: request),
+           [200, 404].contains((response as? HTTPURLResponse)?.statusCode ?? 0) {
+            Interface.unsaved = false  // saved (404: the plugin «devices» is off; nothing to keep in step)
+        }
     }
 
     // MARK: Both ways

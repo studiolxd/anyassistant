@@ -162,6 +162,7 @@ struct SettingsView: View {
     var changed: Bool { connectedTo.map { $0.host != mac.host || $0.port != mac.port } ?? false }
     @AppStorage("background") private var background = true
     @AppStorage("awake") private var awake = true
+    @State private var language = Interface.chosen  // the interface's: «Automático», «English», «Español»
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -172,6 +173,15 @@ struct SettingsView: View {
                     Toggle(T("Keep the screen on"), isOn: $awake)
                 } footer: {
                     Text(T("With the screen off it listens as long as the app isn't closed; iOS shows the microphone in use."))
+                }
+                Section {
+                    Picker(T("Interface Language"), selection: $language) {
+                        Text(T("Automatic")).tag("auto")
+                        Text("English").tag("en")
+                        Text("Español").tag("es")
+                    }
+                } footer: {
+                    Text(T("The language of this app and its screen. The assistant speaks the server's."))
                 }
                 Section(T("Server")) { ServerFields(mac: mac) }
                 Section {
@@ -195,6 +205,12 @@ struct SettingsView: View {
             }
             .onAppear { connectedTo = (mac.host, mac.port) }
             .onChange(of: mac.host) { _ in problem = nil }
+            .onChange(of: language) { new in  // this app's texts, its face's, and saved on the server for it
+                guard new != Interface.chosen else { return }
+                Interface.choose(new)
+                link.interfaceLanguageChanged()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Interface.changed)) { _ in language = Interface.chosen }
             .onChange(of: mac.port) { _ in problem = nil }
             .onDisappear { if changed { mac.moved(); link.restart() } }
             .navigationTitle(T("Settings"))

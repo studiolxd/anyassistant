@@ -183,6 +183,9 @@
     "Administer from another browser": "Administer from another browser",
     "Scan the code with the other computer's or phone's camera: it opens the administration with the code.": "Scan the code with the other computer's or phone's camera: it opens the administration with the code.",
     "Or open %s in the other browser and type the code.": "Or open %s in the other browser and type the code.",
-    "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.": "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code."
+    "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.": "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.",
+    "Interface Language": "Interface Language",
+    "Automatic": "Automatic",
+    "The language of its screen and its app. The assistant speaks the one in General.": "The language of its screen and its app. The assistant speaks the one in General."
   }
 }

@@ -471,4 +471,5 @@ def test_the_description_is_shown_in_your_language_from_the_packages_locales(tmp
     made = cli.entry(folder, "https://example.com/themes/aurora")
     assert made["descriptions"] == {"es": "Luces del norte."}
     assert community._description(made) == "Luces del norte."
+    assert community._description(made, "en") == "Northern lights."  # the interface's language, not the assistant's
     assert community._description({"description": "Northern lights."}) == "Northern lights."

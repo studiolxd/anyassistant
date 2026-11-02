@@ -1,4 +1,4 @@
-// Every theme but Eyes: the server's page for the apps (/?app&theme=<name>: plugins/page/web, the
+// Every theme but Eyes: the server's page for the apps (/?app&theme=<name>&ui=<lang>: plugins/page/web, the
 // same page a browser shows, so a theme from the community looks the same here) in a WebView, fed
 // by the app. The app keeps the microphone, the audio, the camera, the notifications and the
 // connection (Link): the page opens none of them. It gets what the server says (forward), the
@@ -98,7 +98,7 @@ class WebFace(private val face: FaceState, private val mac: Mac) {
         ready = false
         cameraWindow = null
         val base = base ?: return view
-        val url = base + "/?app&theme=" + android.net.Uri.encode(theme)
+        val url = base + "/?app&theme=" + android.net.Uri.encode(theme) + "&ui=" + Interface.code(context)  // the app's interface language
         val cookies = CookieManager.getInstance()
         cookies.setAcceptCookie(true)
         val load = { view.loadUrl(url) }

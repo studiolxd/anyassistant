@@ -64,6 +64,14 @@ final class Client: ObservableObject {
 
     var name: String { link.face.name }
 
+    /// The interface's language chosen here: the menu and the windows in it, and saved on the server
+    /// for this Mac's device (its face's texts too).
+    func interfaceLanguageChanged() {
+        objectWillChange.send()
+        Server.shared.objectWillChange.send()
+        link.interfaceLanguageChanged()
+    }
+
     /// «Paused: Zoom is using the microphone», for the menu; nil while it listens.
     var pausedText: String? {
         guard let paused = link.paused else { return nil }
