@@ -32,8 +32,10 @@ releases: el instalador .exe, el AppImage y el .deb), y la app de Android en un 
 - [ ] **Diseño de las páginas web**: darles un diseño cuidado a la página de temas
   (`plugins/themes`: la que se ve en la ventana Temas de la app del Mac, un WKWebView, y en el
   navegador) y a la administración web (`plugins/admin/web`: la que usan Windows y Linux y
-  cualquier navegador). Hoy son funcionales pero sobrias; que sigan el estilo y el vocabulario
-  de las apps.
+  cualquier navegador), y a las pantallas de emparejar desde el navegador: el código de la
+  página del dispositivo (`#pair` en `plugins/page/web/index.html` y `system.css`) y la página
+  del QR (`/connect`, `plugins/page/web/connect.html`). Hoy son funcionales pero sobrias; que
+  sigan el estilo y el vocabulario de las apps.
 
 ## El instalador
 
