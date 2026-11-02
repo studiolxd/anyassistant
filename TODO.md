@@ -2,17 +2,19 @@
 
 # Para publicar
 
-- [ ] **iPhone y iPad en TestFlight**, y probarla en el iPhone 7 (iOS 15).
-- [ ] **Un modo demo para la revisión de la App Store** (el revisor no tiene tu servidor), solo si
+- [ ] **Subir la app de iPhone y iPad a TestFlight.**
+- [ ] **Probar la app en el iPhone 7** (iOS 15), desde TestFlight.
+- [ ] **Hacer un modo demo para la revisión de la App Store** (el revisor no tiene tu servidor), solo si
   se publica fuera de TestFlight.
 - [ ] **Publicar la app de Android** (Google Play, o el APK firmado para instalar a mano).
-- [ ] **Versiones en GitHub Releases** con lo que lleva cada una (install.sh copia hoy el
+- [ ] **Publicar las versiones en GitHub Releases** con lo que lleva cada una (install.sh copia hoy el
   checkout de git, o la copia de la app).
 - [ ] **Firmar el instalador de Windows** cuando lo instale más gente (Azure Artifact
   Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de España).
-- [ ] **Actualizarse sola** (hoy, instalar la versión nueva encima).
-- [ ] **Versiones ARM** (Windows en ARM, Raspberry Pi).
-- [ ] **La app del Mac en Releases** en cada versión sin hacerlo a mano (hoy:
+- [ ] **Que las apps se actualicen solas** (hoy, instalar la versión nueva encima).
+- [ ] **Versión para Windows en ARM.**
+- [ ] **Versión para Raspberry Pi** (Linux en ARM).
+- [ ] **Subir la app del Mac a Releases** en cada versión sin hacerlo a mano (hoy:
   `apps/mac/build.sh --release` en este Mac y `gh release upload`; en Actions haría falta el
   certificado como secreto).
 
@@ -20,94 +22,95 @@
 
 ## Las apps
 
-- [ ] **Android**: probarla en un Android 8 real (el micrófono y la cancelación de eco, Bonjour,
+- [ ] **Probar la app de Android en un Android 8 real** (el micrófono y la cancelación de eco, Bonjour,
   la alarma con la pantalla bloqueada, la cámara).
-- [ ] **El Mac**: probarlo como cliente de otro servidor.
-- [ ] **El Apple Watch**: los avisos en la muñeca (alarmas, agenda, «la cocina dice…», con
+- [ ] **Probar la app del Mac como cliente de otro servidor.**
+- [ ] **El Apple Watch**: recibir los avisos en la muñeca (alarmas, agenda, «la cocina dice…», con
   vibración: notificaciones push).
-- [ ] **El Apple Watch**: fuera de casa (el servidor accesible desde fuera: Tailscale…).
-- [ ] **El Apple Watch**: una complicación para la esfera y el botón Acción.
+- [ ] **El Apple Watch**: usarlo fuera de casa (el servidor accesible desde fuera: Tailscale…).
+- [ ] **El Apple Watch**: una complicación para la esfera.
+- [ ] **El Apple Watch**: el botón Acción.
 
 ## Diseño de las páginas web
 
 Hoy son funcionales pero sobrias; que sigan el estilo y el vocabulario de las apps.
 
-- [ ] **La página de temas** (`plugins/themes`: la ventana Temas de la app del Mac, un
+- [ ] **Diseñar la página de temas** (`plugins/themes`: la ventana Temas de la app del Mac, un
   WKWebView, y el navegador).
-- [ ] **La administración web** (`plugins/admin/web`: la de Windows y Linux y cualquier
+- [ ] **Diseñar la administración web** (`plugins/admin/web`: la de Windows y Linux y cualquier
   navegador).
-- [ ] **Emparejar con el código** en la página del dispositivo (`#pair` en
+- [ ] **Diseñar la pantalla de emparejar con el código** en la página del dispositivo (`#pair` en
   `plugins/page/web/index.html` y `system.css`).
-- [ ] **La página del QR** (`/connect`, `plugins/page/web/connect.html`).
+- [ ] **Diseñar la página del QR** (`/connect`, `plugins/page/web/connect.html`).
 
 ## El instalador
 
-- [ ] **El paso de registro de la voz** en el instalador (`@installer.device`).
+- [ ] **Añadir el paso de registro de la voz** al instalador (`@installer.device`).
 
 ## Windows y Linux
 
 Cómo se hizo: `docs/windows-y-linux.md`.
 
-- [ ] **Probar en tu Windows y tu Linux** los motores, la app de bandeja y la administración web
-  (en curso).
-- [ ] **Claude Code en Windows y Linux** (las preguntas abiertas).
-- [ ] **`tts-piper`**: una voz más ligera, para una Raspberry.
-- [ ] **`set_voice` con las voces de Kokoro** (hoy, solo las del Mac).
-- [ ] **Reiniciar por voz en Windows** con la app de bandeja (hoy `os.execv`, que cambia de
+- [ ] **Probar en tu Windows** los motores, la app de bandeja y la administración web (en curso).
+- [ ] **Probar en tu Linux** los motores, la app de bandeja y la administración web (en curso).
+- [ ] **Hacer funcionar Claude Code en Windows y Linux** (las preguntas abiertas).
+- [ ] **Añadir `tts-piper`**: una voz más ligera, para una Raspberry.
+- [ ] **Elegir voz (`set_voice`) entre las de Kokoro** (hoy, solo las del Mac).
+- [ ] **Poder reiniciar por voz en Windows** con la app de bandeja (hoy `os.execv`, que cambia de
   proceso).
-- [ ] **El control sin LLM** en Windows y Linux (aplazado).
-- [ ] **Qué dice la app de bandeja** cuando es cliente de otro servidor y otra app usa el
+- [ ] **Controlar el equipo sin LLM** en Windows y Linux (aplazado).
+- [ ] **Decidir qué dice la app de bandeja** cuando es cliente de otro servidor y otra app usa el
   micrófono.
 
 ## Varios dispositivos, lo siguiente
 
-- [ ] **Afinar quién contesta**: el margen (1,5 s) y la comparación por volumen, con más
-  uso real (el log dice `heard it louder` / `not woken`).
+- [ ] **Afinar el margen de quién contesta** (1,5 s) con más uso real (el log dice `not woken`).
+- [ ] **Afinar la comparación por volumen de quién contesta** con más uso real (el log dice
+  `heard it louder`).
 
 ## Quién habla
 
-- [ ] **Afinar la huella de voz con voces reales** (`voice_match`, 0,5): el log da la
-  puntuación de cada frase. Con voces sintéticas: la misma ~0,7–0,8, otra ~0,0–0,5.
-- [ ] **La memoria de cada persona**: «hechos solo de lo que dice el usuario», pero en una
-  casa de varios se mezclan; ahora que sabe quién habla, cada uno los suyos.
+- [ ] **Afinar la huella de voz con voces reales** (`voice_match`, 0,5; el log da la puntuación
+  de cada frase; con voces sintéticas, la misma ~0,7–0,8, otra ~0,0–0,5).
+- [ ] **Separar la memoria de cada persona** (en una casa de varios, los hechos se mezclan;
+  ahora que sabe quién habla, cada uno los suyos).
 
 ## Casa y multimedia
 
 Home Assistant, cuando lo tengas instalado (HomeKit, no): luces, persianas y climatización,
 lo primero que se le pide a un asistente de voz en casa.
 
-- [ ] **Home Assistant para el LLM**: su MCP (lo conectas tú a los LLM, como Holded); ya
+- [ ] **Conectar Home Assistant al LLM**: su MCP (lo conectas tú a los LLM, como Holded); ya
   entiende sus áreas, que son nuestras habitaciones, y lo expuesto a Assist.
-- [ ] **Home Assistant: la regla de confirmación**: luces, persianas y clima sin «sí»;
+- [ ] **Añadir la regla de confirmación de Home Assistant**: luces, persianas y clima sin «sí»;
   cerraduras, garaje y alarma con él (el hook ve los argumentos).
-- [ ] **Home Assistant sin LLM**: órdenes rápidas con su API («enciende la luz», «sube la
+- [ ] **Órdenes rápidas de Home Assistant sin LLM** con su API («enciende la luz», «sube la
   persiana», «pon la calefacción a 21»), en menos de un segundo y aunque falle Claude.
-- [ ] **Avisos de Home Assistant** («la lavadora ha terminado») dichos donde estés (`notices`).
-- [ ] **Música, radio, podcasts**: solo reproduce su voz y sus sonidos. Antes, valorar
-  opciones para que suene en el dispositivo donde la pides (no solo en el Mac: Spotify
-  Connect, AirPlay, por la página…).
+- [ ] **Decir los avisos de Home Assistant donde estés** («la lavadora ha terminado»; `notices`).
+- [ ] **Valorar cómo hacer que la música suene en el dispositivo donde la pides** (no solo en el
+  Mac: Spotify Connect, AirPlay, por la página…).
+- [ ] **Reproducir música, radio y podcasts** (hoy solo reproduce su voz y sus sonidos).
 
 ## Calidad de la conversación
 
-- [ ] **Afinar el eco al interrumpirle** (`listen_while_speaking`, activado): con más uso real en
-  cada dispositivo (el log da la puntuación de cada frase, «its own echo» / «not its echo»).
-- [ ] **Parakeet se pasa al inglés** con frases cortas («Yeah.», «Thank you.»; docs/corpus.md).
-- [ ] **Las primeras palabras se pierden con ruido** (0,3 s de preroll; docs/corpus.md).
-- [ ] **Whisper se inventa «Gracias.»** (docs/corpus.md).
+- [ ] **Afinar el eco al interrumpirle** (`listen_while_speaking`) con más uso real en cada
+  dispositivo (el log da la puntuación de cada frase, «its own echo» / «not its echo»).
+- [ ] **Evitar que Parakeet se pase al inglés** con frases cortas («Yeah.», «Thank you.»; docs/corpus.md).
+- [ ] **No perder las primeras palabras con ruido** (0,3 s de preroll; docs/corpus.md).
+- [ ] **Evitar que Whisper se invente «Gracias.»** (docs/corpus.md).
 - [ ] **Juntar una pregunta partida por una pausa** («la caída del imperio» … «romano de
   Occidente»): si el segundo trozo llega mientras piensa la respuesta al primero, una sola
   respuesta a los dos.
-- [ ] **Palabra de activación**: seguir vigilando falsos positivos y negativos (31 oct: 28
+- [ ] **Vigilar los falsos positivos y negativos de la palabra de activación** (31 oct: 28
   activaciones, una falsa, corregida).
-- [ ] **Bilingüe a la vez**: contestar en el idioma en que se dice cada frase.
+- [ ] **Contestar en el idioma en que se dice cada frase** (bilingüe a la vez).
 
 ## Mantenimiento
 
-- [ ] **`LanguageModelSession.GenerationError` deprecado** en macOS 27 (apple_bridge.swift).
-- [ ] **El sintetizador de AVSpeech** avisa sobre el main actor.
-- [ ] **La app del Mac en Swift 6** (hoy compila en modo de lenguaje Swift 5; la concurrencia
-  estricta, pendiente).
-- [ ] **Un test end-to-end inestable**: una vez, la palabra de activación no oyó nada en
+- [ ] **Sustituir `LanguageModelSession.GenerationError`**, deprecado en macOS 27 (apple_bridge.swift).
+- [ ] **Corregir el aviso del sintetizador de AVSpeech** sobre el main actor.
+- [ ] **Pasar la app del Mac a Swift 6** (hoy compila en modo de lenguaje Swift 5).
+- [ ] **Estabilizar un test end-to-end**: una vez, la palabra de activación no oyó nada en
   35 s con la voz sintética (test_memory_with_claude); pasó al repetirlo.
 
 # Hecho
