@@ -3,7 +3,9 @@
 // a notification, once per version, and an item in the tray's menu: «Actualizar a la versión
 // 0.2.0…» downloads it, installs it and opens the new one (which updates the server it carries, as
 // on any start). Nothing is installed by itself. Not while developing (only the packaged app), and
-// on Linux only the AppImage and the .deb update themselves.
+// on Linux only the AppImage and the .deb update themselves. «Buscar actualizaciones…» always
+// answers (`answer`): the version found, with «Actualizar»; up to date; or why it couldn't look.
+// What it does goes to `log` (main.js: updates.log, beside the app's logs).
 
 const EVERY = 6 * 3600 * 1000;  // how often it looks
 
@@ -19,14 +21,15 @@ function items(state, T, M, install) {
   return [];
 }
 
-/// Starts looking (the packaged app only). `changed`: the menu again; `notify(version)`: its notification.
-function begin({ app, log, changed, notify }) {
+/// Starts looking (the packaged app only). `changed`: the menu again; `notify(version)`: its notification;
+/// `answer({found, current, error})`: what a search asked for in the menu found (a window).
+function begin({ app, log, changed, notify, answer = () => {} }) {
   const state = { version: null, downloading: false };
   if (!app.isPackaged) return { state, check: () => {}, install: () => {} };
   const { autoUpdater } = require('electron-updater');
   autoUpdater.autoDownload = false;  // only when asked
   autoUpdater.autoInstallOnAppQuit = false;
-  autoUpdater.logger = { info: () => {}, warn: (m) => log(`updates: ${m}`), error: (m) => log(`updates: ${m}`), debug: () => {} };
+  autoUpdater.logger = { info: (m) => log(`updates: ${m}`), warn: (m) => log(`updates: ${m}`), error: (m) => log(`updates: ${m}`), debug: () => {} };
   autoUpdater.on('update-available', (info) => {
     state.version = info.version;
     changed();
@@ -37,7 +40,15 @@ function begin({ app, log, changed, notify }) {
     if (state.downloading) { state.downloading = false; changed(); }
   });
   autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall(false, true));  // installs and opens it
-  const check = () => autoUpdater.checkForUpdates().catch((e) => log(`updates: ${e && e.message}`));
+  /// asked: from the menu (it answers whatever it finds); else now and then, quietly.
+  const check = (asked = false) => autoUpdater.checkForUpdates().then((result) => {
+    if (!asked) return;
+    const found = result && result.isUpdateAvailable ? result.updateInfo.version : null;
+    answer({ found, current: app.getVersion() });
+  }).catch((e) => {
+    log(`updates: ${e && e.message}`);
+    if (asked) answer({ error: (e && e.message) || String(e), current: app.getVersion() });
+  });
   const install = () => {
     if (!state.version || state.downloading) return;
     state.downloading = true;

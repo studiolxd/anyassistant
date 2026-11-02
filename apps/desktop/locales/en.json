@@ -33,5 +33,10 @@
   "Its menu updates it with one click.": "Its menu updates it with one click.",
   "Update to version %s…": "Update to version %s…",
   "Downloading version %s…": "Downloading version %s…",
-  "Check for Updates…": "Check for Updates…"
+  "Check for Updates…": "Check for Updates…",
+  "It couldn't look for updates.": "It couldn't look for updates.",
+  "You have version %s.": "You have version %s.",
+  "Update": "Update",
+  "Later": "Later",
+  "AnyAssistant is up to date": "AnyAssistant is up to date"
 }

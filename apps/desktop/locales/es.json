@@ -88,5 +88,10 @@
   "Its menu updates it with one click.": "Se actualiza con un clic desde su menú.",
   "Update to version %s…": "Actualizar a la versión %s…",
   "Downloading version %s…": "Descargando la versión %s…",
-  "Check for Updates…": "Buscar actualizaciones…"
+  "Check for Updates…": "Buscar actualizaciones…",
+  "It couldn't look for updates.": "No se pudo buscar actualizaciones.",
+  "You have version %s.": "Tienes la versión %s.",
+  "Update": "Actualizar",
+  "Later": "Más tarde",
+  "AnyAssistant is up to date": "AnyAssistant está al día"
 }

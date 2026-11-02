@@ -267,8 +267,23 @@ const updatesItems = () => (pendingUpdates.length
 // --- The app's own updates (app-updates.js): a notification once per version, «Actualizar…» in the menu ---
 
 let ownUpdates = { state: {}, check: () => {}, install: () => {} };  // the packaged app's (begin, once there is a tray)
+const updatesLog = (line) => {  // what the updater does, beside the app's logs (%APPDATA%\AnyAssistant\logs on Windows)
+  try { fs.appendFileSync(path.join(app.getPath('logs'), 'updates.log'), `${new Date().toISOString()} ${line}\n`); } catch (e) { /* no log */ }
+};
+/// What «Buscar actualizaciones…» found, in a window: always an answer.
+async function updatesAnswer({ found, current, error }) {
+  if (error) {
+    dialog.showMessageBox({ type: 'warning', message: T('It couldn\'t look for updates.'), detail: error });
+  } else if (found) {
+    const { response } = await dialog.showMessageBox({ type: 'info', message: T('AnyAssistant %s is available', found),
+      detail: T('You have version %s.', current), buttons: [T('Update'), T('Later')], defaultId: 0, cancelId: 1 });
+    if (response === 0) ownUpdates.install();
+  } else {
+    dialog.showMessageBox({ type: 'info', message: T('AnyAssistant is up to date'), detail: T('You have version %s.', current) });
+  }
+}
 function followOwnUpdates() {
-  ownUpdates = appUpdates.begin({ app, log: (m) => console.log(m), changed: menu, notify: (version) => {
+  ownUpdates = appUpdates.begin({ app, log: updatesLog, changed: menu, answer: updatesAnswer, notify: (version) => {
     if (!appUpdates.announce(version, state.appNotice)) return;
     remember({ appNotice: version });
     if (!Notification.isSupported()) return;
@@ -279,7 +294,7 @@ function followOwnUpdates() {
   } });
 }
 const ownUpdateItems = () => appUpdates.items(ownUpdates.state, T, M, () => ownUpdates.install());
-const checkItem = () => (app.isPackaged ? [{ label: M('Check for Updates…'), click: () => ownUpdates.check() }] : []);
+const checkItem = () => (app.isPackaged ? [{ label: M('Check for Updates…'), click: () => ownUpdates.check(true) }] : []);
 
 // --- The other server, as a client (the Mac's «Conectarse a otro servidor») ---
 
