@@ -262,6 +262,14 @@ const faceItem = () => (faceShown()
   ? { label: T('Hide %s', name), click: hideFace }
   : { label: T('Show %s', name), enabled: isClient() || running(), click: showFace });
 const listenItem = () => ({ label: T('Listen on this device'), type: 'checkbox', checked: state.listening, click: (item) => listen(item.checked) });
+// «Paused: Zoom is using the microphone»: the server paused this computer's own page while another
+// program records (the plugin «microphone-busy»); /status says so of the device from 127.0.0.1.
+const pausedText = () => {
+  const own = connected.find((d) => d.local && d.paused);
+  if (!own) return null;
+  return own.paused.app ? T('Paused: %s is using the microphone', own.paused.app) : T('Paused: another app is using the microphone');
+};
+const pausedItems = () => (pausedText() ? [{ label: pausedText(), enabled: false }] : []);
 const privacyItems = () => [
   ...(refused('microphone') ? [{ label: M('Allow the microphone…'), click: () => shell.openExternal(PRIVACY.microphone) }] : []),
   ...(refused('camera') ? [{ label: M('Allow the camera…'), click: () => shell.openExternal(PRIVACY.camera) }] : []),
@@ -293,7 +301,7 @@ function serverMenu() {
       : server.state === 'starting' ? [{ label: T('Stop'), click: () => server.stop() }]
       : [{ label: T('Restart'), click: () => server.restart() }, { label: T('Stop'), click: () => server.stop() }]),
     { type: 'separator' },
-    faceItem(), listenItem(), ...privacyItems(),
+    faceItem(), listenItem(), ...pausedItems(), ...privacyItems(),
     { label: M('Themes…'), enabled: running(), click: showThemes },  // every state of each theme, to see them (the plugin «themes»)
     { type: 'separator' },
     { label: M('Pair a device…'), click: showPair },

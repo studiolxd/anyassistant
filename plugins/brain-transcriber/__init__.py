@@ -4,6 +4,7 @@
 import logging
 import os
 
+import echo
 import events
 import hub
 import i18n
@@ -78,6 +79,14 @@ class Transcriber:
             may_wake=lambda why: hub.claim(self, self.ear.level, why),
             **(ear or {}),
         )
+        # Its own voice heard back: judged against what it sent to this device, and to the others
+        # (two in the same room hear each other's).
+        self.ear.echo = echo.Judge(self._trails)
+
+    def _trails(self) -> list:
+        mine = getattr(self.speaker, "trail", None)
+        others = [getattr(s.speaker, "trail", None) for s in hub.all() if s.brain is not self]
+        return [t for t in [mine, *others] if t is not None]
 
     def _heard(self, text: str, timings: dict):
         self.send({"type": "text", "text": text, "timings": timings})
@@ -88,6 +97,11 @@ class Transcriber:
             self.theme = data["name"]  # this device's theme: its sounds
         elif data.get("type") == "tap":
             events.emit("tap", self)  # the screen was tapped (tap-to-wake…)
+        elif data.get("type") == "paused":  # another app uses its microphone (a call): the device says so
+            if settings.get("pause_when_microphone_busy", True) is not False:
+                self.ear.pause(str(data.get("why") or "microphone"), str(data.get("app") or "")[:80])
+        elif data.get("type") == "listening":
+            self.ear.resume("device")
 
     def _beep(self, kind: str):
         """Wake or sleep: the plugin «sounds» (the theme's, or its own); silence without it."""
@@ -108,6 +122,8 @@ class Transcriber:
         message = {"type": "state", "state": state}
         if self.wake:
             message["wake_phrase"] = self.wake.phrase
+        if state == "paused":  # why, and by which app if known: «En pausa: Zoom usa el micrófono»
+            message["why"], message["app"] = self.ear.pause_reason
         self.send(message)
 
     def on_connect(self):

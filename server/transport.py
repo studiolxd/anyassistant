@@ -23,6 +23,7 @@ class Session:
         self.id = session_id
         self.device = device  # the page's own id: the same device connecting again
         self.agent = ""  # its browser's User-Agent
+        self.remote = ""  # where it connects from (127.0.0.1: the computer's own app)
         # No STUN: on the local network it is useless, and aiortc's default (a
         # Google server) made every connection take ~5 s to answer.
         self.pc = RTCPeerConnection(RTCConfiguration(iceServers=[]))

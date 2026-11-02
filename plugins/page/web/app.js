@@ -315,11 +315,15 @@ function ping() {
 }
 
 var lastWake;
-function showState(state, wakePhrase) {
+var PAUSED = ['microphone', 'call', 'interrupted'];  // why it is paused (the server's reasons)
+function showState(state, wakePhrase, details) {
   lastState = state;
   lastWake = wakePhrase || lastWake;
   if (state === 'alarm') {
     status(text('alarm', { label: alarmLabel }));
+  } else if (state === 'paused') {  // another app uses the microphone (a call): «En pausa: Zoom usa el micrófono»
+    var why = details && PAUSED.indexOf(details.why) >= 0 ? details.why : 'microphone';
+    status(text(details && details.app ? 'paused_app' : 'paused_' + why, { app: details && details.app }));
   } else if (state === 'asleep') {
     status(screen.show_hint === false ? '' : text('asleep', { wake: lastWake || (settings.wake_phrase || 'Hey Jarvis') }));
   } else {
@@ -333,15 +337,24 @@ function showState(state, wakePhrase) {
 
 function message(m) {
   if (m.type === 'pong') rtt = Math.round(performance.now() - m.t);
-  else if (m.type === 'state') showState(m.state, m.wake_phrase);
+  else if (m.type === 'state') showState(m.state, m.wake_phrase, m);
   else if (m.type === 'text') caption(m);
-  else if (m.type === 'config') loadTexts();  // the settings changed
+  else if (m.type === 'pause' || m.type === 'resume') holdMicrophone(m.type === 'pause');  // the server paused it
   else if (m.type === 'look') showPhoto(m.at);
+  else if (m.type === 'config') loadTexts();  // the settings changed
   else if (m.type === 'camera') showCamera(m.on);
   else if (m.type === 'photo') takePhoto(m.id);
   else if (m.type === 'timers') showTimers(m.items);
   else if (m.type === 'alarm') alarmLabel = m.label || '';
   else if (m.type === 'theme') { deviceTheme(m.name); loadTexts(); }  // «use the orb theme here»
+}
+
+// Paused by the server (another program on this computer uses the microphone: the plugin
+// «microphone-busy»): the microphone's track sends silence meanwhile (the browser can't know
+// by itself what else uses it).
+function holdMicrophone(hold) {
+  if (!media) return;
+  media.getAudioTracks().forEach(function (t) { t.enabled = !hold; });
 }
 
 // «Turn on the camera»: what this device's camera sees, live, like a mirror (the same

@@ -14,6 +14,8 @@ import numpy as np
 from aiortc import MediaStreamTrack
 from av import AudioFrame
 
+import echo
+
 RATE = 48000
 SAMPLES = 960  # 20 ms
 
@@ -37,16 +39,20 @@ class Speaker(MediaStreamTrack):
         self._start = None
         self._pts = 0
         self.last_sound = 0.0  # when the last non-silent sample went out
+        self.trail = echo.Trail()  # the loudness of what went out and when: to know its own echo
 
     @property
     def speaking(self) -> bool:
         return len(self._queue) > 0
 
     def play(self, pcm: np.ndarray):
-        self._queue = np.concatenate([self._queue, pcm.astype(np.int16)])
+        pcm = pcm.astype(np.int16)
+        self.trail.add(pcm, time.time() + len(self._queue) / RATE)  # it plays after what is queued
+        self._queue = np.concatenate([self._queue, pcm])
 
     def stop(self):
         self._queue = np.zeros(0, dtype=np.int16)
+        self.trail.cut()
 
     async def recv(self) -> AudioFrame:
         if self._start is None:

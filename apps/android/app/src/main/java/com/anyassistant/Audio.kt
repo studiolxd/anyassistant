@@ -12,6 +12,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
+import android.media.AudioRecordingConfiguration
 import android.media.AudioTrack
 import android.media.MediaRecorder
 import android.media.audiofx.AcousticEchoCanceler
@@ -30,11 +31,19 @@ class Audio(private val context: Context) {
     @Volatile private var running = false
     @Volatile private var generation = 0  // a hush drops what was queued before it
     private var threads = listOf<Thread>()
+    private var recording: AudioManager.AudioRecordingCallback? = null
 
     /** How loud its own voice is now (0…1), for the face. */
     var onSpeech: ((Float) -> Unit)? = null
+    /** Android 10 or later shares the microphone: when another app (a call, a video meeting) has it,
+     *  this one keeps recording but receives silence; true then, false when it hears again. */
+    var onSilenced: ((Boolean) -> Unit)? = null
 
     val isRunning get() = running
+
+    /** Whether the phone is in a call (telephony's mode): why it is silenced, if it is. */
+    val inCall: Boolean
+        get() = (context.getSystemService(Context.AUDIO_SERVICE) as AudioManager).mode == AudioManager.MODE_IN_CALL
 
     /** Starts listening and playing; false if the microphone couldn't be opened. */
     @SuppressLint("MissingPermission")  // asked for before starting
@@ -61,6 +70,15 @@ class Audio(private val context: Context) {
         recorder = record
         track = player
         running = true
+        if (Build.VERSION.SDK_INT >= 29) {  // before: the second app to ask can't record; nothing to tell
+            val callback = object : AudioManager.AudioRecordingCallback() {
+                override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
+                    if (running) onSilenced?.invoke(record.activeRecordingConfiguration?.isClientSilenced == true)
+                }
+            }
+            record.registerAudioRecordingCallback(context.mainExecutor, callback)
+            recording = callback
+        }
         record.startRecording()
         player.play()
         val listen = Thread {
@@ -129,6 +147,8 @@ class Audio(private val context: Context) {
         running = false
         threads.forEach { runCatching { it.join(500) } }
         queue.clear()
+        if (Build.VERSION.SDK_INT >= 29) recording?.let { callback -> recorder?.let { runCatching { it.unregisterAudioRecordingCallback(callback) } } }
+        recording = null
         recorder?.let { runCatching { it.stop() }; it.release() }
         track?.let { runCatching { it.stop() }; it.release() }
         recorder = null

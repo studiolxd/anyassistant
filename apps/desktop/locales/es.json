@@ -33,6 +33,8 @@
   "Connected to %s": "Conectado a %s",
   "Looking for the server…": "Buscando el servidor…",
   "The microphone is off": "El micrófono está apagado",
+  "Paused: another app is using the microphone": "En pausa: otra app usa el micrófono",
+  "Paused: %s is using the microphone": "En pausa: %s usa el micrófono",
   "Run the server on this device…": "Usar este dispositivo como servidor…",
   "The server isn't responding": "El servidor no responde",
   "AnyAssistant's server is stopped.": "El servidor de AnyAssistant está detenido.",

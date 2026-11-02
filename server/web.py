@@ -113,6 +113,7 @@ async def offer(request: web.Request) -> web.Response:
     device = device if re.fullmatch(r"[A-Za-z0-9_-]{1,64}", device) else None
     session = Session(uuid.uuid4().hex[:6], brain, device)
     session.agent = request.headers.get("User-Agent", "")
+    session.remote = request.remote or ""  # 127.0.0.1: the computer's own app (microphone-busy)
     for old in hub.add(session):  # the same device connecting again: its old connection goes
         await old.close()
     events.emit("connected", session)  # its name and room (the plugin «devices»)…
@@ -154,9 +155,13 @@ def _device(session, current: bool, devices) -> dict:
     """A connected device, for the apps' menus: its name, room, kind (its icon) and LLM."""
     known = devices.load().get(session.device or "", {}) if devices else {}
     own = devices.llm_of(session.device) if devices else None
+    ear = getattr(session.brain, "ear", None)
+    why, app = ear.pause_reason if ear is not None and getattr(ear, "paused", None) else ("", "")
     return {"id": session.device or session.id, "name": known.get("name", ""), "room": known.get("room", ""),
             "kind": devices.kind(known.get("agent") or getattr(session, "agent", "")) if devices else "",
-            "llm": own or settings.get("llm"), "own_llm": bool(own), "current": current}
+            "llm": own or settings.get("llm"), "own_llm": bool(own), "current": current,
+            "local": getattr(session, "remote", "") in LOCAL,  # the computer's own app (its tray says if paused)
+            "paused": {"why": why, "app": app} if why else None}
 
 
 def contributed(request: web.Request) -> dict:

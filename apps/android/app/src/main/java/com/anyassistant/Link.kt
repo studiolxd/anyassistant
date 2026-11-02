@@ -2,6 +2,10 @@
 // and its voice coming down, and the messages both ways, which change the face (FaceState). It
 // reconnects by itself (the network drops, the Mac restarts). The same as iOS's Link.swift; it lives
 // in the app (App.link), kept running by ListenService while the screen is off.
+// Paused while another app has the microphone (a call, a meeting: Android silences this one,
+// Audio.onSilenced): the server is told («paused», why; «listening» after), so its face explains
+// it and nothing is transcribed; the recorder keeps running (silence) to know when it's given
+// back, and then the audio is started again: a call leaves the mode and the route changed.
 
 package com.anyassistant
 
@@ -45,9 +49,13 @@ class Link(private val context: Context) {
     var inFront = true  // the app is on screen (the camera only works then)
         private set
     private var lastLevel = 0L
+    /** Why it is paused («microphone», «call») and by which app, if known; null while it listens. */
+    var paused: Pair<String, String>? = null
+        private set
 
     init {
         audio.onSpeech = { level -> scope.launch { face.speech = level } }
+        audio.onSilenced = { silenced -> scope.launch { if (silenced) pause(if (audio.inCall) "call" else "microphone") else resume() } }
         camera.onFrame = { jpeg -> scope.launch { send(JSONObject().put("type", "frame").put("jpeg", Base64.encodeToString(jpeg, Base64.NO_WRAP))) } }
     }
 
@@ -113,17 +121,44 @@ class Link(private val context: Context) {
 
     private fun connected() {
         set(State.CONNECTED)
+        startAudio()
+        paused?.let { (why, app) -> send(JSONObject().put("type", "paused").put("why", why).put("app", app)) }  // the server is new to it
+        scope.launch { configure() }
+        if (tapWhenConnected) {
+            tapWhenConnected = false
+            send(JSONObject().put("type", "tap"))
+        }
+    }
+
+    private fun startAudio() {
         val listening = audio.start { pcm, level ->
             socket?.send(pcm.toByteString())
             val now = System.currentTimeMillis()
             if (now - lastLevel > 33) { lastLevel = now; scope.launch { face.voice = level } }  // the face follows your voice
         }
         if (!listening) report("no microphone: the recorder didn't start")
-        scope.launch { configure() }
-        if (tapWhenConnected) {
-            tapWhenConnected = false
-            send(JSONObject().put("type", "tap"))
-        }
+    }
+
+    // --- Paused: another app has the microphone ---
+
+    /** Tells the server why («microphone»: another app records; «call»). Nothing if the server
+     *  doesn't want it (settings «pause_when_microphone_busy»). */
+    fun pause(why: String, app: String = "") {
+        if (!face.shows("pause_when_microphone_busy")) return
+        if (paused == why to app) return
+        if (paused == null) report("paused: $why" + if (app.isEmpty()) "" else " ($app)")
+        paused = why to app
+        send(JSONObject().put("type", "paused").put("why", why).put("app", app))
+    }
+
+    /** The microphone is its again: the audio started afresh (the call changed the mode and the
+     *  route), and the server told. */
+    fun resume() {
+        if (paused == null) return
+        paused = null
+        report("listening again")
+        if (state == State.CONNECTED) { audio.stop(); startAudio() }
+        send(JSONObject().put("type", "listening"))
     }
 
     private fun dropped(code: Int?) {

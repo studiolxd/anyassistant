@@ -15,6 +15,11 @@ in a separate thread; the result goes to on_heard(text, timings).
 Each room is different: the VAD's thresholds aren't only the fixed ones but follow the room's
 noise as this device's microphone hears it (NoiseFloor), and a calibration (the plugin
 «calibration»: a few seconds of silence measured on the device, Measurement) sets where it starts.
+
+Paused (pause/resume): while another app uses the device's microphone (a call) nothing is heard
+and the face says so. While it speaks it is deaf, unless «listen_while_speaking»: then sentences
+are segmented as always and, at the end, its own echo is told from a person by loudness
+(server/echo.py) and dropped; a person talking over it reaches on_heard with timings «over».
 """
 
 import asyncio
@@ -182,6 +187,17 @@ class Ear:
         self.generation = 0  # a wake-up undone (drop) discards what it was still transcribing
         self.last_audio = None  # the 16 kHz audio of the last sentence heard
         self.interruptible = False  # the wake word is listening while it speaks
+        # Paused: another app uses the device's microphone (a call), so what arrives isn't heard
+        # (it isn't the room, or it isn't ours to hear). By who says so: the device («paused»
+        # messages), the server (the plugin «microphone-busy») or the audio itself (exact zeros,
+        # stream-api): each with its reason and, if known, the app. Any of them pauses it.
+        self.paused: dict[str, tuple[str, str]] = {}
+        self.paused_at = 0.0
+        # Its own voice, heard back (settings «listen_while_speaking»): an echo.Judge that says
+        # whether a sentence heard while it spoke is its echo (dropped) or someone talking over it,
+        # and whether its output just started (a chime: not a sentence). None: deaf while it speaks.
+        self.echo = None
+        self.over = False  # the sentence being heard overlaps its own speech
         self.recording = None  # WAV with everything that arrives, for debugging
         if record:
             # One file per session: reconnecting doesn't overwrite it.
@@ -194,14 +210,67 @@ class Ear:
 
     @property
     def idle_state(self) -> str:
+        if self.paused:
+            return "paused"
         if self.wake is None:
             return "listening"
         return "awake" if self.awake else "asleep"
+
+    # --- Paused: another app uses the microphone ---
+
+    PAUSE_SOURCES = ("device", "server", "zeros")  # whose reason is shown, in this order
+
+    def pause(self, why: str = "microphone", app: str = "", source: str = "device"):
+        """Stops hearing (what arrives is discarded, nothing wakes it) until resume(): another app
+        uses the device's microphone (`why`: microphone, call or interrupted; `app` if known)."""
+        was = bool(self.paused)
+        self.paused[source] = (why or "microphone", app or "")
+        if was:
+            self.on_state("paused")  # the reason shown may have changed
+            return
+        log.info("paused: %s%s (%s)", why, f" by {app}" if app else "", source)
+        self.paused_at = time.time()
+        self._reset()
+        if self.wake:
+            self.wake.reset()
+        self.on_state("paused")
+
+    def resume(self, source: str | None = None):
+        """Hears again: that source's reason is over (None: every one). The follow-up clock didn't
+        run meanwhile: a conversation isn't lost to a call."""
+        if not self.paused:
+            return
+        if source is None:
+            self.paused.clear()
+        else:
+            self.paused.pop(source, None)
+        if self.paused:
+            self.on_state("paused")
+            return
+        log.info("listening again (paused %.0f s)", time.time() - self.paused_at)
+        self.last_activity += time.time() - self.paused_at
+        self._reset()
+        self.on_state(self.idle_state)
+
+    @property
+    def pause_reason(self) -> tuple[str, str]:
+        """Why it is paused and by which app, if known: (why, app); ('', '') if it isn't."""
+        for source in self.PAUSE_SOURCES:
+            if source in self.paused:
+                return self.paused[source]
+        return next(iter(self.paused.values()), ("", ""))
+
+    def through(self) -> bool:
+        """Whether it keeps hearing while it speaks (settings «listen_while_speaking»), telling its
+        own echo from a person by loudness (echo.Judge)."""
+        return self.echo is not None and bool(settings.get("listen_while_speaking"))
 
     def hear(self, pcm48: np.ndarray):
         audio = resample_poly(pcm48.astype(np.float32) / 32768, 1, 3).astype(np.float32)
         if self.recording:
             self.recording.writeframes((np.clip(audio, -1, 1) * 32767).astype(np.int16).tobytes())
+        if self.paused:  # another app's call: not heard, not even for its name
+            return
         if len(audio):  # how loud it hears now (devices compare it: hub.claim)
             self.levels = (self.levels + [rms(audio)])[-int(LEVEL_SECONDS * RATE / len(audio)):]
         if self.measuring is not None:  # calibrating: it only measures (not while it speaks)
@@ -233,8 +302,10 @@ class Ear:
                 self.interruptible = True
                 if self.wake.listen(audio):
                     self._interrupted()
-                return
-            if self.interruptible:  # it finished speaking: what the word half heard is forgotten
+                    return
+                if not self.through():  # its name is the only thing it hears while it speaks
+                    return
+            elif self.interruptible:  # it finished speaking: what the word half heard is forgotten
                 self.interruptible = False
                 self.wake.reset()
         self.pending = np.concatenate([self.pending, audio])
@@ -277,8 +348,8 @@ class Ear:
             asyncio.ensure_future(self._transcribe(sentence))
 
     def wake_up(self, why: str) -> bool:
-        """Wakes it up as its name would (a tap…); False if it wasn't asleep."""
-        if not self.wake or self.awake or not self.may_wake(why):
+        """Wakes it up as its name would (a tap…); False if it wasn't asleep (or it is paused)."""
+        if not self.wake or self.awake or self.paused or not self.may_wake(why):
             return False
         self._wake_up(why)
         return True
@@ -332,10 +403,16 @@ class Ear:
     def _window(self, window: np.ndarray):
         probability = self.vad.probability(window)
         on, off = self.noise.thresholds()  # this room's, not only the fixed ones
-        if self.deaf():
-            self._reset()
+        deaf = self.deaf()
+        if deaf:
             self.last_activity = time.time()  # its own speech counts as activity too
-            return
+            if not self.through():  # while it speaks it would hear itself: deaf
+                self._reset()
+                return
+            if self.speaking:
+                self.over = True  # its voice came in during this sentence: judged at the end
+            elif self.echo.onset():
+                return  # its own sound just started (a chime, a sentence): not someone talking
         if self.busy():  # thinking an answer, a tool running, an alarm ringing
             self.last_activity = time.time()
 
@@ -349,6 +426,7 @@ class Ear:
             loudness = rms(window)
             if probability >= on and self.noise.loud(loudness):
                 self.speaking = True
+                self.over = deaf
                 self.sentence = list(self.pre_roll)
                 self.silence = 0.0
                 self.speech = WINDOW / RATE
@@ -366,17 +444,22 @@ class Ear:
         duration = len(self.sentence) * WINDOW / RATE
         if self.silence >= self.end_of_sentence or duration >= MAXIMUM:
             audio = np.concatenate(self.sentence)
-            speech = self.speech
+            speech, over = self.speech, self.over
             self._reset()
             self.last_activity = time.time()
             if speech < MINIMUM:
                 log.info("dropped: too short (%.2f s of speech)", speech)
                 self.on_state(self.idle_state)
                 return
-            asyncio.ensure_future(self._transcribe(audio))
+            if over and self.echo is not None and self.echo.is_echo(audio, time.time()):
+                log.info("dropped: its own voice (%.2f s)", duration)  # by its loudness: not transcribed
+                self.on_state(self.idle_state)
+                return
+            asyncio.ensure_future(self._transcribe(audio, over))
 
     def _reset(self):
         self.speaking = False
+        self.over = False
         self.sentence = []
         self.pre_roll = []
         self.pending = np.zeros(0, dtype=np.float32)
@@ -384,7 +467,7 @@ class Ear:
         self.speech = 0.0
         self.vad.reset()
 
-    async def _transcribe(self, audio: np.ndarray):
+    async def _transcribe(self, audio: np.ndarray, over: bool = False):
         self.on_state("transcribing")
         start = time.time()
         generation = self.generation
@@ -395,6 +478,8 @@ class Ear:
             "audio_s": round(len(audio) / RATE, 2),
             "stt_ms": round((time.time() - start) * 1000),
         }
+        if over:
+            timings["over"] = True  # said while it spoke (and it wasn't its echo): an interruption
         self.last_activity = time.time()
         if text and hasattr(self.wake, "strip"):
             text = self.wake.strip(text)
