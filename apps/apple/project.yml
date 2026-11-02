@@ -21,10 +21,11 @@ targets:
   AnyAssistant:
     type: application
     platform: iOS
-    sources: [../ios/Sources, ../ios/Resources, ../ios/Assets.xcassets, ../shared]
+    sources: [../ios/Sources, ../ios/Resources, ../ios/Assets.xcassets, ../shared, ../ios/Live/Ringing.swift]
     dependencies:
       - target: AnyAssistantWatch
         platformFilter: iOS  # the watch app goes only with the iPhone's
+      - target: AnyAssistantLive  # a timer's countdown on the Lock Screen and in the Dynamic Island
     info:
       path: ../ios/Info.plist
       properties:
@@ -43,6 +44,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         UIBackgroundModes: [audio]
+        NSSupportsLiveActivities: true  # a timer's countdown (AlarmKit's, apps/ios/Live)
         UILaunchScreen:
           UIColorName: ""
         UIStatusBarHidden: true
@@ -115,3 +117,25 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant.watchkitapp.widget
         PRODUCT_NAME: AnyAssistantComplication
         SKIP_INSTALL: true
+  # A timer's countdown on the iPhone's Lock Screen and in its Dynamic Island (a Live Activity
+  # for the phone's own timers, AlarmKit's): iOS 26 or later.
+  AnyAssistantLive:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: ../ios/Live
+    info:
+      path: ../ios/Live/Info.plist
+      properties:
+        CFBundleDisplayName: AnyAssistant
+        CFBundleDevelopmentRegion: en
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant.live
+        PRODUCT_NAME: AnyAssistantLive
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: true
+

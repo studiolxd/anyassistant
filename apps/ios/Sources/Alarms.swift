@@ -1,6 +1,7 @@
 // On iOS 26 or later, the Mac's alarms and timers are the phone's own alarms (AlarmKit): they
 // ring like the Clock's, with the theme's alarm, even on silent, full screen, with the app
-// closed. Reminders are plain notifications (Notices).
+// closed. A timer counts down on the Lock Screen and in the Dynamic Island meanwhile (its Live
+// Activity: apps/ios/Live). Reminders are plain notifications (Notices).
 // Stopped on the phone, the Mac stops ringing too (a tap, as on its face); stopped on the Mac
 // («para»), it goes from the phone. Before iOS 26 they are notifications (Notices).
 
@@ -14,9 +15,6 @@ extension Notification.Name {
 import AlarmKit
 import AppIntents
 import SwiftUI
-
-@available(iOS 26.0, *)
-struct Ringing: AlarmMetadata {}
 
 @available(iOS 26.0, *)
 @MainActor
@@ -62,10 +60,20 @@ final class Alarms {
                                                 stopButton: AlarmButton(text: LocalizedStringResource(stringLiteral: T("Stop")),
                                                                         textColor: .white, systemImageName: "stop.circle"))
             }
-            let attributes = AlarmAttributes<Ringing>(presentation: AlarmPresentation(alert: alert), tintColor: .blue)
-            let configuration = AlarmManager.AlarmConfiguration.alarm(
-                schedule: .fixed(Date(timeIntervalSince1970: at)), attributes: attributes, stopIntent: StopRinging(),
-                sound: sound.map { .named($0) } ?? .default)
+            let tint = Color(red: 0x34 / 255, green: 0xaf / 255, blue: 0xf7 / 255)
+            let configuration: AlarmManager.AlarmConfiguration<Ringing>
+            if kind == "timer" {  // counting down meanwhile, on the Lock Screen and in the Dynamic Island
+                let countdown = AlarmPresentation.Countdown(title: LocalizedStringResource(stringLiteral: title))
+                let attributes = AlarmAttributes<Ringing>(presentation: AlarmPresentation(alert: alert, countdown: countdown),
+                                                          metadata: Ringing(title: title), tintColor: tint)
+                configuration = .timer(duration: at - Date().timeIntervalSince1970, attributes: attributes,
+                                       stopIntent: StopRinging(), sound: sound.map { .named($0) } ?? .default)
+            } else {
+                let attributes = AlarmAttributes<Ringing>(presentation: AlarmPresentation(alert: alert),
+                                                          metadata: Ringing(title: title), tintColor: tint)
+                configuration = .alarm(schedule: .fixed(Date(timeIntervalSince1970: at)), attributes: attributes,
+                                       stopIntent: StopRinging(), sound: sound.map { .named($0) } ?? .default)
+            }
             if (try? await manager.schedule(id: id, configuration: configuration)) != nil {
                 known[name] = id.uuidString
             }
