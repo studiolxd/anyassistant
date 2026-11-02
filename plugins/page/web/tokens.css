@@ -13,7 +13,7 @@
   /* Colours: dark only (the brand's blue the same everywhere). */
   --color-primary: #34AFF7;  /* the logo's and Eyes' blue */
   --color-primary-text: #000;
-  --color-background: #0B0B0C;
+  --color-background: #000000;  /* the same black as Eyes, the assistant itself */
   --color-surface: #1C1C1E;
   --color-surface-raised: #2C2C2E;
   --color-border: #38383A;
