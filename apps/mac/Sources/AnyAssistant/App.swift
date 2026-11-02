@@ -32,8 +32,9 @@ struct AnyAssistantApp: App {
         }
         Window(T("Devices"), id: "devices") {
             DevicesView()
-                .frame(minWidth: 560, minHeight: 360)
+                .frame(minWidth: 440, minHeight: 320)
         }
+        .defaultSize(width: 520, height: 460)  // a list of devices: no wider than its rows need
         Window(T("Themes"), id: "themes") {
             ThemesWindow()
                 .frame(minWidth: 640, minHeight: 480)
