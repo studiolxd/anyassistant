@@ -60,7 +60,7 @@ class Transcriber:
         engine, wake_factory, ear = listening(args)
         return lambda speaker, send: cls(engine, wake_factory() if wake_factory else None, speaker, send, ear)
 
-    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None, on_interrupt=None, busy=None):
+    def __init__(self, stt, wake, speaker, send, ear=None, deaf=None, on_interrupt=None, busy=None, on_over=None):
         self.send = send
         self.speaker = speaker
         self.wake = wake
@@ -75,6 +75,7 @@ class Transcriber:
             on_sleep=self._fell_asleep,
             deaf=deaf,
             on_interrupt=on_interrupt,
+            on_over=on_over,
             busy=busy,
             may_wake=lambda why: hub.claim(self, self.ear.level, why),
             **(ear or {}),

@@ -149,7 +149,7 @@ class Measurement:
 class Ear:
     def __init__(
         self, stt, on_state, on_heard, wake=None, on_wake=None, on_sleep=None,
-        deaf=None, record=None, silence=SILENCE, follow_up=FOLLOW_UP, on_interrupt=None,
+        deaf=None, record=None, silence=SILENCE, follow_up=FOLLOW_UP, on_interrupt=None, on_over=None,
         busy=None, may_wake=None, noise=None,
     ):
         self.stt = stt
@@ -180,6 +180,9 @@ class Ear:
         # says whether to stop (False: it was its own voice saying its name).
         self.deaf = deaf or (lambda: False)
         self.on_interrupt = on_interrupt
+        # Someone talked over it (listen_while_speaking) and it wasn't its echo: on_over(), as soon
+        # as the sentence ends, before transcribing it (what was said may not transcribe well).
+        self.on_over = on_over
         # Whether it may wake up (why None: its name, how loud it heard it in `level`): with
         # several devices, only one answers (hub.claim).
         self.may_wake = may_wake or (lambda why: True)
@@ -455,6 +458,8 @@ class Ear:
                 log.info("dropped: its own voice (%.2f s)", duration)  # by its loudness: not transcribed
                 self.on_state(self.idle_state)
                 return
+            if over and self.on_over:
+                self.on_over()
             asyncio.ensure_future(self._transcribe(audio, over))
 
     def _reset(self):

@@ -162,7 +162,7 @@ class Assistant(Transcriber):
 
     def __init__(self, stt, wake, llm, tts, speaker, send, ear=None, guard=GUARD):
         super().__init__(stt, wake, speaker, send, ear, deaf=self._deaf, on_interrupt=self._interrupt,
-                         busy=lambda: self.turn.locked() or bool(self.ringing))
+                         busy=lambda: self.turn.locked() or bool(self.ringing), on_over=self._talked_over)
         self.ear.voice_may_wake = self._voice_may_wake
         self.doubt = False  # the first sentence after a dubious wake-up
         self.ringing = None  # the timer, alarm or reminder ringing now
@@ -324,15 +324,20 @@ class Assistant(Transcriber):
         await events.gather("asleep", self, transcript)  # memory…
         await self.llm.prepare()
 
+    def _talked_over(self):
+        """Someone talked over it while it spoke (listen_while_speaking), and not its echo: it stops
+        at once, as «Jarvis, stop» without the name, before what was said is transcribed (even if
+        it doesn't transcribe, it was a person); what was said, if anything, is answered."""
+        if self.speaker.speaking or self.turn.locked():
+            log.info("interrupted by voice (without its name)")
+            self.stop()
+
     def _heard(self, text: str, timings: dict):
         if self._is_echo(text, timings):
             log.info("echo dropped: «%s»", settings.private(text))
             return
-        if timings.get("over") and (self.speaker.speaking or self.turn.locked()):
-            # Said over it while it spoke (listen_while_speaking), and not its echo: as «Jarvis,
-            # stop» without the name; what was said is answered.
-            log.info("interrupted by voice (without its name)")
-            self.stop()
+        if timings.get("over"):
+            self._talked_over()  # stopped already when the sentence ended; still speaking, now
         voices = kernel.module("voices")  # learning a voice, or only known voices count
         if voices and voices.screen(self, text, timings, getattr(self.ear, "last_audio", None), self._handle):
             return

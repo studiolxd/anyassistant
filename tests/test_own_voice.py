@@ -262,6 +262,26 @@ def test_its_echo_is_dropped_and_a_person_over_it_is_transcribed(monkeypatch):
     asyncio.run(go())
 
 
+def test_talked_over_it_stops_before_transcribing(monkeypatch):
+    """A person over it stops it as the sentence ends, even if what was said doesn't transcribe."""
+    settings.active["listen_while_speaking"] = True
+    ear, _ = make_ear(monkeypatch, deaf=True)
+    overs = []
+    ear.on_over = lambda: overs.append(True)
+    monkeypatch.setattr(ear, "_transcribe", lambda audio, over=False: _done())
+
+    async def go():
+        ear.echo = FakeJudge(echo=True)
+        speak(ear, 20, 0.9)
+        speak(ear, 25, 0.0)
+        assert not overs  # its echo: nothing
+        ear.echo = FakeJudge(echo=False)
+        speak(ear, 20, 0.9)
+        speak(ear, 25, 0.0)
+        assert overs == [True]
+    asyncio.run(go())
+
+
 async def _done():
     pass
 
