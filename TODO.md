@@ -2,7 +2,6 @@
 
 # Para publicar
 
-- [ ] **Probar la app en el iPhone 7** (iOS 15), desde TestFlight.
 - [ ] **Hacer un modo demo para la revisión de la App Store** (el revisor no tiene tu servidor), solo si
   se publica fuera de TestFlight.
 - [ ] **Publicar la app de Android** (Google Play, o el APK firmado para instalar a mano).
@@ -93,6 +92,7 @@ LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
 - [x] **El Apple Watch emparejado como el iPhone** (2 nov): el iPhone le pasa la IP del servidor, el
   certificado y el emparejamiento (el reloj no tiene Bonjour ni resuelve `.local`); sin teclado ni
   ajustes de servidor. Habla con el servidor directamente y sigue encendido mientras contesta.
+- [x] **La app en el iPhone 7** (iOS 15), desde TestFlight: funciona (2 nov).
 - [x] **Los avisos en la muñeca** (2 nov): los avisos (agenda, correo…) se guardan para los
   dispositivos que no estaban conectados y les llegan al conectarse; el reloj los pide (al abrirse, en
   segundo plano y con cada respuesta) y los muestra con vibración; «dile al reloj…» le espera. Sin push.
