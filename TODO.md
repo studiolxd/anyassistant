@@ -70,8 +70,6 @@ Cómo se hizo: `docs/windows-y-linux.md`.
 
 - [ ] **Afinar la huella de voz con voces reales** (`voice_match`, 0,5; el log da la puntuación
   de cada frase; con voces sintéticas, la misma ~0,7–0,8, otra ~0,0–0,5).
-- [ ] **Separar la memoria de cada persona** (en una casa de varios, los hechos se mezclan;
-  ahora que sabe quién habla, cada uno los suyos).
 
 ## Casa y multimedia
 
@@ -108,6 +106,9 @@ LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
 - [ ] **Pasar la app del Mac a Swift 6** (hoy compila en modo de lenguaje Swift 5).
 
 # Hecho
+
+- [x] **La memoria de cada persona** (2 nov): lo aprendido con una voz reconocida es suyo; sin
+  voz reconocida, compartido.
 
 - [x] **Los puentes de Swift para versiones anteriores** (2 nov): se compilaban para la versión
   del Mac donde se hacían (macOS 27) y no se abrían en 14 a 26; ahora, la voz para macOS 14 y el
