@@ -93,6 +93,7 @@ class MainActivity : ComponentActivity() {
     private var scanAllowed by mutableStateOf(false)  // the camera, for «Escanear código»
     private val prefs get() = getSharedPreferences("anyassistant", Context.MODE_PRIVATE)
 
+    private var asked = false  // the permissions, asked for in this run
     private val ask = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { begin() }
     private val askCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { scanAllowed = it }
 
@@ -180,12 +181,16 @@ class MainActivity : ComponentActivity() {
         val wanted = mutableListOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA)
         if (Build.VERSION.SDK_INT >= 33) wanted += Manifest.permission.POST_NOTIFICATIONS
         val missing = wanted.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
-        if (missing.isNotEmpty() && !prefs.getBoolean("asked", false)) {
-            prefs.edit().putBoolean("asked", true).apply()
+        if (missing.isNotEmpty() && !asked) {  // each time it opens while one is missing (not once ever)
+            asked = true
             ask.launch(missing.toTypedArray())
             return
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            link.face.problem = getString(R.string.microphone_needed)  // denied: the face says so
+            return
+        }
+        if (link.face.problem == getString(R.string.microphone_needed)) link.face.problem = null
         ListenService.start(this)
         link.start()
     }

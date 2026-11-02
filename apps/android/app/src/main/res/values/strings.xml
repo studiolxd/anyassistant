@@ -46,4 +46,5 @@
     <string name="scan_hint">The QR code that “Connect another device” shows on the server.</string>
     <string name="camera_needed">Allow the camera in Settings to scan the code.</string>
     <string name="connecting_to">Connecting to %1$s…</string>
+    <string name="microphone_needed">AnyAssistant needs the microphone. Allow it in Settings → Apps → AnyAssistant → Permissions.</string>
 </resources>
