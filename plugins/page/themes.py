@@ -8,6 +8,7 @@ A theme is a folder:
       theme.html        the layout: where each block goes (<div data-block="clock"></div>…)
       theme.css         its styles and animations for each state
       locales/es.json  optional: {"ui": {…}} overrides the page's texts, {"theme": {…}} adds its own
+                       ({"theme": {"description": …}}: its description in that language)
       sounds/          optional: wake.wav, sleep.wav, alarm.wav
       preview.png      optional
 
@@ -80,6 +81,18 @@ def manifest(name: str) -> dict:
         return json.loads(part(path, "json").read_text()) if path else {}
     except ValueError:
         return {}
+
+
+def description(name: str, language: str) -> str:
+    """Its description in that language: locales/<language>.json's {"theme": {"description"}}, else theme.json's."""
+    path = folder(name)
+    try:
+        found = json.loads((path / "locales" / f"{language}.json").read_text())["theme"]["description"]
+        if isinstance(found, str) and found:
+            return found
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return manifest(name).get("description", "")
 
 
 # --- Cleaning the theme's HTML ---

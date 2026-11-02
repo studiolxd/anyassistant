@@ -154,3 +154,10 @@ def test_system_themes_cant_be_deleted_and_yours_need_a_yes(mine):
     with pytest.raises(tools.ToolError):
         tools.call("delete_theme", {"name": "eyes"})
     assert "delete_theme" in tools.NEEDS_YES and "edit_theme" not in tools.NEEDS_YES
+
+
+def test_a_themes_description_in_the_servers_language():
+    from plugins.page import themes
+
+    assert themes.description("eyes", "es").startswith("Dos ojos azules")
+    assert themes.description("eyes", "en").startswith("Two blue robot eyes")  # theme.json's

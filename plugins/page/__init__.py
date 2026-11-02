@@ -185,7 +185,7 @@ async def _config(request):
         "name": settings.get("name"), "video": settings.get("video"),
         "theme": themes.for_page(chosen if chosen in themes.available() else settings.get("theme"), i18n.L.code),
         "themes": [{"name": name, "title": themes.manifest(name).get("name", name),
-                   "description": themes.manifest(name).get("description", "")} for name in themes.available()],
+                   "description": themes.description(name, i18n.L.code)} for name in themes.available()],
         "screen": {key: settings.get(key) for key in options.SCREEN},
         # How it is woken, as the screen says it («Ey, Eva»): for the demo and the themes page, before a brain says it.
         "wake_phrase": i18n.L.text("wake.phrase", "Hey, {name}").format(name=(settings.get("name") or "Jarvis").title()),

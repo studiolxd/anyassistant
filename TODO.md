@@ -1,40 +1,36 @@
 # TODO
 
-## Lo siguiente
-
-Probándose ahora (1 nov): la versión 0.1.0 de Windows y Linux (github.com/studiolxd/anyassistant/
-releases: el instalador .exe, el AppImage y el .deb), y la app de Android en un Android 8.
-
-- [ ] **Registrar tu voz** («Eva, aprende mi voz», o Ajustes → Voces) y afinar `voice_match`
-  (abajo, «Quién habla»): hoy no hay ninguna voz aprendida, así que escucha a cualquiera.
-
 ## Las apps
 
-- [ ] **iPhone y iPad**: subir a TestFlight para el iPhone 7 (iOS 15) y probarla allí (el iPad
-  con iOS 17 ya funciona, instalada por cable); un modo demo para la revisión de la App Store (el
-  revisor no tiene tu Mac), solo si se publica fuera de TestFlight.
-- [ ] **Android**: probarla en un Android 8 real (el micrófono y la cancelación de eco,
-  encontrar el Mac por Bonjour, la alarma con la pantalla bloqueada, la cámara); publicarla
-  (Google Play, o el APK firmado para instalar a mano).
-- [ ] **El Mac**: hablarle de verdad desde «Mostrar a Eva» y probarlo como cliente de otro servidor.
+- [ ] **iPhone**: subir a TestFlight para el iPhone 7 (iOS 15) y probarla allí.
+- [ ] **iPhone y iPad**: un modo demo para la revisión de la App Store (el revisor no tiene tu
+  Mac), solo si se publica fuera de TestFlight.
+- [ ] **Android**: probarla en un Android 8 real (el micrófono y la cancelación de eco, Bonjour,
+  la alarma con la pantalla bloqueada, la cámara).
+- [ ] **Android**: publicarla (Google Play, o el APK firmado para instalar a mano).
+- [ ] **El Mac**: probarlo como cliente de otro servidor.
 - [ ] **El Apple Watch**: los avisos en la muñeca (alarmas, agenda, «la cocina dice…», con
-  vibración: notificaciones push); fuera de casa (el Mac accesible desde fuera: Tailscale…);
-  una complicación para la esfera y el botón Acción.
-- [ ] **Tele**: no por ahora (sin micrófono que puedan usar las apps); si acaso, Android TV
-  como pantalla y altavoz, con la app de Android.
-- [ ] **Diseño de las páginas web**: darles un diseño cuidado a la página de temas
-  (`plugins/themes`: la que se ve en la ventana Temas de la app del Mac, un WKWebView, y en el
-  navegador) y a la administración web (`plugins/admin/web`: la que usan Windows y Linux y
-  cualquier navegador), y a las pantallas de emparejar desde el navegador: el código de la
-  página del dispositivo (`#pair` en `plugins/page/web/index.html` y `system.css`) y la página
-  del QR (`/connect`, `plugins/page/web/connect.html`). Hoy son funcionales pero sobrias; que
-  sigan el estilo y el vocabulario de las apps.
+  vibración: notificaciones push).
+- [ ] **El Apple Watch**: fuera de casa (el servidor accesible desde fuera: Tailscale…).
+- [ ] **El Apple Watch**: una complicación para la esfera y el botón Acción.
+
+## Diseño de las páginas web
+
+Hoy son funcionales pero sobrias; que sigan el estilo y el vocabulario de las apps.
+
+- [ ] **La página de temas** (`plugins/themes`: la ventana Temas de la app del Mac, un
+  WKWebView, y el navegador).
+- [ ] **La administración web** (`plugins/admin/web`: la de Windows y Linux y cualquier
+  navegador).
+- [ ] **Emparejar con el código** en la página del dispositivo (`#pair` en
+  `plugins/page/web/index.html` y `system.css`).
+- [ ] **La página del QR** (`/connect`, `plugins/page/web/connect.html`).
 
 ## El instalador
 
-- [ ] **Un paquete de versión** (install.sh copia el checkout de git, o la copia de la app):
-  ahora que el repositorio es público, las versiones de GitHub (Releases) con lo que lleva
-  cada una; el paso de registro de la voz (`@installer.device`) cuando exista ese plugin.
+- [ ] **Versiones en GitHub Releases** con lo que lleva cada una (install.sh copia hoy el
+  checkout de git, o la copia de la app).
+- [ ] **El paso de registro de la voz** en el instalador (`@installer.device`).
 
 ## El servidor en Windows y Linux
 
@@ -79,11 +75,14 @@ Java no tiene cancelación de eco).
   int8, o NVIDIA si tiene sus librerías), `tts-kokoro` (Dora en español, ~4× tiempo real),
   `wake-whisper` con faster-whisper fuera del Mac. Probado en Ubuntu: «¿Qué hora es?» por
   `/talk` → «Son las 4 y 48 de la tarde» con la voz de Kokoro.
-- [ ] **2b. Lo que queda de los motores**: probarlo todo en tu Windows y tu Linux (en
-  curso); Claude Code allí (las preguntas abiertas); `tts-piper` (más ligero, para una
-  Raspberry); `set_voice` con las voces de Kokoro (hoy, solo las del Mac); en Windows,
-  reiniciar por voz con la app de bandeja (hoy `os.execv`, que cambia de proceso); el control
-  sin LLM (aplazado); qué dice la app cuando es cliente de otro servidor y otra app usa el
+- [ ] **2b. Probar los motores** en tu Windows y tu Linux (en curso).
+- [ ] **2b. Claude Code en Windows y Linux** (las preguntas abiertas).
+- [ ] **2b. `tts-piper`**: una voz más ligera, para una Raspberry.
+- [ ] **2b. `set_voice` con las voces de Kokoro** (hoy, solo las del Mac).
+- [ ] **2b. Reiniciar por voz en Windows** con la app de bandeja (hoy `os.execv`, que cambia de
+  proceso).
+- [ ] **2b. El control sin LLM** en Windows y Linux (aplazado).
+- [ ] **2b. Qué dice la app de bandeja** cuando es cliente de otro servidor y otra app usa el
   micrófono.
 - [x] **3. Linux sin pantalla** (1 nov): `install.sh` y el servicio de systemd; la
   administración web en `/admin` (emparejar con QR, dispositivos, ajustes, plugins, voces,
@@ -104,11 +103,13 @@ Java no tiene cancelación de eco).
   **v0.1.0 publicada** (1 nov), con la app del Mac también (`AnyAssistant-0.1.0-mac.dmg`, Apple
   Silicon, firmada y notarizada). La siguiente: subir `version` en `apps/desktop/package.json`,
   `git tag v0.1.1 && git push origin v0.1.1`.
-- [ ] **5b. Lo que queda de los paquetes**: firmar el de Windows cuando lo instale más gente
-  (Azure Artifact Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de
-  España); actualizarse sola (hoy, instalar la versión nueva encima); versiones ARM (Windows
-  en ARM, Raspberry Pi); la app del Mac en Releases cada versión sin hacerlo a mano (hoy: `apps/mac/build.sh --release` en este Mac y `gh release upload`; en Actions haría falta el certificado como secreto).
-
+- [ ] **5b. Firmar el instalador de Windows** cuando lo instale más gente (Azure Artifact
+  Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de España).
+- [ ] **5b. Actualizarse sola** (hoy, instalar la versión nueva encima).
+- [ ] **5b. Versiones ARM** (Windows en ARM, Raspberry Pi).
+- [ ] **5b. La app del Mac en Releases** en cada versión sin hacerlo a mano (hoy:
+  `apps/mac/build.sh --release` en este Mac y `gh release upload`; en Actions haría falta el
+  certificado como secreto).
 
 ## Varios dispositivos, lo siguiente
 
@@ -122,22 +123,18 @@ Java no tiene cancelación de eco).
 - [ ] **La memoria de cada persona**: «hechos solo de lo que dice el usuario», pero en una
   casa de varios se mezclan; ahora que sabe quién habla, cada uno los suyos.
 
-## Tomar la iniciativa
-
-- [ ] **Más avisos**: los de Home Assistant cuando lo haya. La base ya está (`notices`).
-
 ## Casa y multimedia
 
-- [ ] **Home Assistant** (cuando lo tengas instalado; HomeKit, no): luces, persianas,
-  climatización (lo primero que se le pide a un asistente de voz en casa). El plan:
-  1. Para el LLM, el MCP de Home Assistant (lo conectas tú a los LLM, como Holded):
-     ya entiende sus áreas y lo expuesto a Assist. Las áreas son nuestras habitaciones,
-     y el LLM ya sabe desde cuál le hablas. Falta la regla de confirmación: luces,
-     persianas y clima sin «sí»; cerraduras, garaje y alarma con él (el hook ve los
-     argumentos).
-  2. Órdenes rápidas sin LLM, con su API («enciende la luz», «sube la persiana», «pon
-     la calefacción a 21»): en menos de un segundo, y aunque falle Claude.
-  3. Avisos de Home Assistant («la lavadora ha terminado») dichos donde estés.
+Home Assistant, cuando lo tengas instalado (HomeKit, no): luces, persianas y climatización,
+lo primero que se le pide a un asistente de voz en casa.
+
+- [ ] **Home Assistant para el LLM**: su MCP (lo conectas tú a los LLM, como Holded); ya
+  entiende sus áreas, que son nuestras habitaciones, y lo expuesto a Assist.
+- [ ] **Home Assistant: la regla de confirmación**: luces, persianas y clima sin «sí»;
+  cerraduras, garaje y alarma con él (el hook ve los argumentos).
+- [ ] **Home Assistant sin LLM**: órdenes rápidas con su API («enciende la luz», «sube la
+  persiana», «pon la calefacción a 21»), en menos de un segundo y aunque falle Claude.
+- [ ] **Avisos de Home Assistant** («la lavadora ha terminado») dichos donde estés (`notices`).
 - [ ] **Música, radio, podcasts**: solo reproduce su voz y sus sonidos. Antes, valorar
   opciones para que suene en el dispositivo donde la pides (no solo en el Mac: Spotify
   Connect, AirPlay, por la página…).
@@ -146,26 +143,30 @@ Java no tiene cancelación de eco).
 
 - [ ] **Afinar el eco al interrumpirle** (`listen_while_speaking`, activado): con más uso real en
   cada dispositivo (el log da la puntuación de cada frase, «its own echo» / «not its echo»).
-- [ ] **Los fallos del corpus**: Parakeet se pasa al inglés con frases cortas («Yeah.»,
-  «Thank you.»), las primeras palabras se pierden con ruido (0,3 s de preroll) y Whisper se
-  inventa «Gracias.» (docs/corpus.md).
+- [ ] **Parakeet se pasa al inglés** con frases cortas («Yeah.», «Thank you.»; docs/corpus.md).
+- [ ] **Las primeras palabras se pierden con ruido** (0,3 s de preroll; docs/corpus.md).
+- [ ] **Whisper se inventa «Gracias.»** (docs/corpus.md).
 - [ ] **Juntar una pregunta partida por una pausa** («la caída del imperio» … «romano de
   Occidente»): si el segundo trozo llega mientras piensa la respuesta al primero, una sola
   respuesta a los dos.
-- [ ] **Palabra de activación**: seguir vigilando falsos positivos y negativos (31 oct:
-  28 activaciones, una falsa, corregida; no se encontraron fallos). Un nombre en el
-  idioma del usuario llega con el nuevo nombre de la app (`name`).
+- [ ] **Palabra de activación**: seguir vigilando falsos positivos y negativos (31 oct: 28
+  activaciones, una falsa, corregida).
+- [ ] **Bilingüe a la vez**: contestar en el idioma en que se dice cada frase.
 
 ## Mantenimiento
 
-- [ ] **Puentes Swift en macOS 27**: `LanguageModelSession.GenerationError` está
-  deprecado (apple_bridge.swift); el sintetizador de AVSpeech avisa sobre el main
-  actor. La app del Mac compila en modo de lenguaje Swift 5 (la concurrencia estricta
-  de Swift 6: pendiente).
+- [ ] **`LanguageModelSession.GenerationError` deprecado** en macOS 27 (apple_bridge.swift).
+- [ ] **El sintetizador de AVSpeech** avisa sobre el main actor.
+- [ ] **La app del Mac en Swift 6** (hoy compila en modo de lenguaje Swift 5; la concurrencia
+  estricta, pendiente).
 - [ ] **Un test end-to-end inestable**: una vez, la palabra de activación no oyó nada en
   35 s con la voz sintética (test_memory_with_claude); pasó al repetirlo.
 
 ## Hecho
+
+- [x] **Apps nativas** para Android, iPhone, iPad, el Apple Watch y Windows y Linux (la app de
+  bandeja); el Mac como cliente con su app. La de Android encuentra el servidor con Bonjour y se
+  empareja con el QR.
 
 - [x] **Alarmas con el sonido del tema y recordatorios como notificación** (2 nov): en el
   iPhone, el iPad y Android las alarmas y los temporizadores suenan con la alarma del tema
@@ -309,13 +310,7 @@ Java no tiene cancelación de eco).
 - [x] **Tests automáticos**: pytest en `tests/` (`uv run pytest`; `-m e2e` para el
   servidor real).
 
-## Aplazado
+## Descartados
 
-- **Apps nativas para Android, iOS, Android TV, Windows** (el Apple Watch antes; el papel
-  de cliente del Mac con la app del Mac). La de Android: sin el flag de Chrome, encuentra el
-  servidor con Bonjour y se empareja con el QR; comprobar si llega a la tablet antigua.
-- **Bilingüe a la vez**: contestar en el idioma en que se dice cada frase; cuando todo
-  lo demás funcione.
-
-La IP fija del Mac importa menos ahora (Bonjour, el QR de la app); publicar la app de
-Google es cosa de quien lo instale (ver el README).
+- **Tele**: sin micrófono que puedan usar las apps (si acaso, Android TV como pantalla y
+  altavoz, con la app de Android).
