@@ -43,10 +43,6 @@ Hoy son funcionales pero sobrias; que sigan el estilo y el vocabulario de las ap
   `plugins/page/web/index.html` y `system.css`).
 - [ ] **Diseñar la página del QR** (`/connect`, `plugins/page/web/connect.html`).
 
-## El instalador
-
-- [ ] **Añadir el paso de registro de la voz** al instalador (`@installer.device`).
-
 ## Windows y Linux
 
 Cómo se hizo: `docs/windows-y-linux.md`.
