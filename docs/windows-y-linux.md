@@ -8,13 +8,14 @@ cada equipo elige los motores que tiene. Cómo se hizo cada pieza:
 |---|---|---|
 | Reconocimiento de voz | Parakeet y Whisper en MLX (Apple Silicon) | `stt-parakeet-onnx` (el mismo Parakeet v3 en ONNX, CPU; CUDA si hay NVIDIA) y `stt-faster-whisper` |
 | Palabra de activación | `wake-whisper` sobre MLX | que use el Whisper que haya (faster-whisper tiny/base); openWakeWord ya vale |
-| Voz | AVSpeech y `say` | `tts-kokoro` (Kokoro-82M en ONNX, voces en español) y `tts-piper` (más ligero, para una Raspberry) |
+| Voz | AVSpeech y `say` | `tts-kokoro` (Kokoro-82M en ONNX, en el procesador; Dora en español) |
+| Voz ligera | `tts-piper` también vale | `tts-piper` (Piper en ONNX con `piper-tts`, que trae espeak-ng: Linux ARM de una Raspberry Pi y x86, Windows; una voz por modelo, ~63 MB, fijada en `server/models.py` y descargada al usarla; Davefx en español, Lessac en inglés) |
 | LLM | Claude (CLI), Hermes, Apple (modelo del Mac) | Claude y Hermes valen; Apple no (`llm-fallback` ya lo salta) |
 | Correo | contraseñas en el llavero (`security`) | `keyring`: el Administrador de credenciales de Windows, Secret Service en Linux |
 | Bonjour (`anyassistant.local`) | `dns-sd` | `zeroconf` en Python (vale también en el Mac: una sola implementación) |
 | HTTPS | el nombre con `scutil` | `socket.gethostname()` |
 | Alarma sin dispositivos | `afplay` y `say` en el Mac | la voz del plugin de TTS por los altavoces del equipo, o nada |
-| Voces del sistema (`tools-system`) | `say -v ?` | las voces del plugin de TTS |
+| Elegir voz (`set_voice`, Ajustes → Voz) | `say -v ?` | las del motor de voz en uso (`voices()` de cada plugin de TTS: Kokoro, Piper) |
 | Servicio | `launchctl` (`bin/anyassistant`) | Linux: unidad `systemd --user`; Windows: la app de la bandeja lo arranca (como la del Mac), y al iniciar sesión |
 | Rutas | `~/Library/Application Support`, `~/Library/Caches` | Windows: `%APPDATA%`, `%LOCALAPPDATA%`; Linux: `~/.local/share`, `~/.cache` (XDG) |
 | App | la de la barra de menús (servidor y cliente) | una app de bandeja para los dos (abajo) |

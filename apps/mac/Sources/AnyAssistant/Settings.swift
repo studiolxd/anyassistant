@@ -3,6 +3,13 @@
 
 import SwiftUI
 
+/// One of the voice engine's voices («ef_dora», called «Dora»), to pick for its language.
+struct VoiceChoice: Hashable {
+    let name: String
+    let label: String
+    let language: String
+}
+
 struct Pair: Identifiable, Equatable {
     let id = UUID()
     var key: String
@@ -20,6 +27,7 @@ final class OptionItem: ObservableObject, Identifiable {
     let choices: [String]?
     let labels: [String: String]  // how each choice is shown, in the active language
     let placeholder: String  // what an empty one uses: «Mónica · la del idioma»
+    let voices: [VoiceChoice]  // «voice»: the voice engine in use's, in this language
     @Published var isSet: Bool  // a secret: whether the keychain has it (its value never comes)
     @Published var text: String  // what the field shows
     @Published var flag: Bool
@@ -41,6 +49,10 @@ final class OptionItem: ObservableObject, Identifiable {
         live = raw["live"] as? Bool ?? false
         choices = (raw["choices"] as? [Any])?.map { "\($0)" }
         labels = raw["labels"] as? [String: String] ?? [:]
+        voices = (raw["voices"] as? [[String: Any]] ?? []).compactMap {
+            guard let name = $0["name"] as? String, let language = $0["language"] as? String else { return nil }
+            return VoiceChoice(name: name, label: $0["label"] as? String ?? name, language: language)
+        }
         isSet = raw["set"] as? Bool ?? false
         let value = raw["value"]
         flag = value as? Bool ?? false
@@ -54,6 +66,15 @@ final class OptionItem: ObservableObject, Identifiable {
         let current = OptionItem.show(raw["current"], kind: kind)
         let empty = raw["empty"] as? String ?? ""
         placeholder = [current, empty].filter { !$0.isEmpty && $0 != "{}" }.joined(separator: " · ")
+    }
+
+    /// A voice from the list: that language's (the others' stay as they were).
+    /// One for every language («Mónica», as text) becomes this language's choice.
+    func choose(_ voice: VoiceChoice) {
+        pairs.removeAll { $0.key == voice.language }
+        pairs.append(Pair(key: voice.language, value: voice.name))
+        pairs.sort { $0.key < $1.key }
+        text = ""
     }
 
     static func show(_ value: Any?, kind: String) -> String {
@@ -519,6 +540,18 @@ struct OptionRow: View {
                         .focused($editing)
                         .onSubmit { save() }
                         .onChange(of: editing) { _, now in if !now { save() } }  // leaving the field saves it
+                }
+                if !option.voices.isEmpty {
+                    Menu(T("Choose a voice")) {
+                        ForEach(option.voices, id: \.self) { voice in
+                            Button(voice.label == voice.name ? voice.name : "\(voice.label) · \(voice.name)") {
+                                option.choose(voice)
+                                saved = option.text
+                                Task { await admin.save(option) }
+                            }
+                        }
+                    }
+                    .fixedSize()
                 }
             }
             if !note.isEmpty {

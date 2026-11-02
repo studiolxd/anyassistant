@@ -85,7 +85,7 @@ OPTIONS = [
     Option("stt_model", None, "its model", "voice", empty="the engine's own"),
     Option("stt_unload_minutes", 30, "minutes without transcribing before the speech recognition model leaves memory "
            "(0: never); it comes back when needed", "voice", "int", live=True),
-    Option("tts", "avspeech", "its voice engine: avspeech, macos… or none", "voice", "choice",
+    Option("tts", "avspeech", "its voice engine: avspeech, macos, kokoro, piper… or none", "voice", "choice",
            lambda: _plugins("tts")() + ["none"], prefer=("avspeech", "kokoro", "piper", "macos", "none")),
     Option("voice", None, "the voice (default: the language's); one, or one per language: "
            '{"es": "Mónica", "en": "Samantha"}', "voice", "json", empty="the language's"),

@@ -16,7 +16,7 @@ from scipy.signal import resample_poly
 
 import i18n
 from swift import build
-from tts import RATE, Voice, register
+from tts import RATE, Voice, register, say_voices
 
 
 @register("avspeech")
@@ -48,3 +48,7 @@ class AVSpeech(Voice):
 
     def close(self):
         self._process.kill()
+
+    @classmethod
+    def voices(cls, language: str) -> list[str]:
+        return say_voices(language)  # the same as `say`

@@ -13,7 +13,8 @@ given an admin code (6 digits, 5 minutes, one browser: the page here, or
     POST /admin/stop       stops it, cleanly (the Windows and Linux app: no signals there)
 
     GET  /admin/settings   the options by group, each with its value, kind, choices and help
-                           (in the active language: locale «options», «groups»)
+                           (in the active language: locale «options», «groups»); «voice» also
+                           with the voice engine in use's voices in this language, to pick one
     POST /admin/settings   {"name": value, …} → saved; {"restart": true} if one needs it
     GET  /admin/plugins    every plugin: on, locked, why it can't work here, what it lacks
     POST /admin/plugins    {"id": true|false} → saved; whether packages must be installed
@@ -78,10 +79,14 @@ def _is_set(option) -> bool | None:
 
 
 def _current(option):
-    """What the server uses now: for an empty one, what it chose (the language's voice: «Mónica»)."""
+    """What the server uses now: for an empty one, what it chose (the language's voice: «Mónica»;
+    Kokoro's or Piper's own, ef_dora, where «Mónica» isn't one of theirs)."""
     value = settings.get(option.name, option.default)
     if option.name == "voice" and not value:
-        value = i18n.L.tts_voice
+        import tts
+
+        there = tts.voices()
+        value = i18n.L.tts_voice if not there or i18n.L.tts_voice in there else there[0]
     return _json(value)
 
 
@@ -107,6 +112,23 @@ def _labels(option) -> dict | None:
     return {str(c): i18n.L.text(f"choices.{option.name}.{c}", str(c)) for c in found}
 
 
+def _voices(option) -> list | None:
+    """«voice»: the voice engine in use's voices in this language, [{"name": "ef_dora", "label": "Dora",
+    "language": "es"}…] (picking one sets that language's voice); None for the others, or with no engine."""
+    if option.name != "voice":
+        return None
+    import tts
+
+    engine = tts.engine()
+    if not engine:
+        return None
+    try:
+        return [{"name": v, "label": engine.label(v), "language": i18n.L.code} for v in tts.voices()]
+    except Exception:  # a list that couldn't be made now
+        log.exception("the voices of %s couldn't be listed", engine.name)
+        return None
+
+
 # The order they are shown in, within each section or plugin page: the most used first, the
 # technical last. One not listed goes after these.
 ORDER = ["name", "language", "llm", "llm_model", "instructions", "detail", "detail_levels", "ignore_others", "skills", "mcp", "voice", "rate", "volume", "wake_word", "threshold", "silence", "follow_up", "echo_guard", "voice_interrupt", "pause_when_microphone_busy", "listen_while_speaking", "tap_to_stop", "fillers", "stt", "stt_model", "stt_unload_minutes", "tts", "wake", "vad", "log_transcripts", "host", "port", "mode", "record", "conversations", "quiet_hours", "notices_where", "calendar_notice_minutes", "email_notice_query", "email_notice_says", "email_check_minutes", "confirm_wait", "confirm_valid", "read_photo", "https_port", "https_redirect_port", "interpreter", "llm_fallback", "openai_key", "openai_url", "memory", "memory_facts", "memory_conversations", "memory_days", "theme", "theme_options", "themes_dir", "show_time", "show_date", "show_hint", "show_status", "show_heard", "show_answer", "history", "show_timers", "clock", "video", "show_stats", "morning_after_alarm", "unread_query", "ring_seconds", "snooze_minutes", "alarm_rings", "location", "voice_check", "voice_adapt", "voice_match"]
@@ -126,7 +148,8 @@ async def _settings(request):
               "title": _named(i18n.L.text(f"options_title.{o.name}", "")),
               "help": _named(i18n.L.text(f"options.{o.name}", o.help)), "default": _value_default(o),
               "value": _value(o), "current": None if o.kind == "secret" else _current(o), "set": _is_set(o), "choices": _choices(o), "labels": _labels(o),
-              "empty": i18n.L.text(f"options_empty.{o.name}", o.empty) if o.empty else ""}
+              "empty": i18n.L.text(f"options_empty.{o.name}", o.empty) if o.empty else "",
+              "voices": _voices(o)}
              for o in sorted(options.OPTIONS, key=_order) if o.group != "plugins" and not o.hidden]
     return http.json_response({"groups": groups, "options": found})
 

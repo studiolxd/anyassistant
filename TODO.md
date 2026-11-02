@@ -55,8 +55,8 @@ Cómo se hizo: `docs/windows-y-linux.md`.
 - [ ] **Probar en tu Linux** los motores, la app de Windows y Linux y la administración web (en curso).
 - [ ] **Hacer funcionar Claude Code en Windows** (las preguntas abiertas).
 - [ ] **Hacer funcionar Claude Code en Linux** (las preguntas abiertas).
-- [ ] **Añadir `tts-piper`**: una voz más ligera, para una Raspberry.
-- [ ] **Elegir voz (`set_voice`) entre las de Kokoro** (hoy, solo las del Mac).
+- [ ] **Probar `tts-piper` en una Raspberry Pi** (su velocidad, y si conviene por defecto una voz
+  x_low o low allí).
 - [ ] **Controlar el equipo sin LLM en Windows.**
 - [ ] **Controlar el equipo sin LLM en Linux.**
 

@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "tts-piper": [
+      "Piper",
+      "Una voz ligera, para una Raspberry Pi: Piper (VITS en ONNX), en el procesador, más rápida que Kokoro (español e inglés)."
+    ]
+  }
+}

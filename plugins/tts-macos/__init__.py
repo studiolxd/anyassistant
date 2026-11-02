@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from tts import RATE, Voice, register
+from tts import RATE, Voice, register, say_voices
 
 
 @register("macos")
@@ -22,3 +22,7 @@ class MacOS(Voice):
             subprocess.run(command + ["--", text], check=True)
             with wave.open(str(output)) as w:
                 return np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16)
+
+    @classmethod
+    def voices(cls, language: str) -> list[str]:
+        return say_voices(language)

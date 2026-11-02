@@ -441,6 +441,7 @@ function option(o) {
         flash(field, false);
       }
     });
+    if (o.voices && o.voices.length) field = voicePicker(o, field, save);
   } else {
     var number = o.kind === 'int' || o.kind === 'float';
     field = el('input', { type: number ? 'number' : 'text', step: o.kind === 'float' ? 'any' : null,
@@ -459,6 +460,27 @@ function option(o) {
     el('div', { class: 'field' }, [field])
   ]);
   return row;
+}
+
+// «voice»: the voice engine in use's voices in this language, under its field. Picking one sets that
+// language's voice (one for every language, «Mónica», becomes this language's), as the Mac's menu.
+function voicePicker(o, text, save) {
+  var pick = el('select', {}, [el('option', { value: '', text: T('Choose a voice') })]);
+  o.voices.forEach(function (v) {
+    pick.appendChild(el('option', { value: v.name, text: v.label === v.name ? v.name : v.label + ' · ' + v.name }));
+  });
+  pick.addEventListener('change', function () {
+    var voice = o.voices.filter(function (v) { return v.name === pick.value; })[0];
+    if (!voice) return;
+    var chosen = {};
+    try { chosen = JSON.parse(text.value); } catch (e) {}  // as the field says now
+    if (!chosen || typeof chosen !== 'object' || Array.isArray(chosen)) chosen = {};
+    chosen[voice.language] = voice.name;
+    text.value = JSON.stringify(chosen, null, 2);
+    pick.value = '';
+    save(chosen);
+  });
+  return el('div', { class: 'stack' }, [text, pick]);
 }
 
 // An LLM's name as its maker writes it.

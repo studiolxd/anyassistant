@@ -44,6 +44,8 @@ class Model:
     files: dict = field(default_factory=dict)  # file name → SHA-256
 
 
+PIPER = "https://huggingface.co/rhasspy/piper-voices/resolve/b4e358ffcb232591bf73a540e70f7de528e4174a/"
+
 MODELS = {
     # Speech recognition on the Mac (stt-parakeet, stt-mlx-whisper; the wake word's small Whisper)
     "mlx-community/parakeet-tdt-0.6b-v3": Model(
@@ -103,6 +105,38 @@ MODELS = {
             "kokoro-v1.0.int8.onnx": "6e742170d309016e5891a994e1ce1559c702a2ccd0075e67ef7157974f6406cb",
             "voices-v1.0.bin": "bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d",
         }),
+    # The light voice (tts-piper): each voice its own model, from rhasspy/piper-voices at a commit
+    # («piper-<voice>»: downloaded the first time that voice speaks)
+    "piper-es_ES-davefx-medium": Model(url=PIPER + "es/es_ES/davefx/medium/", files={
+        "es_ES-davefx-medium.onnx": "6658b03b1a6c316ee4c265a9896abc1393353c2d9e1bca7d66c2c442e222a917",
+        "es_ES-davefx-medium.onnx.json": "0e0dda87c732f6f38771ff274a6380d9252f327dca77aa2963d5fbdf9ec54842"}),
+    "piper-es_ES-carlfm-x_low": Model(url=PIPER + "es/es_ES/carlfm/x_low/", files={
+        "es_ES-carlfm-x_low.onnx": "d69677323a907cd4963f42b29c20a98b5d6bfa7f3e64df339915e4650c00d125",
+        "es_ES-carlfm-x_low.onnx.json": "d9bdfa9ff01eb2bc9e62e7d2593939d1e4c4d8eb7cf75f972731539d12399966"}),
+    "piper-es_MX-claude-high": Model(url=PIPER + "es/es_MX/claude/high/", files={
+        "es_MX-claude-high.onnx": "3ef40a71ea63852cd8ab7e6fa7d2ecdcfa67a0b47c9c48e3f10e02ee02083ea0",
+        "es_MX-claude-high.onnx.json": "1afc81f703c0e4cb3b4d7c0dca096b8b54a98806807f0170cf5eb5557723c12d"}),
+    "piper-es_MX-ald-medium": Model(url=PIPER + "es/es_MX/ald/medium/", files={
+        "es_MX-ald-medium.onnx": "019b3803293c93e34a206dd2e53a3889209a514e786fd7144f7b70196c579b63",
+        "es_MX-ald-medium.onnx.json": "5a71498158e04afc8099bfd019c7e87c68eb9d042505a2b1a87e5c1ac2b1a61d"}),
+    "piper-es_AR-daniela-high": Model(url=PIPER + "es/es_AR/daniela/high/", files={
+        "es_AR-daniela-high.onnx": "7ceb1fc0dab349418c5b54a639ae9ee595212d7c9ea422220d8419163d5cc985",
+        "es_AR-daniela-high.onnx.json": "aedbf69647e1d754c62ecf8e0366ca5f16af3e768e3c6b5329af6eb6bde3852b"}),
+    "piper-en_US-lessac-medium": Model(url=PIPER + "en/en_US/lessac/medium/", files={
+        "en_US-lessac-medium.onnx": "5efe09e69902187827af646e1a6e9d269dee769f9877d17b16b1b46eeaaf019f",
+        "en_US-lessac-medium.onnx.json": "efe19c417bed055f2d69908248c6ba650fa135bc868b0e6abb3da181dab690a0"}),
+    "piper-en_US-amy-medium": Model(url=PIPER + "en/en_US/amy/medium/", files={
+        "en_US-amy-medium.onnx": "b3a6e47b57b8c7fbe6a0ce2518161a50f59a9cdd8a50835c02cb02bdd6206c18",
+        "en_US-amy-medium.onnx.json": "95a23eb4d42909d38df73bb9ac7f45f597dbfcde2d1bf9526fdeaf5466977d77"}),
+    "piper-en_US-ryan-medium": Model(url=PIPER + "en/en_US/ryan/medium/", files={
+        "en_US-ryan-medium.onnx": "abf4c274862564ed647ba0d2c47f8ee7c9b717d27bdad9219100eb310db4047a",
+        "en_US-ryan-medium.onnx.json": "44034c056cb15681b2ad494307c7f3f2e4499d1253c700c711fa0a4607ffe78d"}),
+    "piper-en_GB-alba-medium": Model(url=PIPER + "en/en_GB/alba/medium/", files={
+        "en_GB-alba-medium.onnx": "401369c4a81d09fdd86c32c5c864440811dbdcc66466cde2d64f7133a66ad03b",
+        "en_GB-alba-medium.onnx.json": "aa965a2f02ecced632c2694e1fc72bbff6d65f265fab567ca945918c73dd89f4"}),
+    "piper-en_GB-alan-medium": Model(url=PIPER + "en/en_GB/alan/medium/", files={
+        "en_GB-alan-medium.onnx": "0a309668932205e762801f1efc2736cd4b0120329622adf62be09e56339d3330",
+        "en_GB-alan-medium.onnx.json": "c0f0d124e5895c00e7c03b35dcc8287f319a6998a365b182deb5c8e752ee8c1e"}),
 }
 
 VERIFIED = paths.CACHE / "models" / "verified.json"  # what was already checked: path → [size, mtime]

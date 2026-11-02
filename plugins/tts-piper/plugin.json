@@ -1,0 +1,10 @@
+{
+  "name": "Piper",
+  "description": "A light voice, for a Raspberry Pi: Piper (VITS in ONNX), on the CPU, faster than Kokoro (Spanish and English).",
+  "kind": "tts",
+  "needs": {
+    "python": [
+      "piper-tts>=1.3"
+    ]
+  }
+}
