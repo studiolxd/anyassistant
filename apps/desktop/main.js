@@ -40,6 +40,7 @@ if (!app.requestSingleInstanceLock()) app.quit();
 // Packaged (the Windows installer, the AppImage, the .deb): it carries the program and uv; the
 // program is copied, the first time and when a newer one comes, to where it can make its Python
 // (%LOCALAPPDATA%\AnyAssistant\program, ~/.local/opt/AnyAssistant), keeping that Python.
+let programUpdated = false;  // the server's plugins' packages, before it starts (Server.begin)
 function installProgram() {
   const bundled = path.join(process.resourcesPath, 'program');
   const target = process.platform === 'win32'
@@ -49,6 +50,7 @@ function installProgram() {
     try { return parseInt(fs.readFileSync(path.join(folder, 'VERSION'), 'utf8'), 10) || 0; } catch (e) { return 0; }
   };
   if (number(target) < number(bundled)) {
+    programUpdated = number(target) > 0;  // a newer version over an installed one (not the first time)
     fs.mkdirSync(target, { recursive: true });
     for (const entry of fs.readdirSync(target)) {  // what a new version removed goes; its Python stays
       if (!['.venv', 'install.env', 'native'].includes(entry)) fs.rmSync(path.join(target, entry), { recursive: true, force: true });
@@ -62,6 +64,7 @@ function installProgram() {
 if (app.isPackaged) installProgram();
 
 const server = new Server(__dirname);
+server.updated = programUpdated;
 let tray = null;
 let name = 'Eva';
 const windows = {};

@@ -116,6 +116,11 @@ class Server extends EventEmitter {
       this.ours = false;
       return this.set('running');
     }
+    if (this.updated) {  // a new version just copied (main.js): its plugins' packages first, as the Mac's update does
+      this.updated = false;
+      this.set('starting');
+      await this.setup(['packages', '--json'], () => {}).catch(() => {});  // what it can't: the server says so
+    }
     return this.start();
   }
 
@@ -181,7 +186,10 @@ class Server extends EventEmitter {
     fs.mkdirSync(this.cache, { recursive: true });
     fs.mkdirSync(this.data, { recursive: true });
     if (!process.env.ANYASSISTANT_PROGRAM && exists(this.venv)) return Promise.resolve(0);  // developing: uv sync did it
-    return this.run(this.uv(), ['sync', '--frozen', '--no-dev', '--project', this.program], line);
+    // --inexact: the plugins' packages already there stay (the «packages» step after it sets them as
+    // they should be); without it, installing again or «Volver a configurar» took them all out and
+    // put them back.
+    return this.run(this.uv(), ['sync', '--frozen', '--no-dev', '--inexact', '--project', this.program], line);
   }
 
   // bin/anyassistant setup, as the Mac runs it (its own Python: bin/anyassistant is a shell script, not for
