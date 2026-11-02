@@ -294,6 +294,17 @@ its hash in `paired.json`). Unpaired devices can't connect, see the camera
 (`/video.mjpg`) or the status; the Mac itself always can. `bin/anyassistant unpair`
 forgets them all.
 
+**Connecting a device** («Conectar otro dispositivo», in the Mac app and the web admin): one QR
+for everything, `http://<ip>:<port>/connect?code=…`, the server itself by its address now (old
+devices don't resolve `anyassistant.local`; made when shown, so a changed address doesn't matter)
+and the code big next to it. Scanned with the phone's camera, `/connect` (the plugin `page`)
+offers «Abrir en la app» (`anyassistant://connect?host=…&port=…&code=…`: the iPhone and Android
+apps register that link and pair by themselves) or going on in the browser: it pairs with the code
+and opens the page; with the plugin `https` on, the certificate first (the QR is plain HTTP so it
+works before). The apps also read the same QR themselves («Escanear código»). «Conectar a mano»
+keeps the rest: the app's list of servers and the code; the browser's `http://anyassistant.local:<port>`
+and, for old devices, the address.
+
 **Several devices at once** (`server/hub.py`): each one connects with its own id (the
 page keeps it), so a device that reconnects replaces its old connection. Each device has
 its own conversation (its own LLM, made the first time it wakes; at most `conversations`,
@@ -309,8 +320,8 @@ and the LLM hears, with the first message of each conversation, which device and
 is («here» means there);
 `GET /devices` from the Mac lists them.
 
-**The Mac app** (`apps/mac`, in the menu bar): it installs and runs the server, pairs devices,
-and has the settings; and the assistant is on the Mac too: «Show Eva» opens its face in a
+**The Mac app** (`apps/mac`, in the menu bar): it installs and runs the server, connects devices
+(the QR), and has the settings; and the assistant is on the Mac too: «Show Eva» opens its face in a
 window (the iPhone app's own files, `Sources/AnyAssistant/Client`, linked to `apps/ios/Sources`),
 with the Mac's microphone and speaker (macOS's echo cancellation) and, while the window is open,
 its camera; «Listen on this Mac» turns the microphone off. It talks to its own server (no code).
@@ -328,14 +339,16 @@ the app: the gear). With the plugin `eyes`, its camera: a frame a second while a
 a full photo for «lee esto», live for «muestra la cámara». On iOS 26 or later, alarms, timers
 and reminders are the phone's own alarms (AlarmKit: they ring on silent); before, notifications.
 In the background, answers and messages arrive as notifications. «Talk to AnyAssistant» for
-Siri, Shortcuts and the Action button (iOS 16 or later). Paired with the 6-digit code, HTTPS
-trusting only your Mac's authority.
+Siri, Shortcuts and the Action button (iOS 16 or later). Paired by scanning the QR («Escanear
+código»: VisionKit where it exists, else AVFoundation), by the QR page's «Abrir en la app», or
+choosing the server and typing the 6-digit code; HTTPS trusting only your Mac's authority.
 
 **The Android app** (`apps/android`, Android 8 or later, Kotlin and Compose; the plugin
 `stream-api`): the same as the iPhone's. Its face, the four themes (`Themes.kt`); its microphone
 and speaker over the WebSocket, in «communication» mode with Android's echo canceller; it finds
 the Mac by Bonjour (`_anyassistant._tcp`: many Androids don't resolve anyassistant.local), pairs
-with the 6-digit code and talks HTTPS trusting only your Mac's authority. With the screen off it
+with the 6-digit code (or scanning the QR: CameraX and ZXing, no Play Services; or opened by the QR
+page's «Abrir en la app») and talks HTTPS trusting only your Mac's authority. With the screen off it
 keeps listening while its notification is there («Stop listening»). Alarms, timers and
 reminders are the phone's own alarm clock: they ring on the alarm channel, even on silent, full
 screen over the lock screen; stopped on the phone, the Mac stops too. «Hablar»: long-press the
