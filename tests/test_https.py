@@ -48,3 +48,23 @@ def test_another_device_on_http_goes_to_the_https_page(monkeypatch):
     with pytest.raises(http.HTTPFound) as moved:
         asyncio.run(page._index(tablet))
     assert moved.value.location == "https://192.168.86.32/?code=1"
+
+
+def test_an_apps_view_of_its_theme_stays_on_http(monkeypatch):
+    """The apps' web view of a theme (?app) isn't sent to HTTPS: the app has the microphone, and it
+    opens the page at the address it already trusts."""
+    import asyncio
+
+    import kernel
+    from aiohttp.test_utils import make_mocked_request
+    from plugins import page
+
+    https = kernel.load("https")
+
+    monkeypatch.setattr(kernel, "module", lambda name: https if name == "https" else None)
+    monkeypatch.setattr(https, "port", lambda: 443)
+    phone = make_mocked_request("GET", "/?app&theme=orb", headers={"Host": "192.168.86.32:8080"},
+                                transport=type("T", (), {"get_extra_info": lambda self, k, d=None:
+                                                         ("192.168.86.34", 5000) if k == "peername" else d})())
+    response = asyncio.run(page._index(phone))
+    assert response.status == 200 and "/web/app.js" in response.text

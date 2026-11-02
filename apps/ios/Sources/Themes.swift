@@ -1,6 +1,6 @@
-// The four themes, drawn natively: Eyes, Orb, Bedside and Minimal (plugins/page/themes: the same
-// looks, sizes in «v» = 1% of the screen's shorter side, as the CSS's vmin). A theme the app
-// doesn't have yet is drawn as Eyes.
+// The face: the theme Eyes, drawn natively (plugins/page/themes/eyes: the same look, sizes in «v» =
+// 1% of the screen's shorter side, as the CSS's vmin); every other theme, the server's page in a
+// web view (WebTheme.swift), fed by the app. Eyes too while the server's page can't be had.
 
 import AVFoundation
 import SwiftUI
@@ -9,6 +9,10 @@ struct ThemeView: View {
     @ObservedObject var face: FaceModel
     @ObservedObject var levels: Levels
     let camera: Camera
+    @ObservedObject var web: WebFace
+    /// A tap (it stops talking, or wakes up), and holding the face (its settings; nil: none).
+    var tap: () -> Void = {}
+    var settings: (() -> Void)? = nil
 
     @State private var faceEnd: CGFloat = 0  // where the theme's face and words end (FaceEnd)
 
@@ -17,8 +21,16 @@ struct ThemeView: View {
             // The background to the screen's edges; the face, its words, the clock and the camera
             // inside the safe area (not under the Dynamic Island, the home bar or a window's title).
             face.background.ignoresSafeArea()
-            GeometryReader { geometry in
-                content(geometry.size)
+            if web.shows(face.theme) {
+                WebTheme(web: web, camera: camera, theme: face.theme, tap: tap, settings: settings)
+                    .id(face.theme)  // another theme: another page
+            } else {
+                GeometryReader { geometry in
+                    content(geometry.size)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture(perform: tap)
+                .onLongPressGesture(minimumDuration: 0.8) { settings?() }
             }
         }
     }
@@ -26,12 +38,7 @@ struct ThemeView: View {
     @ViewBuilder func content(_ size: CGSize) -> some View {
         let v = min(size.width, size.height) / 100
         ZStack(alignment: .top) {
-                switch face.theme {
-                case "orb": OrbTheme(face: face, levels: levels, v: v, size: size)
-                case "bedside": BedsideTheme(face: face, levels: levels, v: v, size: size)
-                case "minimal": MinimalTheme(face: face, levels: levels, v: v, size: size)
-                default: EyesTheme(face: face, levels: levels, v: v, size: size)
-                }
+                EyesTheme(face: face, levels: levels, v: v, size: size)
                 // «Muestra la cámara»: centred below what the face says, in the space left; the
                 // face doesn't move.
                 if face.cameraShown {
@@ -79,39 +86,31 @@ let grey = Color(white: 0.53)  // #888
 
 struct StatusLine: View {
     @ObservedObject var face: FaceModel
-    var size: CGFloat = 22
-    var color: Color = grey
-    var weight: Font.Weight = .regular
-    var alignment: TextAlignment = .center
 
     var body: some View {
-        Text(face.status).font(.system(size: size, weight: weight)).foregroundColor(color)
-            .multilineTextAlignment(alignment)
+        Text(face.status).font(.system(size: 22)).foregroundColor(grey)
+            .multilineTextAlignment(.center)
     }
 }
 
 struct TimerLines: View {
     @ObservedObject var face: FaceModel
     let size: CGFloat
-    var color: Color = .white
-    var icons = true
-    var alignment: HorizontalAlignment = .center
-    var spacing: CGFloat = 4
 
     var body: some View {
         if face.shows("show_timers") {
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 let now = context.date.timeIntervalSince1970
-                VStack(alignment: alignment, spacing: spacing) {
+                VStack(spacing: 4) {
                     ForEach(face.items.filter { $0.at > now - 1 }) { item in
                         HStack(spacing: size * 0.35) {
-                            if icons { Image(systemName: Self.icon(item.kind)) }
+                            Image(systemName: Self.icon(item.kind))
                             Text(face.line(item, now: context.date)).monospacedDigit()
                         }
                     }
                 }
                 .font(.system(size: size))
-                .foregroundColor(color)
+                .foregroundColor(.white)
             }
         }
     }
@@ -124,23 +123,19 @@ struct TimerLines: View {
 struct CaptionLines: View {
     @ObservedObject var face: FaceModel
     let accent: Color
-    var older: Color = .white
-    var olderOpacity = 0.6
-    var height: CGFloat? = nil  // as WordsArea's
-    var fills = false
     var minHeight: CGFloat = 0
 
     var body: some View {
         let last = face.captions.last
         WordsArea(aim: last.map { face.aim($0.id, answer: $0.answer, text: $0.text) } ?? Aim(key: "", y: 0),
-                  fresh: last?.id ?? "", height: height, fills: fills, minHeight: minHeight) {
+                  fresh: last?.id ?? "", minHeight: minHeight) {
             VStack(spacing: 5) {
                 ForEach(face.captions) { caption in
                     let isLast = caption.id == last?.id
                     Text(caption.text)
                         .font(.system(size: isLast ? 24 : 17.6))
-                        .foregroundColor(caption.assistant ? accent : isLast ? .white : older)
-                        .opacity(isLast ? 1 : olderOpacity)
+                        .foregroundColor(caption.assistant ? accent : .white)
+                        .opacity(isLast ? 1 : 0.6)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                         .id(caption.id)
@@ -164,14 +159,10 @@ struct WordsMetrics: PreferenceKey {
 /// without a bar (a finger, the trackpad, the wheel) and follows `aim` (FaceModel.aim: the end of
 /// what you said, the sentence the voice is saying); scrolled by hand, it stops following until
 /// back at the end or new words arrive (`fresh` changes). A fade at the edge where there is more.
-/// Its height: `height`, fixed (a centred column: so the face doesn't move); else as tall as the
-/// words, from `minHeight` up to `most`, or (`fills`) up to the space its column leaves it.
+/// Its height: as tall as the words, from `minHeight` up to the space its column leaves it.
 struct WordsArea<Content: View>: View {
     let aim: Aim
     let fresh: String
-    var height: CGFloat? = nil
-    var most: CGFloat? = nil
-    var fills = false
     var minHeight: CGFloat = 0
     @ViewBuilder let content: () -> Content
 
@@ -181,18 +172,11 @@ struct WordsArea<Content: View>: View {
     @State private var following = true
     @State private var auto = Date.distantPast  // until when the scrolling is its own
 
-    @State private var shown: CGFloat = 0  // its height as laid out (flexible: down to the bottom)
+    @State private var shown: CGFloat = 0  // its height as laid out (down to the bottom)
 
-    /// Flexible (`fills`): as tall as the words, at most what its column leaves it (SwiftUI's
-    /// layout gives it the space down to the bottom: no measuring where it starts).
-    private var flexible: Bool { height == nil && fills }
-
-    private var view: CGFloat {
-        if let height { return height }
-        if flexible { return shown }
-        let most = self.most ?? .infinity
-        return max(minHeight, min(words, max(most, minHeight)))
-    }
+    /// As tall as the words, at most what its column leaves it (SwiftUI's layout gives it the space
+    /// down to the bottom: no measuring where it starts).
+    private var view: CGFloat { shown }
 
     var body: some View {
         let view = self.view
@@ -205,7 +189,7 @@ struct WordsArea<Content: View>: View {
                     })
             }
             .coordinateSpace(name: space)
-            .frame(minHeight: flexible ? minHeight : view, maxHeight: flexible ? max(words, minHeight) : view)
+            .frame(minHeight: minHeight, maxHeight: max(words, minHeight))
             .onPreferenceChange(WordsMetrics.self) { m in
                 let moved = abs(m.width - offset) > 1
                 offset = m.width
@@ -223,7 +207,7 @@ struct WordsArea<Content: View>: View {
             .onChange(of: fresh) { _ in following = true; go(proxy) }
             .onAppear { go(proxy) }
         }
-        .frame(minHeight: flexible ? minHeight : view, maxHeight: flexible ? max(words, minHeight) : view)
+        .frame(minHeight: minHeight, maxHeight: max(words, minHeight))
         .mask(VStack(spacing: 0) {
             LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
                 .frame(height: offset < -1 ? 28 : 0)
@@ -247,7 +231,7 @@ struct WordsArea<Content: View>: View {
     }
 }
 
-/// The time and the date, as each theme lays them out.
+/// The time and the date, as the theme lays them out.
 struct Clock<Content: View>: View {
     @ObservedObject var face: FaceModel
     @ViewBuilder var content: (_ time: String?, _ day: String?) -> Content
@@ -260,14 +244,14 @@ struct Clock<Content: View>: View {
     }
 }
 
-/// Where a theme's face and words end (in ThemeView's space): the camera goes below.
+/// Where the face and its words end (in ThemeView's space): the camera goes below.
 struct FaceEnd: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
 extension View {
-    /// Marks the end of the theme's face and words (each theme, on its column).
+    /// Marks the end of the face and its words (on its column).
     func endsTheFace() -> some View {
         background(GeometryReader { geometry in
             Color.clear.preference(key: FaceEnd.self, value: geometry.frame(in: .named("theme")).maxY)
@@ -387,7 +371,7 @@ struct EyesTheme: View {
                     .padding(.top, (landscape ? 1.5 : 3) * v)
                 if look != "asleep" {
                     // From 112 up to the space left down to the bottom: the eyes above don't move.
-                    CaptionLines(face: face, accent: accent, fills: true, minHeight: landscape ? 0 : 112)
+                    CaptionLines(face: face, accent: accent, minHeight: landscape ? 0 : 112)
                         .frame(width: size.width * (landscape ? 0.7 : 0.9))
                         .padding(.top, 10)
                         .layoutPriority(1)  // the space left goes to the words, not shared
@@ -532,233 +516,5 @@ struct EyesTheme: View {
             try? await Task.sleep(nanoseconds: 140_000_000)
             blink = false
         }
-    }
-}
-
-// MARK: - Orb
-
-/// A flat sphere that breathes, beats with your voice and sends out waves when it speaks.
-struct OrbTheme: View {
-    @ObservedObject var face: FaceModel
-    @ObservedObject var levels: Levels
-    let v: CGFloat
-    let size: CGSize
-
-    var tone: Color {
-        switch face.look {
-        case "asleep": return grey
-        case "hearing": return Color(hex: "#7ff0c2")!
-        case "thinking": return Color(hex: "#e0b54a")!
-        case "looking": return Color(hex: "#cfd8dc")!
-        case "speaking": return Color(hex: "#5bc6e8")!
-        case "question": return Color(hex: "#a98cf0")!
-        case "alarm": return Color(hex: "#ff7a45")!
-        case "error": return Color(hex: "#e05555")!
-        default: return face.color("accent", Color(hex: "#3ddc97")!)
-        }
-    }
-
-    var body: some View {
-        let landscape = size.width > size.height
-        let look = face.look
-        VStack(spacing: 0) {
-            if look == "asleep" {
-                Clock(face: face) { time, day in
-                    VStack(spacing: 0) {
-                        if let time { Text(time).font(.system(size: 24 * v, weight: .ultraLight)) }
-                        if let day { Text(day).font(.system(size: 5 * v)).padding(.top, v).padding(.bottom, 4 * v) }
-                    }
-                    .foregroundColor(Color(white: 0.4))
-                }
-            }
-            orb(look, side: (landscape ? 28 : 40) * v)
-                .padding((landscape ? 2 : 3) * v)
-            StatusLine(face: face).padding(.top, 27)
-            TimerLines(face: face, size: (landscape ? 4.5 : 5) * v, color: Color(white: 0.73), icons: false)
-                .padding(.top, (landscape ? 1.5 : 3) * v)
-            if look != "asleep" {
-                // A fixed height (the column is centred: so the sphere doesn't move); longer, it scrolls.
-                CaptionLines(face: face, accent: tone, older: Color(white: 0.4), olderOpacity: 1,
-                             height: landscape ? size.height * 0.2 : max(112, size.height * 0.2))
-                    .frame(width: size.width * (landscape ? 0.7 : 0.9))
-                    .padding(.top, 10)
-            }
-        }
-        .endsTheFace()
-        .frame(width: size.width, height: size.height)
-        .animation(.easeInOut(duration: 0.4), value: look)
-    }
-
-    private func orb(_ look: String, side: CGFloat) -> some View {
-        TimelineView(.animation(minimumInterval: 1 / 30)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            let pulse: CGFloat = look == "speaking" ? 1 + levels.speech * 0.2
-                : (look == "hearing" || look == "awake") ? 1 + levels.voice * 0.18 : 1
-            ZStack {
-                if look == "speaking" {
-                    ForEach(0..<2) { i in
-                        let p = (t + Double(i) * 0.8).truncatingRemainder(dividingBy: 1.6) / 1.6
-                        Circle().stroke(tone, lineWidth: 0.6 * v)
-                            .scaleEffect(0.9 + 0.8 * (1 - pow(1 - p, 2)))
-                            .opacity(0.7 * (1 - p))
-                    }
-                }
-                if look == "thinking" || look == "looking" {
-                    Circle().trim(from: 0, to: 0.5).stroke(tone, style: StrokeStyle(lineWidth: 0.8 * v, lineCap: .butt))
-                        .rotationEffect(.degrees(-135 + 360 * (t.truncatingRemainder(dividingBy: 1.1) / 1.1)))
-                        .padding(-3.4 * v)
-                }
-                Circle().fill(tone)
-                    .opacity(look == "asleep" ? 0.35 + 0.45 * beat(t, period: 5)
-                             : look == "alarm" ? 1 - 0.4 * beat(t, period: 0.6) : 1)
-                    .scaleEffect(look == "alarm" ? 1 - 0.15 * beat(t, period: 0.6) : 1)
-            }
-            .frame(width: side, height: side)
-            .scaleEffect(look == "asleep" ? 0.55 : pulse)
-        }
-        .frame(width: side, height: side)
-    }
-}
-
-// MARK: - Bedside
-
-/// For the bedside table: only a dim time while asleep; awake, a grey ember and its answer.
-struct BedsideTheme: View {
-    @ObservedObject var face: FaceModel
-    @ObservedObject var levels: Levels
-    let v: CGFloat
-    let size: CGSize
-
-    var body: some View {
-        let look = face.look
-        let asleep = look == "asleep"
-        let glow = face.color("glow", Color(hex: "#9ca3af")!)
-        VStack(spacing: 0) {
-            Clock(face: face) { time, day in
-                VStack(spacing: 0) {
-                    if let time {
-                        Text(time).font(.system(size: (asleep ? 26 : 8) * v, weight: .ultraLight)).opacity(asleep ? 0.35 : 0.3)
-                    }
-                    if asleep, let day { Text(day).font(.system(size: 4 * v)).opacity(0.25) }
-                }
-            }
-            TimelineView(.animation(minimumInterval: 1 / 30)) { context in
-                let t = context.date.timeIntervalSinceReferenceDate
-                let opacity = asleep ? 0 : look == "thinking" ? 0.6 - 0.35 * beat(t, period: 1.4)
-                    : look == "alarm" ? 1 - 0.75 * beat(t, period: 0.7) : 0.6
-                Circle().fill(look == "error" ? Color(hex: "#7f1d1d")! : glow)
-                    .frame(width: 10 * v, height: 10 * v)
-                    .scaleEffect(1 + levels.voice * 0.4 + levels.speech * 0.4)
-                    .opacity(opacity)
-            }
-            .frame(width: 10 * v, height: 10 * v)
-            .padding(.top, 6 * v).padding(.bottom, 3 * v)
-            StatusLine(face: face, size: 4 * v, color: glow).opacity(asleep ? 0.2 : 0.5)
-            TimerLines(face: face, size: 5 * v, color: glow, icons: false, spacing: 0).opacity(0.6).padding(.top, 3 * v)
-            if !asleep, face.shows("show_answer") {
-                // Four lines, always (the column is centred: so the ember doesn't move); longer, it scrolls.
-                WordsArea(aim: face.aim("answer", answer: face.answerId, text: face.answer), fresh: face.answerId,
-                          height: 25 * v) {
-                    Text(face.answer).font(.system(size: 5 * v)).foregroundColor(glow).opacity(0.7)
-                        .multilineTextAlignment(.center).frame(maxWidth: .infinity)
-                        .fixedSize(horizontal: false, vertical: true).id("answer")
-                }
-                .frame(width: size.width * 0.8).padding(.top, 16)
-            }
-        }
-        .endsTheFace()
-        .foregroundColor(glow)
-        .frame(width: size.width, height: size.height)
-    }
-}
-
-// MARK: - Minimal
-
-/// High contrast and large text: a light that changes with each state, and words.
-struct MinimalTheme: View {
-    @ObservedObject var face: FaceModel
-    @ObservedObject var levels: Levels
-    let v: CGFloat
-    let size: CGSize
-
-    var light: Color {
-        switch face.look {
-        case "asleep": return Color(white: 0.27)
-        case "hearing": return Color(hex: "#00e676")!
-        case "thinking", "looking": return Color(hex: "#ffd600")!
-        case "speaking": return Color(hex: "#40c4ff")!
-        case "question": return Color(hex: "#e040fb")!
-        case "alarm": return Color(hex: "#ff6d00")!
-        case "error": return Color(hex: "#ff1744")!
-        default: return .white
-        }
-    }
-
-    var body: some View {
-        let landscape = size.width > size.height
-        let look = face.look
-        let asleep = look == "asleep"
-        let ink = face.color("text", .white)
-        let top = size.height * (landscape ? 0.34 : 0.40)
-        ZStack(alignment: .topLeading) {
-            if asleep {
-                Clock(face: face) { time, day in
-                    VStack(alignment: .leading, spacing: 2 * v) {
-                        if let time { Text(time).font(.system(size: (landscape ? 15 : 22) * v, weight: .bold)) }
-                        if let day { Text(day).font(.system(size: (landscape ? 5 : 6) * v)) }
-                    }
-                }
-                .foregroundColor(ink)
-                .frame(width: size.width - 12 * v, height: top - (landscape ? 2 : 4) * v, alignment: .bottomLeading)
-                .padding(.leading, 6 * v)
-            }
-            VStack(alignment: .leading, spacing: 0) {
-                TimelineView(.animation(minimumInterval: 1 / 30)) { context in
-                    let t = context.date.timeIntervalSinceReferenceDate
-                    let p = t.truncatingRemainder(dividingBy: 1.6) / 1.6
-                    ZStack {
-                        if !["asleep", "awake", "error"].contains(look) {
-                            Circle().fill(light).scaleEffect(1 + p).opacity(0.6 * (1 - p))
-                        }
-                        Circle().fill(light)
-                    }
-                    .frame(width: 12 * v, height: 12 * v)
-                    .scaleEffect(0.8 + levels.voice * 0.5 + levels.speech * 0.5)
-                }
-                .frame(width: 12 * v, height: 14 * v, alignment: .top)
-                StatusLine(face: face, size: 9 * v, color: ink, weight: .bold, alignment: .leading)
-                    .padding(.vertical, (landscape ? 2 : 4) * v)
-                TimerLines(face: face, size: (landscape ? 5.5 : 7) * v, color: ink, icons: false, alignment: .leading, spacing: v)
-                    .padding(.top, (landscape ? 1 : 3) * v)
-                if !asleep {
-                    // What you said: two lines at most (its end); the answer, the space down to the bottom.
-                    if face.shows("show_heard"), !face.heard.isEmpty {
-                        WordsArea(aim: Aim(key: "heard", y: 1), fresh: "\(face.heardCount)", most: 15 * v) {
-                            Text(face.heard).font(.system(size: 6 * v)).opacity(0.75)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .fixedSize(horizontal: false, vertical: true).id("heard")
-                        }
-                        .padding(.bottom, 2 * v)
-                    }
-                    if face.shows("show_answer"), !face.answer.isEmpty {
-                        WordsArea(aim: face.aim("answer", answer: face.answerId, text: face.answer), fresh: face.answerId,
-                                  fills: true) {
-                            Text(face.answer).font(.system(size: 7 * v))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .fixedSize(horizontal: false, vertical: true).id("answer")
-                        }
-                        .layoutPriority(1)  // the space left goes to the answer, not shared
-                    }
-                }
-            }
-            .foregroundColor(ink)
-            .padding(.top, top)
-            .endsTheFace()
-            .padding(.bottom, 4 * v)  // the answer's area ends here (WordsArea, flexible)
-            .padding(.horizontal, 6 * v)
-            .frame(width: size.width, alignment: .leading)
-        }
-        .frame(width: size.width, height: size.height, alignment: .topLeading)
-        .animation(.easeInOut(duration: 0.3), value: look)
     }
 }

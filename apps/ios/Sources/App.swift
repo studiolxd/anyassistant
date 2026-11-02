@@ -1,6 +1,6 @@
-// AnyAssistant on the iPhone and the iPad, native: its face is one of the themes (Themes.swift,
-// drawn as the page's: Eyes, Orb, Bedside, Minimal), following the Mac's state, texts and
-// settings; the microphone and the speaker go over a WebSocket (plugin «stream-api»), so it
+// AnyAssistant on the iPhone and the iPad, native: its face is its theme (Eyes, drawn natively:
+// Themes.swift; any other, the server's page in a web view fed by the app: WebTheme.swift),
+// following the Mac's state, texts and settings; the microphone and the speaker go over a WebSocket (plugin «stream-api»), so it
 // keeps listening with the screen off. Alarms, timers and reminders are also the phone's own
 // notifications (they ring with the app closed); answers and messages arrive as notifications
 // while it's in the background. Siri, Shortcuts and the Action button: «Talk to AnyAssistant».
@@ -68,10 +68,9 @@ struct MainView: View {
     }
 
     var body: some View {
-        ThemeView(face: link.face, levels: link.levels, camera: link.camera)
-            .contentShape(Rectangle())
-            .onTapGesture { link.tap() }  // it stops talking, or wakes up
-            .onLongPressGesture(minimumDuration: 0.8) { settings = true }  // always, whatever the theme
+        // A tap: it stops talking, or wakes up; held: the settings, always, whatever the theme.
+        ThemeView(face: link.face, levels: link.levels, camera: link.camera, web: link.web,
+                  tap: { link.tap() }, settings: { settings = true })
             .overlay { SettingsButton(face: link.face) { settings = true } }
             .statusBarHidden(true)
             .modifier(Quiet())
@@ -249,23 +248,41 @@ struct Orientation: View {
 
 #if DEBUG
 /// A theme with a long conversation, as the page's ?demo: AA_DEMO=eyes in the environment
-/// (simctl launch with SIMCTL_CHILD_AA_DEMO=eyes). Only in debug builds.
+/// (simctl launch with SIMCTL_CHILD_AA_DEMO=eyes). Another theme is the server's page fed by the
+/// app as with a server (WebTheme.swift), from AA_SERVER (http://127.0.0.1:8080 if not given).
+/// Only in debug builds.
 struct DemoView: View {
     let theme: String
-    @StateObject private var face = FaceModel()
-    @StateObject private var levels = Levels()
-    private let camera = Camera()
+    @StateObject private var demo = Demo()
+
+    @MainActor final class Demo: ObservableObject {
+        let face = FaceModel()
+        let levels = Levels()
+        let camera = Camera()
+        lazy var web = WebFace(face: face, levels: levels)
+        private var timer: Timer?
+
+        func start(_ theme: String) {
+            let server = ProcessInfo.processInfo.environment["AA_SERVER"] ?? "http://127.0.0.1:8080"
+            if let base = URL(string: server) { web.configured(base: base, cookies: []) }
+            face.theme = theme
+            face.receive(["type": "state", "state": "speaking"])
+            face.receive(["type": "text", "text": "¿Qué sabes de los griegos?"])
+            face.receive(["type": "text", "author": "assistant", "id": "demo", "text":
+                String(repeating: "Los antiguos griegos fueron una civilización del Mediterráneo oriental que floreció entre los siglos VIII y IV antes de Cristo. ", count: 6)])
+            face.receive(["type": "timers", "items": [["kind": "timer", "at": Date().timeIntervalSince1970 + 299, "label": "pasta"]]])
+            timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
+                Task { @MainActor in  // its voice, as if it spoke
+                    self?.levels.speech = CGFloat(0.35 + 0.25 * sin(Date().timeIntervalSince1970 * 7))
+                }
+            }
+        }
+    }
 
     var body: some View {
-        ThemeView(face: face, levels: levels, camera: camera)
+        ThemeView(face: demo.face, levels: demo.levels, camera: demo.camera, web: demo.web)
             .statusBarHidden(true)
-            .onAppear {
-                face.theme = theme
-                face.receive(["type": "state", "state": "speaking"])
-                face.receive(["type": "text", "text": "¿Qué sabes de los griegos?"])
-                face.receive(["type": "text", "author": "assistant", "id": "demo", "text":
-                    String(repeating: "Los antiguos griegos fueron una civilización del Mediterráneo oriental que floreció entre los siglos VIII y IV antes de Cristo. ", count: 6)])
-            }
+            .onAppear { demo.start(theme) }
     }
 }
 #endif

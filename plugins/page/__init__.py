@@ -153,9 +153,10 @@ async def _connect_pair(request):
 @web.route("GET", "/")
 async def _index(request):
     # With the plugin «https», another device on plain HTTP goes to the HTTPS page: on HTTP the
-    # browser doesn't let it use the microphone (it would ask for Chrome's flag). The Mac stays.
+    # browser doesn't let it use the microphone (it would ask for Chrome's flag). The Mac stays, and
+    # so does an app's view of its theme (?app: the app has the microphone; its address is the app's).
     https = kernel.module("https")
-    if https and not request.secure and request.remote not in LOCAL:
+    if https and not request.secure and request.remote not in LOCAL and "app" not in request.query:
         raise http.HTTPFound(https.address(request.url.raw_host or https.NAME, request.path_qs))
     return web.page(WEB / "index.html")
 

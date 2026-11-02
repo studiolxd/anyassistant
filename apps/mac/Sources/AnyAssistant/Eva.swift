@@ -1,5 +1,6 @@
 // The assistant on this Mac too: the same client as the iPhone's (Client/ links the iPhone
-// app's own files: its face, microphone, camera and link), in a window and in the menu bar.
+// app's own files: its face, microphone, camera and link; Eyes drawn natively, any other theme the
+// server's page in a web view, WebTheme.swift), in a window and in the menu bar.
 // It talks to this Mac's server (no code: the server trusts its own Mac) or, on a Mac
 // without the server, only to another Mac's (paired with its code, as a phone).
 
@@ -163,9 +164,7 @@ struct FaceWindow: View {
 
     var body: some View {
         let link = client.link
-        ThemeView(face: link.face, levels: link.levels, camera: link.camera)
-            .contentShape(Rectangle())
-            .onTapGesture { link.tap() }
+        ThemeView(face: link.face, levels: link.levels, camera: link.camera, web: link.web, tap: { link.tap() })
             .overlay(alignment: .bottom) {
                 if !client.listening {
                     Button(T("Turn the microphone on")) { client.listening = true }

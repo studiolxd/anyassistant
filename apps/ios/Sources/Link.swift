@@ -28,6 +28,8 @@ final class Link: NSObject, ObservableObject {
     let camera = Camera()
     let face = FaceModel()
     let levels = Levels()
+    /// Every theme but Eyes: the server's page, fed from here (WebTheme.swift).
+    lazy var web = WebFace(face: face, levels: levels)
     @Published private(set) var state = State.connecting
     @Published private(set) var paused: Pause?
 
@@ -235,7 +237,9 @@ final class Link: NSObject, ObservableObject {
         if let theme = UserDefaults.standard.string(forKey: "theme") { parts.queryItems = [URLQueryItem(name: "theme", value: theme)] }
         guard let (data, _) = try? await mac.session.data(from: parts.url!),
               let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        web.configured(base: base, cookies: mac.cookies(for: base))
         face.configure(config)
+        web.forward(["type": "config"])  // the page reads its texts and settings again
         #if os(iOS)
         Notices.shared.name = face.name
         await Notices.shared.fetchAlarmSound(from: base, theme: face.theme, session: mac.session)
@@ -284,7 +288,8 @@ final class Link: NSObject, ObservableObject {
         case "hello": eyes = message["eyes"] as? Bool ?? false
         case "pong": break
         case "photo": takePhoto(message["id"])
-        case "look": Task { await showPhoto() }
+        case "look":  // the page shows it itself; Eyes, here
+            if web.shows(face.theme) { web.forward(message) } else { Task { await showPhoto() } }
         case "config": Task { await configure() }
         case "theme":
             let name = message["name"] as? String ?? ""
@@ -293,6 +298,7 @@ final class Link: NSObject, ObservableObject {
             Task { await configure() }
         default:
             face.receive(message)
+            web.forward(message)
             #if os(iOS)
             Notices.shared.handle(message)
             #endif

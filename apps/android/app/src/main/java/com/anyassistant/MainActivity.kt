@@ -75,7 +75,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -201,10 +200,7 @@ class MainActivity : ComponentActivity() {
         var settings by remember { mutableStateOf(false) }
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             // A tap: it stops talking or wakes up; held: the settings, always, whatever the theme.
-            Box(Modifier.fillMaxSize().combinedClickable(remember { MutableInteractionSource() }, null,
-                onLongClick = { settings = true }) { link.tap() }) {
-                ThemeView(link.face, link.camera)
-            }
+            ThemeView(link.face, link.camera, link.web, tap = { link.tap() }, settings = { settings = true })
             // «Ajustes», only asleep or in error (where it's needed), inside the safe area: where the
             // theme puts it (its options «settings»: bottom, top, bottom-left…) in its colour
             // («settings_color», else its accent), text or icon («settings_style»).

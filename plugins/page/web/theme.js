@@ -6,7 +6,8 @@
 //   body[data-look]   the same, with the ones that look alike grouped (listening → awake…)
 //   body.blink        now and then, for a moment
 //   --voice, --speech, --bar-1…5   on the face block, live (0–1): your voice, its own,
-//                     and its own as five moving bars (a mouth)
+//                     and its own as five moving bars (a mouth); in an app (?app), both
+//                     come from it
 // Transforms and opacity only, if possible: the tablet is modest (Chrome 81).
 
 var Theme = (function () {
@@ -77,6 +78,7 @@ var Theme = (function () {
   var analyser = null;
   var samples = null;
   var analyserWorks = false;  // on some Chrome versions remote audio reaches WebAudio silent
+  var given = null;  // its voice's level from an app (?app: the app plays the audio), instead
 
   function speaker(stream) {
     try {
@@ -109,8 +111,8 @@ var Theme = (function () {
   }
   (function loop() {
     step++;
-    var level = speakerLevel();
-    if (look === 'speaking' && !analyserWorks) level = 0.35 + 0.25 * Math.sin(step / 4);  // a mouth that moves anyway
+    var level = given !== null ? given : speakerLevel();
+    if (look === 'speaking' && !analyserWorks && given === null) level = 0.35 + 0.25 * Math.sin(step / 4);  // a mouth that moves anyway
     if (look !== 'speaking') level = 0;
     speech += (level - speech) * 0.4;
     var target = block('face') || screen;
@@ -152,6 +154,7 @@ var Theme = (function () {
     block: block,
     state: state,
     voice: function (level) { voice = level; },
+    speech: function (level) { given = level; },
     speaker: speaker,
     current: function () { return current; },
     language: function (code) { lang = code; clock(); },
