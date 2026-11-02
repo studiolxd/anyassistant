@@ -80,7 +80,7 @@
     "certificate_android": "If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»).",
     "then": "Then",
     "open": "Open the page",
-    "about_phone": "If you have the AnyAssistant app, open it with the button. If not, connect from the browser with the code.",
+    "about_phone": "If you have the AnyAssistant app, tap «Open in the app». If not, connect from the browser with the code.",
     "about_computer": "Type the code the server shows in «Connect another device».",
     "code": "Pairing code"
   }
