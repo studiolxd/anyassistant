@@ -50,6 +50,12 @@ def model(size: str):
         return _models[size]
 
 
+def unload(size: str):
+    """Drops a model loaded by model() (the next call loads it again); the others stay."""
+    with _loading:
+        _models.pop(size, None)
+
+
 def transcribe_fw(audio: np.ndarray, size: str, language: str, prompt: str | None = None) -> str:
     """Transcribes with a faster-whisper model (16 kHz float32 mono)."""
     segments, _ = model(size).transcribe(
@@ -66,3 +72,7 @@ class FasterWhisper(Transcriber):
 
     def transcribe(self, audio: np.ndarray) -> str:
         return transcribe_fw(audio, self.model, self.language)
+
+    def unload(self) -> bool:
+        unload(self.model)  # load(): the next transcription (warm_up) brings it back
+        return True

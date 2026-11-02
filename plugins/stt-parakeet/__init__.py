@@ -53,7 +53,20 @@ class Parakeet(Transcriber):
 
         self._mx = mx
         self._logmel = get_logmel
-        self._model = from_pretrained(models.pinned(self.model))
+        self._from_pretrained = from_pretrained
+        self._model = None
+        self.load()
+
+    def load(self):
+        if self._model is None:
+            self._model = self._from_pretrained(models.pinned(self.model))
+
+    def unload(self) -> bool:
+        from plugins.stt_mlx_whisper import unload_mlx
+
+        self._model = None
+        unload_mlx(FALLBACK)  # its Whisper too; warm_up() brings both back
+        return True
 
     def warm_up(self):
         super().warm_up()

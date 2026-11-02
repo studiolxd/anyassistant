@@ -1,5 +1,6 @@
 """Whisper on the Apple Silicon GPU with MLX."""
 
+import gc
 import sys
 
 import numpy as np
@@ -43,6 +44,16 @@ def transcribe_mlx(audio: np.ndarray, model: str, language: str, prompt: str | N
     return result["text"].strip()
 
 
+def unload_mlx(model: str):
+    """Drops a model loaded by transcribe_mlx (the next transcription loads it again) and gives
+    the GPU's memory back; the other models (the wake word's) stay."""
+    import mlx.core as mx
+
+    _models.pop(models.pinned(model), None)
+    gc.collect()
+    mx.clear_cache()
+
+
 @register("mlx-whisper")
 class MlxWhisper(Transcriber):
     def __init__(self, language="en", model=None):
@@ -50,3 +61,7 @@ class MlxWhisper(Transcriber):
 
     def transcribe(self, audio: np.ndarray) -> str:
         return transcribe_mlx(audio, self.model, self.language)
+
+    def unload(self) -> bool:
+        unload_mlx(self.model)  # load(): the next transcription (warm_up) brings it back
+        return True

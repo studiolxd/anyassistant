@@ -83,6 +83,11 @@ def _awake(session) -> bool:
     return bool(ear and ear.wake and ear.awake)
 
 
+def in_conversation() -> bool:
+    """Whether any device is in a conversation (the speech model stays in memory meanwhile)."""
+    return any(_awake(s) for s in sessions.values())
+
+
 def awake_elsewhere(brain) -> bool:
     """Whether another device is in a conversation (the LLM's is theirs: not to be reset)."""
     return any(_awake(s) for s in sessions.values() if s.brain is not brain)

@@ -22,12 +22,19 @@ def volume() -> float:
     return max(5, min(100, settings.get("volume") or 100)) / 100
 
 
+def talking() -> bool:
+    """Whether a device is in a conversation or in the middle of a sentence: the speech model stays."""
+    return hub.in_conversation() or any(getattr(getattr(s.brain, "ear", None), "speaking", False) for s in hub.all())
+
+
 def listening(args):
-    """What it listens with, from the settings: the STT engine (warmed up), a function that makes a
-    wake word for each session (it keeps state; None: no wake word) and the Ear's options."""
+    """What it listens with, from the settings: the STT engine (warmed up; it leaves memory after
+    «stt_unload_minutes» without use, stt.Unloading), a function that makes a wake word for each
+    session (it keeps state; None: no wake word) and the Ear's options."""
     engine = stt.create(args.stt, language=i18n.L.stt_language, model=args.stt_model)
     log.info("loading STT %s (%s)…", engine.name, engine.model)
     engine.warm_up()
+    engine = stt.Unloading(engine, busy=talking)
     wake_factory = None
     if args.wake != "none":
         wake_options = {"word": args.wake_word}
