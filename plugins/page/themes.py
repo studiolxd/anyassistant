@@ -2,8 +2,8 @@
 
 A theme is a folder:
 
-    themes/orb/
-      theme.json        {"name": "Orb", "author": "…", "version": "1", "description": "…",
+    themes/eyes/
+      theme.json        {"name": "Eyes", "author": "…", "version": "1", "description": "…",
                         "options": {"accent": "#3ddc97"}}
       theme.html        the layout: where each block goes (<div data-block="clock"></div>…)
       theme.css         its styles and animations for each state
@@ -12,7 +12,8 @@ A theme is a folder:
       sounds/          optional: wake.wav, sleep.wav, alarm.wav
       preview.png      optional
 
-System themes live in plugins/page/themes/; yours in «themes_dir» (paths.THEMES by default:
+The system's theme, Eyes, lives in plugins/page/themes/ (Orb, Minimal and Bedside are in the
+community's catalog); yours in «themes_dir» (paths.THEMES by default:
 themes.local/ while developing, not in git). Jarvis fills the blocks; the theme
 styles them with CSS, from body[data-state] / [data-look] and live CSS variables
 (--voice, --speech, --bar-1…5). The theme's HTML is cleaned: no scripts, no on…
@@ -24,7 +25,7 @@ shown asleep or in error: options «settings» (bottom, top, bottom-left, bottom
 top-left, top-right; bottom if not said), «settings_style» (text or icon; text if not said)
 and «settings_color» (else its «accent»).
 
-    bin/anyassistant theme new <name> [--from orb]
+    bin/anyassistant theme new <name> [--from eyes]
 """
 
 import json
@@ -341,7 +342,7 @@ def _tools():
 
         return tools.session()
 
-    @tool("The screen's look (a theme: eyes, orb… see get_settings), for every "
+    @tool("The screen's look (a theme: eyes or one installed… see get_settings), for every "
           "device or only the one the user is talking to (this_device).")
     def set_theme(theme: str, this_device: bool = False) -> str:
         import settings
@@ -357,7 +358,7 @@ def _tools():
         settings.save(theme=theme)
         return "Saved: the theme changes when you finish answering."
 
-    @tool("Create a theme of the user's own as a copy of another (based_on: eyes, orb, minimal, bedside or one of "
+    @tool("Create a theme of the user's own as a copy of another (based_on: eyes or one of "
           "theirs), to change its look (colours, shapes, layout). Not to show or hide parts of the screen (the "
           "time, the transcription, the answers, the timers…): that is set_screen, for every theme.")
     def create_theme(name: str, based_on: str = DEFAULT) -> str:

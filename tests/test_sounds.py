@@ -1,8 +1,10 @@
 """The plugin «sounds» (waking and falling asleep) and the alarm's, in skill-alarms."""
 
+import pytest
 import numpy as np
 
 import kernel
+from conftest import ROOT
 import settings
 from audio import RATE
 
@@ -17,6 +19,13 @@ class Speaker:
         self.played.append(pcm)
 
 
+
+@pytest.fixture
+def others(monkeypatch):
+    """The tests' copy of Bedside, with its sounds, as a theme of your own (it is the community's now)."""
+    monkeypatch.setattr(settings, "active", {**settings.active, "themes_dir": str(ROOT / "tests" / "data" / "themes")})
+
+
 def test_two_short_notes_without_clicks_rising_and_falling():
     sounds = kernel.load("sounds")
     wake, sleep = sounds.sound("wake", None), sounds.sound("sleep", None)
@@ -26,7 +35,7 @@ def test_two_short_notes_without_clicks_rising_and_falling():
     assert np.array_equal(wake[:half], sleep[half:])  # the same notes, the other way round
 
 
-def test_a_themes_own_sound_wins():
+def test_a_themes_own_sound_wins(others):
     sounds = kernel.load("sounds")
     assert np.array_equal(sounds.sound("wake", "bedside"), themes.sound("bedside", "wake"))
     assert not np.array_equal(sounds.sound("wake", "eyes"), themes.sound("bedside", "wake"))
@@ -44,15 +53,15 @@ def test_off_it_wakes_in_silence(monkeypatch):
     assert len(ear.speaker.played) == 1
 
 
-def test_the_alarm_rings_even_without_the_sounds_plugin(monkeypatch):
-    monkeypatch.setattr(settings, "active", {"plugins": {"sounds": False}})
+def test_the_alarm_rings_even_without_the_sounds_plugin(monkeypatch, others):
+    monkeypatch.setattr(settings, "active", {**settings.active, "plugins": {"sounds": False}})
     alarms = kernel.module("skill-alarms")
     tone = alarms.alarm_sound("eyes")
     assert tone is not None and len(tone) > RATE // 4
     assert np.array_equal(alarms.alarm_sound("bedside"), themes.sound("bedside", "alarm"))
 
 
-def test_the_apps_ring_with_the_themes_alarm():
+def test_the_apps_ring_with_the_themes_alarm(others):
     """/alarm.wav: the theme's alarm as the server rings it (sound, silence, again), under 30 s."""
     import io
     import wave
@@ -67,7 +76,7 @@ def test_the_apps_ring_with_the_themes_alarm():
     assert np.array_equal(pcm[:len(tone)], tone)
 
 
-def test_the_themes_page_hears_each_sound_as_it_plays():
+def test_the_themes_page_hears_each_sound_as_it_plays(others):
     """/sounds/<kind>.wav: the theme's own, or the system's (X-Theme-Sound says which)."""
     import asyncio
     import io

@@ -33,7 +33,7 @@ HERE = Path(__file__).parent
 WEB = HERE / "web"
 
 for option in (
-    Option("theme", themes.DEFAULT, "the screen's look: eyes, orb, minimal, bedside or yours (a device's ?theme= wins)",
+    Option("theme", themes.DEFAULT, "the screen's look: eyes, one from the community or yours (a device's ?theme= wins)",
            "screen", "choice", lambda: list(themes.available()), live=True),
     Option("theme_options", None, 'the theme\'s options: {"accent": "#ff7a45"}', "screen", "dict", live=True,
            empty="the theme's own"),

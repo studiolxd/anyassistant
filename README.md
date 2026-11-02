@@ -242,7 +242,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 
 | Option | Default | |
 |---|---|---|
-| `theme` | `"eyes"` | the screen's look: eyes, orb, minimal, bedside or yours (a device's ?theme= wins) |
+| `theme` | `"eyes"` | the screen's look: eyes, one from the community or yours (a device's ?theme= wins) |
 | `theme_options` | — | the theme's options: {"accent": "#ff7a45"} |
 | `themes_dir` | — | your themes (default: themes in your data folder) *(restarts)* |
 | `video` | `"auto"` | camera quality; auto: each device by its memory (a device's ?video= wins) |
@@ -412,7 +412,7 @@ five sentences, it says once «Suvi: conviene volver a aprender tu voz en iPad (
 notice, through `notices`), and the Mac's Voices page and `/admin` → Voices show it, until it
 recovers or the voice is learnt again on that device.
 
-**By voice**: «Use the orb theme», «Change your voice to Mónica», «From now on your
+**By voice**: «Use the bedside theme», «Change your voice to Mónica», «From now on your
 name is …», with Jarvis's own tools (below). After every answer the server reads
 `settings.json` again (also when you edit it by hand): the theme changes on the
 screen at once, and anything else (voice, name, language…) restarts it when it
@@ -676,22 +676,23 @@ and `--wake my-engine [--wake-word …]`. `server/plugins.py` is the shared regi
 ## Themes
 
 The screen's look is a **theme**: HTML and CSS anyone can make, **without
-JavaScript**. Four come with Jarvis (`plugins/page/themes/`):
+JavaScript**. One comes with AnyAssistant (`plugins/page/themes/eyes`):
 
 - **`eyes`** (default): two blinking eyes; closed and breathing while asleep,
   brighter and slightly bigger with your voice, looking to one side with dots while
   thinking, a mouth of bars that follows its voice, a raised eyebrow and «?» while
   waiting for your «yes», orange when ringing, drooping and red on errors.
-- **`orb`**: a sphere that breathes, beats with your voice, has a spinning ring
-  while thinking and sends out waves while speaking.
-- **`minimal`**: high contrast and large text, a light that changes with each state.
-- **`bedside`**: nearly black, only a dim time while asleep, and soft sounds.
 
-Chosen with `theme` for every device, `?theme=bedside` on one (remembered by it;
+Others are installed from the community's catalog (the window Themes → «De la comunidad»;
+docs/comunidad.md): **Orb** (a sphere that breathes and sends out waves while speaking),
+**Minimal** (high contrast and large text) and **Bedside** (nearly black, a dim time while
+asleep, soft sounds), among them.
+
+Chosen with `theme` for every device, `?theme=<name>` on one (remembered by it;
 `?theme=default` forgets it), or by voice («ponte el tema de mesilla», «only on
 this one»).
 
-**Making one.** `bin/anyassistant theme new mine --from orb` copies a theme into your
+**Making one.** `bin/anyassistant theme new mine --from eyes` copies a theme into your
 folder (`themes_dir`, `themes.local/` by default: where an installed Jarvis keeps
 them will come with the installer). A theme is a folder:
 
@@ -736,7 +737,7 @@ understands). Starting and pairing aren't blocks: they always work.
   the theme only gives their height: a `max-height` (30% of the screen if it says nothing), a
   fixed `height` in a centred column (so the face doesn't move when words arrive), or
   `max-height: none` in a flex column of the screen's height, so they shrink to the space left
-  (Eyes and Orb). While there is more above or below they have the classes `more-above`,
+  (Eyes). While there is more above or below they have the classes `more-above`,
   `more-below` (a fade; a theme may change it).
 - The timers' lines with their kind as a class (`.timers p.timer`, `.alarm`,
   `.reminder`): Jarvis puts no icon, so a theme that wants one adds it, e.g.

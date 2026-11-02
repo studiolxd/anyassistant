@@ -24,9 +24,17 @@ def mine(tmp_path, monkeypatch):
 
 
 def test_system_themes_are_fine():
-    assert {"eyes", "orb", "minimal", "bedside"} <= set(themes.available())
-    for name in ("eyes", "orb", "minimal", "bedside"):
-        assert themes.check(ROOT / "plugins" / "page" / "themes" / name) == [], name
+    """Only Eyes comes with it (Orb, Minimal and Bedside are in the community's catalog)."""
+    assert "eyes" in themes.available()
+    assert themes.check(ROOT / "plugins" / "page" / "themes" / "eyes") == []
+    for name in ("orb", "bedside"):  # the tests' copies, as a community theme is
+        assert themes.check(ROOT / "tests" / "data" / "themes" / name) == [], name
+
+
+@pytest.fixture
+def others(monkeypatch):
+    """The tests' copies of Orb and Bedside (with its sounds), as themes of your own."""
+    monkeypatch.setattr(settings, "active", {"themes_dir": str(ROOT / "tests" / "data" / "themes")})
 
 
 @pytest.mark.parametrize("html, kept, gone", [
@@ -86,16 +94,16 @@ def test_what_is_wrong_in_a_theme(mine):
 
 
 def test_new_theme_from_another(mine):
-    created = themes.new("lamp", "bedside")
-    assert json.loads((created / "theme.json").read_text())["based_on"] == "bedside"
+    created = themes.new("lamp", "eyes")
+    assert json.loads((created / "theme.json").read_text())["based_on"] == "eyes"
     assert "lamp" in themes.available()
     with pytest.raises(ValueError):
-        themes.new("lamp", "bedside")
+        themes.new("lamp", "eyes")
     with pytest.raises(ValueError):
         themes.new("../evil", "eyes")
 
 
-def test_sounds(mine):
+def test_sounds(mine, others):
     assert themes.sound("eyes", "wake") is None  # the plugin «sounds»'s, then
     bedside = themes.sound("bedside", "alarm")
     assert bedside is not None and bedside.dtype.name == "int16" and len(bedside) > 48000
@@ -119,7 +127,7 @@ def test_the_page_forbids_outside_resources_and_scripts():
 def test_jarvis_makes_a_theme_of_your_own(mine, monkeypatch):
     import tools
 
-    assert "Created" in tools.call("create_theme", {"name": "lamp", "based_on": "orb"})
+    assert "Created" in tools.call("create_theme", {"name": "lamp", "based_on": "eyes"})
     assert "=== theme.css ===" in tools.call("get_theme", {"name": "lamp"})
     css = "body[data-look=\"thinking\"] .core { background: #ff00ff; }"
     assert tools.call("edit_theme", {"name": "lamp", "file": "theme.css", "content": css}).startswith("Saved.")

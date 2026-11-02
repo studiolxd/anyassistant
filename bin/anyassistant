@@ -11,7 +11,7 @@
 #   bin/anyassistant unpair                   forgets every paired device
 #   bin/anyassistant admin-code               a code for a browser to administer it (/admin)
 #   bin/anyassistant llm-key openai           an LLM's API key, into the system's keychain
-#   bin/anyassistant theme list|new <name> [--from orb]   the screen's themes
+#   bin/anyassistant theme list|new <name> [--from eyes]   the screen's themes
 #   bin/anyassistant community entry <folder> <base-url>   a theme's or plugin's entry for the community catalog
 #   bin/anyassistant plugins [requirements [--all]]   which are on, what they lack; their Python packages
 #   bin/anyassistant mail add|list|test|remove   mail accounts besides Gmail (IMAP and SMTP)

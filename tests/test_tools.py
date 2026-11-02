@@ -13,6 +13,7 @@ mcp_server = kernel.load("mcp-server")
 import tools
 from conftest import here, load_script, mac_only
 from plugins.llm_claude.permissions import load
+from conftest import ROOT
 
 
 @pytest.fixture
@@ -22,7 +23,8 @@ def env(tmp_path, monkeypatch, es):
     monkeypatch.setattr(settings, "PATH", tmp_path / "settings.json")
     monkeypatch.setattr(memory, "PATH", tmp_path / "memory.json")
     monkeypatch.setattr(settings, "active", {"name": "Jarvis", "face": "eyes", "memory": "explicit", "port": 8080,
-                                                  "plugins": {"memory": True}})
+                                                  "plugins": {"memory": True},
+                                                  "themes_dir": str(ROOT / "tests" / "data" / "themes")})  # orb, bedside
     monkeypatch.setattr(tools, "requested", set())
     return tmp_path
 

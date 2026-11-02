@@ -354,7 +354,7 @@ function message(m) {
   else if (m.type === 'photo') takePhoto(m.id);
   else if (m.type === 'timers') showTimers(m.items);
   else if (m.type === 'alarm') alarmLabel = m.label || '';
-  else if (m.type === 'theme') { deviceTheme(m.name); loadTexts(); }  // «use the orb theme here»
+  else if (m.type === 'theme') { deviceTheme(m.name); loadTexts(); }  // «use another theme here»
 }
 
 // Paused by the server (another program on this computer uses the microphone: the plugin
@@ -705,7 +705,7 @@ function fail(message) {
   status(message);
 }
 
-// ?demo: without connecting, cycles through every state to see the theme (?demo&theme=orb);
+// ?demo: without connecting, cycles through every state to see the theme (?demo&theme=eyes);
 // ?demo=thinking stays in one (the themes lab shows them all at once).
 var DEMO_STATES = ['asleep', 'awake', 'hearing', 'transcribing', 'looking', 'thinking', 'speaking', 'question', 'alarm', 'error'];
 function demo() {
