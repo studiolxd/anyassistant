@@ -28,6 +28,7 @@ def asked(said: set[str], topic: str) -> bool:
 @skill
 class Clock(Skill):
     order = 32
+    harmless = True
 
     def answer(self, text, toks):
         said = {t.plain for t in toks}

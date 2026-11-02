@@ -10,6 +10,7 @@ from .units import convert, name
 @skill
 class Conversion(Skill):
     order = 34
+    harmless = True
 
     def answer(self, text, toks):
         found = convert(toks)

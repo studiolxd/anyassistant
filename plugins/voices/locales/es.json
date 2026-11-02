@@ -56,7 +56,9 @@
     "voice_learnt": "Listo, {name}: ya conozco tu voz.",
     "voice_cancelled": "Vale, lo dejamos.",
     "voice_forgotten": "He olvidado tu voz, {name}.",
-    "voice_refused": "No reconozco tu voz: eso no lo hago."
+    "voice_refused": "No reconozco tu voz: eso no lo hago.",
+    "voice_unclear": "No he reconocido bien tu voz: ¿lo hago?",
+    "voice_relearn": "{name}: conviene volver a aprender tu voz en {device}."
   },
   "options_title": {
     "voice_check": "Qué exige una voz conocida",

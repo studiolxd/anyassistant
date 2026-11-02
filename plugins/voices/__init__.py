@@ -6,11 +6,19 @@ voices.json in your data folder.
   says, one by one → «Ya conozco tu voz, Suvi.» Once someone is known, only a known voice
   can start it («aprende una voz nueva»), or the Mac app (Settings → Voices).
 - «voice_check» all (the default): once someone is known, it only listens to known voices:
-  every sentence is checked before anything is done with it; others are dropped (the log
-  says so, with the score). actions: only the «yes» that authorizes an action. off: never.
+  every sentence is checked before anything is done with it. A voice clearly unlike everyone
+  (below UNCLEAR × «voice_match») is dropped (the log says so, with the score); one in between,
+  not clear enough, isn't dropped: if what it said would do something (an action, the LLM),
+  it asks («No he reconocido bien tu voz: ¿lo hago?», the plugin «confirmation») and does it on
+  a «yes» from a recognised voice; a harmless skill (the time, «stop», «go to sleep») goes
+  through, as «Ey, Eva» does. actions: only the «yes» that authorizes an action. off: never.
 - Short sentences («sí», «para») say little about who: a clear match counts, a clear match
   with someone else is dropped, and in between they count as the person this conversation
   already recognised (with a longer sentence) — never as an unknown.
+- It keeps each person's usual score per device (the median of the sentences accepted as
+  theirs); when the recent ones stay clearly below it (DROP, over RECENT_SCORES sentences: another
+  place for the microphone, a cold), it says once that their voice should be learnt again there
+  (a notice; the Mac's Voices page and the admin page show it), until it recovers or is learnt.
 - The LLM hears who is talking («(Suvi is talking.)»), with the first sentence of each.
 - «voice_adapt» (on by default): it keeps learning each voice from what that person says
   (only voice prints, never the audio): the last RECENT sentences it was sure of on each device (long, clearly
@@ -23,6 +31,7 @@ import asyncio
 import json
 import logging
 import time
+from collections import namedtuple
 
 import numpy as np
 
@@ -32,6 +41,7 @@ import models
 import options
 import paths
 import settings
+import skills
 import web
 from aiohttp import web as http
 from options import Option
@@ -50,6 +60,13 @@ SURE = 0.65  # how alike a sentence must be to be kept (well above voice_match)
 LONG = 2.0  # seconds a sentence must last to be kept
 APART = 0.15  # and how much nearer to them than to anyone else
 FLOOR = 0.45  # a recent print counts only if the voice is also this near the learnt one
+# Below this share of «voice_match» a voice is clearly a stranger's (0.30 with the default 0.5): dropped;
+# between it and «voice_match», not clear: it asks before doing something, lets a harmless skill through.
+UNCLEAR = 0.6
+USUAL = 40  # scores kept per person and device, to know their usual one
+ENOUGH = 10  # sentences before it judges a drop
+RECENT_SCORES = 5  # the recent ones: a drop has to last, one bad sentence doesn't count
+DROP = 0.15  # how far below the usual score the recent ones are when the print should be learnt again
 
 options.add(Option("voice_check", "all", "what needs a known voice once someone's is learnt: all (it only listens "
                    "to known voices), actions (only the «yes» that authorizes one) or off", "security", "choice",
@@ -90,6 +107,7 @@ def learn(name: str, prints: list[np.ndarray], device: str | None = None):
         person.setdefault("prints", {})["?"] = person.pop("print")
     person.setdefault("prints", {})[device or "?"] = [round(float(x), 6) for x in mean]
     person["recent"] = [r for r in person.get("recent", []) if r["near"] != (device or "?")]  # learnt anew
+    person.get("usual", {}).pop(device or "?", None)  # its usual score there starts over (and any warning)
     person["samples"] = person.get("samples", 0) + len(prints)
     _save(found)
     log.info("voice learnt: %s on %s (%d phrases, %d devices)", name, device or "a device", len(prints),
@@ -226,33 +244,105 @@ def drop_recent():
         log.info("voice adaptation off: recent prints deleted")
 
 
-def judge(audio: np.ndarray, before: str | None) -> tuple[str | None, bool, str]:
-    """(who, whether it counts, why): `before`, who this conversation already recognised."""
-    match = settings.get("voice_match") or 0.5
+# Who it sounds like, whether the sentence counts and why; its score and length; and «unclear»: long
+# enough to tell, like someone known, but not enough (between the lower bound and «voice_match»).
+Verdict = namedtuple("Verdict", "name counts why score seconds unclear")
+
+
+def match() -> float:
+    return settings.get("voice_match") or 0.5
+
+
+def lower() -> float:
+    """Below this a voice is clearly nobody known's."""
+    return match() * UNCLEAR
+
+
+def judge(audio: np.ndarray, before: str | None) -> Verdict:
+    """(who, whether it counts, why, …): `before`, who this conversation already recognised."""
+    wanted = match()
     name, score = identify(audio)
     seconds = len(audio) / RATE
-    if score >= match:
-        return name, True, f"{name} ({score:.2f})"
+    if score >= wanted:
+        return Verdict(name, True, f"{name} ({score:.2f})", score, seconds, False)
     if seconds >= SHORT:
-        return None, False, f"unknown voice (best {name}, {score:.2f}, {seconds:.1f} s)"
-    if before and (name == before or score < match * 0.6):  # short and unclear: whoever was talking
-        return before, True, f"short, as {before} ({score:.2f})"
-    return None, False, f"short and unclear (best {name}, {score:.2f})"
+        if score >= lower():
+            return Verdict(name, False, f"unclear voice (best {name}, {score:.2f}, {seconds:.1f} s)", score, seconds, True)
+        return Verdict(None, False, f"unknown voice (best {name}, {score:.2f}, {seconds:.1f} s)", score, seconds, False)
+    if before and (name == before or score < lower()):  # short and unclear: whoever was talking
+        return Verdict(before, True, f"short, as {before} ({score:.2f})", score, seconds, False)
+    return Verdict(None, False, f"short and unclear (best {name}, {score:.2f})", score, seconds, False)
+
+
+def stranger(audio: np.ndarray) -> tuple[bool, str]:
+    """Whether the voice is clearly nobody known's (below the lower bound), and why."""
+    name, score = identify(audio)
+    return score < lower(), f"best {name}, {score:.2f}"
 
 
 def may_wake(audio: np.ndarray) -> bool:
     """«Ey, Eva» said by whom: with «voice_check» all and someone known, only a voice that isn't
     clearly a stranger's wakes it. Its name is short (under a second: its print says less), so it
-    only refuses a voice clearly unlike everyone known (below 60 % of «voice_match»); what is said
+    only refuses a voice clearly unlike everyone known (below UNCLEAR × «voice_match»); what is said
     after it is checked as always."""
     if checking() != "all":
         return True
-    name, score = identify(audio)
-    least = (settings.get("voice_match") or 0.5) * 0.6
-    if score < least:
-        log.info("not woken: unknown voice (best %s, %.2f)", name, score)
+    unknown, why = stranger(audio)
+    if unknown:
+        log.info("not woken: unknown voice (%s)", why)
         return False
     return True
+
+
+# --- Each person's usual score per device: when it drops, their print there should be learnt again ---
+
+def usual_of(person: dict, device: str | None) -> dict:
+    return person.setdefault("usual", {}).setdefault(device or "?", {"scores": [], "warned": False})
+
+
+def track(assistant, name: str, device: str | None, score: float):
+    """A sentence accepted as `name`'s on that device, with its score: kept (the last USUAL). When the
+    recent ones stay DROP below their usual one, it tells them once to learn their voice again there;
+    once they recover (or learn it again), it may tell them again some day."""
+    everyone = people()
+    person = next((p for p in everyone if p["name"] == name), None)
+    if person is None:
+        return
+    usual = usual_of(person, device)
+    usual["scores"] = (usual["scores"] + [round(float(score), 3)])[-USUAL:]
+    scores = usual["scores"]
+    if len(scores) >= ENOUGH:
+        typical, recent = float(np.median(scores)), float(np.median(scores[-RECENT_SCORES:]))
+        if not usual["warned"] and recent <= typical - DROP:
+            usual["warned"] = True
+            log.info("%s on %s: usual score %.2f, lately %.2f: their voice should be learnt again there",
+                     name, device or "?", typical, recent)
+            _warn(assistant, name, device)
+        elif usual["warned"] and recent > typical - DROP / 2:
+            usual["warned"] = False
+            log.info("%s on %s: their score is back (%.2f)", name, device or "?", recent)
+    _save(everyone)
+
+
+def _warn(assistant, name: str, device: str | None):
+    """«Conviene volver a aprender tu voz en …»: a notice (the plugin «notices»), when it is a good moment."""
+    notices = kernel_module("notices")
+    text = i18n.L("speech.voice_relearn", name=name, device=device_name(device))
+    if notices is None:
+        log.info("no notices: not said «%s»", settings.private(text))
+        return
+    assistant.later(notices.tell(text))
+
+
+def device_name(device: str | None) -> str:
+    """«iPad (cocina)», from the plugin «devices»; else what it has."""
+    devices = kernel_module("devices")
+    return devices.describe(device) if devices else (device or "a device")
+
+
+def relearn(person: dict) -> list[str]:
+    """The devices where their voice should be learnt again, by name."""
+    return [device_name(None if d == "?" else d) for d, u in person.get("usual", {}).items() if u.get("warned")]
 
 
 # --- In the assistant: every sentence (or only the «yes»), before it is handled ---
@@ -272,17 +362,26 @@ def screen(assistant, text: str, timings: dict, audio, handle) -> bool:
         if not (confirmation and confirmation.waiting() and confirmation.is_yes(text)):
             return False
 
-    sleep = kernel_module("skill-sleep")
-    if mode == "all" and sleep and sleep.is_sleep_command(text):
-        # «Apágate» is harmless and short (its print says less): as «Ey, Eva», only a voice clearly
-        # unlike everyone known is refused.
-        if may_wake(audio):
+    if mode == "all" and skills.harmless(text):
+        # «Apágate», «para», «¿qué hora es?» are harmless (and often short: their print says less): as
+        # «Ey, Eva», only a voice clearly unlike everyone known is refused.
+        unknown, why = stranger(audio)
+        if not unknown:
             return False
+        log.info("not for it: harmless, but an unknown voice (%s) «%s»", why, settings.private(text))
+        assistant._state(assistant._idle_state())
+        return True
+
+    session = hub.of(assistant)
+    device = session.device if session else None
 
     async def check():
-        name, counts, why = await asyncio.get_running_loop().run_in_executor(
+        verdict = await asyncio.get_running_loop().run_in_executor(
             None, judge, audio, getattr(assistant, "voice", None))
+        name, counts, why = verdict.name, verdict.counts, verdict.why
         if not counts:
+            if mode == "all" and verdict.unclear and _ask(assistant, text, timings, verdict):
+                return
             log.info("not for it: %s «%s»", why, settings.private(text))
             if mode == "actions":  # a «yes» from an unknown voice: refused, and said so
                 confirmation = kernel_module("confirmation")
@@ -294,13 +393,48 @@ def screen(assistant, text: str, timings: dict, audio, handle) -> bool:
             return
         log.info("voice: %s", why)
         assistant.voice = name
-        handle(text, timings)
+        if verdict.seconds >= SHORT:  # long enough to say something about them: their usual score
+            track(assistant, name, device, verdict.score)
+        if not _answered(assistant, text, name, handle):
+            handle(text, timings)
         if settings.get("voice_adapt", True):
             await asyncio.get_running_loop().run_in_executor(None, adapt, audio, name)
         else:
             drop_recent()
 
     assistant.later(check())
+    return True
+
+
+def _ask(assistant, text: str, timings: dict, verdict: Verdict) -> bool:
+    """A voice not clear enough said something that would do something (an action, the LLM): instead of
+    dropping it, it asks whether to do it («¿lo hago?», the plugin «confirmation»: the face shows the
+    question), and does it on a «yes» from a recognised voice (_answered). False if it can't ask: no
+    confirmation plugin, or a question already waiting (then it is dropped, as before)."""
+    confirmation = kernel_module("confirmation")
+    if confirmation is None or confirmation.waiting():
+        return False
+    sign = confirmation.ask_about(f"voice: {text}")  # an earlier one nobody answered has expired: replaced
+    assistant.unclear = {"text": text, "timings": timings, "sign": sign, "name": verdict.name, "score": verdict.score}
+    log.info("unclear voice (%s): asking «%s»", verdict.why, settings.private(text))
+    assistant.show_heard(text)
+    assistant.say(i18n.L("speech.voice_unclear"))
+    return True
+
+
+def _answered(assistant, text: str, name: str, handle) -> bool:
+    """A recognised voice answered the question about an unclear one: «yes» does what was said (as
+    that voice), anything else cancels it. False if nothing was waiting (or it expired): as usual."""
+    asked, assistant.unclear = getattr(assistant, "unclear", None), None
+    confirmation = kernel_module("confirmation")
+    if asked is None or confirmation is None or not confirmation.waiting_for(asked["sign"]):
+        return False
+    yes = confirmation.is_yes(text)
+    confirmation.answer(text)  # resolved: confirmed (nobody else will use it) or cancelled
+    assistant.show_heard(text)
+    if yes:
+        log.info("unclear voice: %s said yes to «%s»", name, settings.private(asked["text"]))
+        handle(asked["text"], asked["timings"])
     return True
 
 
@@ -434,7 +568,7 @@ def _listing():
     for device in [d for d, p in progress.items() if p["step"] in ("done", "cancelled") and now - p["at"] > 60]:
         progress.pop(device)  # an ended one stays a minute, for the guide to say so
     return {"people": [{"name": p["name"], "samples": p.get("samples", 0), "since": p.get("since"),
-                        "devices": len(prints_of(p))} for p in people()],
+                        "devices": len(prints_of(p)), "relearn": relearn(p)} for p in people()],
             "check": checking(), "learning": progress}
 
 

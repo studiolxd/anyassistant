@@ -45,7 +45,9 @@
     "voice_learnt": "Done, {name}: now I know your voice.",
     "voice_cancelled": "OK, let's leave it.",
     "voice_forgotten": "I've forgotten your voice, {name}.",
-    "voice_refused": "I don't recognise your voice: I won't do that."
+    "voice_refused": "I don't recognise your voice: I won't do that.",
+    "voice_unclear": "I didn't recognise your voice well: shall I do it?",
+    "voice_relearn": "{name}: it would be good to learn your voice again on {device}."
   },
   "options_title": {
     "voice_check": "What needs a known voice",

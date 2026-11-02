@@ -18,6 +18,10 @@ def is_stop_command(text: str) -> bool:
 class Stop(Skill):
     order = -2
     local = False
+    harmless = True
+
+    def takes(self, text, toks) -> bool:
+        return is_stop_command(text)
 
     def hear(self, text: str, assistant) -> bool:
         if not is_stop_command(text):

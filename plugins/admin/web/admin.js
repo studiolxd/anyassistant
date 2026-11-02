@@ -218,8 +218,28 @@ function devices(main) {
           });
           field.addEventListener('blur', function () { editing = false; });
         });
+        // Its room's noise (the plugin «calibration»): measured, or a calibration going on there.
+        var noise = d.noise || {};
+        var noiseText = noise.step === 'asking' || noise.step === 'measuring' ? T('Measuring: keep silent near the device…')
+                      : noise.step === 'talking' ? T('It heard talking: try again in silence.')
+                      : !noise.noise ? T('Room noise: not measured')
+                      : T('Room noise') + ': ' + T({ quiet: 'quiet', some: 'some noise', noisy: 'noisy' }[noise.noise] || noise.noise)
+                        + (noise.db !== undefined ? ' (' + Math.round(noise.db) + ' dB)' : '') + (noise.at ? ' · ' + T('measured') + ' ' + ago(noise.at) : '');
+        var noiseLine = el('div', { class: 'muted', style: noise.step === 'talking' ? 'color:var(--warn)' : null, text: noiseText });
+        if (d.connected && !d.press) {
+          noiseLine.appendChild(el('button', { class: 'quiet', style: 'margin-left:10px', text: T('Calibrate'),
+            title: T('A few seconds of silence measured on the device: how it tells your voice from the room\'s noise.'),
+            disabled: noise.step === 'asking' || noise.step === 'measuring' ? 'disabled' : null,
+            onclick: function (e) {
+              e.target.disabled = true;
+              noiseLine.firstChild.textContent = T('Measuring: keep silent near the device…');
+              api('POST', '/admin/calibration', { calibrate: d.id }).then(function (r) {
+                if (r.error) { alert(r.error); e.target.disabled = false; }
+              });
+            } }));
+        }
         box.appendChild(el('div', { class: 'row' }, [
-          el('div', { class: 'what' }, [name, ' ', room, ' ', llm, state]),
+          el('div', { class: 'what' }, [name, ' ', room, ' ', llm, state, noiseLine]),
           el('button', { class: 'danger', text: T('Forget'), onclick: function () {
             if (confirm(T('Forget this device? It will need a new code if pairing is on.'))) {
               api('POST', '/devices', { id: d.id, forget: true }).then(load);
@@ -230,7 +250,7 @@ function devices(main) {
     });
   }
   load();
-  timer = setInterval(load, 5000);
+  timer = setInterval(load, 2000);  // a calibration going on, a device connecting: as it is now
 }
 
 function settingsPage(main) {
@@ -437,8 +457,12 @@ function voices(main, inPage) {
     if (data._status === 404) { box.appendChild(el('p', { class: 'muted', text: T('Turn on the plugin «Voices» to teach it who you are.') })); return; }
     if (!data.people.length) box.appendChild(el('p', { class: 'muted', text: T('Nobody yet: while nobody is known, it listens to everyone.') }));
     data.people.forEach(function (p) {
+      // Their score there has dropped lately (the microphone moved, a cold…): said once as a notice.
+      var warnings = (p.relearn || []).map(function (device) {
+        return el('div', { class: 'muted', style: 'color:var(--warn)', text: T('It would be good to learn their voice again on %s.').replace('%s', device) });
+      });
       box.appendChild(el('div', { class: 'row' }, [
-        el('div', { class: 'what' }, [el('b', { text: p.name }), el('div', { class: 'muted', text: p.samples + ' ' + T('phrases') + ' · ' + ago(p.since) })]),
+        el('div', { class: 'what' }, [el('b', { text: p.name }), el('div', { class: 'muted', text: p.samples + ' ' + T('phrases') + ' · ' + ago(p.since) })].concat(warnings)),
         el('button', { class: 'danger', text: T('Forget'), onclick: function () { api('POST', '/admin/voices', { forget: p.name }).then(draw); } })
       ]));
     });

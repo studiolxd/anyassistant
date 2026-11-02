@@ -1,0 +1,5 @@
+{
+  "name": "Calibration",
+  "description": "Each device's room: a few seconds of silence measured there («calibra el micrófono», the Devices window) set how it tells your voice from that room's noise.",
+  "kind": "feature"
+}

@@ -1,0 +1,35 @@
+{
+  "plugins": {
+    "calibration": [
+      "Calibración",
+      "La sala de cada dispositivo: unos segundos de silencio medidos allí («calibra el micrófono», la ventana Dispositivos) ajustan cómo distingue tu voz del ruido de esa sala."
+    ]
+  },
+  "calibration": {
+    "start": [
+      "calibra el microfono",
+      "calibra el micro",
+      "calibra la sala",
+      "calibra el ruido",
+      "mide el ruido",
+      "mide la sala"
+    ],
+    "noise": {
+      "quiet": "la sala está en silencio.",
+      "some": "hay algo de ruido de fondo; seré un poco más exigente al distinguir tu voz.",
+      "noisy": "la sala es ruidosa; háblame de cerca."
+    }
+  },
+  "speech": {
+    "calibrate_silence": "Guarda silencio unos segundos: voy a medir el ruido de la sala.",
+    "calibrate_done": "Listo: {noise}",
+    "calibrate_talking": "No he podido medir: se oía hablar. Inténtalo en silencio.",
+    "calibrate_busy": "Ya estoy midiendo."
+  },
+  "options_title": {
+    "noise_adapt": "Seguir el ruido de la sala"
+  },
+  "options": {
+    "noise_adapt": "La detección de voz se adapta al ruido de fondo de cada dispositivo, y a su calibración («calibra el micrófono», o Calibrar en Dispositivos). Desactivado: umbrales fijos."
+  }
+}

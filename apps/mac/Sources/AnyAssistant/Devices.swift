@@ -1,5 +1,6 @@
 // The devices (the plugin «devices», only from the Mac): which ones there are, which are
-// connected and which one you're talking to; their name and room, to edit, or forget one.
+// connected and which one you're talking to; their name and room, to edit, or forget one; and
+// its room's noise (the plugin «calibration»): «Calibrate» measures a few seconds of silence there.
 
 import SwiftUI
 
@@ -12,6 +13,10 @@ struct DeviceItem: Identifiable, Equatable {
     let seen: Date?
     let press: Bool  // talks a sentence at a time (the watch): never «connected»
     var llm: String = ""  // its own LLM; "": the general one
+    var noise: String = ""  // its room, measured: quiet, some, noisy; "": not measured
+    var noiseDb: Double?
+    var calibratedAt: Date?
+    var calibrating: String = ""  // a calibration going on there: asking, measuring; or just ended: done, talking
 }
 
 @MainActor
@@ -24,8 +29,8 @@ final class Devices: ObservableObject {
 
     let server = Server.shared
 
-    private func call(_ body: [String: Any]? = nil) async -> [String: Any]? {
-        var request = URLRequest(url: URL(string: "http://127.0.0.1:\(server.port)/devices")!)
+    private func call(_ body: [String: Any]? = nil, path: String = "/devices") async -> [String: Any]? {
+        var request = URLRequest(url: URL(string: "http://127.0.0.1:\(server.port)\(path)")!)
         if let body {
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -57,7 +62,11 @@ final class Devices: ObservableObject {
                        room: $0["room"] as? String ?? "", connected: $0["connected"] as? Bool ?? false,
                        current: $0["current"] as? Bool ?? false,
                        seen: ($0["seen"] as? Double).map { Date(timeIntervalSince1970: $0) },
-                       press: $0["press"] as? Bool ?? false, llm: $0["llm"] as? String ?? "")
+                       press: $0["press"] as? Bool ?? false, llm: $0["llm"] as? String ?? "",
+                       noise: ($0["noise"] as? [String: Any])?["noise"] as? String ?? "",
+                       noiseDb: ($0["noise"] as? [String: Any])?["db"] as? Double,
+                       calibratedAt: (($0["noise"] as? [String: Any])?["at"] as? Double).map { Date(timeIntervalSince1970: $0) },
+                       calibrating: ($0["noise"] as? [String: Any])?["step"] as? String ?? "")
         }
         .sorted { ($0.connected ? 0 : 1, $0.name) < ($1.connected ? 0 : 1, $1.name) }
         llms = answer["llms"] as? [String] ?? llms
@@ -76,6 +85,15 @@ final class Devices: ObservableObject {
 
     func forget(_ item: DeviceItem) async {
         if let answer = await call(["id": item.id, "forget": true]) { show(answer) }
+    }
+
+    /// Measures its room's noise there (the plugin «calibration»): it asks for silence on the
+    /// device, measures a few seconds and says what it found; the row follows it.
+    func calibrate(_ item: DeviceItem) async {
+        if let i = items.firstIndex(of: item) { items[i].calibrating = "asking" }
+        if await call(["calibrate": item.id], path: "/admin/calibration") == nil, error == nil {
+            error = T("It couldn't start the calibration: is the plugin «Calibration» on?")
+        }
     }
 }
 
@@ -153,6 +171,17 @@ struct DeviceRow: View {
             .onChange(of: editing) { _, now in if !now { save() } }  // leaving a field saves it
             .onChange(of: name) { _, _ in later() }  // and a moment after typing (closing the window too)
             .onChange(of: room) { _, _ in later() }
+            HStack(spacing: 8) {
+                Image(systemName: "waveform.badge.minus").foregroundStyle(.secondary)
+                Text(noise).font(.caption).foregroundStyle(item.calibrating == "talking" ? .orange : .secondary)
+                Spacer()
+                if item.connected && !item.press {
+                    Button(T("Calibrate")) { Task { await devices.calibrate(item) } }
+                        .buttonStyle(.borderless)
+                        .disabled(item.calibrating == "asking" || item.calibrating == "measuring")
+                        .help(T("A few seconds of silence measured on the device: how it tells your voice from the room's noise."))
+                }
+            }
         }
         .onAppear { name = item.name; room = item.room }
         .onDisappear { save() }
@@ -168,6 +197,21 @@ struct DeviceRow: View {
                 .labelsHidden().textFieldStyle(.roundedBorder).focused($editing)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Its room's noise, or the calibration going on there.
+    var noise: String {
+        switch item.calibrating {
+        case "asking", "measuring": return T("Measuring: keep silent near the device…")
+        case "talking": return T("It heard talking: try again in silence.")
+        default: break
+        }
+        guard !item.noise.isEmpty else { return T("Room noise: not measured") }
+        let level = ["quiet": T("quiet"), "some": T("some noise"), "noisy": T("noisy")][item.noise] ?? item.noise
+        var text = T("Room noise") + ": " + level
+        if let db = item.noiseDb { text += " (\(Int(db.rounded())) dB)" }
+        if let at = item.calibratedAt { text += " · " + T("measured") + " " + at.formatted(.relative(presentation: .named)) }
+        return text
     }
 
     var state: String {

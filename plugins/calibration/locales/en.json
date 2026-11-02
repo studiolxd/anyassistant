@@ -1,0 +1,28 @@
+{
+  "calibration": {
+    "start": [
+      "calibrate the microphone",
+      "calibrate the mic",
+      "calibrate the room",
+      "measure the noise",
+      "measure the room"
+    ],
+    "noise": {
+      "quiet": "the room is quiet.",
+      "some": "there is some background noise; I'll be a bit stricter telling your voice from it.",
+      "noisy": "the room is noisy; speak to me from nearby."
+    }
+  },
+  "speech": {
+    "calibrate_silence": "Keep silent for a few seconds: I'm going to measure the room's noise.",
+    "calibrate_done": "Done: {noise}",
+    "calibrate_talking": "I couldn't measure it: I heard talking. Try again in silence.",
+    "calibrate_busy": "I'm already measuring."
+  },
+  "options_title": {
+    "noise_adapt": "Follow the room's noise"
+  },
+  "options": {
+    "noise_adapt": "Speech detection adapts to each device's background noise, and to its calibration («calibra el micrófono», or Calibrate in Devices). Off: fixed thresholds."
+  }
+}

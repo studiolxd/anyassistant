@@ -106,6 +106,20 @@ async def decision(sign: str, action: str) -> bool:
     return False
 
 
+def ask_about(action: str) -> str:
+    """Something with no tool behind it waits for your «yes» (what a voice it didn't recognise well
+    said: the plugin «voices»); the answer is for whoever asked, not a new message for the LLM.
+    Its signature, to know whether it is still waiting (waiting_for)."""
+    sign = store.signature("ask", action, time.time())
+    store.ask(sign, action, consume=True)
+    return sign
+
+
+def waiting_for(sign: str) -> bool:
+    """Whether that question is the one waiting for your answer."""
+    return bool(waiting()) and store.waiting(sign)
+
+
 def answer(text: str) -> bool | None:
     """Your sentence answers the waiting action: «yes» authorizes it, anything else cancels it.
     None if nothing was waiting; True if the sentence was only for that (Hermes's approvals,

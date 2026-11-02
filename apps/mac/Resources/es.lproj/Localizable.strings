@@ -224,3 +224,15 @@
 "Updated. It applies after restarting." = "Actualizado. Se aplica al reiniciar.";
 "Removed." = "Quitado.";
 "Removed. It applies after restarting." = "Quitado. Se aplica al reiniciar.";
+"Calibrate" = "Calibrar";
+"A few seconds of silence measured on the device: how it tells your voice from the room's noise." = "Unos segundos de silencio medidos en el dispositivo: cómo distingue tu voz del ruido de la sala.";
+"It couldn't start the calibration: is the plugin «Calibration» on?" = "No se ha podido empezar la calibración: ¿está activado el plugin «Calibración»?";
+"Measuring: keep silent near the device…" = "Midiendo: guarda silencio cerca del dispositivo…";
+"It heard talking: try again in silence." = "Se oía hablar: inténtalo en silencio.";
+"Room noise: not measured" = "Ruido de la sala: sin medir";
+"Room noise" = "Ruido de la sala";
+"quiet" = "silencio";
+"some noise" = "algo de ruido";
+"noisy" = "ruidosa";
+"measured" = "medido";
+"It would be good to learn their voice again on %@." = "Conviene volver a aprender su voz en %@.";
