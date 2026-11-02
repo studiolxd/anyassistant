@@ -16,6 +16,7 @@
 #   bin/anyassistant plugins [requirements [--all]]   which are on, what they lack; their Python packages
 #   bin/anyassistant mail add|list|test|remove   mail accounts besides Gmail (IMAP and SMTP)
 #   bin/anyassistant setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)
+#   bin/anyassistant corpus fetch|status|run|baseline   the audio corpus that measures how it listens (docs/corpus.md)
 #   bin/anyassistant run [server options]     in the foreground (what launchd runs)
 #   bin/anyassistant update             installed: the new version from where it came, then restarts
 #   bin/anyassistant uninstall [--all|--keep-data]   installed: removes it (your data, if you say so)
@@ -227,6 +228,11 @@ else:
   community)
     shift
     exec "$ROOT/.venv/bin/python" "$ROOT/plugins/community/cli.py" "$@"
+    ;;
+  corpus)
+    shift
+    cd "$ROOT" || exit 1
+    PYTHONPATH="$ROOT/server:$ROOT/tests" exec "$ROOT/.venv/bin/python" -m corpus "$@"
     ;;
   unpair)
     if ! alive; then echo "AnyAssistant isn't running."; exit 1; fi

@@ -1088,10 +1088,19 @@ uv run server/main.py --tts none                # text only
 ```sh
 uv run pytest            # fast ones (~1 s): languages, voice commands, permissions, gog, confirmation, echo
 uv run pytest -m e2e     # end to end (~1–2 min): starts the real server and talks to it over WebRTC
+uv run pytest -m corpus  # the audio corpus against its baseline (slow; bin/anyassistant corpus fetch first)
 ```
 
 The end-to-end tests make their voices with `say` and use Apple's local model,
 so they need no account or network; they run on a free port, next to a running Jarvis.
+
+**The audio corpus** (`tests/corpus`, `docs/corpus.md`): some 480 cases from public datasets (Common
+Voice, FLEURS, Multilingual LibriSpeech; MUSAN and DEMAND noises, OpenSLR room impulse responses),
+never anyone's own voice, run through the ear and the speech engines offline: the WER per engine,
+sentence ends per `silence`, false starts in noise, and who is speaking at `voice_match`, against
+`tests/corpus/baseline.json`. `bin/anyassistant corpus fetch` downloads exactly that selection into
+the cache (hashes checked; the audio isn't in git), `corpus run` measures and compares,
+`corpus baseline` writes a new baseline on purpose.
 
 ## Layout
 
@@ -1123,7 +1132,7 @@ so they need no account or network; they run on a free port, next to a running J
 - `plugins/page/` — the device's page: `web/` (plain JS, old Chrome: `app.js`, connection and blocks;
   `theme.js`, applies a theme, its states and live variables; `system.css`), its texts (`locales/`, «ui»),
   `themes/` (the system's) and `themes.py` (finds, cleans and checks them).
-- `tests/` — pytest; `test_e2e.py` drives the real server.
+- `tests/` — pytest; `test_e2e.py` drives the real server; `corpus/`, the audio corpus (`docs/corpus.md`).
 
 See `TODO.md` for what's next.
 

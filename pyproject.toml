@@ -32,6 +32,7 @@ wake-openwakeword = ["openwakeword>=0.4.0", "onnxruntime>=1.31.1"]
 dev = [  # while developing: every system plugin's packages too (uv run would remove them otherwise)
     "pytest>=8",
     "anyassistant[bonjour,eyes,llm-openai,mail,stt-faster-whisper,stt-mlx-whisper,stt-parakeet,stt-parakeet-onnx,tts-kokoro,vad-silero,voices,wake-openwakeword]",
+    "pyarrow>=26.0.0",
 ]
 
 [tool.uv]
@@ -50,5 +51,8 @@ torch = [{ index = "pytorch-cpu", marker = "sys_platform != 'darwin'" }]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["server"]
-markers = ["e2e: end-to-end with the real server and models (slow; run with -m e2e)"]
-addopts = "-m 'not e2e'"
+markers = [
+    "e2e: end-to-end with the real server and models (slow; run with -m e2e)",
+    "corpus: the audio corpus against its baseline (slow; needs bin/anyassistant corpus fetch; run with -m corpus)",
+]
+addopts = "-m 'not e2e and not corpus'"
