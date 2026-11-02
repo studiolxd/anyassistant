@@ -508,3 +508,33 @@ def test_no_device_on_this_computer_yet(monkeypatch):
     made = request("GET", "/setup/device/nothing", remote="127.0.0.1")
     made.match_info["step"] = "nothing"
     assert asyncio.run(web.setup_device(made)).status == 404
+
+
+def test_forgetting_a_voice_keeps_or_deletes_what_it_remembers_of_them(tmp_path, monkeypatch):
+    """Settings → Known voices: «Conservar» keeps their facts under their name; «Borrar» deletes them too."""
+    from aiohttp.test_utils import make_mocked_request
+    memory = kernel.load("memory")
+    monkeypatch.setattr(memory, "PATH", tmp_path / "memory.json")
+    monkeypatch.setattr(kernel, "module", lambda plugin: memory if plugin == "memory" else None)
+    (tmp_path / "memory.json").write_text(json.dumps({"facts": ["The wifi is called Casa."],
+                                                      "people": {"Suvi": ["Invoices with Holded."]}}))
+    for name in ("Suvi", "Ana"):
+        voices.learn(name, [unit(1.0)])
+
+    def post(body):
+        request = make_mocked_request("POST", "/admin/voices", transport=type("T", (), {
+            "get_extra_info": lambda self, k, d=None: ("127.0.0.1", 1) if k == "peername" else d})())
+        request.json = lambda: asyncio.sleep(0, body)
+        return json.loads(asyncio.run(voices._change(request)).body)
+
+    listed = {p["name"]: p["facts"] for p in post({})["people"]}
+    assert listed == {"Suvi": 1, "Ana": 0}  # the app asks only when there is something
+    post({"forget": "Ana"})
+    assert memory.load()["people"] == {"Suvi": ["Invoices with Holded."]}
+    voices.learn("Ana", [unit(1.0)])
+    post({"forget": "Suvi", "memory": "keep"})
+    assert memory.load()["people"] == {"Suvi": ["Invoices with Holded."]}  # as before: kept under the name
+    voices.learn("Suvi", [unit(1.0)])
+    answer = post({"forget": "Suvi", "memory": "delete"})
+    assert [p["name"] for p in answer["people"]] == ["Ana"]
+    assert memory.load()["people"] == {} and memory.load()["facts"] == ["The wifi is called Casa."]
