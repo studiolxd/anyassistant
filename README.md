@@ -425,7 +425,7 @@ theme», «what do you know about me?»):
 | `create_theme`, `get_theme`, `edit_theme` | a theme of your own as a copy of another, read its files, rewrite one (it answers what the check finds; the theme on screen changes at once) | no |
 | `delete_theme` | delete one of yours | yes |
 | `set_voice`, `set_name`, `set_language` | saved to `settings.json`, applied after the answer | yes |
-| `remember`, `forget` | memory facts | yes |
+| `remember`, `forget` | memory facts: the person talking's, or shared | yes |
 | `camera` | shows or hides the live camera on the screen | no: it only changes the screen |
 | `set_screen` | shows or hides parts of the screen for every theme: the time, the date, the transcription, the answers, the timers… (the screen settings) | no: it only changes the screen |
 | `set_detail` | how much it says: concise, neutral, detailed or your own levels | no: it only changes how it talks |
@@ -504,7 +504,8 @@ in `settings.json`: `explicit` (default) or `auto`. It lives in
 `memory.json` (not in git), readable and editable:
 
 ```json
-{"facts": ["Has a dog called Toby."], "conversations": [{"at": 1793439182, "summary": "…"}]}
+{"facts": ["The wifi is called Casa."], "people": {"Suvi": ["Has a dog called Toby."]},
+ "conversations": [{"at": 1793439182, "summary": "…", "who": "Suvi"}]}
 ```
 
 - **explicit**: only what you ask: «remember that I invoice with Holded», «what do
@@ -524,6 +525,23 @@ Beyond 50 facts, the LLM compacts them when it falls asleep, merging and
 shortening them to about 35 («Has a dog» + «The dog is called Toby» → «Has a dog
 called Toby»); only if it can't do the oldest go. Corrections update the fact
 they correct (`update`), not add another.
+
+**Each person's own.** With the plugin `voices` (it knows who is talking), what it
+learns in a conversation with a recognised voice is **that person's** (`people`);
+what it learns with no voice recognised (voices off, nobody learnt yet, a voice it
+didn't know) is **shared** (`facts`), and so is what you ask it to keep for
+everyone («remember that the wifi is called Casa, for everyone»). A
+`memory.json` from before is all shared: it works as it did. Each conversation
+gets the shared notes in its instructions and, once it recognises who is talking,
+that person's with «(Suvi is talking.)», never anyone else's. «What do you know
+about me?», «forget that» and corrections act on that person's facts and the
+shared ones; with a voice it doesn't know, only on the shared ones. Summaries are
+kept per person too (the last 10 of each). If two people speak in one
+conversation, each one's review only takes facts from what they said. From the
+server itself (Claude through `/mcp` with no device), `get_memory` shows everyone's,
+grouped by whose they are. Forgetting a voice keeps its facts under its name:
+learning it again under the same name brings them back; to delete them, edit
+`memory.json`.
 
 Any spoken sentence in a locale can be a list of variants (`speech.wait`: «One
 moment, let me check.», «Let me look.»…): one is picked at random each time, never

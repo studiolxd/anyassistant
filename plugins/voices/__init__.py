@@ -19,7 +19,8 @@ voices.json in your data folder.
   theirs); when the recent ones stay clearly below it (DROP, over RECENT_SCORES sentences: another
   place for the microphone, a cold), it says once that their voice should be learnt again there
   (a notice; the Mac's Voices page and the admin page show it), until it recovers or is learnt.
-- The LLM hears who is talking («(Suvi is talking.)»), with the first sentence of each.
+- The LLM hears who is talking («(Suvi is talking.)»), with the first sentence of each, and what the
+  plugin «memory» remembers about them (their own facts; the shared ones are in its instructions).
 - «voice_adapt» (on by default): it keeps learning each voice from what that person says
   (only voice prints, never the audio): the last RECENT sentences it was sure of on each device (long, clearly
   theirs, nobody else close) make a «recent» print beside the one learnt, per device. That one is

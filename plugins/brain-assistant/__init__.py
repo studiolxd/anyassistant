@@ -182,7 +182,7 @@ class Assistant(Transcriber):
         self.guard = guard
         self.said = []  # words of the last thing it said, to recognize its echo
         self.saying = []  # words of what it is saying now (sentence by sentence)
-        self.transcript = []  # (who, text) of this conversation, for memory
+        self.transcript = []  # (who, text, the voice recognised) of this conversation, for memory
         self._llm = llm  # an LLM, or a Conversations that gives this device its own
         self.tts = tts
         self.turn = asyncio.Lock()  # one answer at a time, in order
@@ -373,7 +373,7 @@ class Assistant(Transcriber):
         if skills.hear(text, self):  # time, timers, the camera, «speak English»…: without the LLM
             return
         super()._heard(text, timings)
-        self.transcript.append(("user", text))
+        self.transcript.append(("user", text, getattr(self, "voice", None)))  # whose it is (the plugin «memory»)
         asyncio.ensure_future(self._interpret_or_answer(text))
 
     async def _interpret_or_answer(self, text: str):
@@ -578,13 +578,17 @@ class Assistant(Transcriber):
         return text
 
     def _with_who(self, text: str) -> str:
-        """«(Suvi is talking.)»: with the first sentence, and when it changes (the plugin «voices»)."""
+        """«(Suvi is talking.)»: with the first sentence, and when it changes (the plugin «voices»); with
+        what it remembers about that person (the plugin «memory»: the instructions only have the shared
+        notes, as they are written before it knows who is talking)."""
         voices = kernel.module("voices")
         who = voices.who(self) if voices else ""
         if not who or who == getattr(self, "told_who", ""):
             return text
         self.told_who = who
-        return f"{who}\n{text}"
+        memory = kernel.module("memory")
+        notes = memory.about(getattr(self, "voice", None)) if memory else ""
+        return f"{who}{notes}\n{text}"
 
     def _with_where(self, text: str) -> str:
         """«(You're talking through the device «iPad», in the room «dormitorio».)»: so «here» means
