@@ -93,6 +93,9 @@ LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
   miras (encuentra cada frase él mismo), piensa, contesta en voz alta y vuelve a escuchar; con la
   muñeca bajada, duerme. El dibujo de Eyes es uno para el iPhone, el iPad, el Mac y el reloj
   (`apps/shared/Eyes.swift`).
+- [x] **El Apple Watch emparejado como el iPhone** (2 nov): el iPhone le pasa la IP del servidor, el
+  certificado y el emparejamiento (el reloj no tiene Bonjour ni resuelve `.local`); sin teclado ni
+  ajustes de servidor. Habla con el servidor directamente y sigue encendido mientras contesta.
 - [x] **La app de iPhone y iPad en TestFlight**, con la del reloj dentro (`apps/apple/testflight.sh`).
 - [x] **El diseño de las páginas web**, con el estilo y el vocabulario de las apps: la página de
   temas, la administración web, la pantalla de emparejar con el código y la página del QR.
