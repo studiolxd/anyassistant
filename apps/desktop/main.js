@@ -572,6 +572,7 @@ app.on('before-quit', async (e) => {
 });
 
 app.whenReady().then(async () => {
+  server.systemLanguage = app.getLocale();  // «es-ES»: for the server and its installer (server.environment)
   loadTexts();
   watchLanguageCookie();
   if (process.platform === 'win32') app.setAppUserModelId('com.anyassistant.desktop');  // its notifications, as the installer's shortcut

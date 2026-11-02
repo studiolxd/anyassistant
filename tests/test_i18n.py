@@ -111,3 +111,24 @@ def test_a_plugins_spanish_has_its_english(path):
     missing = {k for k in flatten(spanish).keys() - flatten(english).keys() if not STYLE_KEYS.match(k)
                and ".names." not in k and ".display." not in k}  # words of each language: «compra», «shopping»
     assert not missing
+
+
+def test_windows_language_is_detected(monkeypatch):
+    """Windows has no $LANG nor the Mac's preferences: its display language (it fell to English)."""
+    import subprocess
+
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(OSError()))  # no `defaults`
+    for name in ("LC_ALL", "LANG"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(i18n, "_windows_language", lambda: "es")
+    assert i18n.detect() == "es"
+    monkeypatch.setattr(i18n, "_windows_language", lambda: "")
+    monkeypatch.setenv("LANG", "es_ES.UTF-8")  # the Windows and Linux app sets it from the system's
+    assert i18n.detect() == "es"
+    monkeypatch.delenv("LANG")
+    assert i18n.detect() == "en"
+
+
+@pytest.mark.skipif(__import__("sys").platform == "win32", reason="there it is the real one")
+def test_windows_language_elsewhere_is_nothing():
+    assert i18n._windows_language() == ""  # not on Windows

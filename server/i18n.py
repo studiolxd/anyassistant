@@ -22,6 +22,7 @@ import os
 import random
 import re
 import subprocess
+import sys
 import time
 
 import paths
@@ -34,8 +35,22 @@ def available() -> list[str]:
     return sorted(p.stem for p in LOCALES.glob("*.json"))
 
 
+def _windows_language() -> str:
+    """Windows' display language («es», «en»…; "" elsewhere or unknown): it has no $LANG."""
+    if sys.platform != "win32":
+        return ""
+    try:
+        import ctypes
+        import locale
+
+        return locale.windows_locale.get(ctypes.windll.kernel32.GetUserDefaultUILanguage(), "")[:2].lower()
+    except (OSError, AttributeError):
+        return ""
+
+
 def detect() -> str:
-    """The Mac's preferred language (or $LANG) if there is a locale for it; else English."""
+    """The system's language if there is a locale for it (the Mac's preferred one, Windows' display
+    language, or $LC_ALL / $LANG: the Windows and Linux app sets it from the system's); else English."""
     candidates = []
     try:
         output = subprocess.run(
@@ -44,6 +59,7 @@ def detect() -> str:
         candidates += re.findall(r'"?([a-z]{2})[-_",\s]', output)
     except (OSError, subprocess.TimeoutExpired):
         pass
+    candidates.append(_windows_language())
     candidates += [os.environ.get(v, "")[:2].lower() for v in ("LC_ALL", "LANG")]
     return next((c for c in candidates if c in available()), "en")
 

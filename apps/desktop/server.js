@@ -144,7 +144,11 @@ class Server extends EventEmitter {
   }
 
   environment() {
-    return { ...process.env, ANYASSISTANT_APP: '1', ANYASSISTANT_HOME: this.data, ANYASSISTANT_CACHE: this.cache,
+    // The system's language for the server and its installer (its steps' texts, the language it
+    // proposes): Windows has no $LANG, nor does a Linux desktop session at times (main.js: app.getLocale).
+    const locale = (this.systemLanguage || '').replace('-', '_');
+    const language = !process.env.LANG && !process.env.LC_ALL && locale ? { LANG: `${locale}.UTF-8` } : {};
+    return { ...process.env, ...language, ANYASSISTANT_APP: '1', ANYASSISTANT_HOME: this.data, ANYASSISTANT_CACHE: this.cache,
              ANYASSISTANT_RESTART_EXIT: String(RESTART), PYTHONUNBUFFERED: '1', PYTHONUTF8: '1' };
   }
 
