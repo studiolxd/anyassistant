@@ -127,13 +127,13 @@ struct CaptionLines: View {
     var older: Color = .white
     var olderOpacity = 0.6
     var height: CGFloat? = nil  // as WordsArea's
-    var bottom: CGFloat? = nil
+    var fills = false
     var minHeight: CGFloat = 0
 
     var body: some View {
         let last = face.captions.last
         WordsArea(aim: last.map { face.aim($0.id, answer: $0.answer, text: $0.text) } ?? Aim(key: "", y: 0),
-                  fresh: last?.id ?? "", height: height, bottom: bottom, minHeight: minHeight) {
+                  fresh: last?.id ?? "", height: height, fills: fills, minHeight: minHeight) {
             VStack(spacing: 5) {
                 ForEach(face.captions) { caption in
                     let isLast = caption.id == last?.id
@@ -162,27 +162,32 @@ struct WordsMetrics: PreferenceKey {
 /// what you said, the sentence the voice is saying); scrolled by hand, it stops following until
 /// back at the end or new words arrive (`fresh` changes). A fade at the edge where there is more.
 /// Its height: `height`, fixed (a centred column: so the face doesn't move); else as tall as the
-/// words, from `minHeight` up to `most` and to `bottom` (in ThemeView's space: down to there).
+/// words, from `minHeight` up to `most`, or (`fills`) up to the space its column leaves it.
 struct WordsArea<Content: View>: View {
     let aim: Aim
     let fresh: String
     var height: CGFloat? = nil
     var most: CGFloat? = nil
-    var bottom: CGFloat? = nil
+    var fills = false
     var minHeight: CGFloat = 0
     @ViewBuilder let content: () -> Content
 
     @State private var space = UUID().uuidString  // its scroll's own coordinate space
-    @State private var top: CGFloat = 0  // where the area starts, in ThemeView's space
     @State private var offset: CGFloat = 0  // the words' top in the area: 0, or less when scrolled
     @State private var words: CGFloat = 0  // the words' height
     @State private var following = true
     @State private var auto = Date.distantPast  // until when the scrolling is its own
 
+    @State private var shown: CGFloat = 0  // its height as laid out (flexible: down to the bottom)
+
+    /// Flexible (`fills`): as tall as the words, at most what its column leaves it (SwiftUI's
+    /// layout gives it the space down to the bottom: no measuring where it starts).
+    private var flexible: Bool { height == nil && fills }
+
     private var view: CGFloat {
         if let height { return height }
-        var most = self.most ?? .infinity
-        if let bottom { most = min(most, bottom - top) }
+        if flexible { return shown }
+        let most = self.most ?? .infinity
         return max(minHeight, min(words, max(most, minHeight)))
     }
 
@@ -197,7 +202,7 @@ struct WordsArea<Content: View>: View {
                     })
             }
             .coordinateSpace(name: space)
-            .frame(height: view)
+            .frame(minHeight: flexible ? minHeight : view, maxHeight: flexible ? max(words, minHeight) : view)
             .onPreferenceChange(WordsMetrics.self) { m in
                 let moved = abs(m.width - offset) > 1
                 offset = m.width
@@ -215,7 +220,7 @@ struct WordsArea<Content: View>: View {
             .onChange(of: fresh) { _ in following = true; go(proxy) }
             .onAppear { go(proxy) }
         }
-        .frame(height: view)
+        .frame(minHeight: flexible ? minHeight : view, maxHeight: flexible ? max(words, minHeight) : view)
         .mask(VStack(spacing: 0) {
             LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
                 .frame(height: offset < -1 ? 28 : 0)
@@ -225,8 +230,8 @@ struct WordsArea<Content: View>: View {
         })
         .background(GeometryReader { g in
             Color.clear
-                .onAppear { top = g.frame(in: .named("theme")).minY }
-                .onChange(of: g.frame(in: .named("theme")).minY) { top = $0 }
+                .onAppear { shown = g.size.height }
+                .onChange(of: g.size.height) { shown = $0 }
         })
     }
 
@@ -379,13 +384,14 @@ struct EyesTheme: View {
                     .padding(.top, (landscape ? 1.5 : 3) * v)
                 if look != "asleep" {
                     // From 112 up to the space left down to the bottom: the eyes above don't move.
-                    CaptionLines(face: face, accent: accent, bottom: size.height - 2 * v, minHeight: landscape ? 0 : 112)
+                    CaptionLines(face: face, accent: accent, fills: true, minHeight: landscape ? 0 : 112)
                         .frame(width: size.width * (landscape ? 0.7 : 0.9))
                         .padding(.top, 10)
                 }
             }
             .padding(.top, size.height * (landscape ? 0.10 : 0.28))
             .endsTheFace()
+            .padding(.bottom, 2 * v)  // the captions' area ends here (WordsArea, flexible)
             if look == "asleep" {
                 Clock(face: face) { time, day in
                     HStack(alignment: .top) {
@@ -732,7 +738,7 @@ struct MinimalTheme: View {
                     }
                     if face.shows("show_answer"), !face.answer.isEmpty {
                         WordsArea(aim: face.aim("answer", answer: face.answerId, text: face.answer), fresh: face.answerId,
-                                  bottom: size.height - 4 * v) {
+                                  fills: true) {
                             Text(face.answer).font(.system(size: 7 * v))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .fixedSize(horizontal: false, vertical: true).id("answer")
@@ -743,6 +749,7 @@ struct MinimalTheme: View {
             .foregroundColor(ink)
             .padding(.top, top)
             .endsTheFace()
+            .padding(.bottom, 4 * v)  // the answer's area ends here (WordsArea, flexible)
             .padding(.horizontal, 6 * v)
             .frame(width: size.width, alignment: .leading)
         }
