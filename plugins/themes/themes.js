@@ -55,6 +55,37 @@ function show(data) {
   document.getElementById('about').textContent = about ? about.description : '';
   history.replaceState(null, '', '/themes?theme=' + encodeURIComponent(data.theme.name));
   views(data.theme.name);
+  sounds(data.theme.name);
+}
+
+// Its sounds (when it wakes, falls asleep, an alarm rings): a button each to hear it, as it
+// plays (/sounds/<kind>.wav), marked when it is the theme's own (sounds/<kind>.wav in it).
+var SOUNDS = ['wake', 'sleep', 'alarm'];
+function soundName(kind) {
+  return kind === 'wake' ? T('When it wakes') : kind === 'sleep' ? T('When it falls asleep') : T('Alarm');
+}
+var player = new Audio();
+function sounds(name) {
+  var row = document.getElementById('sounds');
+  row.innerHTML = '';
+  var title = document.createElement('span');
+  title.textContent = T('Sounds');
+  row.appendChild(title);
+  SOUNDS.forEach(function (sound) {
+    var url = '/sounds/' + sound + '.wav?theme=' + encodeURIComponent(name) + '&v=' + version;
+    var button = document.createElement('button');
+    button.textContent = '▶ ' + soundName(sound);
+    button.onclick = function () { player.pause(); player.src = url; player.play().catch(function () {}); };
+    row.appendChild(button);
+    fetch(url).then(function (r) {
+      if (!r.ok) { button.hidden = true; return; }
+      var own = r.headers.get('X-Theme-Sound') === '1';
+      if (own) button.className = 'own';
+      var whose = document.createElement('small');
+      whose.textContent = own ? T('the theme\'s') : T('the system\'s');
+      button.appendChild(whose);
+    });
+  });
 }
 
 select.onchange = function () { config(select.value).then(show); };
@@ -108,6 +139,7 @@ function community() {
   fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (me) {
     if (!me.owner) return;
     texts = me.texts || {};
+    sounds(select.value);  // in its language
     section.querySelector('h2').textContent = T('From the community');
     section.querySelector('.lead').textContent = T('Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.');
     load(false);

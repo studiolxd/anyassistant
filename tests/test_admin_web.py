@@ -131,6 +131,7 @@ ADMIN_INDIRECT = {"Features", "Skills", "Libraries", "Brain", "LLMs", "Speech re
 
 def test_the_admin_pages_texts_are_in_both_languages():
     used = keys_in((admin.WEB / "admin.js").read_text()) | ADMIN_INDIRECT
+    used |= keys_in((ROOT / "plugins/themes/themes.js").read_text())  # the themes page asks for them too
     for language in ("en", "es"):
         texts = json.loads((ROOT / "plugins/admin/locales" / f"{language}.json").read_text())["admin_page"]
         assert used <= texts.keys(), f"{language}: {used - texts.keys()}"

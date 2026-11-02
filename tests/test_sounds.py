@@ -65,3 +65,25 @@ def test_the_apps_ring_with_the_themes_alarm():
     assert 20 < seconds <= 30
     tone = alarms.alarm_sound("bedside")
     assert np.array_equal(pcm[:len(tone)], tone)
+
+
+def test_the_themes_page_hears_each_sound_as_it_plays():
+    """/sounds/<kind>.wav: the theme's own, or the system's (X-Theme-Sound says which)."""
+    import asyncio
+    import io
+    import wave
+
+    from aiohttp.test_utils import make_mocked_request
+
+    sounds = kernel.load("sounds")
+    kernel.load("skill-alarms")
+
+    def get(kind, theme):
+        request = make_mocked_request("GET", f"/sounds/{kind}.wav?theme={theme}", match_info={"kind": kind})
+        return asyncio.run(sounds._sound(request))
+
+    own, system = get("alarm", "bedside"), get("wake", "eyes")
+    assert own.headers["X-Theme-Sound"] == "1" and system.headers["X-Theme-Sound"] == "0"
+    with wave.open(io.BytesIO(system.body)) as w:
+        assert np.array_equal(np.frombuffer(w.readframes(w.getnframes()), np.int16), sounds.sound("wake", "eyes"))
+    assert get("nope", "eyes").status == 404

@@ -10,12 +10,10 @@ it stops on all.
 """
 
 import asyncio
-import io
 import logging
 import shutil
 import sys
 import time
-import wave
 from pathlib import Path
 
 import hub
@@ -62,14 +60,7 @@ def ringing(theme: str | None, seconds: float = RINGING) -> bytes:
     tone = tone if tone is not None else np.zeros(0, np.int16)
     gap = np.zeros(int(48000 * 2.0), np.int16)
     one = np.concatenate([tone, gap])
-    pcm = np.tile(one, max(1, int(seconds * 48000 // len(one))))
-    out = io.BytesIO()
-    with wave.open(out, "wb") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(48000)
-        w.writeframes(pcm.astype(np.int16).tobytes())
-    return out.getvalue()
+    return audio.wav_bytes(np.tile(one, max(1, int(seconds * 48000 // len(one)))))
 
 
 @web.route("GET", "/alarm.wav")

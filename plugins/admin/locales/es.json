@@ -168,6 +168,13 @@
     "Some noise": "Algo de ruido",
     "Noisy": "Ruidosa",
     "OpenAI-compatible": "Compatible con OpenAI",
-    "Settings": "Ajustes"
+    "Settings": "Ajustes",
+    "Sounds": "Sonidos",
+    "When it wakes": "Al despertarse",
+    "When it falls asleep": "Al dormirse",
+    "Alarm": "Alarma",
+    "the theme's": "del tema",
+    "the system's": "del sistema",
+    "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Temas y plugins que comparte otra gente, de un catálogo público. Cada paquete se revisa antes de publicarlo."
   }
 }

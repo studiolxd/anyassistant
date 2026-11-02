@@ -106,6 +106,19 @@ def wav(file: Path) -> np.ndarray | None:
     return _sounds[key]
 
 
+def wav_bytes(pcm: np.ndarray) -> bytes:
+    """48 kHz mono PCM as a 16-bit WAV file's bytes."""
+    import io
+
+    out = io.BytesIO()
+    with wave.open(out, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(48000)
+        w.writeframes(np.asarray(pcm, np.int16).tobytes())
+    return out.getvalue()
+
+
 def _read_wav(file: Path) -> np.ndarray | None:
     try:
         with wave.open(str(file)) as w:

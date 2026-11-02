@@ -4,6 +4,12 @@ header > * { margin-right: 16px; }
 select { font-size: 15px; padding: 4px; }
 #about { color: #888; }
 #reloaded { color: #3ddc97; }
+/* Its sounds: a button each to hear it, and whether it is the theme's or the system's. */
+#sounds { padding: 10px 16px 0; display: flex; flex-wrap: wrap; align-items: center; color: #888; font-size: 14px; }
+#sounds > * { margin: 0 12px 6px 0; }
+#sounds button { font: inherit; border: 1px solid #333; border-radius: 7px; padding: 5px 12px; background: #1c1c1c; color: #ddd; cursor: pointer; }
+#sounds button.own { border-color: #3ddc97; }
+#sounds small { color: #666; margin-left: 4px; }
 main { display: flex; flex-wrap: wrap; padding: 8px; }
 figure { margin: 8px; }
 figcaption { text-align: center; font-family: monospace; color: #888; margin-top: 4px; }

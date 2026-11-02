@@ -1159,7 +1159,7 @@ the cache (hashes checked; the audio isn't in git), `corpus run` measures and co
 - `server/kernel.py`, `server/registry.py` — the core: plugins found, loaded, on or off; engines' registry.
 - `plugins/` — every plugin: engines (`stt-*`, `wake-*`, `llm-*`, `tts-*`, `vad-*`), skills (`skill-*`),
   `tools-system`, `plugin-manager`, and features: `pairing`, `confirmation` (the «yes»), `memory`, `eyes`,
-  `sounds`, `tap-to-wake`, `monitor` (`/monitor`), `themes` (`/themes`: every state of a theme), `mcp-server` (`/mcp`),
+  `sounds`, `tap-to-wake`, `monitor` (`/monitor`), `themes` (`/themes`: every state of a theme, and its sounds to hear, the theme's or the system's), `mcp-server` (`/mcp`),
   `community` (the public catalog of themes and plugins: `docs/comunidad.md`)…
   `server/stt/`, `wake/`, `llm/`, `tts/`, `vad/` keep only what each kind is.
 - `server/text.py`, text utilities;
