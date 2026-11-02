@@ -27,8 +27,14 @@ struct AnyAssistantApp: App {
                 MainView(mac: mac)
             } else {
                 PairView(mac: mac)
+                    .onOpenURL(perform: open)
             }
         }
+    }
+
+    /// Opened by «Abrir en la app» on the QR's page (anyassistant://connect?…): it pairs by itself.
+    func open(_ url: URL) {
+        if let invitation = Mac.Invitation(url) { mac.invite(invitation) }
     }
 }
 
@@ -82,6 +88,9 @@ struct MainView: View {
             .onChange(of: awake) { on in UIApplication.shared.isIdleTimerDisabled = on }
             .onReceive(NotificationCenter.default.publisher(for: .talk)) { _ in link.talk() }
             .onReceive(NotificationCenter.default.publisher(for: .stopRinging)) { _ in link.stopRinging() }
+            .onOpenURL { url in  // the QR page's link while paired: to that server (a way back if it fails)
+                if let invitation = Mac.Invitation(url) { link.stop(); mac.invite(invitation) }
+            }
     }
 }
 

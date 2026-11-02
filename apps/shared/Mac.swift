@@ -204,6 +204,52 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         return parts.url!
     }
 
+    /// What the QR or the link from «Conectar otro dispositivo» on the server says: where it is and
+    /// its code, so nothing is typed. anyassistant://connect?host=…&port=…&code=…&server=…&name=…
+    /// (the app's own link, on the QR's page), or the QR itself: http://<ip>:<port>/connect?code=….
+    struct Invitation: Equatable {
+        let host: String
+        let port: Int
+        let code: String?  // none: that server asks for no code
+        let name: String?  // the assistant's («Eva»)
+
+        init?(_ url: URL) {
+            guard let parts = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return nil }
+            var query: [String: String] = [:]
+            for item in parts.queryItems ?? [] where query[item.name] == nil { query[item.name] = item.value }
+            if parts.scheme == "anyassistant" {
+                guard parts.host == "connect", let host = query["host"], !host.isEmpty else { return nil }
+                self.host = host
+                port = Int(query["port"] ?? "") ?? 8080
+            } else if parts.scheme == "http" || parts.scheme == "https", parts.path == "/connect", let host = parts.host, !host.isEmpty {
+                self.host = host
+                port = parts.port ?? (parts.scheme == "https" ? 443 : 80)
+            } else {
+                return nil
+            }
+            code = query["code"].flatMap { $0.isEmpty ? nil : $0 }
+            name = query["name"].flatMap { $0.isEmpty ? nil : $0 }
+        }
+    }
+
+    /// An invitation arrived (the app opened by its link, or the QR scanned): the pairing screen
+    /// pairs with it. Paired already, with a way back if it fails.
+    @Published var invited: Invitation?
+
+    func invite(_ invitation: Invitation) {
+        invited = invitation
+        if paired { pairAgain() }
+    }
+
+    /// Pairs where the invitation says, with its code if there is one.
+    func pair(_ invitation: Invitation) async throws {
+        host = invitation.host
+        port = invitation.port
+        moved()
+        defer { invited = nil }
+        try await pair(code: invitation.code ?? "")
+    }
+
     /// «Pair again» chosen here: the code screen, with a way back. What it had stays until a new
     /// pairing works (not even saved: reopening the app, it is still paired).
     @Published var repairing = false

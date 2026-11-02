@@ -35,7 +35,10 @@ targets:
         NSMicrophoneUsageDescription: "To hear you: what you say goes to AnyAssistant on your Mac, nowhere else."
         NSLocalNetworkUsageDescription: "To talk to AnyAssistant on your Mac."
         NSBonjourServices: [_anyassistant._tcp]
-        NSCameraUsageDescription: "So AnyAssistant can see what you show it when you ask («what do you see?», «read this»); only while it's awake."
+        CFBundleURLTypes:  # anyassistant://connect?host=…: «Abrir en la app» on the QR's page pairs it
+          - CFBundleURLName: com.anyassistant.connect
+            CFBundleURLSchemes: [anyassistant]
+        NSCameraUsageDescription: "So AnyAssistant can see what you show it when you ask («what do you see?», «read this»; only while it's awake), and to scan the code that connects it to your server."
         NSAlarmKitUsageDescription: "So the alarms, timers and reminders you set with AnyAssistant ring on this iPhone, even on silent."
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true

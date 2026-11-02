@@ -33,3 +33,7 @@
 "Pairing code" = "Pairing code";
 "To get the code, open AnyAssistant on the server and select Connect another device." = "To get the code, open AnyAssistant on the server and select Connect another device.";
 "Connecting…" = "Connecting…";
+"Scan the code" = "Scan the code";
+"The QR code that «Connect another device» shows on the server." = "The QR code that “Connect another device” shows on the server.";
+"Allow the camera in Settings to scan the code." = "Allow the camera in Settings to scan the code.";
+"Connecting to %@…" = "Connecting to %@…";
