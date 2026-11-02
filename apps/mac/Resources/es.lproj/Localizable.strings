@@ -254,3 +254,5 @@
 "First, install the certificate:" = "Primero, instala el certificado:";
 "Then, open:" = "Después, abre:";
 "On old devices: %@" = "En dispositivos antiguos: %@";
+"Getting ready: keep silent near the device…" = "Preparando: guarda silencio cerca del dispositivo…";
+"Measuring… %d" = "Midiendo… %d";

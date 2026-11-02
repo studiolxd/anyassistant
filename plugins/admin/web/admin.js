@@ -234,7 +234,8 @@ function devicePage(main, id) {
     // Its room's noise (the plugin «calibration»): measured, or a calibration going on there.
     var noise = d.noise || {};
     var levels = { quiet: 'Quiet', some: 'Some noise', noisy: 'Noisy' };
-    var noiseText = noise.step === 'asking' || noise.step === 'measuring' ? T('Measuring: keep silent near the device…')
+    var noiseText = noise.step === 'asking' ? T('Getting ready: keep silent near the device…')
+                  : noise.step === 'measuring' ? T('Measuring… %d').replace('%d', Math.max(1, Math.ceil(noise.left || 0)))
                   : noise.step === 'talking' ? T('It heard talking: try again in silence.')
                   : !noise.noise ? T('Not measured')
                   : T(levels[noise.noise] || noise.noise) + (noise.db !== undefined ? ' (' + Math.round(noise.db) + ' dB)' : '')
@@ -245,9 +246,12 @@ function devicePage(main, id) {
         e.target.disabled = true;
         api('POST', '/admin/calibration', { calibrate: d.id }).then(function (r) {
           if (r.error) { alert(r.error); e.target.disabled = false; }
-          else setTimeout(function () { show('device/' + d.id); }, 5000);  // its result, once measured
+          else setTimeout(function () { show('device/' + d.id); }, 500);  // it follows the calibration
         });
       } }) : el('span');
+    if (noise.step === 'asking' || noise.step === 'measuring') {  // the countdown: again in half a second
+      setTimeout(function () { if (location.hash === '#device/' + d.id) show('device/' + d.id); }, 500);
+    }
     main.appendChild(el('div', { class: 'card' }, [row(T('Room noise') + ': ' + noiseText,
       T('A few seconds of silence measured on the device: how it tells your voice from the room\'s noise.'), calibrate)]));
     main.appendChild(el('div', { class: 'card' }, [row(T('Forget This Device'), T('It is forgotten here; if it connects again it is a new device.'),

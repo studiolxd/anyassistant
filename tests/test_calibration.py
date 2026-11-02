@@ -249,3 +249,15 @@ def test_the_listing_for_the_apps():
     calibration.keep("ipad", {"level": 0.02, "db": -34, "vad": 0.35, "on": 0.65, "off": 0.46})
     found = calibration._listing()
     assert found["devices"]["ipad"]["noise"] == "some" and found["progress"] == {}
+
+
+def test_while_measuring_it_says_the_seconds_left(monkeypatch):
+    """The apps count the measuring down: its seconds left come with its state."""
+    import time
+
+    monkeypatch.setattr(calibration, "progress", {"tablet": {"step": "measuring", "at": time.time() - 1}})
+    monkeypatch.setattr(calibration, "of", lambda device: None)
+    found = calibration.summary("tablet")
+    assert found["step"] == "measuring" and 1.5 < found["left"] <= calibration.SECONDS - 0.9
+    monkeypatch.setattr(calibration, "progress", {"tablet": {"step": "asking", "at": time.time()}})
+    assert "left" not in calibration.summary("tablet")

@@ -254,3 +254,5 @@
 "First, install the certificate:" = "First, install the certificate:";
 "Then, open:" = "Then, open:";
 "On old devices: %@" = "On old devices: %@";
+"Getting ready: keep silent near the device…" = "Getting ready: keep silent near the device…";
+"Measuring… %d" = "Measuring… %d";

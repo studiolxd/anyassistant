@@ -154,6 +154,8 @@
     "Not measured": "Sin medir",
     "Quiet": "Silenciosa",
     "Some noise": "Algo de ruido",
-    "Noisy": "Ruidosa"
+    "Noisy": "Ruidosa",
+    "Getting ready: keep silent near the device…": "Preparando: guarda silencio cerca del dispositivo…",
+    "Measuring… %d": "Midiendo… %d"
   }
 }

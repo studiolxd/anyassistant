@@ -148,6 +148,8 @@
     "Not measured": "Not measured",
     "Quiet": "Quiet",
     "Some noise": "Some noise",
-    "Noisy": "Noisy"
+    "Noisy": "Noisy",
+    "Getting ready: keep silent near the device…": "Getting ready: keep silent near the device…",
+    "Measuring… %d": "Measuring… %d"
   }
 }

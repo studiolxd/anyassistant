@@ -87,6 +87,8 @@ def summary(device: str | None) -> dict:
     now = time.time()
     if (step := progress.get(device or "")) and (step["step"] in ("asking", "measuring") or now - step["at"] < 60):
         found["step"] = step["step"]
+        if step["step"] == "measuring":  # seconds still to measure: the apps count them down
+            found["left"] = round(max(0.0, SECONDS - (now - step["at"])), 1)
     return found
 
 

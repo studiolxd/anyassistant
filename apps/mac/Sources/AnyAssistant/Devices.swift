@@ -21,6 +21,7 @@ struct DeviceItem: Identifiable, Equatable {
     var noiseDb: Double?
     var calibratedAt: Date?
     var calibrating: String = ""  // a calibration going on there: asking, measuring; or just ended: done, talking
+    var measuredBy: Date?  // measuring: when it ends (counted down)
 }
 
 @MainActor
@@ -73,7 +74,8 @@ final class Devices: ObservableObject {
                        noise: ($0["noise"] as? [String: Any])?["noise"] as? String ?? "",
                        noiseDb: ($0["noise"] as? [String: Any])?["db"] as? Double,
                        calibratedAt: (($0["noise"] as? [String: Any])?["at"] as? Double).map { Date(timeIntervalSince1970: $0) },
-                       calibrating: ($0["noise"] as? [String: Any])?["step"] as? String ?? "")
+                       calibrating: ($0["noise"] as? [String: Any])?["step"] as? String ?? "",
+                       measuredBy: (($0["noise"] as? [String: Any])?["left"] as? Double).map { Date().addingTimeInterval($0) })
         }
         .sorted { ($0.connected ? 0 : 1, $0.name) < ($1.connected ? 0 : 1, $1.name) }
         llms = answer["llms"] as? [String] ?? llms
@@ -223,7 +225,10 @@ struct DeviceDetail: View {
             }
             Section {
                 LabeledContent(T("Room noise")) {
-                    Text(noise).foregroundStyle(item.calibrating == "talking" ? .orange : .secondary)
+                    TimelineView(.periodic(from: .now, by: 0.25)) { context in  // the countdown, while it measures
+                        Text(noise(at: context.date)).monospacedDigit()
+                            .foregroundStyle(item.calibrating == "talking" ? .orange : .secondary)
+                    }
                 }
                 if item.connected && !item.press {
                     Button(T("Calibrate")) { Task { await devices.calibrate(item) } }
@@ -259,12 +264,19 @@ struct DeviceDetail: View {
         .onChange(of: name) { _, _ in later() }  // and a moment after typing
         .onChange(of: room) { _, _ in later() }
         .onChange(of: item) { _, new in if !editing { name = new.name; room = new.room } }
+        // While it calibrates, its state every half second (the measuring lasts 3 s).
+        .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { _ in
+            if ["asking", "measuring"].contains(item.calibrating) { Task { await devices.load() } }
+        }
     }
 
-    /// Its room's noise, or the calibration going on there.
-    var noise: String {
+    /// Its room's noise, or the calibration going on there (measuring: the seconds left).
+    func noise(at now: Date) -> String {
         switch item.calibrating {
-        case "asking", "measuring": return T("Measuring: keep silent near the device…")
+        case "asking": return T("Getting ready: keep silent near the device…")
+        case "measuring":
+            let left = max(1, Int((item.measuredBy ?? now).timeIntervalSince(now).rounded(.up)))
+            return String(format: T("Measuring… %d"), left)
         case "talking": return T("It heard talking: try again in silence.")
         default: break
         }
