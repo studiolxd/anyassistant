@@ -9,7 +9,7 @@
   <link rel="icon" href="/web/favicon.png">
   <link rel="apple-touch-icon" href="/web/icon.png">
   <link rel="stylesheet" href="/web/tokens.css?v=20">
-  <link rel="stylesheet" href="/web/system.css?v=44">
+  <link rel="stylesheet" href="/web/system.css?v=46">
   <!-- The theme's (themes/<name>/theme.css), set by theme.js. -->
   <link rel="stylesheet" id="theme-css">
 </head>
@@ -32,8 +32,8 @@
     <div class="panel">
       <h1 id="settings-title"></h1>
       <div class="card">
-        <label class="row" for="settings-awake"><span class="what" id="settings-awake-label"></span>
-          <span class="switch"><input type="checkbox" id="settings-awake"><span></span></span></label>
+        <div class="row"><label class="what" for="settings-awake" id="settings-awake-label"></label>
+          <label class="switch"><input type="checkbox" id="settings-awake"><span></span></label></div>
         <div class="row"><label class="what" for="settings-language" id="settings-language-label"></label>
           <select id="settings-language"></select></div>
       </div>
@@ -41,11 +41,13 @@
       <button class="button" id="settings-done"></button>
     </div>
   </div>
+  <!-- «Ajustes», asleep or in error (the theme says where and how): opens the settings above. -->
+  <button id="settings-open" class="settings-open" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg><span id="settings-open-text"></span></button>
   <!-- The theme's theme.html goes here. -->
   <div id="screen" hidden></div>
   <audio id="speaker" autoplay></audio>
   <script src="/web/nosleep.js?v=1"></script>
   <script src="/web/theme.js?v=37"></script>
-  <script src="/web/app.js?v=48"></script>
+  <script src="/web/app.js?v=49"></script>
 </body>
 </html>

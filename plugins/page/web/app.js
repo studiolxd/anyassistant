@@ -127,6 +127,7 @@ loadTexts().then(function () {
   if (new URLSearchParams(location.search).has('demo')) return demo();
   document.getElementById('screen').hidden = false;
   Theme.state('asleep');
+  settingsButton('asleep');
   status(text('tap_to_start'));
   waitingTap = true;
   document.getElementById('screen').classList.add('waiting');
@@ -192,10 +193,11 @@ document.getElementById('screen').onclick = function () {
   tell({ type: 'tap' });
 };
 
-// Holding the face opens the settings (as on the apps' own Eyes), not a tap: an app's, or in a
-// browser, this page's own (openSettings).
+// In an app: holding the face opens its settings (as on its own Eyes), not a tap. In a browser,
+// the «Ajustes» button (settingsButton), as the apps'.
 var held = false;
 (function () {
+  if (!APP) return;
   var timer = null;
   var from = null;
   var page = document.getElementById('screen');
@@ -204,7 +206,7 @@ var held = false;
     held = false;
     from = { x: x, y: y };
     cancel();
-    timer = setTimeout(function () { timer = null; held = true; if (APP) toApp({ type: 'settings' }); else openSettings(); }, 800);
+    timer = setTimeout(function () { timer = null; held = true; toApp({ type: 'settings' }); }, 800);
   };
   var move = function (x, y) { if (from && Math.abs(x - from.x) + Math.abs(y - from.y) > 10) cancel(); };  // a drag
   page.addEventListener('touchstart', function (ev) { down(ev.touches[0].clientX, ev.touches[0].clientY); }, { passive: true });
@@ -282,6 +284,22 @@ function keepAwake() {
   enable();
 }
 
+// «Ajustes», as the apps': only asleep or in error (where it's needed), inside the safe area, where
+// the theme puts it (its options «settings»: bottom, top, bottom-left…) in its colour (its CSS:
+// «settings_color», else its accent), text or icon («settings_style»). Not in an app (its own) nor a demo.
+function settingsButton(state) {
+  var button = document.getElementById('settings-open');
+  if (APP || new URLSearchParams(location.search).has('demo')) return;
+  var options = (settings.theme && settings.theme.options) || {};
+  var place = ['top', 'top-left', 'top-right', 'bottom-left', 'bottom-right'].indexOf(options.settings) >= 0 ? options.settings : 'bottom';
+  var icon = options.settings_style === 'icon';
+  button.className = 'settings-open at-' + place + (icon ? ' icon' : '');
+  button.setAttribute('aria-label', text('settings_title'));
+  document.getElementById('settings-open-text').textContent = icon ? '' : text('settings_title');
+  button.onclick = function (ev) { ev.stopPropagation(); openSettings(); };
+  button.hidden = !(state === 'asleep' || state === 'error') || !document.getElementById('settings').hidden;
+}
+
 // A browser's settings (an app has its own): «Keep the screen on» and the interface's language
 // (this device's, kept on the server: chosen in Devices too), over the face. Holding it opens them.
 function openSettings() {
@@ -314,8 +332,9 @@ function openSettings() {
                                     body: JSON.stringify({ device: deviceId(), ui_language: language.value }) })
       .then(function () { return loadTexts(); }).then(openSettings);  // its texts in the new language
   };
-  document.getElementById('settings-done').onclick = function () { panel.hidden = true; };
+  document.getElementById('settings-done').onclick = function () { panel.hidden = true; settingsButton(lastState === 'connecting' ? 'asleep' : lastState); };
   panel.hidden = false;
+  document.getElementById('settings-open').hidden = true;
 }
 
 // Camera constraints for each quality.
@@ -473,6 +492,7 @@ function showState(state, wakePhrase, details) {
     status(screen.show_status === false && state !== 'error' ? '' : text(state));
   }
   Theme.state(state);
+  settingsButton(state);
   photoFollows(state);
   var camera = Theme.block('camera');
   if (state === 'asleep' && camera && !camera.hidden) showCamera(false);

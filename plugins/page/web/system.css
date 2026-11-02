@@ -107,5 +107,22 @@ body.camera-on [data-block="camera"] { position: fixed; left: 0; right: 0; margi
 /* Its settings (a browser's): the panel's rows, their text on the left and the control on the right. */
 #settings { z-index: 10; }
 #settings .row .what { -webkit-box-flex: 1; flex: 1; min-width: 0; color: var(--color-text); font-size: var(--text-md);
-  margin: 0 var(--space-3) 0 0; font-weight: var(--weight-regular); }
-#settings label.row { cursor: pointer; }
+  margin: 0 var(--space-3) 0 0; font-weight: var(--weight-regular); cursor: pointer; }
+#settings .row .switch { flex: 0 0 auto; margin: 0; }
+
+/* «Ajustes» (a browser's, as the apps'): a capsule in the theme's colour (its «settings_color»,
+   else its accent), its fill that colour faint; where the theme says, inside the safe area. */
+.settings-open { position: fixed; z-index: 5; margin: 0; padding: 9px 18px; border: 0; border-radius: 999px;
+  font: 500 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--settings_color, var(--accent, var(--glow, #fff))); background: transparent; opacity: 0.85;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+.settings-open::before { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+  background: currentColor; opacity: 0.16; }
+.settings-open svg { display: none; width: 22px; height: 22px; fill: currentColor; }
+.settings-open.icon { width: 40px; height: 40px; padding: 9px; border-radius: 50%; }
+.settings-open.icon svg { display: block; }
+.settings-open.at-bottom, .settings-open.at-top { left: 50%; -webkit-transform: translateX(-50%); transform: translateX(-50%); }
+.settings-open.at-bottom, .settings-open.at-bottom-left, .settings-open.at-bottom-right { bottom: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+.settings-open.at-top, .settings-open.at-top-left, .settings-open.at-top-right { top: 12px; top: calc(12px + env(safe-area-inset-top, 0px)); }
+.settings-open.at-top-left, .settings-open.at-bottom-left { left: 12px; left: calc(12px + env(safe-area-inset-left, 0px)); }
+.settings-open.at-top-right, .settings-open.at-bottom-right { right: 12px; right: calc(12px + env(safe-area-inset-right, 0px)); }
