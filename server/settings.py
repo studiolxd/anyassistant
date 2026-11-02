@@ -33,7 +33,8 @@ PATH = paths.SETTINGS
 log = logging.getLogger("settings")
 
 
-# The keys from when themes were called skins: settings.json is rewritten with the new ones once.
+# The keys from when themes were called skins (and the plugin «skins», in «plugins»): settings.json
+# is rewritten with the new ones once.
 RENAMED = {"skin": "theme", "skin_options": "theme_options", "skins_dir": "themes_dir"}
 
 
@@ -45,7 +46,7 @@ def load() -> dict:
     except ValueError as e:
         log.warning("settings.json is not valid JSON (%s): ignored", e)
         return {}
-    if RENAMED.keys() & found.keys():
+    if RENAMED.keys() & found.keys() or "skins" in (found.get("plugins") or {}):
         found = migrate(found)
         try:
             PATH.write_text(json.dumps(found, ensure_ascii=False, indent=2) + "\n")
@@ -58,8 +59,13 @@ def load() -> dict:
 def migrate(found: dict) -> dict:
     """settings.json's keys as they are called now (skin → theme…), in the file's order; when the
     file has both the old and the new one, the new one stays."""
-    return {RENAMED.get(key, key): value for key, value in found.items()
-            if key not in RENAMED or RENAMED[key] not in found}
+    out = {RENAMED.get(key, key): value for key, value in found.items()
+           if key not in RENAMED or RENAMED[key] not in found}
+    plugins = out.get("plugins")
+    if isinstance(plugins, dict) and "skins" in plugins:
+        out["plugins"] = {("themes" if key == "skins" else key): on for key, on in plugins.items()
+                          if key != "skins" or "themes" not in plugins}
+    return out
 
 
 def save(**changes):

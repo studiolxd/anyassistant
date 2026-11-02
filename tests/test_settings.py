@@ -37,6 +37,8 @@ def test_the_keys_from_when_themes_were_called_skins(file):
     assert "skin" not in file.read_text()  # rewritten once
     file.write_text(json.dumps({"skin": "orb", "theme": "eyes"}))
     assert settings.load() == {"theme": "eyes"}  # both: the new one stays
+    file.write_text(json.dumps({"plugins": {"skins": False, "memory": True}}))
+    assert settings.load() == {"plugins": {"themes": False, "memory": True}}  # the plugin «skins» too
 
 
 def test_voice_for_each_language():
