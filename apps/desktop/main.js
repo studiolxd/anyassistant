@@ -1,34 +1,32 @@
-// AnyAssistant for Windows and Linux, in the tray (as the Mac app is in the menu bar): it runs the
-// server, and the assistant is on this computer too: «Show Eva» opens its face (the page, with
-// Chromium's microphone, camera and echo cancellation). Pairing, settings, plugins, devices,
-// voices and mail are the admin page (/admin), in a window.
+// AnyAssistant for Windows and Linux, in the tray (as the Mac app is in the menu bar): the same
+// menu, the same windows. The first time, it installs the server (with what comes, or step by
+// step: setup.js, the installer's window) or connects to another server; then it runs it, says how
+// it is, and pairs devices. The assistant is on this computer too: «Show Eva» opens its face (the
+// page, with Chromium's microphone, camera and echo cancellation). Settings, devices and
+// «Connect another device» are the admin page (/admin), each in its window, as on the Mac.
 //
-//   cd apps/desktop && npm install && npm start
+//   cd apps/desktop && npm install && npm start      (ANYASSISTANT_SETUP=1 npm start: the installer's window too)
 
-const { app, BrowserWindow, Menu, Tray, nativeImage, session, shell, dialog, systemPreferences } = require('electron');
+const { app, BrowserWindow, Menu, Tray, nativeImage, session, shell, dialog, systemPreferences, ipcMain } = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { Server } = require('./server');
+const setup = require('./setup');
 
-const SPANISH = (app.getLocale() || '').startsWith('es');
-const TEXTS = {
-  'Starting…': 'Arrancando…', 'Running': 'Funcionando', 'Stopped': 'Parado',
-  'Preparing it (the first time it downloads Python and the models: a few minutes)…':
-    'Preparándolo (la primera vez descarga Python y los modelos: unos minutos)…',
-  'It failed': 'Ha fallado', 'Show %s': 'Mostrar a %s', 'Connect another device': 'Conectar otro dispositivo',
-  'Administer': 'Administrar', 'Start': 'Arrancar', 'Stop': 'Parar', 'Restart': 'Reiniciar',
-  'Log': 'Registro', 'No device connected': 'Ningún dispositivo conectado', 'and %s more': 'y %s más', 'Allow the microphone': 'Permitir el micrófono', 'Allow the camera': 'Permitir la cámara', 'Hide %s': 'Ocultar a %s', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
-  'started by systemd': 'lo arranca systemd', 'Themes': 'Temas',
-  'uv isn\'t installed: it brings Python and the server\'s packages.': 'uv no está instalado: trae Python y los paquetes del servidor.',
-  'Install it and open AnyAssistant again:': 'Instálalo y vuelve a abrir AnyAssistant:',
-  'The server keeps running (systemd): only the app closes.': 'El servidor sigue funcionando (systemd): solo se cierra la app.',
-};
+// Its texts: the key is the English in the code (the Mac app's); locales/<language>.json says it
+// in the system's language (app.getLocale: known once the app is ready).
+let TEXTS = {};
+function loadTexts() {
+  TEXTS = require((app.getLocale() || '').startsWith('es') ? './locales/es.json' : './locales/en.json');
+}
 const T = (english, ...values) => {
-  let text = SPANISH ? (TEXTS[english] || english) : english;
+  let text = TEXTS[english] || english;
   for (const v of values) text = text.replace('%s', v);
   return text;
 };
+/// A menu item's text: without the «…» (in the menu, an item says what it does, plainly).
+const M = (english) => T(english).replace(/…\s*$/, '');
 
 if (!app.requestSingleInstanceLock()) app.quit();
 
@@ -61,35 +59,112 @@ let tray = null;
 let name = 'Eva';
 const windows = {};
 
-// --- Its windows: the face and the admin page ---
+// --- What the app remembers (app.json, with your data): whether it listens on this device, and another server it talks to ---
 
+const stateFile = () => path.join(server.data, 'app.json');
+let state = { listening: true, client: null };  // client: {host, port, name}: another server; null: this one
+try { state = { ...state, ...JSON.parse(fs.readFileSync(stateFile(), 'utf8')) }; } catch (e) { /* the first time */ }
+function remember(changes) {
+  Object.assign(state, changes);
+  try { fs.mkdirSync(path.dirname(stateFile()), { recursive: true }); fs.writeFileSync(stateFile(), JSON.stringify(state)); } catch (e) { /* */ }
+}
+const isClient = () => Boolean(state.client);
+/// Where the assistant is: this computer's server, or another one's.
+const base = () => (isClient() ? `http://${state.client.host}:${state.client.port}` : server.url);
+/// Whether it has a server to talk to, or still needs installing (then: only the installer's window).
+const ready = () => isClient() || server.installed;
+
+// --- Its windows: the face, the admin page's (settings, devices, pairing) and the themes ---
+
+// The window's content, from the server; while it doesn't answer, what to do (unavailable.html:
+// start it if it is stopped, else try again), in the middle, instead of Chromium's error page.
 function open(id, route, options) {
   const found = windows[id];
   if (found && !found.isDestroyed()) {
-    found.loadURL(server.url + route);
-    found.show();
-    found.focus();
-    return;
+    if (found.webContents.getURL() !== base() + route) found.loadURL(base() + route);
+    if (!options.hidden) { found.show(); found.focus(); }  // the face, listening hidden: left as it is
+    return found;
   }
   const made = new BrowserWindow({
-    width: options.width, height: options.height, title: options.title, icon: path.join(__dirname, 'icons', 'icon.png'),
+    width: options.width, height: options.height, minWidth: options.minWidth, minHeight: options.minHeight,
+    title: options.title, icon: path.join(__dirname, 'icons', 'icon.png'), show: options.hidden !== true,
     autoHideMenuBar: true, backgroundColor: options.dark ? '#000000' : '#f6f7f9',
-    webPreferences: { contextIsolation: true, sandbox: true },
+    webPreferences: { contextIsolation: true, sandbox: true, preload: path.join(__dirname, 'preload.js'),
+                      autoplayPolicy: 'no-user-gesture-required', backgroundThrottling: false },
   });
-  made.loadURL(server.url + route);
+  made.on('page-title-updated', (e) => e.preventDefault());  // the window's title is the app's, not the page's
+  made.webContents.on('did-fail-load', (e, code, why, url, isMainFrame) => {
+    if (isMainFrame && code !== -3) made.loadFile(path.join(__dirname, 'unavailable.html'), { query: { route } });
+  });
+  made.loadURL(base() + route);
   for (const event of ['show', 'hide', 'closed']) made.on(event, () => tray && menu());  // the menu follows it
-  made.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
+  // A link to another of the app's windows (the page's «Connect another device…» in Devices) opens
+  // it; any other link, the browser.
+  made.webContents.setWindowOpenHandler(({ url }) => {
+    const wanted = url.startsWith(base() + '/admin?window=') ? new URL(url).searchParams.get('window') : null;
+    if (wanted && WINDOWS[wanted]) WINDOWS[wanted]();
+    else shell.openExternal(url);
+    return { action: 'deny' };
+  });
   windows[id] = made;
+  return made;
+}
+
+/// The windows showing «the server isn't responding»: its content again once it answers.
+function retryUnavailable() {
+  for (const window of Object.values(windows)) {
+    if (window.isDestroyed()) continue;
+    const url = window.webContents.getURL();
+    if (!url.startsWith('file:')) continue;
+    const route = new URL(url).searchParams.get('route') || '/';
+    window.loadURL(base() + route);
+  }
 }
 
 const faceShown = () => Boolean(windows.face && !windows.face.isDestroyed() && windows.face.isVisible());
-const showFace = () => open('face', '/', { width: 480, height: 720, title: name, dark: true });
-const showAdmin = (part = '') => open('admin', '/admin' + part, { width: 1100, height: 780, title: 'AnyAssistant' });
+
+// Its face: the page. With «Listen on this device» on, the page runs while the window is hidden (its
+// microphone keeps listening; closing the window only hides it), and starts by itself.
+function face(show = true) {
+  const had = windows.face && !windows.face.isDestroyed();
+  const made = open('face', '/', { width: 480, height: 640, minWidth: 320, minHeight: 400, title: name, dark: true, hidden: !show });
+  if (had) return;
+  made.on('close', (e) => {
+    if (!state.listening || app.quitting) return;
+    e.preventDefault();
+    made.hide();
+  });
+  // Listening: «Start» pressed for you, once the page shows it (after its texts come).
+  made.webContents.on('did-finish-load', () => {
+    if (state.listening && made.webContents.getURL().startsWith('http')) {
+      made.webContents.executeJavaScript('(function () { var tries = 0; var wait = setInterval(function () {' +
+        ' var b = document.getElementById("start"); if (b && !b.hidden) { b.click(); clearInterval(wait); }' +
+        ' if (++tries > 40) clearInterval(wait); }, 250); })()').catch(() => {});
+    }
+  });
+}
+const showFace = () => face(true);
+const hideFace = () => { if (windows.face && !windows.face.isDestroyed()) windows.face.close(); };
+
+/// Listening on this device: its face runs (hidden) while nobody looks at it; off, only while shown.
+function listen(on) {
+  remember({ listening: on });
+  if (on) { if (running() && !faceShown()) face(false); }
+  else if (windows.face && !windows.face.isDestroyed() && !windows.face.isVisible()) windows.face.destroy();
+  menu();
+}
+
+// The admin page's windows, as the Mac's: the page shows that window's part only (?window=).
+const showSettings = () => open('settings', '/admin?window=settings#settings', { width: 940, height: 640, minWidth: 780, minHeight: 520, title: T('Settings') });
+const showDevices = () => open('devices', '/admin?window=devices#devices', { width: 520, height: 460, minWidth: 440, minHeight: 320, title: T('Devices') });
+const showPair = () => open('pair', '/admin?window=pair#pair', { width: 680, height: 500, minWidth: 680, minHeight: 440, title: T('Pair a device') });
+const showThemes = () => open('themes', '/themes', { width: 1100, height: 780, minWidth: 640, minHeight: 480, title: T('Themes'), dark: true });
+const WINDOWS = { settings: showSettings, devices: showDevices, pair: showPair };
 
 // The page may use the microphone and camera, keep the screen on and go full screen; only the
-// server's own page (127.0.0.1), nothing else.
+// server's own page (this computer's, or the other server it talks to), nothing else.
 function permissions() {
-  const ours = (url) => { try { return new URL(url).hostname === '127.0.0.1'; } catch (e) { return false; } };
+  const ours = (url) => { try { const u = new URL(url); return u.origin === base() || u.hostname === '127.0.0.1'; } catch (e) { return false; } };
   const allowed = new Set(['media', 'fullscreen', 'screen-wake-lock', 'notifications']);
   session.defaultSession.setPermissionRequestHandler((contents, permission, done, details) => {
     done(allowed.has(permission) && ours(details.requestingUrl || contents.getURL()));
@@ -135,37 +210,81 @@ const PRIVACY = { microphone: 'ms-settings:privacy-microphone', camera: 'ms-sett
 let connected = [];
 const LLM_NAMES = { claude: 'Claude', codex: 'Codex', gemini: 'Gemini', opencode: 'OpenCode', openai: 'OpenAI',
                     ollama: 'Ollama', hermes: 'Hermes', apple: 'Apple' };
+const running = () => server.state === 'running';
 
 async function followDevices() {
-  if (server.state !== 'running') { connected = []; return; }
+  if (!running()) { connected = []; return; }
   try { connected = (await server.call('GET', '/status')).devices || []; } catch (e) { /* not now */ }
 }
 
+// Each connected one: its name, room and LLM; a click opens Devices (rename it, its room, its own LLM).
 function deviceItems() {
-  if (server.state !== 'running') return [];
+  if (!running()) return [];
   if (!connected.length) return [{ type: 'separator' }, { label: T('No device connected'), enabled: false }];
   const items = connected.slice(0, 5).map((d) => ({
-    label: [d.name || '?', d.room, LLM_NAMES[d.llm] || d.llm].filter(Boolean).join(' · '),
-    click: () => showAdmin('#devices'),  // rename it, its room, its own LLM
+    label: [d.name || T('a device'), d.room, LLM_NAMES[d.llm] || d.llm].filter(Boolean).join(' · '),
+    click: showDevices,
   }));
-  if (connected.length > 5) items.push({ label: T('and %s more', connected.length - 5), click: () => showAdmin('#devices') });
+  if (connected.length > 5) items.push({ label: T('and %s more', connected.length - 5), click: showDevices });
   return [{ type: 'separator' }, ...items];
+}
+
+// --- The other server, as a client (the Mac's «Conectarse a otro servidor») ---
+
+let linked = false;  // the other server answers
+async function followLink() {
+  if (!isClient()) return;
+  try {
+    const r = await session.defaultSession.fetch(base() + '/status', { signal: AbortSignal.timeout(2000) });
+    linked = r.ok;
+  } catch (e) { linked = false; }
+}
+
+/// What the menu says about it, as a client of another server.
+function clientStatus() {
+  if (linked) return T('Connected to %s', state.client.host);
+  return state.listening ? T('Looking for the server…') : T('The microphone is off');
 }
 
 // --- The tray ---
 
+// How it is, at a glance (the Mac draws a symbol by it; here, a plain mark): its state.
 function status() {
   switch (server.state) {
-    case 'starting': return server.ours ? T('Preparing it (the first time it downloads Python and the models: a few minutes)…') : T('Starting…');
-    case 'running': return T('Running') + (server.systemd ? ' · ' + T('started by systemd') : '');
-    case 'failed': return T('It failed') + (server.why ? ` (${server.why})` : '');
-    default: return T('Stopped');
+    case 'starting': return '… ' + T('Starting…');
+    case 'running': return '✓ ' + T('Running') + (server.systemd ? ' · ' + T('started by systemd') : '');
+    case 'failed': return '⚠ ' + (server.why === 'crashed' ? T('It stopped; starting it again…') : T('It failed') + (server.why ? ` (${server.why})` : ''));
+    default: return server.installed ? '■ ' + T('Stopped') : '⬇ ' + T('Not installed yet');
   }
 }
 
-function menu() {
-  const running = server.state === 'running';
-  const items = [
+const faceItem = () => (faceShown()
+  ? { label: T('Hide %s', name), click: hideFace }
+  : { label: T('Show %s', name), enabled: isClient() || running(), click: showFace });
+const listenItem = () => ({ label: T('Listen on this device'), type: 'checkbox', checked: state.listening, click: (item) => listen(item.checked) });
+const privacyItems = () => [
+  ...(refused('microphone') ? [{ label: M('Allow the microphone…'), click: () => shell.openExternal(PRIVACY.microphone) }] : []),
+  ...(refused('camera') ? [{ label: M('Allow the camera…'), click: () => shell.openExternal(PRIVACY.camera) }] : []),
+];
+const loginItem = () => ({ label: T('Open at login'), type: 'checkbox', checked: opensAtLogin(), click: (item) => setOpensAtLogin(item.checked) });
+const quitItem = () => ({ label: T('Quit AnyAssistant'), click: () => app.quit() });
+
+/// A client of another server: its face and its microphone, nothing else here.
+function clientMenu() {
+  return [
+    { label: clientStatus(), enabled: false },
+    { type: 'separator' },
+    faceItem(), listenItem(), ...privacyItems(),
+    { type: 'separator' },
+    { label: M('Run the server on this device…'), click: useThisDevice },
+    loginItem(),
+    { type: 'separator' },
+    quitItem(),
+  ];
+}
+
+function serverMenu() {
+  return [
     { label: status(), enabled: false },
     ...deviceItems(),
     // The server, right under how it is: start it when stopped (or failed); while it starts, only
@@ -174,22 +293,35 @@ function menu() {
       : server.state === 'starting' ? [{ label: T('Stop'), click: () => server.stop() }]
       : [{ label: T('Restart'), click: () => server.restart() }, { label: T('Stop'), click: () => server.stop() }]),
     { type: 'separator' },
-    faceShown()  // «Hide Eva» while its window is open
-      ? { label: T('Hide %s', name), click: () => windows.face.close() }
-      : { label: T('Show %s', name), enabled: running, click: showFace },
-    { label: T('Themes'), enabled: running, click: () => open('themes', '/themes', { width: 1100, height: 780, title: T('Themes'), dark: true }) },
-    ...(refused('microphone') ? [{ label: T('Allow the microphone'), click: () => shell.openExternal(PRIVACY.microphone) }] : []),
-    ...(refused('camera') ? [{ label: T('Allow the camera'), click: () => shell.openExternal(PRIVACY.camera) }] : []),
-    { label: T('Connect another device'), enabled: running, click: () => showAdmin('#pair') },
-    { label: T('Administer'), enabled: running, click: () => showAdmin() },
+    faceItem(), listenItem(), ...privacyItems(),
+    { label: M('Themes…'), enabled: running(), click: showThemes },  // every state of each theme, to see them (the plugin «themes»)
     { type: 'separator' },
-    { label: T('Log'), click: () => shell.openPath(server.log) },
-    { label: T('Open at login'), type: 'checkbox', checked: opensAtLogin(), click: (item) => setOpensAtLogin(item.checked) },
+    { label: M('Pair a device…'), click: showPair },
+    { label: M('Devices…'), click: showDevices },
     { type: 'separator' },
-    { label: T('Quit AnyAssistant'), click: () => app.quit() },
+    { label: T('Show the log'), click: () => shell.openPath(server.log) },
+    { label: M('Settings…'), click: showSettings },
+    { label: M('Install steps again…'), click: () => setup.open() },
+    loginItem(),
+    { type: 'separator' },
+    quitItem(),
   ];
-  tray.setContextMenu(Menu.buildFromTemplate(items));
-  tray.setToolTip(`AnyAssistant · ${status()}`);
+}
+
+function menu() {
+  if (!tray) return;
+  tray.setContextMenu(Menu.buildFromTemplate(isClient() ? clientMenu() : serverMenu()));
+  tray.setToolTip(`AnyAssistant · ${isClient() ? clientStatus() : status().replace(/^\S+ /, '')}`);
+}
+
+/// Installed, or using another server: the tray (there is none before: only the installer's window).
+function showTray() {
+  if (tray) return;
+  const icon = nativeImage.createFromPath(path.join(__dirname, 'icons', 'tray.png'));
+  tray = new Tray(icon);
+  tray.on('click', () => ((isClient() || running()) ? showFace() : null));  // Windows: a click shows it
+  menu();
+  setInterval(async () => { if (!isClient()) await server.check(); await followDevices(); await followLink(); menu(); }, 5000);  // the server, its devices, permissions: as they are
 }
 
 async function learnName() {
@@ -206,29 +338,63 @@ server.on('change', async () => {
         ? 'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"'
         : 'curl -LsSf https://astral.sh/uv/install.sh | sh') });
   }
-  if (server.state === 'running') await learnName();
-  if (tray) menu();
+  if (running()) {
+    await learnName();
+    retryUnavailable();
+    if (state.listening && !faceShown()) face(false);  // it listens on this device too
+  }
+  menu();
 });
 
-app.on('second-instance', () => (server.state === 'running' ? showFace() : null));
+// --- This computer's server, or another one's (the installer's window decides) ---
+
+/// Only a client of another server: paired there (setup.js did it), its face talks to it.
+function useAnother(client) {
+  if (server.ours) server.stop();
+  remember({ client });
+  for (const id of Object.keys(windows)) if (windows[id] && !windows[id].isDestroyed()) windows[id].destroy();
+  showTray();
+  menu();
+  followLink().then(menu);
+  if (state.listening) face(false);
+}
+
+/// The server on this computer again: installed, it starts; else the installer.
+function useThisDevice() {
+  remember({ client: null });
+  for (const id of Object.keys(windows)) if (windows[id] && !windows[id].isDestroyed()) windows[id].destroy();
+  menu();
+  if (server.installed) server.begin(); else setup.open();
+}
+
+// --- The windows' own buttons (unavailable.html): start the server, try again ---
+
+ipcMain.handle('texts', () => TEXTS);  // the app's own pages (setup.html, unavailable.html)
+ipcMain.handle('server-state', () => ({ state: server.state, client: isClient() }));
+ipcMain.handle('server-start', () => { if (!isClient()) server.start(); });
+ipcMain.handle('retry', () => retryUnavailable());
+
+app.on('second-instance', () => (ready() ? showFace() : setup.open()));
 app.on('window-all-closed', (e) => e.preventDefault());  // it stays in the tray
 
-let quitting = false;
+app.quitting = false;
 app.on('before-quit', async (e) => {
-  if (quitting) return;
+  if (app.quitting) return;
   e.preventDefault();
-  quitting = true;
+  app.quitting = true;
   await server.quit();  // its own server goes with it; systemd's stays
   app.exit(0);
 });
 
 app.whenReady().then(async () => {
+  loadTexts();
   permissions();
-  const icon = nativeImage.createFromPath(path.join(__dirname, 'icons', 'tray.png'));
-  tray = new Tray(icon);
-  tray.on('click', () => (server.state === 'running' ? showFace() : null));  // Windows: a click shows it
-  menu();
-  setInterval(async () => { await followDevices(); menu(); }, 5000);  // devices, permissions: as they are
+  setup.configure({ server, T,
+    installed: () => { showTray(); server.begin(); menu(); },  // installed now: the menu, and the server runs
+    connected: useAnother, pair: showPair, setOpensAtLogin, quitUnlessReady: () => { if (!ready()) app.quit(); } });
+  if (!ready()) return setup.open();  // not installed yet (nor using another server): no menu, the installer
+  if (process.env.ANYASSISTANT_SETUP) setup.open();  // developing: the installer's window, to see it
+  showTray();
+  if (isClient()) { await followLink(); menu(); if (state.listening) face(false); return; }
   await server.begin();
-  if (server.state === 'running' && !opensAtLogin()) showFace();  // the first time: its face
 });

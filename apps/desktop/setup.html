@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>AnyAssistant</title>
+  <style>
+    :root { --bg: #f6f7f9; --panel: #fff; --text: #1d2330; --muted: #677085; --line: #e3e6ec; --accent: #2f7cf6;
+            --ok: #1f9d55; --warn: #c27c0e; --bad: #d93d3d; color-scheme: light; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #12151b; --panel: #1b1f27; --text: #e7eaf0; --muted: #8b93a6; --line: #2a303b; --accent: #4b8ff8;
+              --ok: #3cc47c; --warn: #e3a33a; --bad: #f06565; color-scheme: dark; }
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { height: 100%; margin: 0; }
+    body { font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text);
+           padding: 28px; display: flex; flex-direction: column; -webkit-user-select: none; user-select: none; }
+    .phase { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .centered { align-items: center; text-align: center; }
+    .grow { flex: 1; }
+    h1 { font-size: 26px; margin: 10px 0 6px; }
+    h2 { font-size: 20px; margin: 0 0 12px; }
+    h3 { font-size: 17px; margin: 0 0 4px; }
+    p { margin: 6px 0; }
+    .muted { color: var(--muted); }
+    .lead { font-size: 16px; color: var(--muted); max-width: 400px; }
+    .foot { font-size: 12px; color: var(--muted); max-width: 420px; margin-top: 10px; }
+    .error { color: var(--bad); }
+    img.icon { width: 112px; height: 112px; margin-top: 8px; }
+    img.icon.small { width: 64px; height: 64px; margin: 0; }
+    button { font: inherit; border: 0; border-radius: 7px; padding: 8px 16px; background: var(--line); color: var(--text); cursor: pointer; }
+    button.main { background: var(--accent); color: #fff; }
+    button.large { font-size: 15px; width: 240px; padding: 10px 16px; }
+    button.link { background: none; color: var(--accent); padding: 4px; }
+    button:disabled { opacity: .5; cursor: default; }
+    .buttons { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 16px; }
+    .buttons .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .stack { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px 14px; }
+    .scroll { overflow: auto; min-height: 0; flex: 1; }
+    .row { display: flex; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .row:last-child { border-bottom: 0; }
+    .row .what { flex: 1; min-width: 0; }
+    .row .help { font-size: 12px; color: var(--muted); }
+    .row.pick { cursor: pointer; }
+    .row.pick .mark { color: var(--accent); width: 18px; text-align: center; }
+    input, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; width: 190px; min-width: 0; flex: 0 0 auto; }
+    input.code { font: 600 32px/1.2 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 12px; text-align: center; width: 270px; min-width: 0; padding-left: 18px; }
+    label.check { display: flex; gap: 8px; align-items: center; padding: 9px 0; }
+    label.check input { min-width: 0; }
+    progress { width: 280px; height: 6px; }
+    .steps { background: rgba(127,127,127,.08); border-radius: 8px; font-size: 13px; }
+    .steps .row { padding: 7px 12px; }
+    .steps .row .state { width: 16px; text-align: center; }
+    .steps .row .text { color: var(--muted); max-width: 55%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .steps .row .text.bad { color: var(--bad); }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .big { font-size: 46px; line-height: 1; }
+    .ok { color: var(--ok); } .warn { color: var(--warn); }
+  </style>
+</head>
+<body>
+  <div id="welcome" class="phase centered" hidden>
+    <div class="grow"></div>
+    <img class="icon" src="icons/icon.png" alt="">
+    <h1>AnyAssistant</h1>
+    <p class="lead" data-t="A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears."></p>
+    <div class="grow"></div>
+    <div class="stack">
+      <button class="main large" id="install-defaults" data-t="Install with what comes"></button>
+      <button class="large" id="ask-questions" data-t="Set it up step by step"></button>
+      <button class="link" id="another" data-t="The server is on another Mac: use this one only to talk to it"></button>
+    </div>
+    <p class="foot" data-t="You can change everything later. The speech models download once (a few hundred MB)."></p>
+  </div>
+
+  <div id="working" class="phase centered" hidden>
+    <div class="grow"></div>
+    <div class="spinner" id="working-spinner"></div>
+    <div class="big warn" id="working-failed" hidden>⚠</div>
+    <p class="muted" id="working-note"></p>
+    <div class="grow"></div>
+    <div class="buttons" id="working-buttons" hidden><button id="working-back" data-t="Back"></button></div>
+  </div>
+
+  <div id="questions" class="phase" hidden>
+    <h2 data-t="Step by step"></h2>
+    <div class="scroll"><div class="card" id="form"></div></div>
+    <div class="buttons">
+      <button id="questions-back" data-t="Back"></button>
+      <div class="right"><button class="main" id="questions-install" data-t="Install"></button></div>
+    </div>
+  </div>
+
+  <div id="progress" class="phase centered" hidden>
+    <img class="icon small" src="icons/icon.png" alt="" id="progress-icon">
+    <div class="big ok" id="progress-ok" hidden>✓</div>
+    <div class="big warn" id="progress-bad" hidden>⚠</div>
+    <h2 id="progress-title"></h2>
+    <p class="muted" id="progress-note" hidden data-t="AnyAssistant is now running on this device."></p>
+    <progress id="progress-bar" value="0" max="1"></progress>
+    <div class="scroll steps" id="steps" style="width:100%;text-align:left;margin-top:12px"></div>
+    <div class="buttons" id="progress-buttons" hidden style="width:100%">
+      <div class="right">
+        <button id="progress-close" data-t="Close"></button>
+        <button class="main" id="progress-pair" data-t="Pair your tablet or phone"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="another-choose" class="phase" hidden>
+    <h2 data-t="Another Mac's server"></h2>
+    <p class="muted" data-t="This device will only be used to talk to the assistant."></p>
+    <h3 style="margin-top:10px" data-t="Servers on this network"></h3>
+    <div class="scroll"><div class="card" id="servers"></div>
+    <p class="foot" data-t="AnyAssistant servers on this network are shown here."></p>
+    <div class="card" style="margin-top:8px"><div class="row pick" id="other-server"><span class="mark"></span><div class="what" data-t="Other server…"></div></div></div></div>
+    <p class="error" id="choose-problem"></p>
+    <div class="buttons">
+      <button id="choose-back" data-t="Back"></button>
+      <div class="right"><button class="main" id="choose-next" data-t="Next" disabled></button></div>
+    </div>
+  </div>
+
+  <div id="another-manual" class="phase" hidden>
+    <h2 data-t="Other server"></h2>
+    <div class="card">
+      <div class="row"><div class="what" data-t="Host"></div><input id="host" placeholder="anyassistant.local"></div>
+      <div class="row"><div class="what" data-t="Port"></div><input id="port" type="number" value="8080"></div>
+    </div>
+    <p class="foot" data-t="The name or IP address of the server."></p>
+    <p class="error" id="manual-problem"></p>
+    <div class="grow"></div>
+    <div class="buttons">
+      <button id="manual-back" data-t="Back"></button>
+      <div class="right"><div class="spinner" id="manual-spinner" hidden></div><button class="main" id="manual-next" data-t="Next"></button></div>
+    </div>
+  </div>
+
+  <div id="another-code" class="phase centered" hidden>
+    <div style="margin-top:24px"></div>
+    <h2 style="margin-bottom:2px" data-t="Pairing code"></h2>
+    <p class="muted" id="code-server"></p>
+    <p style="margin-top:18px"><input class="code" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></p>
+    <p class="foot" data-t="To get the code, open AnyAssistant on the server and select Connect another device."></p>
+    <p class="error" id="code-problem"></p>
+    <div class="grow"></div>
+    <div class="buttons" style="width:100%">
+      <button id="code-back" data-t="Back"></button>
+      <div class="right"><div class="spinner" id="code-spinner" hidden></div><button class="main" id="code-pair" data-t="Pair" disabled></button></div>
+    </div>
+  </div>
+
+  <script>
+    var texts = {};
+    function T(english) { return texts[english] || english; }
+    function $(id) { return document.getElementById(id); }
+    var setup = window.anyassistant.setup;
+    var questions = [];
+    var steps = [];
+    var total = 0;
+    var chosen = null;  // a server picked in the list, or 'other'
+    var servers = [];
+    var target = { host: '', port: 8080, pairing: false, name: '' };
+
+    function showOnly(id) {
+      Array.prototype.forEach.call(document.querySelectorAll('.phase'), function (p) { p.hidden = p.id !== id; });
+    }
+
+    window.anyassistant.texts().then(function (found) {
+      texts = found || {};
+      Array.prototype.forEach.call(document.querySelectorAll('[data-t]'), function (node) { node.textContent = T(node.getAttribute('data-t')); });
+      $('code').placeholder = '';
+    });
+
+    // --- The phases, as the app says them ---
+
+    setup.on('phase', function (data) {
+      if (data.phase === 'welcome') showOnly('welcome');
+      else if (data.phase === 'another') showAnother();
+      else if (data.phase === 'preparing') {
+        showOnly('working');
+        $('working-spinner').hidden = false; $('working-failed').hidden = true; $('working-buttons').hidden = true;
+        $('working-note').textContent = data.note || '';
+      } else if (data.phase === 'failed') {
+        showOnly('working');
+        $('working-spinner').hidden = true; $('working-failed').hidden = false; $('working-buttons').hidden = false;
+        $('working-note').textContent = data.note || '';
+      } else if (data.phase === 'questions') { questions = data.questions || []; drawQuestions(); showOnly('questions'); }
+      else if (data.phase === 'installing') { steps = []; total = 0; drawProgress(false, false); showOnly('progress'); }
+      else if (data.phase === 'finished') { drawProgress(true, data.failed); showOnly('progress'); }
+    });
+
+    setup.on('event', function (event) {
+      if (event.event === 'step') { total = event.total || total; steps.push({ id: event.id, title: event.title || event.id, status: 'running', text: '' }); }
+      else {
+        var step = steps.filter(function (s) { return s.id === event.id; })[0];
+        if (!step) return;
+        if (event.event === 'progress') step.text = event.text || '';
+        else if (event.event === 'done' || event.event === 'skipped' || event.event === 'error') {
+          step.status = event.event === 'done' ? 'done' : event.event === 'skipped' ? 'skipped' : 'failed';
+          step.text = event.text || '';
+        }
+      }
+      drawSteps();
+    });
+
+    $('install-defaults').onclick = function () { setup.installDefaults(); };
+    $('ask-questions').onclick = function () { setup.askQuestions(); };
+    $('another').onclick = function () { setup.phase('another'); showAnother(); };
+    $('working-back').onclick = function () { setup.phase('welcome'); showOnly('welcome'); };
+    $('questions-back').onclick = function () { setup.phase('welcome'); showOnly('welcome'); };
+    $('questions-install').onclick = function () {
+      var answers = {};
+      questions.forEach(function (q) {
+        var field = $('q-' + q.id);
+        var value = field.value;
+        if (q.choices) {
+          var found = q.choices.filter(function (c) { return String(c.value) === value; })[0];
+          value = found ? found.value : value;
+        }
+        answers[q.id] = value;
+      });
+      setup.install(answers, $('start-at-login').checked);
+    };
+    $('progress-close').onclick = function () { setup.close(); };
+    $('progress-pair').onclick = function () { setup.pairWindow(); };
+
+    // --- Step by step: the installer's questions ---
+
+    function drawQuestions() {
+      var form = $('form');
+      form.innerHTML = '';
+      questions.forEach(function (q) {
+        var field;
+        if (q.choices) {
+          field = document.createElement('select');
+          q.choices.forEach(function (c) {
+            var option = document.createElement('option');
+            option.value = String(c.value);
+            option.textContent = c.label === 'True' ? T('Yes') : c.label === 'False' ? 'No' : c.label;
+            if (String(c.value) === String(q.default)) option.selected = true;
+            field.appendChild(option);
+          });
+        } else {
+          field = document.createElement('input');
+          field.value = q.default === null || q.default === undefined ? '' : String(q.default);
+        }
+        field.id = 'q-' + q.id;
+        var row = document.createElement('div');
+        row.className = 'row';
+        var what = document.createElement('div');
+        what.className = 'what';
+        what.appendChild(document.createTextNode(q.title));
+        if (q.help) { var help = document.createElement('div'); help.className = 'help'; help.textContent = q.help; what.appendChild(help); }
+        row.appendChild(what);
+        row.appendChild(field);
+        form.appendChild(row);
+      });
+      var login = document.createElement('label');
+      login.className = 'check';
+      var box = document.createElement('input');
+      box.type = 'checkbox'; box.checked = true; box.id = 'start-at-login';
+      login.appendChild(box);
+      login.appendChild(document.createTextNode(T('Open AnyAssistant at login')));
+      form.appendChild(login);
+    }
+
+    // --- Installing: a bar and the steps as they go; finished: how it went at a glance ---
+
+    function drawProgress(finished, failed) {
+      $('progress-icon').hidden = finished;
+      $('progress-ok').hidden = !finished || failed;
+      $('progress-bad').hidden = !finished || !failed;
+      $('progress-title').textContent = finished ? (failed ? T('Installed, with problems') : T('Installed')) : T('Installing…');
+      $('progress-note').hidden = !finished || failed;
+      $('progress-bar').hidden = finished;
+      $('progress-buttons').hidden = !finished;
+      drawSteps();
+    }
+
+    function drawSteps() {
+      var box = $('steps');
+      box.innerHTML = '';
+      var marks = { running: '…', done: '✓', skipped: '–', failed: '✗' };
+      var colors = { running: 'muted', done: 'ok', skipped: 'muted', failed: 'error' };
+      steps.forEach(function (s) {
+        var row = document.createElement('div');
+        row.className = 'row';
+        var mark = document.createElement('span');
+        mark.className = 'state ' + colors[s.status];
+        mark.textContent = marks[s.status];
+        var title = document.createElement('div');
+        title.className = 'what';
+        title.textContent = s.title;
+        var text = document.createElement('span');
+        text.className = 'text' + (s.status === 'failed' ? ' bad' : '');
+        text.textContent = s.text;
+        text.title = s.text;
+        row.appendChild(mark); row.appendChild(title); row.appendChild(text);
+        box.appendChild(row);
+      });
+      box.scrollTop = box.scrollHeight;
+      var bar = $('progress-bar');
+      bar.max = Math.max(total, steps.length, 1);
+      bar.value = steps.filter(function (s) { return s.status !== 'running'; }).length;
+    }
+
+    // --- Another server: the ones on this network, or a host and port, then its code ---
+
+    function showAnother() {
+      chosen = null;
+      $('choose-problem').textContent = '';
+      $('choose-next').disabled = true;
+      showOnly('another-choose');
+      drawServers();
+      setup.servers().then(function (found) { servers = found || []; drawServers(); });
+    }
+    setup.on('servers', function (found) { servers = found || []; drawServers(); });
+
+    function drawServers() {
+      var box = $('servers');
+      box.innerHTML = '';
+      if (!servers.length) {
+        var row = document.createElement('div');
+        row.className = 'row';
+        var spinner = document.createElement('div'); spinner.className = 'spinner';
+        var text = document.createElement('div'); text.className = 'what muted'; text.textContent = T('Searching…');
+        row.appendChild(spinner); row.appendChild(text);
+        box.appendChild(row);
+      }
+      servers.forEach(function (s) {
+        var row = document.createElement('div');
+        row.className = 'row pick';
+        var mark = document.createElement('span'); mark.className = 'mark'; mark.textContent = chosen === s.id ? '✓' : '';
+        var what = document.createElement('div'); what.className = 'what';
+        what.appendChild(document.createTextNode(s.assistant));
+        var help = document.createElement('div'); help.className = 'help'; help.textContent = s.computer;
+        what.appendChild(help);
+        row.appendChild(mark); row.appendChild(what);
+        row.onclick = function () { chosen = s.id; $('choose-problem').textContent = ''; $('choose-next').disabled = false; drawServers(); };
+        box.appendChild(row);
+      });
+      $('other-server').querySelector('.mark').textContent = chosen === 'other' ? '✓' : '';
+    }
+    $('other-server').onclick = function () { chosen = 'other'; $('choose-problem').textContent = ''; $('choose-next').disabled = false; drawServers(); };
+    $('choose-back').onclick = function () { setup.phase('welcome'); showOnly('welcome'); };
+    $('choose-next').onclick = function () {
+      if (chosen === 'other') { $('manual-problem').textContent = ''; showOnly('another-manual'); $('host').focus(); return; }
+      var found = servers.filter(function (s) { return s.id === chosen; })[0];
+      if (!found) return;
+      target = { host: found.address, port: found.port, pairing: found.pairing, name: T('%s on %s').replace('%s', found.assistant).replace('%s', found.computer) };
+      if (found.pairing) askCode(); else connect($('choose-problem'), $('choose-next'), null);
+    };
+    $('manual-back').onclick = function () { showOnly('another-choose'); };
+    $('manual-next').onclick = function () {
+      var host = $('host').value.trim();
+      var port = parseInt($('port').value, 10) || 8080;
+      if (!host) return;
+      $('manual-problem').textContent = '';
+      $('manual-spinner').hidden = false; $('manual-next').disabled = true;
+      setup.probe(host, port).then(function (answer) {
+        $('manual-spinner').hidden = true; $('manual-next').disabled = false;
+        if (!answer.reachable) { $('manual-problem').textContent = T('That Mac doesn\'t answer: is AnyAssistant running there, on this network?'); return; }
+        target = { host: host, port: port, pairing: answer.pairing, name: host };
+        if (answer.pairing) askCode(); else connect($('manual-problem'), $('manual-next'), $('manual-spinner'));
+      });
+    };
+    function askCode() {
+      $('code').value = '';
+      $('code-problem').textContent = '';
+      $('code-pair').disabled = true;
+      $('code-server').textContent = target.name;
+      showOnly('another-code');
+      $('code').focus();
+    }
+    $('code').oninput = function () {
+      this.value = this.value.replace(/\D/g, '').slice(0, 6);
+      $('code-pair').disabled = this.value.length !== 6;
+      if (this.value.length === 6) $('code-pair').onclick();
+    };
+    $('code-back').onclick = function () { showOnly(chosen === 'other' ? 'another-manual' : 'another-choose'); };
+    $('code-pair').onclick = function () { if ($('code').value.length === 6) connect($('code-problem'), $('code-pair'), $('code-spinner')); };
+
+    function connect(problem, button, spinner) {
+      problem.textContent = '';
+      button.disabled = true;
+      if (spinner) spinner.hidden = false;
+      setup.pair(target.host, target.port, $('code').value, target.pairing).then(function (answer) {
+        if (spinner) spinner.hidden = true;
+        button.disabled = false;
+        if (answer.paired) return;  // the window closes: the face talks to that server now
+        if (answer.problem === 'code') { problem.textContent = T('That code isn\'t right (or it\'s too old): ask for another.'); $('code').value = ''; $('code-pair').disabled = true; }
+        else problem.textContent = T('That Mac doesn\'t answer: is AnyAssistant running there, on this network?');
+      });
+    }
+  </script>
+</body>
+</html>
