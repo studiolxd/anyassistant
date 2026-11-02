@@ -178,8 +178,11 @@ function show(id) {
   Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (b) {
     b.classList.toggle('on', b.dataset.id === section(id));
   });
-  var main = $('main');
-  main.innerHTML = '';
+  // Each section in a page of its own: what a section it left still gets late (its data came after
+  // another was chosen) goes into its page, no longer on screen, not into the new one.
+  var main = document.createElement('div');
+  $('main').innerHTML = '';
+  $('main').appendChild(main);
   if (id === 'search') searchResults(main);
   else if (id.indexOf('group/') === 0) groupPage(main, id.slice(6));
   else if (id.indexOf('plugin/') === 0) pluginPage(main, id.slice(7));
