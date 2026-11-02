@@ -549,7 +549,7 @@ conversation, each one's review only takes facts from what they said. From the
 server itself (Claude through `/mcp` with no device), `get_memory` shows everyone's,
 grouped by whose they are.
 
-**In Settings → Plugins → Memory → «What it remembers»** (the Mac app, and the admin page of the Windows and Linux
+**In Settings → Plugins → Memory → Memories** (the Mac app, and the admin page of the Windows and Linux
 app) you see what it remembers: «Shared» and each person's (`/admin/memory`, only
 for the owner). Each fact can be edited in place, deleted, or moved to someone else
 (any known voice) or to shared. **Forgetting a voice** (Settings → Voices → Known
