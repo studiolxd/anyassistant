@@ -212,3 +212,28 @@ def test_status_says_which_device_is_paused():
     assert found["local"] and found["paused"] is None
     b.ear.pause("call", "FaceTime")
     assert web._device(Session(), True, None)["paused"] == {"why": "call", "app": "FaceTime"}
+
+
+def test_an_iphones_zeros_dont_pause_it():
+    """The iPhone's voice processing gives exact zeros whenever nobody speaks: not a silenced
+    microphone (it paused at every question); its app says so itself when it loses it."""
+    web.brain, web.GUARDS = (lambda speaker, send: Transcriber(None, FakeWake(), speaker, send)), []
+
+    async def test(client):
+        socket = await client.ws_connect("/stream?device=iphone1", headers={"User-Agent": "AnyAssistant iPhone"})
+        assert json.loads((await socket.receive()).data)["type"] == "hello"
+        assert json.loads((await socket.receive()).data)["state"] == "asleep"
+        streamer = next(iter(hub.sessions.values()))
+        assert streamer.zeros is None
+        for _ in range(10):
+            await socket.send_bytes(np.zeros(960, np.int16).tobytes())
+        await asyncio.sleep(0.2)
+        assert not streamer.brain.ear.paused
+        await socket.close()
+
+    async def go():
+        app = http.Application()
+        app.router.add_get("/stream", stream._stream)
+        async with TestClient(TestServer(app)) as client:
+            await test(client)
+    asyncio.run(go())

@@ -138,14 +138,18 @@ class Streamer:
         self.pc, self.speaker, self.channel = Line(), Voice(socket), None
         self.frames, self.last_frame = 0, None
         self.picture, self.pictured = None, 0.0  # its camera's last frame (JPEG), and when
-        self.zeros = Zeros()  # silenced by the system (Android): exact zeros
+        # Silenced by the system (Android: another app, a call, takes the microphone): exact zeros.
+        # Only Android's: the iPhone's voice processing gives exact zeros whenever nobody speaks (it
+        # paused at every question, while the answer was being made), and its app says itself when
+        # it loses the microphone (an interruption: «pause»).
+        self.zeros = Zeros() if "Android" in (agent or "") else None
         self.brain = web.brain(self.speaker, self.send)
 
     def hear(self, pcm: np.ndarray):
         """Its microphone; SECONDS of exact zeros pause it (the system gave the microphone to
         another app), the first real sample resumes it. Not while it speaks to it, nor just after
         (ECHO_ZEROS): its echo cancellation may send exact zeros then."""
-        change = self.zeros.feed(pcm, counting=time.time() > self.speaker.until + ECHO_ZEROS)
+        change = self.zeros.feed(pcm, counting=time.time() > self.speaker.until + ECHO_ZEROS) if self.zeros else None
         ear = getattr(self.brain, "ear", None)
         if change and ear is not None:
             if change == "silenced":
