@@ -49,6 +49,7 @@ options.add(Option("conversations", 2, "how many devices can be in a conversatio
 # the tablet the last word leaked in («…anything else?» → «Anything else?»).
 GUARD = 1.2
 ECHO_MAX_WORDS = 5  # an echo is a short piece of what it just said
+OWN_WORDS = 0.6  # heard while it spoke, this share of its own pairs of words: its echo
 # An echo starts right after it stops speaking (after the guard); an answer of yours
 # that repeats its words («Delete only the two promotional ones…?» → «Only the two
 # promotional ones») usually starts later: only what starts within this margin counts.
@@ -225,15 +226,27 @@ class Assistant(Transcriber):
 
     def _is_echo(self, text: str, timings: dict) -> bool:
         """A short piece of what it just said (or is saying): its own voice leaking into the microphone."""
+        heard = words(text)
+        if timings.get("over") and self._own_words(heard):  # heard while it spoke: mostly its words
+            return True
         # When the sentence started: now, minus the STT time and its duration.
         started = time.time() - timings.get("stt_ms", 0) / 1000 - timings.get("audio_s", 0)
         if started - self.speaker.last_sound > ECHO_WINDOW:
             return False
-        heard = words(text)
         if not 0 < len(heard) <= ECHO_MAX_WORDS:
             return False
         piece = f" {' '.join(heard)} "
         return piece in f" {' '.join(self.said)} " or piece in f" {' '.join(self.saying)} "
+
+    def _own_words(self, heard: list) -> bool:
+        """Longer than ECHO_MAX_WORDS and most of its pairs of words in a row (OWN_WORDS) are in
+        what it is saying or just said: its echo, even not word for word (a device without echo
+        cancellation hears all of it back). Pairs, not words: a question of yours may share words."""
+        if len(heard) <= ECHO_MAX_WORDS:
+            return False
+        mine = {pair for said in (self.saying, self.said) for pair in zip(said, said[1:])}
+        pairs = list(zip(heard, heard[1:]))
+        return sum(pair in mine for pair in pairs) / len(pairs) >= OWN_WORDS
 
     def on_connect(self):
         super().on_connect()

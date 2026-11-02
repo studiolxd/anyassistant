@@ -34,7 +34,7 @@ LAG_MAX = 1.5  # seconds: the latest its voice can come back (playback, the room
                # iPhone's, over Wi-Fi, can take more than a second)
 MIN_SECONDS = 0.4  # at least this much of its output under the sentence, to judge it
 THRESHOLD = 0.8  # correlation from which a sentence is its own echo (settings «echo_match»)
-CLEAR = 0.5  # below this, clearly a person: it stops at once (between both, its words decide)
+CLEAR = 0.4  # below this, clearly a person (a tablet's echo, distorted, scored 0.48): it stops at once (between both, its words decide)
 LOUD = -35.0  # dBFS: its output counts as playing above this
 ONSET_SECONDS = 0.8  # after its output starts from silence, a sentence can't start in the ear
 ONSET_QUIET = 0.3  # seconds of silence before a start for it to count as an onset

@@ -356,3 +356,19 @@ def test_a_long_answer_sent_at_once_keeps_what_plays_now():
         trail.add((rng.normal(0, 1, int(48000 * seconds)) * 8000).astype(np.int16), start, now=t0)
         start += seconds
     assert trail.playing(t0 + 1, t0 + 3.5) and trail.playing(t0 + 28, t0 + 30)
+
+
+def test_a_long_echo_not_word_for_word_is_its_own(monkeypatch):
+    """A device without echo cancellation hears its whole answer back, transcribed with mistakes."""
+    from plugins.brain_assistant import Assistant
+    from text import words
+
+    a = object.__new__(Assistant)
+    a.said = []
+    a.saying = words("Mucho: nació como una república en Roma y se convirtió en imperio con Augusto en el 27 a.C. "
+                     "Llegó a dominar todo el Mediterráneo")
+    heard = words("Mucho, nació como una república en Roma y se convirtió en imperio con Augusto en el XXI a.C. "
+                  "Llegó a dominar todo el Mediterráneo")
+    assert a._own_words(heard)
+    assert not a._own_words(words("¿Y cuándo cayó el de Occidente, exactamente?"))  # shares words, not pairs
+    assert not a._own_words(words("cayó el de occidente"))  # short: the exact piece decides
