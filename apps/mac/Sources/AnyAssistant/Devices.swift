@@ -1,5 +1,7 @@
-// The devices (the plugin «devices», only from the Mac): which ones there are, which are
-// connected and which one you're talking to; their name and room, to edit, or forget one.
+// The devices (the plugin «devices», only from the Mac), as System Settings lists Bluetooth's: a
+// row each (its icon, name, room and state; the connected ones first) and «Conectar otro
+// dispositivo…»; a click opens its page: its state, name and room, its language model, and
+// «Olvidar este dispositivo».
 
 import SwiftUI
 
@@ -12,6 +14,7 @@ struct DeviceItem: Identifiable, Equatable {
     let seen: Date?
     let press: Bool  // talks a sentence at a time (the watch): never «connected»
     var llm: String = ""  // its own LLM; "": the general one
+    var kind: String = ""  // «iPhone», «Mac»…: its icon
 }
 
 @MainActor
@@ -57,7 +60,8 @@ final class Devices: ObservableObject {
                        room: $0["room"] as? String ?? "", connected: $0["connected"] as? Bool ?? false,
                        current: $0["current"] as? Bool ?? false,
                        seen: ($0["seen"] as? Double).map { Date(timeIntervalSince1970: $0) },
-                       press: $0["press"] as? Bool ?? false, llm: $0["llm"] as? String ?? "")
+                       press: $0["press"] as? Bool ?? false, llm: $0["llm"] as? String ?? "",
+                       kind: $0["kind"] as? String ?? "")
         }
         .sorted { ($0.connected ? 0 : 1, $0.name) < ($1.connected ? 0 : 1, $1.name) }
         llms = answer["llms"] as? [String] ?? llms
@@ -83,30 +87,37 @@ struct DevicesView: View {
     @StateObject private var devices = Devices()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if let error = devices.error {
-                Text(error).foregroundStyle(.red).padding(8)
-            }
-            if devices.off {
-                Text(T("Turn on the plugin «Devices» in the settings to see them here."))
-                    .foregroundStyle(.secondary).padding(24)
-            } else if devices.items.isEmpty {
-                Text(T("No device has connected yet: pair one from the menu."))
-                    .foregroundStyle(.secondary).padding(24)
-            } else {
-                Form {
-                    Section {
-                        ForEach(devices.items) { item in
-                            DeviceRow(item: item, devices: devices)
-                        }
-                    } footer: {
-                        Text(T("The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina»."))
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
+        NavigationStack {
+            VStack(spacing: 0) {
+                if let error = devices.error {
+                    Text(error).foregroundStyle(.red).padding(8)
                 }
-                .formStyle(.grouped)
+                if devices.off {
+                    Text(T("Turn on the plugin «Devices» in the settings to see them here."))
+                        .foregroundStyle(.secondary).padding(24)
+                    Spacer()
+                } else {
+                    Form {
+                        Section {
+                            if devices.items.isEmpty {
+                                Text(T("No device has connected yet.")).foregroundStyle(.secondary)
+                            }
+                            ForEach(devices.items) { item in
+                                NavigationLink(value: item.id) { DeviceRow(item: item) }
+                            }
+                        }
+                        Section {
+                            Button(T("Connect another device…")) { Delegate.show("pair") }
+                        }
+                    }
+                    .formStyle(.grouped)
+                }
             }
-            Spacer(minLength: 0)
+            .navigationDestination(for: String.self) { id in
+                if let item = devices.items.first(where: { $0.id == id }) {
+                    DeviceDetail(item: item, devices: devices)
+                }
+            }
         }
         .task { await devices.load() }
         // Kept up to date: they connect and change by voice too (not while you type in one).
@@ -117,68 +128,82 @@ struct DevicesView: View {
     }
 }
 
+/// A device in the list: its icon, its name, and its room and state under it.
 struct DeviceRow: View {
+    let item: DeviceItem
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: deviceSymbol(item.kind)).font(.title2).frame(width: 30)
+                .foregroundStyle(item.connected ? Color.accentColor : .secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name.isEmpty ? T("Unnamed device") : item.name)
+                Text([item.room, deviceState(item)].filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+            Spacer()
+            if item.connected { Circle().fill(.green).frame(width: 8, height: 8) }
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+/// A device's page: its state, name and room, its language model; «Olvidar este dispositivo».
+struct DeviceDetail: View {
     let item: DeviceItem
     @ObservedObject var devices: Devices
     @State private var name = ""
     @State private var room = ""
+    @State private var forgetting = false
+    @State private var pending: Task<Void, Never>?
     @FocusState private var editing: Bool
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Circle().fill(item.connected ? .green : item.press ? .blue : .secondary.opacity(0.4)).frame(width: 8, height: 8)
-                Text(state).font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                Button(T("Forget")) { Task { await devices.forget(item) } }
-                    .buttonStyle(.borderless).foregroundStyle(.red)
-                    .help(T("It is forgotten here; if it connects again it is a new device."))
+        Form {
+            Section {
+                LabeledContent(T("State"), value: deviceState(item))
             }
-            HStack(alignment: .top, spacing: 16) {
-                field(T("Name"), text: $name, empty: "")
-                field(T("Room"), text: $room, empty: T("Not set yet"))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(T("Its LLM")).font(.caption).foregroundStyle(.secondary)
-                    Picker(T("Its LLM"), selection: Binding(get: { item.llm }, set: { new in
-                        Task { await devices.setLLM(item, new) }
-                    })) {
-                        Text(String(format: T("The general one (%@)"), llmName(devices.general))).tag("")
-                        ForEach(devices.llms, id: \.self) { Text(llmName($0)).tag($0) }  // fixed, whatever the default becomes
-                    }
-                    .labelsHidden()
-                }
-                .frame(maxWidth: .infinity)
+            Section {
+                TextField(T("Name"), text: $name)
+                TextField(T("Room"), text: $room, prompt: Text(T("Not set yet")))
+            } footer: {
+                Text(T("The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina»."))
+                    .font(.caption).foregroundStyle(.secondary)
             }
+            .focused($editing)
             .onSubmit { save() }
-            .onChange(of: editing) { _, now in if !now { save() } }  // leaving a field saves it
-            .onChange(of: name) { _, _ in later() }  // and a moment after typing (closing the window too)
-            .onChange(of: room) { _, _ in later() }
+            Section {
+                Picker(T("Language model"), selection: Binding(get: { item.llm }, set: { new in
+                    Task { await devices.setLLM(item, new) }
+                })) {
+                    Text(String(format: T("The general one (%@)"), llmName(devices.general))).tag("")
+                    ForEach(devices.llms, id: \.self) { Text(llmName($0)).tag($0) }  // fixed, whatever the default becomes
+                }
+            } footer: {
+                Text(T("The one that answers on this device.")).font(.caption).foregroundStyle(.secondary)
+            }
+            Section {
+                Button(T("Forget This Device"), role: .destructive) { forgetting = true }
+            } footer: {
+                Text(T("It is forgotten here; if it connects again it is a new device.")).font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle(item.name.isEmpty ? T("Unnamed device") : item.name)
+        .alert(T("Forget this device?"), isPresented: $forgetting) {
+            Button(T("Forget"), role: .destructive) { Task { await devices.forget(item); dismiss() } }
+            Button(T("Cancel"), role: .cancel) {}
+        } message: {
+            Text(T("It is forgotten here; if it connects again it is a new device."))
         }
         .onAppear { name = item.name; room = item.room }
         .onDisappear { save() }
+        .onChange(of: editing) { _, now in if !now { save() } }  // leaving a field saves it
+        .onChange(of: name) { _, _ in later() }  // and a moment after typing
+        .onChange(of: room) { _, _ in later() }
         .onChange(of: item) { _, new in if !editing { name = new.name; room = new.room } }
     }
-
-    /// A field with its title above it (in a form, macOS puts the title on the left and the
-    /// field without a border: the title read as if it were the value).
-    func field(_ title: String, text: Binding<String>, empty: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
-            TextField(title, text: text, prompt: Text(empty))
-                .labelsHidden().textFieldStyle(.roundedBorder).focused($editing)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    var state: String {
-        if item.current && item.connected { return T("Connected · talking to you") }
-        if item.connected { return T("Connected") }
-        let state = item.press ? T("Press to talk") : T("Not connected")
-        guard let seen = item.seen else { return state }
-        return state + " · " + (item.press ? T("last used") + " " : "") + seen.formatted(.relative(presentation: .named))
-    }
-
-    @State private var pending: Task<Void, Never>?
 
     /// Saved once you stop typing for a moment.
     func later() {
@@ -196,4 +221,13 @@ struct DeviceRow: View {
         changed.room = room
         Task { await devices.save(changed) }
     }
+}
+
+/// How a device is now: connected (and talking to you), press to talk (the watch), or when it was last seen.
+func deviceState(_ item: DeviceItem) -> String {
+    if item.current && item.connected { return T("Connected · talking to you") }
+    if item.connected { return T("Connected") }
+    let state = item.press ? T("Press to talk") : T("Not connected")
+    guard let seen = item.seen else { return state }
+    return state + " · " + seen.formatted(.relative(presentation: .named))
 }

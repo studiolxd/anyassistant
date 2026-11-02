@@ -15,7 +15,7 @@
     "Type the admin code. On the computer with the server: this page, Admins → «A code for another browser»; or in its terminal: bin/anyassistant admin-code.": "Escribe el código de administración. En el equipo con el servidor: esta página, Administradores → «Un código para otro navegador»; o en su terminal: bin/anyassistant admin-code.",
     "Enter": "Entrar",
     "That code isn't right (or it's too old): ask for another.": "Ese código no vale (o ha caducado): pide otro.",
-    "Pair a device": "Emparejar un dispositivo",
+    "Pair a device": "Conectar otro dispositivo",
     "A tablet or phone: scan the code with its camera, or open the address. The iPhone, Android and Apple Watch apps ask for the 6 digits.": "Una tablet o un móvil: escanea el código con su cámara, o abre la dirección. Las apps de iPhone, Android y Apple Watch piden los 6 dígitos.",
     "1. The certificate": "1. El certificado",
     "2. The page": "2. La página",
@@ -125,6 +125,20 @@
     "What it can do. Each one's page has its options.": "Lo que puede hacer. La página de cada uno tiene sus opciones.",
     "OpenAI-compatible": "Compatible con OpenAI",
     "From the community": "De la comunidad",
-    "Plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Plugins que comparte otra gente, desde un catálogo público. Cada paquete se revisa antes de publicarlo."
+    "Plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Plugins que comparte otra gente, desde un catálogo público. Cada paquete se revisa antes de publicarlo.",
+    "Connected · talking to you": "Conectado · hablando contigo",
+    "Connected": "Conectado",
+    "Press to talk": "Pulsar para hablar",
+    "Not connected": "Sin conectar",
+    "No device has connected yet.": "Todavía no se ha conectado ningún dispositivo.",
+    "Unnamed device": "Dispositivo sin nombre",
+    "Connect another device…": "Conectar otro dispositivo…",
+    "Not set yet": "Sin asignar",
+    "Language model": "Modelo de lenguaje",
+    "The one that answers on this device.": "El que responde en este dispositivo.",
+    "Forget This Device": "Olvidar este dispositivo",
+    "It is forgotten here; if it connects again it is a new device.": "Se olvida aquí; si vuelve a conectarse, será un dispositivo nuevo.",
+    "Forget this device?": "¿Olvidar este dispositivo?",
+    "The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».": "La habitación es como la dices por voz: «pon una alarma en la cocina». También se cambia por voz desde el propio dispositivo: «esta es la de la cocina»."
   }
 }

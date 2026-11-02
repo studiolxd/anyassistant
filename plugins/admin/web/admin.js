@@ -110,13 +110,14 @@ var timer = null;
 function show(id) {
   current = id;
   if (timer) { clearInterval(timer); timer = null; }
-  var section = id.indexOf('plugin/') === 0 ? 'plugins' : id;
+  var section = id.indexOf('plugin/') === 0 ? 'plugins' : id.indexOf('device/') === 0 ? 'devices' : id;
   Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (b) {
     b.classList.toggle('on', b.dataset.id === section);
   });
   var main = $('main');
   main.innerHTML = '';
-  if (section !== id) pluginPage(main, id.slice(7));
+  if (section === 'plugins' && section !== id) pluginPage(main, id.slice(7));
+  else if (section === 'devices' && section !== id) devicePage(main, id.slice(7));
   else ({ pair: pair, devices: devices, settings: settingsPage, plugins: plugins, admins: adminsPage })[id](main);
   history.replaceState(null, '', '#' + id);
 }
@@ -180,57 +181,76 @@ function pair(main) {
   });
 }
 
+// The devices, as the Mac app lists them: a row each (name, room and state; the connected ones
+// first) that opens its page (#device/<id>): its state, name and room, its language model, forget it.
+function deviceState(d) {
+  if (d.connected) return d.current ? T('Connected · talking to you') : T('Connected');
+  var state = d.press ? T('Press to talk') : T('Not connected');
+  return d.seen ? state + ' · ' + ago(d.seen) : state;
+}
+
 function devices(main) {
   main.appendChild(el('h1', { text: T('Devices') }));
-  main.appendChild(el('p', { class: 'lead', text: T('Its name and room: «dile a la cocina…», and where alarms ring.') }));
   var box = el('div', { class: 'card' });
   main.appendChild(box);
-  var editing = false;
   function load() {
-    if (editing) return;
     api('GET', '/devices').then(function (data) {
       box.innerHTML = '';
-      if (!data.devices.length) box.appendChild(el('p', { class: 'muted', text: T('None yet: pair one.') }));
-      data.devices.forEach(function (d) {
-        var state = d.connected ? el('span', { class: 'pill ok', text: d.current ? T('talking to you') : T('connected') })
-                    : d.press ? el('span', { class: 'pill', text: T('press to talk') + (d.seen ? ' · ' + ago(d.seen) : '') })
-                    : el('span', { class: 'pill', text: d.seen ? T('seen') + ' ' + ago(d.seen) : T('not connected') });
-        var name = el('input', { value: d.name, placeholder: T('Name') });
-        var room = el('input', { value: d.room, placeholder: T('Room') });
-        // Its own LLM, or the general one: from its next question.
-        var llm = el('select', { title: T('Its LLM') }, [el('option', { value: '', text: T('The general one') + ' (' + T(LLM_NAMES[data.general] || data.general) + ')' })]
-          .concat((data.llms || []).map(function (l) {  // fixed, whatever the default becomes
-            return el('option', { value: l, text: T(LLM_NAMES[l] || l) });
-          })));
-        llm.value = d.llm || '';
-        llm.addEventListener('focus', function () { editing = true; });
-        llm.addEventListener('blur', function () { editing = false; });
-        llm.addEventListener('change', function () {
-          api('POST', '/devices', { id: d.id, llm: llm.value }).then(function (r) { flash(llm, !r.error); });
+      if (!data.devices.length) box.appendChild(el('p', { class: 'muted', text: T('No device has connected yet.') }));
+      data.devices.slice().sort(function (a, b) { return (b.connected ? 1 : 0) - (a.connected ? 1 : 0) || a.name.localeCompare(b.name); })
+        .forEach(function (d) {
+          box.appendChild(el('div', { class: 'row link', onclick: function () { show('device/' + d.id); } }, [
+            el('div', { class: 'what' }, [el('b', { text: d.name || T('Unnamed device') }),
+              el('div', { class: 'muted', text: [d.room, deviceState(d)].filter(Boolean).join(' · ') })]),
+            d.connected ? el('span', { class: 'pill ok', text: T('Connected') }) : null
+          ]));
         });
-        [name, room].forEach(function (field) {
-          field.addEventListener('focus', function () { editing = true; });
-          field.addEventListener('change', function () {
-            api('POST', '/devices', { id: d.id, name: name.value, room: room.value }).then(function (r) {
-              flash(field, !r.error);
-              if (r.error) alert(r.error);
-            });
-          });
-          field.addEventListener('blur', function () { editing = false; });
-        });
-        box.appendChild(el('div', { class: 'row' }, [
-          el('div', { class: 'what' }, [name, ' ', room, ' ', llm, state]),
-          el('button', { class: 'danger', text: T('Forget'), onclick: function () {
-            if (confirm(T('Forget this device? It will need a new code if pairing is on.'))) {
-              api('POST', '/devices', { id: d.id, forget: true }).then(load);
-            }
-          } })
-        ]));
-      });
     });
   }
   load();
+  main.appendChild(el('p', {}, [el('button', { class: 'quiet', text: T('Connect another device…'), onclick: function () { show('pair'); } })]));
   timer = setInterval(load, 5000);
+}
+
+function devicePage(main, id) {
+  api('GET', '/devices').then(function (data) {
+    var d = data.devices.filter(function (x) { return x.id === id; })[0];
+    main.appendChild(el('button', { class: 'quiet', text: '‹ ' + T('Devices'), onclick: function () { show('devices'); } }));
+    if (!d) { main.appendChild(el('p', { class: 'muted', text: T('No results') })); return; }
+    main.appendChild(el('h1', { text: d.name || T('Unnamed device') }));
+    main.appendChild(el('p', { class: 'lead', text: deviceState(d) }));
+    var name = el('input', { value: d.name, placeholder: T('Name') });
+    var room = el('input', { value: d.room, placeholder: T('Not set yet') });
+    [name, room].forEach(function (field) {
+      field.addEventListener('change', function () {
+        api('POST', '/devices', { id: d.id, name: name.value, room: room.value }).then(function (r) {
+          flash(field, !r.error);
+          if (r.error) alert(r.error);
+        });
+      });
+    });
+    var llm = el('select', {}, [el('option', { value: '', text: T('The general one') + ' (' + T(LLM_NAMES[data.general] || data.general) + ')' })]
+      .concat((data.llms || []).map(function (l) {  // fixed, whatever the default becomes
+        return el('option', { value: l, text: T(LLM_NAMES[l] || l) });
+      })));
+    llm.value = d.llm || '';
+    llm.addEventListener('change', function () {
+      api('POST', '/devices', { id: d.id, llm: llm.value }).then(function (r) { flash(llm, !r.error); });
+    });
+    function row(title, help, field) {
+      return el('div', { class: 'row' }, [el('div', { class: 'what' }, [el('b', { text: title }),
+        help ? el('div', { class: 'muted', text: help }) : null]), el('div', { class: 'field' }, [field])]);
+    }
+    main.appendChild(el('div', { class: 'card' }, [
+      row(T('Name'), '', name),
+      row(T('Room'), T('The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».'), room),
+      row(T('Language model'), T('The one that answers on this device.'), llm)
+    ]));
+    main.appendChild(el('div', { class: 'card' }, [row(T('Forget This Device'), T('It is forgotten here; if it connects again it is a new device.'),
+      el('button', { class: 'danger', text: T('Forget'), onclick: function () {
+        if (confirm(T('Forget this device?'))) api('POST', '/devices', { id: d.id, forget: true }).then(function () { show('devices'); });
+      } }))]));
+  });
 }
 
 function settingsPage(main) {

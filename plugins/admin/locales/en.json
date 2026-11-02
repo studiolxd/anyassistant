@@ -9,7 +9,7 @@
     "Type the admin code. On the computer with the server: this page, Admins → «A code for another browser»; or in its terminal: bin/anyassistant admin-code.": "Type the admin code. On the computer with the server: this page, Admins → «A code for another browser»; or in its terminal: bin/anyassistant admin-code.",
     "Enter": "Enter",
     "That code isn't right (or it's too old): ask for another.": "That code isn't right (or it's too old): ask for another.",
-    "Pair a device": "Pair a device",
+    "Pair a device": "Connect another device",
     "A tablet or phone: scan the code with its camera, or open the address. The iPhone, Android and Apple Watch apps ask for the 6 digits.": "A tablet or phone: scan the code with its camera, or open the address. The iPhone, Android and Apple Watch apps ask for the 6 digits.",
     "1. The certificate": "1. The certificate",
     "2. The page": "2. The page",
@@ -119,6 +119,20 @@
     "What it can do. Each one's page has its options.": "What it can do. Each one's page has its options.",
     "OpenAI-compatible": "OpenAI-compatible",
     "From the community": "From the community",
-    "Plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Plugins other people share, from a public catalog. Every package is reviewed before it is listed."
+    "Plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Plugins other people share, from a public catalog. Every package is reviewed before it is listed.",
+    "Connected · talking to you": "Connected · talking to you",
+    "Connected": "Connected",
+    "Press to talk": "Press to talk",
+    "Not connected": "Not connected",
+    "No device has connected yet.": "No device has connected yet.",
+    "Unnamed device": "Unnamed device",
+    "Connect another device…": "Connect another device…",
+    "Not set yet": "Not set yet",
+    "Language model": "Language model",
+    "The one that answers on this device.": "The one that answers on this device.",
+    "Forget This Device": "Forget This Device",
+    "It is forgotten here; if it connects again it is a new device.": "It is forgotten here; if it connects again it is a new device.",
+    "Forget this device?": "Forget this device?",
+    "The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».": "The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina»."
   }
 }

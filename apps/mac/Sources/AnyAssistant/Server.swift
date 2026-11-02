@@ -16,6 +16,20 @@ func llmName(_ id: String) -> String {
      "ollama": "Ollama", "hermes": "Hermes", "apple": "Apple"][id] ?? id.capitalized
 }
 
+/// A device's icon, by its kind («iPhone», «Mac»…).
+func deviceSymbol(_ kind: String) -> String {
+    switch kind {
+    case "iPhone": "iphone"
+    case "iPad": "ipad"
+    case "Mac": "laptopcomputer"
+    case "Apple Watch": "applewatch"
+    case "Android phone": "smartphone"
+    case "Android tablet": "rectangle.portrait"
+    case "PC": "pc"
+    default: "display"
+    }
+}
+
 /// A connected device, for the menu: its name, room, kind (its icon) and the LLM it uses.
 struct ConnectedDevice: Equatable {
     let id: String
@@ -26,18 +40,7 @@ struct ConnectedDevice: Equatable {
     let current: Bool
 
     /// Its kind's symbol: iPhone, iPad, Mac, Android, the watch, a PC.
-    var symbol: String {
-        switch kind {
-        case "iPhone": "iphone"
-        case "iPad": "ipad"
-        case "Mac": "laptopcomputer"
-        case "Apple Watch": "applewatch"
-        case "Android phone": "smartphone"
-        case "Android tablet": "rectangle.portrait"
-        case "PC": "pc"
-        default: "display"
-        }
-    }
+    var symbol: String { deviceSymbol(kind) }
 }
 
 enum ServerState: Equatable {

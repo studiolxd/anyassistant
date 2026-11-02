@@ -224,3 +224,11 @@
 "Updated. It applies after restarting." = "Actualizado. Se aplica al reiniciar.";
 "Removed." = "Quitado.";
 "Removed. It applies after restarting." = "Quitado. Se aplica al reiniciar.";
+"No device has connected yet." = "Todavía no se ha conectado ningún dispositivo.";
+"Connect another device…" = "Conectar otro dispositivo…";
+"Unnamed device" = "Dispositivo sin nombre";
+"State" = "Estado";
+"Language model" = "Modelo de lenguaje";
+"The one that answers on this device." = "El que responde en este dispositivo.";
+"Forget This Device" = "Olvidar este dispositivo";
+"Forget this device?" = "¿Olvidar este dispositivo?";

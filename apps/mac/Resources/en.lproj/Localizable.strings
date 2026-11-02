@@ -224,3 +224,11 @@
 "Updated. It applies after restarting." = "Updated. It applies after restarting.";
 "Removed." = "Removed.";
 "Removed. It applies after restarting." = "Removed. It applies after restarting.";
+"No device has connected yet." = "No device has connected yet.";
+"Connect another device…" = "Connect Another Device…";
+"Unnamed device" = "Unnamed Device";
+"State" = "Status";
+"Language model" = "Language Model";
+"The one that answers on this device." = "The one that answers on this device.";
+"Forget This Device" = "Forget This Device";
+"Forget this device?" = "Forget this device?";
