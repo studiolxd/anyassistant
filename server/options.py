@@ -40,6 +40,13 @@ class Option:
             self.default = next((p for p in self.prefer if p in there), there[0] if there else self.default)
 
 
+def _arm() -> bool:
+    """Whether this computer is ARM but not a Mac (Apple Silicon has its own voices first)."""
+    import platform
+
+    return sys.platform != "darwin" and platform.machine().lower() in ("aarch64", "arm64", "armv7l")
+
+
 def _plugins(package):
     def available():
         module = __import__(package)
@@ -86,7 +93,9 @@ OPTIONS = [
     Option("stt_unload_minutes", 30, "minutes without transcribing before the speech recognition model leaves memory "
            "(0: never); it comes back when needed", "voice", "int", live=True),
     Option("tts", "avspeech", "its voice engine: avspeech, macos, kokoro, piper… or none", "voice", "choice",
-           lambda: _plugins("tts")() + ["none"], prefer=("avspeech", "kokoro", "piper", "macos", "none")),
+           lambda: _plugins("tts")() + ["none"],
+           # On ARM (a Raspberry Pi, Windows on ARM) Piper first: lighter than Kokoro
+           prefer=(("avspeech", "piper", "kokoro", "macos", "none") if _arm() else ("avspeech", "kokoro", "piper", "macos", "none"))),
     Option("voice", None, "the voice (default: the language's); one, or one per language: "
            '{"es": "Mónica", "en": "Samantha"}', "voice", "json", empty="the language's"),
     Option("rate", None, "words per minute", "voice", "int", empty="the voice's own"),

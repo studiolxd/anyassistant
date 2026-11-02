@@ -164,3 +164,16 @@ def test_a_package_for_another_system_isnt_needed_here(tmp_path, monkeypatch):
     assert kernel.unfit("elsewhere") == [] and kernel.enabled("elsewhere")
     assert "surely-not-installed-pkg>=1; sys_platform == 'plan9'" not in kernel.requirements()
     kernel.reset()
+
+
+def test_arm_computers_prefer_piper(monkeypatch):
+    """A Raspberry Pi (Linux on ARM) or Windows on ARM: Piper before Kokoro; the Mac, its own voice."""
+    import platform
+
+    import options
+
+    for system, machine, arm in (("linux", "aarch64", True), ("win32", "ARM64", True), ("linux", "x86_64", False),
+                                 ("darwin", "arm64", False)):
+        monkeypatch.setattr(options.sys, "platform", system)
+        monkeypatch.setattr(platform, "machine", lambda m=machine: m)
+        assert options._arm() is arm

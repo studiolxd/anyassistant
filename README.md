@@ -1145,7 +1145,7 @@ The voice engines (`tts`; each computer starts with the first it has, in this or
 |---|---|---|---|
 | **`avspeech`** | Mac | the Mac's (`say -v '?'`): Mónica in Spanish, Samantha in English | AVSpeechSynthesizer in a Swift bridge that keeps the voice loaded, ~50 ms per sentence; with the enhanced version of a voice downloaded (System Settings → Accessibility → Spoken Content), it uses it |
 | `kokoro` | Windows, Linux | ef_dora (Dora), em_alex, em_santa in Spanish; af_heart, af_bella, am_michael, bf_emma, bm_george… in English; also French, Italian, Portuguese, Hindi, Japanese and Chinese | Kokoro-82M in ONNX on the CPU, the most natural; its model (88 MB) and voices (27 MB) download once |
-| `piper` | Raspberry Pi (Linux ARM), Linux, Windows, Mac | es_ES-davefx-medium (Davefx), es_ES-carlfm-x_low, es_MX-claude-high, es_MX-ald-medium, es_AR-daniela-high in Spanish; en_US-lessac-medium (Lessac), en_US-amy-medium, en_US-ryan-medium, en_GB-alba-medium, en_GB-alan-medium in English | Piper (VITS in ONNX) on the CPU: lighter and faster than Kokoro (~60 ms per sentence on a Mac); each voice is its own model (~63 MB; carlfm, 28 MB), downloaded the first time it speaks, pinned in `server/models.py` |
+| `piper` | Raspberry Pi (Linux ARM; the default on ARM), Linux, Windows | es_ES-davefx-medium (Davefx), es_ES-carlfm-x_low, es_MX-claude-high, es_MX-ald-medium, es_AR-daniela-high in Spanish; en_US-lessac-medium (Lessac), en_US-amy-medium, en_US-ryan-medium, en_GB-alba-medium, en_GB-alan-medium in English | Piper (VITS in ONNX) on the CPU: lighter and faster than Kokoro (~60 ms per sentence on a Mac); each voice is its own model (~63 MB; carlfm, 28 MB), downloaded the first time it speaks, pinned in `server/models.py` |
 | `macos` | Mac | the Mac's | `say`, ~600 ms per sentence (it starts every time) |
 
 Each language has its engine's default voice (the first above). **Another voice**: by voice
@@ -1162,7 +1162,7 @@ and `label(name)` to list and name their voices (`server/tts/`).
 ```
 uv run server/main.py --voice Eddy --rate 200   # another voice, faster
 uv run server/main.py --tts macos               # with `say`
-uv run server/main.py --tts piper               # Piper (the Mac's too)
+uv run server/main.py --tts piper               # Piper (Windows and Linux)
 uv run server/main.py --tts none                # text only
 ```
 

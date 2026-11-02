@@ -1,10 +1,14 @@
 {
   "name": "Piper",
-  "description": "A light voice, for a Raspberry Pi: Piper (VITS in ONNX), on the CPU, faster than Kokoro (Spanish and English).",
+  "description": "A light voice for Windows and Linux, the default on ARM (a Raspberry Pi): Piper (VITS in ONNX), on the CPU, faster than Kokoro (Spanish and English).",
   "kind": "tts",
   "needs": {
     "python": [
-      "piper-tts>=1.3"
+      "piper-tts>=1.3; sys_platform != 'darwin'"
+    ],
+    "system": [
+      "linux",
+      "win32"
     ]
   }
 }

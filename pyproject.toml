@@ -24,7 +24,7 @@ stt-mlx-whisper = ["mlx-whisper>=0.4.3; sys_platform == 'darwin'"]
 stt-parakeet = ["parakeet-mlx>=0.5.3; sys_platform == 'darwin'"]
 stt-parakeet-onnx = ["onnx-asr[cpu,hub]>=0.7; sys_platform != 'darwin'"]
 tts-kokoro = ["kokoro-onnx>=0.4; sys_platform != 'darwin'"]
-tts-piper = ["piper-tts>=1.3"]
+tts-piper = ["piper-tts>=1.3; sys_platform != 'darwin'"]
 vad-silero = ["silero-vad>=6.2.3", "torch>=2.5"]  # torch: named, for its CPU index (below)
 voices = ["onnxruntime>=1.31.1", "huggingface-hub>=0.20"]
 wake-openwakeword = ["openwakeword>=0.4.0", "onnxruntime>=1.31.1"]

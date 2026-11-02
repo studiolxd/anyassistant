@@ -9,7 +9,7 @@ cada equipo elige los motores que tiene. Cómo se hizo cada pieza:
 | Reconocimiento de voz | Parakeet y Whisper en MLX (Apple Silicon) | `stt-parakeet-onnx` (el mismo Parakeet v3 en ONNX, CPU; CUDA si hay NVIDIA) y `stt-faster-whisper` |
 | Palabra de activación | `wake-whisper` sobre MLX | que use el Whisper que haya (faster-whisper tiny/base); openWakeWord ya vale |
 | Voz | AVSpeech y `say` | `tts-kokoro` (Kokoro-82M en ONNX, en el procesador; Dora en español) |
-| Voz ligera | `tts-piper` también vale | `tts-piper` (Piper en ONNX con `piper-tts`, que trae espeak-ng: Linux ARM de una Raspberry Pi y x86, Windows; una voz por modelo, ~63 MB, fijada en `server/models.py` y descargada al usarla; Davefx en español, Lessac en inglés) |
+| Voz ligera | no (la del Mac) | `tts-piper` (Piper en ONNX con `piper-tts`, que trae espeak-ng: Linux ARM de una Raspberry Pi y x86, Windows; una voz por modelo, ~63 MB, fijada en `server/models.py` y descargada al usarla; Davefx en español, Lessac en inglés) |
 | LLM | Claude (CLI), Hermes, Apple (modelo del Mac) | Claude y Hermes valen; Apple no (`llm-fallback` ya lo salta) |
 | Correo | contraseñas en el llavero (`security`) | `keyring`: el Administrador de credenciales de Windows, Secret Service en Linux |
 | Bonjour (`anyassistant.local`) | `dns-sd` | `zeroconf` en Python (vale también en el Mac: una sola implementación) |
