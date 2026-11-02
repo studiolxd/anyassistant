@@ -1019,14 +1019,14 @@ function sidebar() {
 // This browser's interface language (a cookie: the themes page and the device's page here follow
 // it too); Automatic: the browser's own. Not the one the assistant speaks (General).
 function languagePicker(me) {
-  var pick = el('select', { 'aria-label': T('Interface Language') }, [el('option', { value: 'auto', text: T('Automatic') })]
+  var pick = el('select', { class: 'language', 'aria-label': T('Interface Language') }, [el('option', { value: 'auto', text: T('Automatic') })]
     .concat(Object.keys(me.ui_languages || {}).map(function (c) { return el('option', { value: c, text: me.ui_languages[c] }); })));
   pick.value = me.ui_language || 'auto';
   pick.addEventListener('change', function () {
     document.cookie = 'ui_language=' + pick.value + '; path=/; SameSite=Lax; max-age=' + (pick.value === 'auto' ? 0 : 31536000);
     location.reload();
   });
-  return el('label', { class: 'language' }, [el('span', { text: T('Interface Language') }), pick]);
+  return pick;  // no label: the languages say what it is
 }
 
 // --- Start ---
