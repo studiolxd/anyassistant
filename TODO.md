@@ -84,12 +84,11 @@ LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
   activaciones, una falsa, corregida).
 - [ ] **Contestar en el idioma en que se dice cada frase** (bilingüe a la vez).
 
-## Mantenimiento
-
-- [ ] **Pasar la app del Mac a Swift 6** (hoy compila en modo de lenguaje Swift 5).
-
 # Hecho
 
+- [x] **La app del Mac en Swift 6** (2 nov), sin avisos de concurrencia: también los archivos que
+  comparte con el iPhone (que sigue en Swift 5 por iOS 15); los delegados de WebKit con la firma
+  exacta (en Swift 6 dejaban de llamarse: la confianza en el HTTPS del servidor).
 - [x] **El Apple Watch con la cara de Eyes** (2 nov): solo los ojos y la boca; escucha mientras lo
   miras (encuentra cada frase él mismo), piensa, contesta en voz alta y vuelve a escuchar; con la
   muñeca bajada, duerme. El dibujo de Eyes es uno para el iPhone, el iPad, el Mac y el reloj

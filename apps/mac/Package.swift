@@ -9,5 +9,5 @@ let package = Package(
     targets: [
         .executableTarget(name: "AnyAssistant", path: "Sources/AnyAssistant")
     ],
-    swiftLanguageModes: [.v5]
+    swiftLanguageModes: [.v6]
 )

@@ -200,7 +200,7 @@ final class WebFace: NSObject, ObservableObject {
 
 extension WebFace: WKNavigationDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse,
-                 decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+                 decisionHandler: @escaping @MainActor @Sendable (WKNavigationResponsePolicy) -> Void) {
         if let response = navigationResponse.response as? HTTPURLResponse, navigationResponse.isForMainFrame,
            response.statusCode != 200 {
             decisionHandler(.cancel)
@@ -232,7 +232,7 @@ extension WebFace: WKNavigationDelegate {
 
     /// Over HTTPS, only the server's own authority (learnt when pairing), as the app's connection.
     func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge,
-                 completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+                 completionHandler: @escaping @MainActor @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
               let trust = challenge.protectionSpace.serverTrust,
               UserDefaults.standard.data(forKey: "authority") != nil else {

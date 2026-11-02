@@ -102,8 +102,9 @@ final class Delegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { Client.shared.checkPermissions() }  // changed in System Settings
         }
         center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { note in
-            guard let window = note.object as? NSWindow, window.styleMask.contains(.titled) else { return }
+            let window = note.object as? NSWindow
             MainActor.assumeIsolated {
+                guard let window, window.styleMask.contains(.titled) else { return }
                 if NSApp.activationPolicy() != .regular { NSApp.setActivationPolicy(.regular) }
                 Client.shared.followFace()
             }

@@ -266,8 +266,10 @@ final class Server: ObservableObject {
 
     /// Runs a program to the end; its output, line by line, to `line` (and the exit code).
     @discardableResult
-    func run(_ executable: URL, _ arguments: [String], line: ((String) -> Void)? = nil) async -> Int32 {
-        await withCheckedContinuation { done in
+    func run(_ executable: URL, _ arguments: [String], line: (@MainActor (String) -> Void)? = nil) async -> Int32 {
+        /// What has come without its newline yet (the handler is called on one queue at a time).
+        final class Pending: @unchecked Sendable { var data = Data() }
+        return await withCheckedContinuation { done in
             let task = Process()
             task.executableURL = executable
             task.arguments = arguments
@@ -275,15 +277,15 @@ final class Server: ObservableObject {
             let pipe = Pipe()
             task.standardOutput = pipe
             task.standardError = pipe
-            var pending = Data()
+            let pending = Pending()
             pipe.fileHandleForReading.readabilityHandler = { handle in
                 let chunk = handle.availableData
                 guard !chunk.isEmpty else { return }
-                pending.append(chunk)
-                while let newline = pending.firstIndex(of: 10) {
-                    let text = String(decoding: pending[..<newline], as: UTF8.self)
-                    pending.removeSubrange(...newline)
-                    if let line { DispatchQueue.main.async { line(text) } }
+                pending.data.append(chunk)
+                while let newline = pending.data.firstIndex(of: 10) {
+                    let text = String(decoding: pending.data[..<newline], as: UTF8.self)
+                    pending.data.removeSubrange(...newline)
+                    if let line { Task { @MainActor in line(text) } }
                 }
             }
             task.terminationHandler = { finished in

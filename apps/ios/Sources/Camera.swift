@@ -11,7 +11,8 @@ import UIKit
 import AppKit
 #endif
 
-final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCapturePhotoCaptureDelegate {
+/// Its state is touched only on its queue (the frames' delegate is called there; the photo's goes there).
+final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCapturePhotoCaptureDelegate, @unchecked Sendable {
     let session = AVCaptureSession()
     private let video = AVCaptureVideoDataOutput()
     private let still = AVCapturePhotoOutput()
@@ -19,10 +20,10 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
     private let context = CIContext()
     private var configured = false
     private var lastFrame = Date.distantPast
-    private var photos: [Int64: (Data) -> Void] = [:]
+    private var photos: [Int64: @Sendable (Data) -> Void] = [:]
     private var latest: Data?  // the last frame, for a photo that fails
     /// A frame, as JPEG (about once a second while on).
-    var onFrame: ((Data) -> Void)?
+    var onFrame: (@Sendable (Data) -> Void)?
 
     var running: Bool { session.isRunning }
 
@@ -39,13 +40,13 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
     }
 
     /// A photo at full resolution (nil: no camera).
-    func photo(_ done: @escaping (Data?) -> Void) {
+    func photo(_ done: @escaping @Sendable (Data?) -> Void) {
         queue.async { [self] in
             guard configure() else { return done(nil) }
             orient()
             let wasRunning = session.isRunning
             if !wasRunning { session.startRunning() }
-            let shoot = { [self] in
+            let shoot: @Sendable () -> Void = { [self] in
                 let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
                 photos[settings.uniqueID] = { data in
                     done(data)
@@ -125,9 +126,12 @@ final class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCa
     }
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        let done = photos.removeValue(forKey: photo.resolvedSettings.uniqueID)
         let taken = error == nil ? photo.fileDataRepresentation() : nil
-        done?(taken?.isEmpty == false ? taken! : (latest ?? Data()))  // failed: the last frame
+        let id = photo.resolvedSettings.uniqueID
+        queue.async { [self] in
+            let done = photos.removeValue(forKey: id)
+            done?(taken?.isEmpty == false ? taken! : (latest ?? Data()))  // failed: the last frame
+        }
     }
 }
 

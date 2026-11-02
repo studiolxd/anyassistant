@@ -73,7 +73,7 @@ final class Setup: ObservableObject {
         note = T("Copying the program and preparing Python…")
         let code = await server.run(server.bundled.appending(path: "install.sh"),
                                     ["--to", server.program.path, "--data", server.data.path,
-                                     "--cache", server.cache.path, "--no-setup", "--json"]) { [weak self] line in
+                                     "--cache", server.cache.path, "--no-setup", "--json"]) { line in
             _ = line  // install.sh's own words are English: the window says it in its language
         }
         if code != 0 { failed = true; note = T("It couldn't prepare the program.") }

@@ -5,7 +5,9 @@
 
 import AVFoundation
 
-final class Audio {
+/// Set up, started and stopped on the main thread; the engine's taps and the notifications only call
+/// its handlers (Sendable: they go to the main actor) and its converter, made before the taps.
+final class Audio: @unchecked Sendable {
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
     private let playing = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 48000, channels: 1, interleaved: false)!
@@ -14,12 +16,12 @@ final class Audio {
     private var mono: AVAudioFormat?
     private(set) var running = false
     /// The audio was cut off (headphones plugged in, its route changed…): it has to start again.
-    var onRestartNeeded: (() -> Void)?
+    var onRestartNeeded: (@Sendable () -> Void)?
     /// iOS interrupted it: another app took the audio (a call, FaceTime, any app that records);
     /// true when it begins (the engine is stopped by then), false when it ends (it may start again).
-    var onInterruption: ((Bool) -> Void)?
+    var onInterruption: (@Sendable (Bool) -> Void)?
     /// How loud its own voice is now (0…1), for the face; about 20 times a second.
-    var onSpeech: ((Float) -> Void)?
+    var onSpeech: (@Sendable (Float) -> Void)?
 
     init() {
         engine.attach(player)

@@ -40,8 +40,9 @@ enum Interface {
 
     static let changed = Notification.Name("interfaceLanguage")
 
-    /// The chosen language's texts (its .lproj), or the system's choice (the main bundle).
-    static var bundle: Bundle = load()
+    /// The chosen language's texts (its .lproj), or the system's choice (the main bundle). Changed
+    /// only on the main thread (choose), read from any (T).
+    nonisolated(unsafe) static var bundle: Bundle = load()
 
     private static func load() -> Bundle {
         guard chosen != "auto", let path = Bundle.main.path(forResource: chosen, ofType: "lproj"),

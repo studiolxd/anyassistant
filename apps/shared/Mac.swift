@@ -167,7 +167,7 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         let once = Once()
         let found: (address: String, port: Int?)? = await withCheckedContinuation { continuation in
             let browser = NWBrowser(for: .bonjourWithTXTRecord(type: "_anyassistant._tcp", domain: nil), using: .tcp)
-            let finish: ((address: String, port: Int?)?) -> Void = { found in
+            let finish: @Sendable ((address: String, port: Int?)?) -> Void = { found in
                 guard !once.done else { return }
                 once.done = true
                 browser.cancel()

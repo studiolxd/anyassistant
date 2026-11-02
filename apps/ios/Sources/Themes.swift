@@ -126,7 +126,7 @@ struct CaptionLines: View {
 
 /// A WordsArea's words, measured in its scroll: width, their top (0, or less when scrolled); height, theirs.
 struct WordsMetrics: PreferenceKey {
-    static var defaultValue = CGSize.zero
+    static let defaultValue = CGSize.zero
     static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
         let next = nextValue()  // views that don't measure give the default: they don't count
         if next != .zero { value = next }
@@ -224,7 +224,7 @@ struct Clock<Content: View>: View {
 
 /// Where the face and its words end (in ThemeView's space): the camera goes below.
 struct FaceEnd: PreferenceKey {
-    static var defaultValue: CGFloat = 0
+    static let defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
