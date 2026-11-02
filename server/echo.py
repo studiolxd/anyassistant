@@ -77,8 +77,10 @@ class Trail:
     def end(self) -> float:
         return (self.start or 0.0) + len(self.frames) * HOP
 
-    def add(self, pcm: np.ndarray, at: float):
-        """`pcm` (48 kHz int16) starts playing at `at`."""
+    def add(self, pcm: np.ndarray, at: float, now: float | None = None):
+        """`pcm` (48 kHz int16) starts playing at `at`. Kept: from KEEP seconds before now (or
+        `at`, if earlier) on, whatever is queued after it: a long answer is sent at once, so
+        what plays now must not be dropped for what plays later."""
         env = envelope(pcm, 48000)
         if not len(env):
             return
@@ -93,7 +95,8 @@ class Trail:
                 self.frames = np.concatenate([self.frames[:max(0, index)], env])
                 if index < 0:
                     self.start = at
-        extra = len(self.frames) - int(KEEP / HOP)
+        since = min(time.time() if now is None else now, at) - KEEP
+        extra = int((since - self.start) / HOP)
         if extra > 0:
             self.frames = self.frames[extra:]
             self.start += extra * HOP

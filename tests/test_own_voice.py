@@ -99,7 +99,8 @@ def test_the_trail_keeps_only_the_last_seconds():
     trail = echo.Trail()
     for i in range(20):
         trail.add(int16(np.full(RATE, 0.3)), 50.0 + i)
-    assert len(trail.frames) == int(echo.KEEP / echo.HOP) and trail.start == pytest.approx(70 - echo.KEEP)
+    # KEEP seconds before the last one started (now, for it), and all of that one
+    assert trail.start == pytest.approx(69 - echo.KEEP) and trail.end == pytest.approx(70)
 
 
 def test_an_onset_is_silence_then_loud():
@@ -343,3 +344,15 @@ def test_the_assistant_stops_when_talked_over(monkeypatch):
     assert not stopped and not handled
     a._heard("What about Friday?", {"over": True, "stt_ms": 100, "audio_s": 1})
     assert stopped and handled == ["What about Friday?"]
+
+
+def test_a_long_answer_sent_at_once_keeps_what_plays_now():
+    """The whole answer is queued at once: what plays now isn't dropped for what plays later (KEEP
+    counted from now, not from the end of what was queued)."""
+    trail = echo.Trail()
+    rng = np.random.default_rng(1)
+    start = t0 = 1000.0
+    for seconds in (12.0, 1.5, 9.0, 8.0):
+        trail.add((rng.normal(0, 1, int(48000 * seconds)) * 8000).astype(np.int16), start, now=t0)
+        start += seconds
+    assert trail.playing(t0 + 1, t0 + 3.5) and trail.playing(t0 + 28, t0 + 30)
