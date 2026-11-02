@@ -17,6 +17,7 @@ numpy and scipy (and PyAV, which aiortc brings, to decode MP3, FLAC and Opus).
 
 import io
 import json
+import os
 import re
 import unicodedata
 import wave
@@ -39,9 +40,13 @@ LEAD_NOISE = 3.0  # noise before the speech, so the ear's noise floor settles as
 TAIL = 1.5
 
 
+# Where the corpus lives on this computer: the cache's «corpus», or $ANYASSISTANT_CORPUS (one copy for
+# several checkouts). Fixed when imported: the tests send the cache elsewhere, the corpus stays.
+FOLDER = Path(os.environ.get("ANYASSISTANT_CORPUS") or paths.CACHE / "corpus")
+
+
 def folder() -> Path:
-    """Where the corpus lives on this computer: the cache's «corpus»."""
-    return paths.CACHE / "corpus"
+    return FOLDER
 
 
 def cases_folder() -> Path:

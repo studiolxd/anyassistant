@@ -155,6 +155,13 @@ def test_comparison_restricts_the_baseline_to_what_ran():
     after = results({SPEECH[0]: 0}, {SPEECH[0]: 1})  # a run with a limit: only the first case
     assert run.compare(FOUND, before, after)["problems"] == []
     assert run.compare(FOUND, before, after)["changes"] == []
+    # Fewer speakers enrolled: only their impostor scores count, in the baseline too.
+    trial = {"speaker": "cv-01", "kind": "speech", "snr": None, "own": 0.7, "verdict": "accepted"}
+    before["speakers"].update(names=["cv-01", "cv-02", "cv-03"],
+                              trials={SPEECH[1]: {**trial, "others": [0.2, 0.6]}})  # cv-02: 0.2, cv-03: 0.6
+    after["speakers"].update(names=["cv-01", "cv-02"], trials={SPEECH[1]: {**trial, "others": [0.2]}})
+    assert run.restrict(before, after)["speakers"]["trials"][SPEECH[1]]["others"] == [0.2]
+    assert run.compare(FOUND, before, after)["changes"] == []
 
 
 def test_equal_error_rate():

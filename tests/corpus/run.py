@@ -214,13 +214,13 @@ def speakers(found: dict, cases: list[dict], audio: dict, progress=print) -> dic
         trials[case["id"]] = {
             "speaker": case["speaker"], "kind": case["kind"], "snr": case.get("snr"),
             "own": round(scores.get(case["speaker"], 0.0), 3),
-            "others": [round(s, 3) for name, s in sorted(scores.items()) if name != case["speaker"]],
+            "others": [round(scores.get(name, 0.0), 3) for name in enrolled if name != case["speaker"]],  # in `names` order
             "verdict": outcome,
         }
         if n % 50 == 0:
             progress(f"  {n}/{len(tested)}")
     store.unlink(missing_ok=True)
-    return {"enrolled": len(enrolled), "match": voices.match(), "lower": voices.lower(), "trials": trials}
+    return {"enrolled": len(enrolled), "names": enrolled, "match": voices.match(), "lower": voices.lower(), "trials": trials}
 
 
 def eer(genuine: list[float], impostor: list[float]) -> tuple[float, float]:
@@ -327,8 +327,21 @@ def restrict(baseline: dict, results: dict) -> dict:
             kept["segmentation"][silence] = {k: v for k, v in baseline["segmentation"][silence].items() if k in per_case}
     trials = results.get("speakers", {}).get("trials", {})
     old = baseline.get("speakers", {})
-    kept["speakers"] = {**{k: v for k, v in old.items() if k != "trials"},
-                        "trials": {k: v for k, v in old.get("trials", {}).items() if k in trials}}
+    # The impostor scores only of the speakers the run enrolled (with a limit, fewer than the baseline's).
+    names = results.get("speakers", {}).get("names", [])
+    was = old.get("names") or sorted({t["speaker"] for t in old.get("trials", {}).values()})
+    kept_trials = {}
+    for trial_id, trial in old.get("trials", {}).items():
+        if trial_id not in trials:
+            continue
+        if not names:  # a run that doesn't say whom it enrolled: everything as it was
+            kept_trials[trial_id] = trial
+            continue
+        others = [n for n in was if n != trial["speaker"]]
+        index = {n: i for i, n in enumerate(others)}
+        kept_trials[trial_id] = {**trial, "others": [trial["others"][index[n]] for n in names
+                                                      if n != trial["speaker"] and n in index]}
+    kept["speakers"] = {**{k: v for k, v in old.items() if k != "trials"}, "trials": kept_trials}
     return kept
 
 

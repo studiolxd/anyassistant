@@ -11,7 +11,8 @@ Ninguna grabación es de nadie de casa: todo sale de datasets públicos con lice
 audio **no está en git**. En el repositorio solo hay la selección (`tests/corpus/cases.json`: qué
 archivo de qué dataset, con su revisión y su SHA-256, el texto esperado, el hablante y qué se le
 mezcla) y los últimos resultados aceptados (`tests/corpus/baseline.json`). El audio se descarga a
-la caché (`.build/corpus` en el proyecto; `~/Library/Caches/AnyAssistant/corpus` instalado) y se
+la caché (`.build/corpus` en el proyecto; `~/Library/Caches/AnyAssistant/corpus` instalado; o la
+carpeta de `$ANYASSISTANT_CORPUS`, para compartir una copia entre varias copias del proyecto) y se
 comprueba archivo por archivo.
 
 ## Qué hay dentro
@@ -41,7 +42,7 @@ para usar el corpus; está para reproducirlo o ampliarlo.
 ## Descargar
 
 ```sh
-bin/anyassistant corpus fetch      # unos 150 MB; tarda unos minutos
+bin/anyassistant corpus fetch      # descarga unos 85 MB; la caché ocupa unos 250 MB con los casos construidos
 bin/anyassistant corpus status     # qué hay en la caché y en el manifiesto
 bin/anyassistant corpus fetch --check   # vuelve a comprobar los hashes de lo descargado
 ```
@@ -97,7 +98,9 @@ motor, como cuando escucha el asistente. Se mide:
   rechazos) con su umbral: una referencia para el valor por defecto.
 
 Con el baseline, `run` compara **lo mismo con lo mismo**: si corres con `--limit` o sin algún motor,
-el baseline se restringe a esos casos antes de resumirlo. Imprime cada métrica que se movió, los
+el baseline se restringe a esos casos (y, en las voces, a esos hablantes) antes de resumirlo. Con
+pocos casos una sola palabra mueve el WER de un grupo varios puntos, y Whisper no es del todo
+determinista: el subconjunto sirve para ver que todo funciona; la referencia es la ejecución entera. Imprime cada métrica que se movió, los
 casos que cambiaron de lado (una frase antes bien y ahora mal, con los dos textos; una frase
 partida; un hablante antes aceptado y ahora dudoso), y falla si algo empeora más que la
 tolerancia (`run.TOLERANCE`: 2 puntos de WER, 3 de frases exactas o de frases enteras, 2
@@ -114,6 +117,40 @@ CORPUS_LIMIT=5 .venv/bin/python -m pytest -m corpus -q     # un subconjunto
 
 Si el corpus no está en la caché, se salta y dice cómo descargarlo. Las pruebas rápidas de
 `tests/test_corpus.py` (normalización, WER, mezcla, manifiesto, comparación) sí corren siempre.
+
+## Los primeros números (2 de noviembre de 2026, Mac con Apple Silicon)
+
+Parakeet MLX 0.5.3 y Whisper MLX 0.4.3 (large-v3-turbo), Silero VAD 6.2.3; unos 20 minutos.
+
+| | Parakeet | Whisper |
+|---|---|---|
+| WER voz limpia, español (300 frases) | 3,3 % (74 % exactas) | 3,7 % (74 %) |
+| WER voz limpia, inglés (25) | 4,3 % | 4,1 % |
+| WER con ruido a 20 / 10 / 5 dB | 5,0 / 17,7 / 22,0 % | 7,5 / 18,5 / 21,6 % |
+| WER en habitación (20) | 2,6 % | 4,1 % |
+| Frases fantasma de 22 cortes de ruido | 2 | 3 |
+
+Las frases fantasma salen casi todas del ruido de «sala de reuniones» de DEMAND, que **contiene
+voces** (gente hablando de fondo): el oído las corta y el motor las transcribe («So the database
+that we are recording is…»); es el caso de la tele o una conversación al lado. Lo mismo explica las
+frases «perdidas» en los casos mezclados: con esa charla a 5 o 10 dB el detector no encuentra
+silencio para cerrar la frase. Y una muestra de a qué se parece el error: Parakeet se fue al
+inglés en un clip («It don't call it seen no better») sin que el detector de idioma lo cogiese.
+
+Fin de frase, sobre 453 casos de una frase: con `silence` 0,4 s el 84,5 % salen enteras (14,6 %
+partidas); con **0,6 s (el valor por defecto), el 92,1 %** (6,4 % partidas, 1,5 % perdidas); con
+0,8 s, el 93,2 %; con 1,0 s, el 96,0 %. Las partidas con 0,6 son sobre todo de audiolibros (MLS:
+12 de 20, con pausas de lectura) y 9 de 240 de Common Voice. Arranques en falso en 22 cortes de
+ruido: 7 con 0,4 s, 5 con 0,6 o más. Los números apoyan dejar 0,6 (una décima más de latencia
+por cada 0,1 s) y no bajarlo; subir a 0,8 ganaría un punto de frases enteras.
+
+Quién habla, 60 hablantes, 120 pruebas limpias y 7 080 puntuaciones de impostor: con `voice_match`
+0,5 se acepta el 99,2 % de las frases del propio hablante y el 0,23 % de las de impostores (en el
+10,8 % de las pruebas algún impostor de los 59 pasaría); el EER es del 0,8 % en 0,45. Con la cota
+inferior 0,30 se descarta de entrada el 91,2 % de los desconocidos y ningún hablante propio
+(limpio); con ruido a 5 dB, el 8,3 % de los propios caen por debajo. Con 0,55 los impostores
+aceptados bajarían al 0,07 % perdiendo 1,7 puntos de propios. Los números apoyan dejar 0,5 y 0,30.
+No se ha cambiado ningún valor por defecto.
 
 ## Cambiar el baseline
 
