@@ -12,7 +12,7 @@ know what else uses the microphone, so the server looks, once a second (settings
   keeps the microphone open) is left out by its name.
 - Linux: PipeWire's `pw-dump` (the nodes with media.class Stream/Input/Audio in state running,
   with application.name and application.process.binary), or PulseAudio's `pactl list
-  source-outputs` (the ones not corked). Our own Chromium is left out by its name or binary.
+  source-outputs` (the ones not corked; also when pw-dump is there but PipeWire doesn't answer). Our own Chromium is left out by its name or binary.
   Property names as documented, not verified on every distribution.
 
 The condition has to hold a second before pausing and two before resuming (a change of a moment is
@@ -150,10 +150,12 @@ def linux_busy() -> list[str]:
             continue
         args = [command] if command == "pw-dump" else [command, "list", "source-outputs"]
         try:
-            out = subprocess.run(args, capture_output=True, text=True, timeout=3).stdout
+            done = subprocess.run(args, capture_output=True, text=True, timeout=3)
         except (OSError, subprocess.SubprocessError):
             continue
-        return parse(out)
+        if done.returncode != 0 and not done.stdout:  # there but not answering (PipeWire off): the next, as the app
+            continue
+        return parse(done.stdout)
     return []
 
 

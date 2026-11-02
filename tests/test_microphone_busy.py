@@ -118,3 +118,19 @@ def test_only_the_computers_own_devices_are_paused():
 def test_it_only_runs_on_windows_and_linux():
     found = kernel.plugin("microphone-busy")
     assert found.needs["system"] == ["win32", "linux"]
+
+
+def test_pipewire_there_but_not_answering_falls_back_to_pulseaudio(monkeypatch):
+    """pw-dump installed but PipeWire not running (an error, nothing printed): pactl, as the app does."""
+    import subprocess
+    import types
+
+    monkeypatch.setattr(busy.shutil, "which", lambda command: "/usr/bin/" + command)
+
+    def run(args, **_):
+        if args[0] == "pw-dump":
+            return types.SimpleNamespace(returncode=1, stdout="")
+        return types.SimpleNamespace(returncode=0, stdout=PACTL)
+
+    monkeypatch.setattr(busy.subprocess, "run", run)
+    assert busy.linux_busy() == busy.pulse_busy(PACTL) != []
