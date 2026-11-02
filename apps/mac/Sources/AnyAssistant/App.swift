@@ -583,7 +583,9 @@ struct PairView: View {
                                                 address(certificate)
                                                 Text(T("If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)."))
                                                     .font(.callout).foregroundStyle(.secondary)
+                                                    .fixedSize(horizontal: false, vertical: true)
                                             }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
                                             qrCode(certificate, size: 96)
                                         }
                                         Text(T("Then, open:")).padding(.top, 4)
