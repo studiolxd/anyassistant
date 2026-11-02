@@ -13,10 +13,10 @@
   /* Colours: dark only (the brand's blue the same everywhere). */
   --color-primary: #34AFF7;  /* the logo's and Eyes' blue */
   --color-primary-text: #000;
-  --color-background: #1C1C1E;  /* macOS's dark windows: the logo (a black square) shows on it */
-  --color-surface: #2C2C2E;
-  --color-surface-raised: #3A3A3C;
-  --color-border: #48484A;
+  --color-background: #2C2C2E;  /* a dark grey: the logo (a black square) shows on it */
+  --color-surface: #3A3A3C;
+  --color-surface-raised: #48484A;
+  --color-border: #545458;
   --color-text: #F5F5F7;
   --color-text-secondary: #98989D;
   --color-success: #30D158;
@@ -214,6 +214,9 @@ body.ui { color-scheme: dark; }
   color: var(--color-text-secondary);
 }
 .ui .header .end { margin-left: auto; display: flex; align-items: center; }
+
+/* The logo: a thin light edge, as macOS gives a dark icon, so it shows on any dark background. */
+.ui .logo { border-radius: 22.5%; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22); }
 
 /* The logo, larger and centred (pairing, the QR page). */
 .ui .logo.large { display: block; width: 64px; height: 64px; margin: 0 auto var(--space-5); }
