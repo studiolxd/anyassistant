@@ -39,6 +39,11 @@ struct AnyAssistantApp: App {
                 .frame(minWidth: 640, minHeight: 480)
         }
         .defaultSize(width: 1100, height: 780)
+        .commands {
+            CommandGroup(after: .toolbar) {  // View → Open in the Browser: the themes' page, for whoever edits one
+                Button(T("Open Themes in the Browser")) { NSWorkspace.shared.open(ThemesWindow.page) }
+            }
+        }
         Window(T("Learn a voice"), id: "learn-voice") {
             LearnVoiceView()
                 .frame(minWidth: 520, minHeight: 400)

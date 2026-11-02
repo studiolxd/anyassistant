@@ -1,27 +1,17 @@
 // The themes' page (every state of each theme, to see them: the plugin «themes»), in a window of the
-// app, as Eva's and the settings; «Open in the browser» for whoever edits one (its developer tools).
+// app, as Eva's and the settings. No toolbar: it reloads by itself when a theme's files change, and
+// «Open in the browser» (for whoever edits one: its developer tools) is in the View menu.
 
 import SwiftUI
 import WebKit
 
 struct ThemesWindow: View {
     @ObservedObject var server = Server.shared
-    @State private var reloads = 0
 
-    var page: URL { URL(string: "http://127.0.0.1:\(server.port)/themes")! }
+    static var page: URL { URL(string: "http://127.0.0.1:\(Server.shared.port)/themes")! }
 
     var body: some View {
-        WebPage(url: page, reloads: reloads)
-            .toolbar {
-                ToolbarItemGroup {
-                    Button { reloads += 1 } label: { Label(T("Reload"), systemImage: "arrow.clockwise") }
-                        .help(T("Reload"))
-                    Button { NSWorkspace.shared.open(page) } label: {
-                        Label(T("Open in the browser"), systemImage: "safari")
-                    }
-                    .help(T("Open in the browser"))
-                }
-            }
+        WebPage(url: ThemesWindow.page, reloads: 0)
     }
 }
 
