@@ -174,6 +174,31 @@ var WINDOW = new URLSearchParams(location.search).get('window');  // the app's w
 var groups = [];  // the General sections, from /admin/settings
 var current = 'pair';
 var timer = null;
+// A phone, as the iPhone's Settings: the list of sections on a screen of its own (body.listing), and
+// a section over the whole screen with «‹ Settings» back to it (the browser's back too).
+var PHONE = window.matchMedia('(max-width: 720px)');
+function listing(on) {
+  document.body.classList.toggle('listing', on);
+  if (!on) return;
+  document.body.classList.remove('searching');
+  var search = $('nav input');
+  if (search) search.value = '';
+  history.replaceState(null, '', location.pathname + location.search);
+  window.scrollTo(0, 0);
+}
+function toList() {
+  if (history.state && history.state.fromList) history.back();  // the entry it came from: back is back
+  else listing(true);
+}
+window.addEventListener('popstate', function () {
+  if (!PHONE.matches || $('#app').hidden) return;
+  if (!location.hash) listing(true);
+  else show(location.hash.slice(1));
+});
+// From a phone's width to a computer's with the list on screen: a section beside it, as always.
+PHONE.addListener(function () {
+  if (!PHONE.matches && document.body.classList.contains('listing')) { document.body.classList.remove('listing'); show(current); }
+});
 
 function section(id) {
   if (id.indexOf('group/') === 0) return id;
@@ -185,6 +210,8 @@ function section(id) {
 function show(id) {
   if (id === 'settings') id = groups.length ? 'group/' + groups[0].id : 'plugins';
   current = id;
+  document.body.classList.remove('listing');
+  document.body.classList.toggle('searching', id === 'search');
   if (timer) { clearInterval(timer); timer = null; }
   var search = $('nav input');
   if (search && id !== 'search') search.value = '';
@@ -196,6 +223,10 @@ function show(id) {
   var main = document.createElement('div');
   $('main').innerHTML = '';
   $('main').appendChild(main);
+  // On a phone, a section (not a page under one: it has its own way back) goes back to the list.
+  if (section(id) === id && id !== 'search' && WINDOW !== 'devices' && WINDOW !== 'pair') {
+    main.appendChild(el('button', { class: 'secondary back to-list', text: '‹ ' + T('Settings'), onclick: toList }));
+  }
   if (id === 'search') searchResults(main);
   else if (id.indexOf('group/') === 0) groupPage(main, id.slice(6));
   else if (id.indexOf('plugin/') === 0) pluginPage(main, id.slice(7));
@@ -206,7 +237,7 @@ function show(id) {
   else if (id === 'community') plugins(main, true);
   else ({ pair: pair, devices: devices, plugins: plugins, admins: adminsPage })[id](main);
   // #community is a way in, kept as #plugins: asked again (the app's notification), it is a change the page hears
-  if (id !== 'search') history.replaceState(null, '', '#' + (id === 'community' ? 'plugins' : id));
+  if (id !== 'search') history.replaceState(history.state, '', '#' + (id === 'community' ? 'plugins' : id));
 }
 window.addEventListener('hashchange', function () {
   if (location.hash === '#community' && !$('#app').hidden && WINDOW !== 'devices' && WINDOW !== 'pair') show('community');
@@ -1005,11 +1036,19 @@ function sidebar() {
   var nav = $('nav');
   nav.innerHTML = '';
   function item(id, title) {
-    nav.appendChild(el('button', { text: title, 'data-id': id, onclick: function () { show(id); } }));
+    nav.appendChild(el('button', { text: title, 'data-id': id, onclick: function () {
+      // From the list on a phone: an entry of its own, so the browser's back comes back to the list.
+      if (PHONE.matches && document.body.classList.contains('listing')) history.pushState({ fromList: true }, '', '#' + id);
+      show(id);
+    } }));
   }
   if (WINDOW === 'settings' || !WINDOW) {
     var search = el('input', { type: 'search', placeholder: T('Search'), class: 'search' });
-    search.addEventListener('input', function () { show(search.value.trim() ? 'search' : (current === 'search' ? 'settings' : current)); });
+    search.addEventListener('input', function () {
+      if (search.value.trim()) return show('search');
+      if (PHONE.matches && current === 'search') return listing(true);  // a phone: back to the list it was typed on
+      show(current === 'search' ? 'settings' : current);
+    });
     nav.appendChild(search);
   }
   if (!WINDOW) { item('pair', T('Pair a device')); item('devices', T('Devices')); }
@@ -1020,6 +1059,12 @@ function sidebar() {
     item('plugins', T('Plugins'));
   }
   if (!WINDOW) { nav.appendChild(el('div', { class: 'group' })); item('admins', T('Admins')); }
+  // Where each group starts and ends (a phone shows each as a rounded block).
+  Array.prototype.forEach.call(nav.querySelectorAll('button'), function (b) {
+    var before = b.previousElementSibling, after = b.nextElementSibling;
+    if (!before || before.tagName !== 'BUTTON') b.classList.add('first');
+    if (!after || after.tagName !== 'BUTTON') b.classList.add('last');
+  });
 }
 
 // This browser's interface language (a cookie: the themes page and the device's page here follow
@@ -1065,6 +1110,7 @@ fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.
                 : WINDOW === 'settings' ? function (id) { return ['pair', 'devices', 'admins'].indexOf(section(id)) < 0; }
                 : function () { return true; };
     var fits = (known.indexOf(wanted) >= 0 || /^(plugin|device|group)\//.test(wanted)) && allowed(wanted);
+    if (!fits && PHONE.matches && (!WINDOW || WINDOW === 'settings')) return listing(true);  // a phone: the list first
     show(fits ? wanted : (WINDOW === 'devices' ? 'devices' : WINDOW === 'settings' ? 'settings' : 'pair'));
   });
 }).catch(unavailable);

@@ -19,7 +19,7 @@ aside .header { padding: var(--space-4) var(--space-4) var(--space-2); }
 nav { flex: 1; overflow-y: auto; padding: var(--space-2) var(--space-3); }
 nav .group { padding: var(--space-3) var(--space-3) var(--space-1); font-size: var(--text-xs);
              font-weight: var(--weight-semibold); color: var(--color-text-secondary); }
-.ui nav input.search { width: 100%; margin: 0 0 var(--space-5); }  /* apart from the sections below */
+.ui nav input.search { width: 100%; max-width: none; margin: 0 0 var(--space-5); }  /* apart from the sections below */
 .ui nav button { display: block; width: 100%; min-height: 32px; margin-bottom: 2px; padding: 6px var(--space-3);
                  text-align: left; font-weight: var(--weight-regular); color: var(--color-text);
                  background: transparent; border-radius: var(--radius-sm); }
@@ -111,22 +111,41 @@ body.window-devices aside, body.window-pair aside { display: none; }
 body.window main { padding: var(--space-5) var(--space-6) var(--space-7); }
 body.window-devices main { max-width: none; }
 
+/* On a phone back to the list: only on a phone. */
+.ui button.to-list { display: none; }
+
+/* A phone, as the iPhone's Settings: the list (body.listing) on a screen of its own: the logo and
+   the name, the search, the sections (a chevron each), and the language and Restart at the end;
+   a section over the whole screen, «‹ Settings» back to the list. A search: the search and its results. */
 @media (max-width: 720px) {
-  #app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
-  aside { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center;
-          border-right: 0; border-bottom: 1px solid var(--color-border); }
-  aside .header { flex: 1; min-width: 0; padding: var(--space-3) var(--space-4); }
-  aside .foot { padding: var(--space-3) var(--space-4); }
-  aside .foot button { width: auto; }
-  aside .foot .language { display: inline-block; width: auto; margin-bottom: 0; margin-right: var(--space-2); }
-  nav { order: 3; flex: 0 0 100%; display: flex; overflow-x: auto; padding: 0 var(--space-3) var(--space-2); }
-  .ui nav input.search { flex: 0 0 160px; margin: 0 var(--space-2) 0 0; }
-  .ui nav button { width: auto; white-space: nowrap; margin: 0 2px 0 0; }
-  nav .group { display: none; }
+  #app { grid-template-columns: minmax(0, 1fr); }
+  aside { position: static; height: auto; border-right: 0; }
+  body:not(.listing):not(.searching) aside { display: none; }
+  body.listing main { display: none; }
+  body.listing aside { min-height: 100vh; min-height: 100dvh; }
+  body.searching aside { border-bottom: 1px solid var(--color-border); }
+  body.searching nav > button, body.searching nav .group, body.searching aside .foot { display: none; }
+  aside .header { padding: var(--space-4) var(--space-4) var(--space-2); }
+  nav { flex: 1 0 auto; overflow: visible; padding: var(--space-2) var(--space-4); }
+  .ui nav input.search { margin-bottom: var(--space-4); }
+  body.searching nav input.search { margin-bottom: 0; }
+  .ui nav button, .ui nav button.on { display: flex; align-items: center; min-height: 44px; margin: 0;
+    padding: 10px var(--space-3); color: var(--color-text); background: var(--color-surface-raised);
+    border-radius: 0; border-bottom: 1px solid var(--color-border); }
+  .ui nav button::after { content: ""; flex: 0 0 12px; height: 12px; margin-left: auto;
+    background: var(--chevron) no-repeat center / 12px 12px; transform: rotate(-90deg); }
+  /* Each group a rounded block, as a .card. */
+  .ui nav button.first { border-top-left-radius: var(--radius-md); border-top-right-radius: var(--radius-md); }
+  .ui nav button.last { border-bottom: 0; border-bottom-left-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md); }
+  nav .group { padding: var(--space-4) var(--space-3) var(--space-1); }
+  nav .group:empty { padding: var(--space-2) 0 0; }
+  aside .foot { padding: var(--space-4); }
+  .ui button.to-list { display: inline-block; }
   main { padding: var(--space-4); }
   .row { flex-wrap: wrap; }
   .row .control { flex: 1 0 100%; max-width: 100%; margin-top: var(--space-2); }
   .row .control.compact { flex: 0 0 auto; margin-top: 0; }
+  .row .control .stack > input, .row .control .stack > select { width: 100%; }
 }
 
 /* Small layout helpers (instead of inline styles in admin.js). */
