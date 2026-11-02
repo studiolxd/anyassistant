@@ -1,6 +1,6 @@
 // The phone's notifications: its answers and messages from other rooms while the app is in the
-// background (in front, the Mac's voice says them), and the Mac's alarms, timers and reminders
-// as the phone's own alarms (Alarms).
+// background (in front, the Mac's voice says them), the Mac's alarms and timers as the phone's
+// own alarms, and its reminders as plain notifications (Alarms).
 
 package com.anyassistant
 
@@ -17,6 +17,7 @@ object Notices {
     const val ANSWERS = "answers"
     const val LISTENING = "listening"
     const val RINGING = "ringing"
+    const val REMINDERS = "reminders"
     @Volatile var foreground = true
 
     fun channels(context: Context) {
@@ -26,6 +27,7 @@ object Notices {
         manager.createNotificationChannel(NotificationChannel(RINGING, context.getString(R.string.channel_ringing), NotificationManager.IMPORTANCE_HIGH).apply {
             setSound(null, null)  // the ringing service plays the alarm itself
         })
+        manager.createNotificationChannel(NotificationChannel(REMINDERS, context.getString(R.string.channel_reminders), NotificationManager.IMPORTANCE_HIGH))
     }
 
     fun handle(context: Context, message: JSONObject, name: String) {

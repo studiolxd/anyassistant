@@ -346,8 +346,10 @@ state, texts and screen settings (its `/config`). The microphone and the speaker
 WebSocket (`GET /stream?device=…`: 16-bit mono PCM at 48 kHz both ways, and the page's JSON
 messages), with iOS's echo cancellation; so it keeps listening with the screen off (Settings in
 the app: the gear). With the plugin `eyes`, its camera: a frame a second while awake («¿qué ves?»),
-a full photo for «lee esto», live for «muestra la cámara». On iOS 26 or later, alarms, timers
-and reminders are the phone's own alarms (AlarmKit: they ring on silent); before, notifications.
+a full photo for «lee esto», live for «muestra la cámara». On iOS 26 or later, alarms and
+timers are the phone's own alarms (AlarmKit: they ring on silent); before, notifications. Both
+ring with the theme's alarm (`GET /alarm.wav?theme=…`: as the server rings it, 28 s, kept in the
+app's Library/Sounds); reminders are plain notifications (on Android too).
 In the background, answers and messages arrive as notifications. «Talk to AnyAssistant» for
 Siri, Shortcuts and the Action button (iOS 16 or later). Paired by scanning the QR («Escanear
 código»: VisionKit where it exists, else AVFoundation), by the QR page's «Abrir en la app», or

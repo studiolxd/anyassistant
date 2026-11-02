@@ -1,12 +1,14 @@
-// The Mac's alarms, timers and reminders as the phone's own alarms: the system's alarm clock
-// (AlarmManager.setAlarmClock, shown in the status bar), ringing on the alarm channel (even on
-// silent), full screen over the lock screen, with the app closed. Stopped on the phone, the Mac
-// stops ringing too; stopped on the Mac («para»), it goes from the phone.
+// The Mac's alarms and timers as the phone's own alarms: the system's alarm clock
+// (AlarmManager.setAlarmClock, shown in the status bar), ringing with the theme's alarm (the
+// Mac's /alarm.wav) on the alarm channel (even on silent), full screen over the lock screen, with
+// the app closed. Stopped on the phone, the Mac stops ringing too; stopped on the Mac («para»), it
+// goes from the phone. Reminders are plain notifications at their time.
 
 package com.anyassistant
 
 import android.app.AlarmManager
 import android.app.KeyguardManager
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.BroadcastReceiver
@@ -45,6 +47,9 @@ import org.json.JSONObject
 
 object Alarms {
     private const val KEY = "alarms"  // «<kind>-<at>» → its request code
+
+    /** The theme's alarm, fetched from the Mac (Link.fetchAlarmSound); the phone's own if missing. */
+    fun soundFile(context: Context) = java.io.File(context.filesDir, "alarm.wav")
 
     fun title(context: Context, kind: String, label: String): String =
         context.getString(when (kind) { "alarm" -> R.string.alarm; "reminder" -> R.string.reminder; else -> R.string.timer }) +
@@ -95,6 +100,16 @@ object Alarms {
 /** It's time: it rings. */
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.getStringExtra("kind") == "reminder") {  // a plain notification, not ringing
+            val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+            val label = intent.getStringExtra("label") ?: ""
+            val notification = NotificationCompat.Builder(context, Notices.REMINDERS)
+                .setSmallIcon(R.drawable.ic_eyes).setContentTitle(context.getString(R.string.reminder))
+                .setContentText(label).setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setContentIntent(open).setAutoCancel(true).build()
+            runCatching { context.getSystemService(NotificationManager::class.java).notify(label.hashCode(), notification) }
+            return
+        }
         val ring = Intent(context, RingingService::class.java)
             .putExtra("title", Alarms.title(context, intent.getStringExtra("kind") ?: "timer", intent.getStringExtra("label") ?: ""))
         ContextCompat.startForegroundService(context, ring)
@@ -125,12 +140,13 @@ class RingingService : Service() {
         ServiceCompat.startForeground(this, 7, notification,
             if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK else 0)
         if (player == null) {
+            val theme = Alarms.soundFile(this).takeIf { it.length() > 44 }  // the theme's alarm, else the phone's
             val sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM) ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
             player = runCatching {
                 MediaPlayer().apply {
                     setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
-                    setDataSource(this@RingingService, sound)
+                    if (theme != null) setDataSource(theme.path) else setDataSource(this@RingingService, sound)
                     isLooping = true
                     prepare()
                     start()

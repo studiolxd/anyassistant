@@ -10,10 +10,12 @@ it stops on all.
 """
 
 import asyncio
+import io
 import logging
 import shutil
 import sys
 import time
+import wave
 from pathlib import Path
 
 import hub
@@ -23,6 +25,8 @@ import options
 import settings
 import web
 import audio
+import numpy as np
+from aiohttp import web as http
 from skills import Skill, skill
 from plugins.skills_language import spoken_duration, spoken_list, spoken_when
 from plugins.skills_language.parse import Clock, Token, clock, day_tokens, duration, resolve, tokens, words
@@ -46,6 +50,36 @@ def alarm_sound(theme: str | None):
     page = kernel.module("page")
     own = page.themes.sound(theme, "alarm") if page and theme else None
     return own if own is not None else audio.wav(ALARM)
+
+
+RINGING = 28  # seconds of the phone's alarm sound: iOS plays at most 30 of a notification's
+
+
+def ringing(theme: str | None, seconds: float = RINGING) -> bytes:
+    """The alarm as the server rings it (the sound, then about two seconds of silence, again),
+    for `seconds`, as a 16-bit 48 kHz WAV: the apps' own alarms and notifications ring with it."""
+    tone = alarm_sound(theme)
+    tone = tone if tone is not None else np.zeros(0, np.int16)
+    gap = np.zeros(int(48000 * 2.0), np.int16)
+    one = np.concatenate([tone, gap])
+    pcm = np.tile(one, max(1, int(seconds * 48000 // len(one))))
+    out = io.BytesIO()
+    with wave.open(out, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(48000)
+        w.writeframes(pcm.astype(np.int16).tobytes())
+    return out.getvalue()
+
+
+@web.route("GET", "/alarm.wav")
+async def _ringing(request):
+    """The alarm of a theme (?theme=: the device's own; else the server's), for the apps to ring
+    with when they ring by themselves (the phone's alarms and notifications)."""
+    page = kernel.module("page")
+    chosen = request.query.get("theme", "")
+    theme = chosen if page and chosen in page.themes.available() else settings.get("theme")
+    return http.Response(body=ringing(theme), content_type="audio/wav")
 
 
 def _here() -> str | None:

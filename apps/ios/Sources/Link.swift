@@ -238,6 +238,7 @@ final class Link: NSObject, ObservableObject {
         face.configure(config)
         #if os(iOS)
         Notices.shared.name = face.name
+        await Notices.shared.fetchAlarmSound(from: base, theme: face.theme, session: mac.session)
         #endif
         send(["type": "theme", "name": face.theme])  // its theme's sounds are played from the Mac
     }

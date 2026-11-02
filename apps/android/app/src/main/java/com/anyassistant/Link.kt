@@ -205,6 +205,18 @@ class Link(private val context: Context) {
         } ?: return
         face.configure(config)
         send(JSONObject().put("type", "theme").put("name", face.theme))  // its theme's sounds are played from the Mac
+        fetchAlarmSound(base, face.theme)
+    }
+
+    /** The theme's alarm (the Mac's /alarm.wav, as it rings there), kept for the phone's own alarms. */
+    private suspend fun fetchAlarmSound(base: String, theme: String) {
+        val data = withContext(Dispatchers.IO) {
+            runCatching {
+                mac.client.newCall(mac.request("$base/alarm.wav?theme=$theme").build()).execute()
+                    .use { if (it.code == 200) it.body.bytes() else null }
+            }.getOrNull()
+        } ?: return
+        if (data.size > 44) withContext(Dispatchers.IO) { runCatching { Alarms.soundFile(context).writeBytes(data) } }
     }
 
     // --- Both ways ---

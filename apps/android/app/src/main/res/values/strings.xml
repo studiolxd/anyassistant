@@ -23,6 +23,7 @@
     <string name="channel_answers">Answers and messages</string>
     <string name="channel_listening">Listening</string>
     <string name="channel_ringing">Alarms and timers</string>
+    <string name="channel_reminders">Reminders</string>
     <string name="alarm">Alarm</string>
     <string name="reminder">Reminder</string>
     <string name="timer">Timer</string>

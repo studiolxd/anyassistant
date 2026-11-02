@@ -50,3 +50,18 @@ def test_the_alarm_rings_even_without_the_sounds_plugin(monkeypatch):
     tone = alarms.alarm_sound("eyes")
     assert tone is not None and len(tone) > RATE // 4
     assert np.array_equal(alarms.alarm_sound("bedside"), themes.sound("bedside", "alarm"))
+
+
+def test_the_apps_ring_with_the_themes_alarm():
+    """/alarm.wav: the theme's alarm as the server rings it (sound, silence, again), under 30 s."""
+    import io
+    import wave
+
+    alarms = kernel.load("skill-alarms")
+    with wave.open(io.BytesIO(alarms.ringing("bedside"))) as w:
+        assert (w.getnchannels(), w.getsampwidth(), w.getframerate()) == (1, 2, 48000)
+        seconds = w.getnframes() / 48000
+        pcm = np.frombuffer(w.readframes(w.getnframes()), np.int16)
+    assert 20 < seconds <= 30
+    tone = alarms.alarm_sound("bedside")
+    assert np.array_equal(pcm[:len(tone)], tone)

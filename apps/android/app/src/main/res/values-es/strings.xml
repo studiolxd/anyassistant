@@ -22,6 +22,7 @@
     <string name="channel_answers">Respuestas y mensajes</string>
     <string name="channel_listening">Escuchando</string>
     <string name="channel_ringing">Alarmas y temporizadores</string>
+    <string name="channel_reminders">Recordatorios</string>
     <string name="alarm">Alarma</string>
     <string name="reminder">Recordatorio</string>
     <string name="timer">Temporizador</string>

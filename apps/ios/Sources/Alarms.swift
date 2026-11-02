@@ -1,5 +1,6 @@
-// On iOS 26 or later, the Mac's alarms, timers and reminders are the phone's own alarms
-// (AlarmKit): they ring like the Clock's, even on silent, full screen, with the app closed.
+// On iOS 26 or later, the Mac's alarms and timers are the phone's own alarms (AlarmKit): they
+// ring like the Clock's, with the theme's alarm, even on silent, full screen, with the app
+// closed. Reminders are plain notifications (Notices).
 // Stopped on the phone, the Mac stops ringing too (a tap, as on its face); stopped on the Mac
 // («para»), it goes from the phone. Before iOS 26 they are notifications (Notices).
 
@@ -33,8 +34,9 @@ final class Alarms {
         }
     }
 
-    /// The Mac's running timers, alarms and reminders, as the phone's (each time they change).
-    func set(_ items: [[String: Any]]) async -> Bool {
+    /// The Mac's running timers and alarms, as the phone's (each time they change); `sound`: the
+    /// theme's alarm in Library/Sounds (Notices.alarmSound), else the system's.
+    func set(_ items: [[String: Any]], sound: String? = nil) async -> Bool {
         guard await allowed() else { return false }
         var known = UserDefaults.standard.dictionary(forKey: key) as? [String: String] ?? [:]
         let now = Date().timeIntervalSince1970
@@ -42,7 +44,8 @@ final class Alarms {
         for item in items {
             guard let at = item["at"] as? Double, at > now + 1 else { continue }
             let kind = item["kind"] as? String ?? "timer"
-            wanted["\(kind)-\(Int(at))"] = (at, kind, item["label"] as? String ?? "")
+            // With its sound in the name: a new sound (another theme) sets it again.
+            wanted["\(kind)-\(Int(at))-\(sound ?? "")"] = (at, kind, item["label"] as? String ?? "")
         }
         for (name, id) in known where wanted[name] == nil {  // stopped, done or removed on the Mac
             if let uuid = UUID(uuidString: id) { try? manager.cancel(id: uuid) }
@@ -61,7 +64,8 @@ final class Alarms {
             }
             let attributes = AlarmAttributes<Ringing>(presentation: AlarmPresentation(alert: alert), tintColor: .blue)
             let configuration = AlarmManager.AlarmConfiguration.alarm(
-                schedule: .fixed(Date(timeIntervalSince1970: at)), attributes: attributes, stopIntent: StopRinging())
+                schedule: .fixed(Date(timeIntervalSince1970: at)), attributes: attributes, stopIntent: StopRinging(),
+                sound: sound.map { .named($0) } ?? .default)
             if (try? await manager.schedule(id: id, configuration: configuration)) != nil {
                 known[name] = id.uuidString
             }
