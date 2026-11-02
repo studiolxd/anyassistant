@@ -1,8 +1,10 @@
 // The face, alone: Eyes' eyes and mouth on black, nothing else. While you look at it, it listens:
 // say something and it hears (its eyes grow with your voice), thinks, and answers aloud (its
-// mouth moves); then it listens again. Wrist down, it sleeps and the microphone is closed. A tap
-// sends what it hears now, or stops it talking; holding the face opens its settings (its server, and what went
-// wrong, if something did: then the face is sad and the watch taps your wrist). While it thinks and
+// mouth moves); then it listens again. Wrist down, it sleeps and the microphone is closed. A tap,
+// or a double tap of your fingers (watchOS 11), does what matters now: it stops talking, forgets
+// the question it is thinking about, or sends what it hears without waiting for the quiet. Holding
+// the face opens its settings (its server, and what went wrong, if something did: then the face
+// is sad and the watch taps your wrist). While it thinks and
 // speaks it stays on, wrist down too (Staying), so the answer is heard to its end.
 // «-demo <look>» (a launch argument): that face, still, without the microphone (the simulator's
 // can't be opened; and to see each face).
@@ -19,6 +21,8 @@ struct TalkView: View {
     @State private var problem: String?
     @State private var settings = false
     @State private var staying = Staying()
+    @State private var asking: Task<Void, Never>?
+    @State private var held = false  // holding the face opened the settings: that touch is no tap
     private let demo = UserDefaults.standard.string(forKey: "demo")
 
     /// In front, lit, and not in its settings: it may listen.
@@ -39,15 +43,21 @@ struct TalkView: View {
             // The face as large as it fits: 62 v × 45 v at rest, up to 83 v wide (eyes grown by
             // the voice heard, or looking aside) and 50 v high (floating, looking up).
             let v = min(size.width * 0.94 / 83, size.height * 0.85 / 50)
-            EyesFace(look: look, accent: Color(red: 0x34 / 255, green: 0xaf / 255, blue: 0xf7 / 255),
-                     voice: demo != nil ? 1 : voice.voice, speech: demo != nil ? 0.7 : voice.speech, v: v)
-                .frame(width: size.width, height: size.height)
+            Button(action: tap) {
+                EyesFace(look: look, accent: Color(red: 0x34 / 255, green: 0xaf / 255, blue: 0xf7 / 255),
+                         voice: demo != nil ? 1 : voice.voice, speech: demo != nil ? 0.7 : voice.speech, v: v)
+                    .frame(width: size.width, height: size.height)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .modifier(DoubleTap())
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.8).onEnded { _ in
+                held = true
+                settings = true
+            })
         }
         .background(Color.black)
         .ignoresSafeArea()
-        .contentShape(Rectangle())
-        .onTapGesture(perform: tap)
-        .onLongPressGesture(minimumDuration: 0.8) { settings = true }
         .persistentSystemOverlays(.hidden)
         .sheet(isPresented: $settings) { SettingsView(mac: mac, problem: problem) }
         .onAppear {
@@ -55,6 +65,7 @@ struct TalkView: View {
             update()
         }
         .onChange(of: awake) { update() }
+        .onChange(of: settings) { _, open in if !open { held = false } }
         .onChange(of: waiting) { update(); stay() }
         .onChange(of: voice.playing) { update(); stay() }
         .onChange(of: voice.hearing) { _, now in if now { problem = nil } }
@@ -86,8 +97,14 @@ struct TalkView: View {
     }
 
     private func tap() {
+        if held { return }
         if voice.playing {
             voice.stopPlaying()
+        } else if waiting {
+            asking?.cancel()  // forgotten: its answer, if it comes, isn't said
+            asking = nil
+            waiting = false
+            WKInterfaceDevice.current().play(.directionDown)
         } else if voice.hearing {
             voice.finish()
         } else if problem != nil {
@@ -99,11 +116,16 @@ struct TalkView: View {
     private func send(_ wav: Data) {
         waiting = true
         WKInterfaceDevice.current().play(.click)
-        Task {
-            defer { waiting = false }  // after the answer starts: the microphone stays closed meanwhile
+        asking = Task {
+            defer {  // after the answer starts: the microphone stays closed meanwhile
+                if !Task.isCancelled { waiting = false }
+            }
             do {
                 let found = try await mac.talk(wav)
+                guard !Task.isCancelled else { return }
                 voice.play(found.audio)  // nothing heard, nothing said: it listens again
+            } catch where Task.isCancelled {
+                return
             } catch Mac.Failure.unreachable {
                 fail(T("The server isn't answering: is AnyAssistant running, and the watch on the same network?"))
             } catch Mac.Failure.wrongCode {
@@ -117,6 +139,17 @@ struct TalkView: View {
     private func fail(_ why: String) {
         problem = why
         WKInterfaceDevice.current().play(.failure)
+    }
+}
+
+/// A double tap of the fingers (watchOS 11 and later, Series 9 and later) presses the face.
+private struct DoubleTap: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(watchOS 11.0, *) {
+            content.handGestureShortcut(.primaryAction)
+        } else {
+            content
+        }
     }
 }
 
