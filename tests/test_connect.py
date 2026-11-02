@@ -143,3 +143,32 @@ def test_the_admin_status_gives_what_the_qr_and_the_addresses_need(monkeypatch):
     monkeypatch.setattr(settings, "active", {"plugins": {"https": True, "pairing": True}, "port": 8080})
     found = json.loads(asyncio.run(admin._status(request(path="/admin/status", remote="127.0.0.1"))).body)
     assert found["certificate"] == "http://192.168.1.40:8080/https/ca.crt" and found["pairing"] is True
+
+
+def test_the_address_shown_is_the_one_that_reaches_the_network(monkeypatch):
+    """With HTTPS on, every address of the computer is known; the QR's is the routed one, and a
+    self-assigned 169.254… (no router) never goes first."""
+    admin = kernel.load("admin")
+    import socket
+    import types
+
+    class Probe:
+        def __init__(self, *a):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def connect(self, where):
+            pass
+
+        def getsockname(self):
+            return ("192.168.1.130", 5000)
+
+    monkeypatch.setattr(socket, "socket", Probe)
+    https = types.SimpleNamespace(addresses=lambda: ["127.0.0.1", "169.254.122.127", "192.168.1.130", "10.0.0.5"])
+    monkeypatch.setattr(kernel, "module", lambda name: https if name == "https" else None)
+    assert admin._addresses() == ["192.168.1.130", "10.0.0.5", "169.254.122.127"]

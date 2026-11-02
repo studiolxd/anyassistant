@@ -313,15 +313,20 @@ async def _change_admins(request):
 
 
 def _addresses() -> list[str]:
-    https = kernel.module("https")
-    if https:
-        return [a for a in https.addresses() if a != "127.0.0.1"]
+    """The server's addresses on the network, the one that reaches it first (the QR's, the one to
+    type); self-assigned ones (169.254…, no router) last: other devices can't reach them."""
+    routed = None
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("10.255.255.255", 1))
-            return [s.getsockname()[0]]
+            routed = s.getsockname()[0]
     except OSError:
-        return []
+        pass
+    https = kernel.module("https")
+    found = [a for a in (https.addresses() if https else []) if a != "127.0.0.1"]
+    if routed and routed != "127.0.0.1":
+        found = [routed] + [a for a in found if a != routed]
+    return sorted(found, key=lambda a: (a != routed, a.startswith("169.254.")))
 
 
 @web.route("GET", "/admin/status")

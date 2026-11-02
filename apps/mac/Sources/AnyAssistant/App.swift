@@ -53,9 +53,9 @@ struct AnyAssistantApp: App {
         .defaultSize(width: 560, height: 440)
         Window(T("Pair a device"), id: "pair") {
             PairView(server: server)
-                .frame(minWidth: 680, minHeight: 440)
+                .frame(width: 680)  // as tall as what it shows: it grows with «Otras formas de conectar»
         }
-        .defaultSize(width: 680, height: 500)
+        .windowResizability(.contentSize)
     }
 
     /// Installed, or using another server: the menu bar's.
@@ -536,7 +536,7 @@ struct PairView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ScrollView {
+            Group {
                 VStack(alignment: .leading, spacing: 20) {
                     Text(T("Pair a device")).font(.title2.bold())
                     if waiting {
@@ -605,6 +605,7 @@ struct PairView: View {
                 .padding(24)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .fixedSize(horizontal: false, vertical: true)  // every line whole: the window grows instead
             HStack {
                 Spacer()
                 Button(T("Done")) { dismissWindow(id: "pair") }.keyboardShortcut(.defaultAction)
