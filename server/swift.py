@@ -19,6 +19,16 @@ BRIDGES = {  # name: source
     "fm-bridge": paths.PLUGINS / "llm-apple" / "apple_bridge.swift",
     "avspeech-bridge": paths.PLUGINS / "tts-avspeech" / "avspeech_bridge.swift",
 }
+# The oldest macOS each one runs on. Without it swiftc takes this Mac's own version, and a bridge
+# built on macOS 27 wouldn't open on 14 to 26 (the voice and Apple's model, gone there).
+MINIMUM = {"fm-bridge": "26.0", "avspeech-bridge": "14.0"}  # Apple's model: macOS 26; the app: 14
+
+
+def command(source: Path, name: str, output: Path) -> list[str]:
+    import platform
+
+    arch = "arm64" if platform.machine() == "arm64" else "x86_64"
+    return ["swiftc", "-O", "-target", f"{arch}-apple-macos{MINIMUM.get(name, '14.0')}", str(source), "-o", str(output)]
 
 
 def build(source: Path, name: str) -> Path:
@@ -32,7 +42,7 @@ def build(source: Path, name: str) -> Path:
         return binary
     log.info("building %s…", source.name)
     paths.CACHE.mkdir(parents=True, exist_ok=True)
-    done = subprocess.run(["swiftc", "-O", str(source), "-o", str(binary)], capture_output=True, text=True)
+    done = subprocess.run(command(source, name, binary), capture_output=True, text=True)
     if done.returncode:
         raise RuntimeError(f"swiftc couldn't build {source.name}: {done.stderr.strip()[-500:]}")
     return binary
@@ -43,7 +53,7 @@ def prebuild():
     NATIVE.mkdir(exist_ok=True)
     for name, source in BRIDGES.items():
         print(f"building {name}…")
-        subprocess.run(["swiftc", "-O", str(source), "-o", str(NATIVE / name)], check=True)
+        subprocess.run(command(source, name, NATIVE / name), check=True)
 
 
 if __name__ == "__main__":

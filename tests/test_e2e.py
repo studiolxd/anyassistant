@@ -83,8 +83,11 @@ async def talk(url, pcm, until, timeout=60, image=None, photo=None):
     With `image` (a PIL image), the phone's camera shows it; with `photo` (JPEG bytes),
     that is the full-resolution photo it takes when asked to.
 
-    Waits until until(messages) is true (or the timeout) after the audio ends.
+    Waits until until(messages) is true (or the timeout) after the audio ends. It starts with a
+    second and a half of silence, as a real room: the ear first learns its noise (noise_adapt), so
+    a first «Hey Jarvis» right at the start isn't taken for it.
     """
+    pcm = np.concatenate([np.zeros(int(RATE * 1.5), np.int16), pcm])
     import aiohttp
     from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
     from av import AudioFrame

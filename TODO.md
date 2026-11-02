@@ -78,10 +78,10 @@ Cómo se hizo: `docs/windows-y-linux.md`.
 ## Casa y multimedia
 
 Home Assistant, cuando lo tengas instalado (HomeKit, no): luces, persianas y climatización,
-lo primero que se le pide a un asistente de voz en casa.
+lo primero que se le pide a un asistente de voz en casa. Conectarlo no es desarrollo: su
+servidor MCP se añade a `.mcp.json` y se permite en `permissions.json`, como Holded; lo usan los
+LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
 
-- [ ] **Conectar Home Assistant al LLM**: su MCP (lo conectas tú a los LLM, como Holded); ya
-  entiende sus áreas, que son nuestras habitaciones, y lo expuesto a Assist.
 - [ ] **Añadir la regla de confirmación de Home Assistant**: luces, persianas y clima sin «sí»;
   cerraduras, garaje y alarma con él (el hook ve los argumentos).
 - [ ] **Órdenes rápidas de Home Assistant sin LLM** con su API («enciende la luz», «sube la
@@ -107,13 +107,17 @@ lo primero que se le pide a un asistente de voz en casa.
 
 ## Mantenimiento
 
-- [ ] **Sustituir `LanguageModelSession.GenerationError`**, deprecado en macOS 27 (apple_bridge.swift).
-- [ ] **Corregir el aviso del sintetizador de AVSpeech** sobre el main actor.
 - [ ] **Pasar la app del Mac a Swift 6** (hoy compila en modo de lenguaje Swift 5).
-- [ ] **Estabilizar un test end-to-end**: una vez, la palabra de activación no oyó nada en
-  35 s con la voz sintética (test_memory_with_claude); pasó al repetirlo.
 
 # Hecho
+
+- [x] **Los puentes de Swift para versiones anteriores** (2 nov): se compilaban para la versión
+  del Mac donde se hacían (macOS 27) y no se abrían en 14 a 26; ahora, la voz para macOS 14 y el
+  modelo de Apple para macOS 26.
+- [x] **El modelo de Apple sin `GenerationError`** en macOS 27 (`LanguageModelError`), con el de
+  antes en macOS 26; el puente de AVSpeech sin avisos (también en Swift 6).
+- [x] **El test end-to-end inestable**: cada prueba empieza con silencio, para que el oído aprenda
+  el ruido antes del primer «Hey Jarvis».
 
 - [x] **Apps nativas** para Android, iPhone, iPad, el Apple Watch y Windows y Linux (la app de
   bandeja); el Mac como cliente con su app. La de Android encuentra el servidor con Bonjour y se

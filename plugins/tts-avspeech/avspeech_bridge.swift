@@ -19,6 +19,7 @@ let synthesizer = AVSpeechSynthesizer()
 var voices: [String: AVSpeechSynthesisVoice] = [:]
 
 /// By name ("Mónica") or identifier; among several, the one for `language` with the best quality.
+@MainActor
 func voice(_ name: String, language: String) -> AVSpeechSynthesisVoice? {
     let key = "\(name)|\(language)"
     if let cached = voices[key] { return cached }
@@ -32,6 +33,8 @@ func voice(_ name: String, language: String) -> AVSpeechSynthesisVoice? {
     return candidates.first
 }
 
+/// On the main actor, as the synthesizer (the commands are read and answered there, one by one).
+@MainActor
 func synthesize(_ text: String, voice: AVSpeechSynthesisVoice?, rate: Double?) async -> (Double, [Float]) {
     let utterance = AVSpeechUtterance(string: text)
     utterance.voice = voice

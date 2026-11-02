@@ -40,11 +40,30 @@ func newSession() {
     session.prewarm()
 }
 
+/// What went wrong, as far as it matters here: a conversation too long for the model, its
+/// guardrails, or anything else.
+enum Failure { case tooLong, guardrail, other }
+
+func failure(_ error: Error) -> Failure {
+    if #available(macOS 27.0, *), let found = error as? LanguageModelError {
+        switch found {
+        case .contextSizeExceeded: return .tooLong
+        case .guardrailViolation: return .guardrail
+        default: return .other
+        }
+    }
+    // macOS 26 throws LanguageModelSession.GenerationError (deprecated in 27): told by its case's
+    // name, without naming the deprecated type.
+    switch Mirror(reflecting: error).children.first?.label {
+    case "exceededContextWindowSize": return .tooLong
+    case "guardrailViolation": return .guardrail
+    default: return .other
+    }
+}
+
 @MainActor
 func ask(_ text: String, retry: Bool = false) async {
     var previous = ""
-    // GenerationError is marked deprecated in macOS 27, but it is still what
-    // streamResponse throws; these two cases are told apart by it.
     do {
         for try await partial in session.streamResponse(to: text) {
             let current = partial.content
@@ -55,14 +74,17 @@ func ask(_ text: String, retry: Bool = false) async {
             previous = current
         }
         emit(["done": true])
-    } catch LanguageModelSession.GenerationError.exceededContextWindowSize where !retry {
-        // Conversation too long for the model: start another and try again.
-        newSession()
-        await ask(text, retry: true)
-    } catch LanguageModelSession.GenerationError.guardrailViolation {
-        emit(["error": "guardrail"])
     } catch {
-        emit(["error": "\(error)"])
+        switch failure(error) {
+        case .tooLong where !retry:
+            // Conversation too long for the model: start another and try again.
+            newSession()
+            await ask(text, retry: true)
+        case .guardrail:
+            emit(["error": "guardrail"])
+        default:
+            emit(["error": "\(error)"])
+        }
     }
 }
 
