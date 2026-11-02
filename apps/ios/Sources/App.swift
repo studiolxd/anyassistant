@@ -19,6 +19,7 @@ struct AnyAssistantApp: App {
 
     init() {
         Notices.shared.start()
+        WatchBridge.shared.start()  // the watch's pairing (also when iOS wakes the app for it)
     }
 
     var body: some Scene {

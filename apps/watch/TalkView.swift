@@ -1,7 +1,7 @@
 // The face, alone: Eyes' eyes and mouth on black, nothing else. While you look at it, it listens:
 // say something and it hears (its eyes grow with your voice), thinks, and answers aloud (its
 // mouth moves); then it listens again. Wrist down, it sleeps and the microphone is closed. A tap
-// sends what it hears now, or stops it talking; holding the face opens its settings (and what went
+// sends what it hears now, or stops it talking; holding the face opens its settings (its server, and what went
 // wrong, if something did: then the face is sad and the watch taps your wrist). While it thinks and
 // speaks it stays on, wrist down too (Staying), so the answer is heard to its end.
 // «-demo <look>» (a launch argument): that face, still, without the microphone (the simulator's
@@ -123,7 +123,6 @@ struct TalkView: View {
 struct SettingsView: View {
     @ObservedObject var mac: Mac
     var problem: String? = nil
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         Form {
@@ -131,12 +130,8 @@ struct SettingsView: View {
                 Section { Text(problem).font(.footnote).foregroundStyle(.red) }
             }
             Section(T("Server")) {
-                TextField(T("Address"), text: $mac.host)
-                TextField(T("Port"), value: $mac.port, format: .number.grouping(.never))
-            }
-            Button(T("Pair again"), role: .destructive) {
-                mac.unpair()
-                dismiss()
+                Text("\(mac.host):\(String(mac.port))").font(.footnote)
+                Text(T("Paired as the iPhone is.")).font(.footnote).foregroundStyle(.secondary)
             }
         }
     }

@@ -39,7 +39,10 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
     /// (through the iPhone, «.local» names often aren't).
     private var address: String? {
         get { UserDefaults.standard.string(forKey: "address") }
-        set { UserDefaults.standard.set(newValue, forKey: "address") }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "address")
+            NotificationCenter.default.post(name: Mac.handoffChanged, object: nil)
+        }
     }
     /// Which server it is paired with (its /status «server», in its Bonjour announcement «id»):
     /// looking for it by Bonjour takes that one only, never another server on the same network.
@@ -138,6 +141,7 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         repairing = false
         paired = true
         UserDefaults.standard.set(true, forKey: "paired")
+        NotificationCenter.default.post(name: Mac.handoffChanged, object: nil)
     }
 
     /// Where it answers now (its name, else its IP), or nil. Neither answering (the Mac's IP changed,
@@ -275,6 +279,7 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         repairing = false
         paired = false
         UserDefaults.standard.set(false, forKey: "paired")
+        NotificationCenter.default.post(name: Mac.handoffChanged, object: nil)
     }
 
     /// Forgets the Mac it was paired with: its authority, its port and its IP too.
@@ -307,6 +312,61 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
             properties[.secure] = nil
             properties[.domain] = name
             if let copy = HTTPCookie(properties: properties) { HTTPCookieStorage.shared.setCookie(copy) }
+        }
+    }
+
+    // MARK: The watch's pairing, from the iPhone
+
+    /// What the watch needs changed here (paired, the IP): the iPhone sends it again (WatchBridge).
+    nonisolated static let handoffChanged = Notification.Name("macHandoff")
+
+    /// What the watch needs to talk to this server as this iPhone does: where (its IP: the watch
+    /// resolves no «.local» names and has no Bonjour), its HTTPS authority, the pairing's cookies.
+    /// Read from what is saved, so it can be asked before any window (the app woken by the watch).
+    nonisolated static func handoff() -> [String: Any] {
+        let saved = UserDefaults.standard
+        guard saved.bool(forKey: "paired") else { return ["paired": false] }
+        let host = saved.string(forKey: "host") ?? "anyassistant.local"
+        let address = saved.string(forKey: "address")
+        var found: [String: Any] = ["paired": true, "host": isIP(host) ? host : address ?? host,
+                                    "port": saved.integer(forKey: "port") == 0 ? 8080 : saved.integer(forKey: "port")]
+        if let server = saved.string(forKey: "server") { found["server"] = server }
+        if let authority = saved.data(forKey: "authority"), let https = saved.object(forKey: "httpsPort") as? Int {
+            found["authority"] = authority
+            found["httpsPort"] = https
+        }
+        var cookies: [String: String] = [:]
+        for name in [host, address].compactMap({ $0 }) {
+            for cookie in HTTPCookieStorage.shared.cookies(for: URL(string: "http://\(name)")!) ?? [] {
+                cookies[cookie.name] = cookie.value
+            }
+        }
+        found["cookies"] = cookies
+        return found
+    }
+
+    /// The watch: paired as its iPhone is (what handoff gave), or not paired if the iPhone isn't.
+    func adopt(_ handoff: [String: Any]) {
+        guard handoff["paired"] as? Bool == true, let ip = handoff["host"] as? String else {
+            if paired { unpair() }
+            return
+        }
+        host = ip
+        address = ip
+        port = handoff["port"] as? Int ?? 8080
+        server = handoff["server"] as? String
+        authority = handoff["authority"] as? Data
+        UserDefaults.standard.set(authority, forKey: "authority")
+        httpsPort = authority != nil ? handoff["httpsPort"] as? Int : nil
+        for (name, value) in handoff["cookies"] as? [String: String] ?? [:] {
+            let properties: [HTTPCookiePropertyKey: Any] = [.domain: ip, .path: "/", .name: name, .value: value,
+                                                            .expires: Date().addingTimeInterval(10 * 365 * 86400)]
+            if let cookie = HTTPCookie(properties: properties) { HTTPCookieStorage.shared.setCookie(cookie) }
+        }
+        exact = true  // where the iPhone says: no looking elsewhere
+        if !paired {
+            paired = true
+            UserDefaults.standard.set(true, forKey: "paired")
         }
     }
 

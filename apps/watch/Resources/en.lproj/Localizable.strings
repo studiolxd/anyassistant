@@ -2,9 +2,5 @@
 "The server isn't answering: is AnyAssistant running, and the watch on the same network?" = "The server isn't responding. Make sure AnyAssistant is running and the watch is on the same network.";
 "It has to be paired again." = "It has to be paired again.";
 "Server" = "Server";
-"Address" = "Address";
-"Port" = "Port";
-"Pair again" = "Pair again";
-"Code from the server" = "Code from the server";
-"Server: " = "Server: ";
-"That code isn't right (or it expired)." = "The code is incorrect or has expired.";
+"Pair AnyAssistant on the iPhone." = "Pair AnyAssistant on the iPhone.";
+"Paired as the iPhone is." = "Paired as the iPhone is.";

@@ -1,7 +1,7 @@
 // AnyAssistant on the Apple Watch: Eyes' face, listening while you look at it. Each sentence goes
 // to your server (POST /talk, the plugin «talk-api»), which answers in voice, as on any other device: its own
-// conversation, your voice checked, «dile a la cocina…». Paired once with the 6-digit code the
-// Mac app shows («Pair a device…»).
+// conversation, your voice checked, «dile a la cocina…». Paired as its iPhone is (Companion):
+// nothing to type here.
 
 import SwiftUI
 
@@ -11,11 +11,33 @@ struct AnyAssistantApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if mac.paired {
-                TalkView(mac: mac)
-            } else {
-                PairView(mac: mac)
+            Group {
+                if mac.paired {
+                    TalkView(mac: mac)
+                } else {
+                    Unpaired()
+                }
             }
+            .onAppear { Companion.shared.start(mac) }
         }
+    }
+}
+
+/// Not paired: the iPhone's app isn't (or hasn't said so yet). Asleep, and what to do.
+struct Unpaired: View {
+    var body: some View {
+        GeometryReader { geometry in
+            let v = min(geometry.size.width * 0.94 / 83, geometry.size.height * 0.85 / 50)
+            VStack(spacing: 6 * v) {
+                EyesFace(look: "asleep", accent: Color(red: 0x34 / 255, green: 0xaf / 255, blue: 0xf7 / 255),
+                         voice: 0, speech: 0, v: v * 0.8)
+                    .frame(height: 36 * v)
+                Text(T("Pair AnyAssistant on the iPhone.")).font(.footnote).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
+        }
+        .background(Color.black)
+        .ignoresSafeArea()
     }
 }
