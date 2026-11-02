@@ -3,21 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AnyAssistant · Themes</title>
   <link rel="icon" href="/web/favicon.png">
-  <link rel="stylesheet" href="/themes/themes.css">
+  <link rel="stylesheet" href="/web/tokens.css?v=1">
+  <link rel="stylesheet" href="/themes/themes.css?v=2">
 </head>
-<body>
-  <!-- Installed / From the community: only for the owner (who may install), else just the first. -->
-  <nav id="tabs" hidden>
-    <button id="tab-installed" class="on"></button>
-    <button id="tab-community"></button>
-  </nav>
-  <header>
+<body class="ui">
+  <header class="header">
+    <img class="logo" src="/web/favicon.png" alt="">
+    <span class="name">AnyAssistant</span>
+    <span class="page" id="page-name">Themes</span>
+    <!-- Installed / From the community: only for the owner (who may install), else just the first. -->
+    <div class="end">
+      <nav id="tabs" class="segmented" hidden>
+        <button id="tab-installed" class="on"></button>
+        <button id="tab-community"></button>
+      </nav>
+    </div>
+  </header>
+  <div id="toolbar">
     <label><span id="theme-label">Theme</span> <select id="theme"></select></label>
     <span id="about"></span>
     <span id="reloaded"></span>
-  </header>
+  </div>
   <div id="sounds"></div>
   <main id="states"></main>
   <section id="community" hidden>
@@ -34,6 +43,6 @@
       <button id="full-close" aria-label="close">✕</button>
     </div>
   </div>
-  <script src="/themes/themes.js"></script>
+  <script src="/themes/themes.js?v=2"></script>
 </body>
 </html>

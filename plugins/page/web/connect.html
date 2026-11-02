@@ -6,25 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AnyAssistant · {title}</title>
   <link rel="icon" href="/web/favicon.png">
+  <link rel="stylesheet" href="/web/tokens.css?v=1">
   <style>
-    /* The QR's page (plugins/page: /connect): plain, for the oldest browsers too. */
-    html, body { margin: 0; background: #000; color: #ccc; font-family: -apple-system, Roboto, sans-serif; }
-    main { max-width: 420px; margin: 0 auto; padding: 32px 24px 48px; text-align: center; }
-    h1 { font-size: 1.5em; font-weight: 600; color: #fff; margin: 0 0 24px; }
-    h2 { font-size: 1.1em; font-weight: 600; color: #fff; margin: 28px 0 8px; }
-    p { margin: 8px 0 12px; line-height: 1.4; }
-    .muted { color: #888; font-size: 0.9em; }
-    .error { color: #e66; }
-    .button, button { display: block; width: 100%; box-sizing: border-box; margin: 12px 0; padding: 14px 18px;
-      font: inherit; font-size: 1.1em; font-weight: 600; color: #fff; background: #2f7cf6; border: 0;
-      border-radius: 12px; text-decoration: none; cursor: pointer; }
-    .button.quiet { background: #222; border: 1px solid #444; }
-    input { width: 6.5em; font: inherit; font-size: 2em; text-align: center; letter-spacing: 0.2em; padding: 6px;
-      background: #111; color: #fff; border: 2px solid #555; border-radius: 8px; }
+    /* The QR's page (plugins/page: /connect): the design system's (tokens.css), plain, for old browsers too. */
+    html, body { margin: 0; background: var(--color-background); }
+    main { max-width: 420px; margin: 0 auto; padding: var(--space-8) var(--space-6); text-align: center; }
+    h1 { font-size: var(--text-xl); font-weight: var(--weight-semibold); margin: 0 0 var(--space-6); }
+    h2 { font-size: var(--text-lg); font-weight: var(--weight-semibold); margin: var(--space-7) 0 var(--space-2); }
+    p { margin: var(--space-2) 0 var(--space-3); }
+    .muted { color: var(--color-text-secondary); font-size: var(--text-sm); }
+    .error { color: var(--color-danger); }
+    .ui .button, .ui button { display: block; width: 100%; min-height: 50px; margin: var(--space-3) 0;
+      padding: var(--space-3) var(--space-5); font-size: var(--text-lg); font-weight: var(--weight-semibold);
+      border-radius: var(--radius-lg); }
+    .ui input[name=code] { display: block; width: 5.2em; margin: var(--space-4) auto; padding: var(--space-2) var(--space-3);
+      font-family: var(--font-mono); font-size: var(--text-code); font-weight: var(--weight-medium);
+      text-align: center; letter-spacing: 0.15em; border-radius: var(--radius-lg); }
   </style>
 </head>
-<body>
+<body class="ui">
   <main>
+    <img class="logo large" src="/web/favicon.png" alt="">
 {body}
   </main>
 </body>
