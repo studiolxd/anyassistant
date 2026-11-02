@@ -80,5 +80,8 @@
   "That Mac doesn't answer: is AnyAssistant running there, on this network?": "El servidor no responde. Comprueba que el servidor de AnyAssistant esté activo y que este dispositivo esté en la misma red.",
   "Not now": "Ahora no",
   "Cancel": "Cancelar",
-  "Waiting for the server…": "Esperando a que el servidor se inicie…"
+  "Waiting for the server…": "Esperando a que el servidor se inicie…",
+  "Community updates (%s)…": "Actualizaciones de la comunidad (%s)…",
+  "There's an update of %s (%s)": "Hay una actualización de %s (%s)",
+  "There are updates of %s themes and plugins": "Hay actualizaciones de %s temas y plugins"
 }

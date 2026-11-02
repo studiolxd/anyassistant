@@ -33,6 +33,7 @@
       "setup.js",
       "bonjour.js",
       "microphone.js",
+      "updates.js",
       "preload.js",
       "setup.html",
       "unavailable.html",

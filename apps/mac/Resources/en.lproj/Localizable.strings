@@ -275,3 +275,8 @@
 "Rename…" = "Rename…";
 "Rename" = "Rename";
 "What it remembers about them keeps the new name too." = "What it remembers about them goes to the new name. If a voice already has that name, they become one.";
+
+/* Updates from the community (Updates.swift) */
+"Community updates (%d)…" = "Community updates (%d)…";
+"There's an update of %@ (%@)" = "There's an update of %@ (%@)";
+"There are updates of %d themes and plugins" = "There are updates of %d themes and plugins";

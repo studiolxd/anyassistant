@@ -150,6 +150,15 @@ function showTab(community) {
   document.getElementById('tab-community').classList.toggle('on', community);
 }
 
+// /themes#community (an update announced by the app): straight to «From the community». The #part
+// goes once shown, so asking again (the same address) is a change the page hears.
+function asked() {
+  if (location.hash !== '#community' || document.getElementById('tabs').hidden) return;  // tabs: the owner's
+  history.replaceState(null, '', location.pathname + location.search);
+  showTab(true);
+}
+window.addEventListener('hashchange', asked);
+
 function community() {
   var section = document.getElementById('community');
   fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (me) {
@@ -174,6 +183,7 @@ function community() {
     call('GET', '/admin/community' + (refresh ? '?refresh=1' : '')).then(function (data) {
       if (data._status !== 200) return;  // the plugin is off, or not the owner
       document.getElementById('tabs').hidden = false;
+      asked();
       section.querySelector('.error').textContent = data.error || '';
       var list = document.getElementById('packages');
       list.innerHTML = '';

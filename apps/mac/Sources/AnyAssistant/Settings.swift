@@ -313,8 +313,21 @@ struct PageLink<Content: View>: View {
 struct SettingsView: View {
     @StateObject private var admin = Admin()
     @StateObject private var navigation = SettingsNavigation()
-    @State private var section: String? = "assistant"
+    @State private var section: String? = SettingsView.firstSection()
     @State private var search = ""
+    @State private var toCommunity = SettingsView.wantsCommunity ? 1 : 0  // one more: Plugins goes to «From the community»
+
+    /// Asked to open at Plugins → From the community (an update announced) before the window is there.
+    @MainActor static var wantsCommunity = false
+
+    @MainActor static func firstSection() -> String { wantsCommunity ? "plugins" : "assistant" }
+
+    /// Opens Settings at Plugins → From the community (open or not yet).
+    @MainActor static func showCommunity() {
+        wantsCommunity = true
+        NotificationCenter.default.post(name: .settingsCommunity, object: nil)
+        Delegate.show("settings")
+    }
 
     var body: some View {
         // A sidebar of a fixed width (a split view can always be dragged), with the search on top.
@@ -370,7 +383,7 @@ struct SettingsView: View {
                 } else if !search.trimmingCharacters(in: .whitespaces).isEmpty {
                     SearchResults(admin: admin, search: search)
                 } else if section == "plugins" {
-                    PluginsView(admin: admin)
+                    PluginsView(admin: admin, toCommunity: toCommunity)
                 } else if let section {
                     OptionsView(admin: admin, group: section)
                 }
@@ -386,7 +399,17 @@ struct SettingsView: View {
         .environmentObject(navigation)
         .onChange(of: section) { _, _ in navigation.pages = []; search = "" }
         .onChange(of: search) { _, now in if !now.isEmpty { navigation.pages = [] } }
-        .task { await admin.load() }
+        .task {
+            SettingsView.wantsCommunity = false
+            await admin.load()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .settingsCommunity)) { _ in
+            SettingsView.wantsCommunity = false
+            navigation.pages = []
+            search = ""
+            section = "plugins"
+            toCommunity += 1
+        }
         // Kept up to date: the plugins every few seconds (they change by voice too); the
         // options when you come back to the window (not while you type in one).
         .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
@@ -648,50 +671,63 @@ struct DictEditor: View {
     }
 }
 
+extension Notification.Name {
+    static let settingsCommunity = Notification.Name("AnyAssistantSettingsCommunity")
+}
+
 struct PluginsView: View {
     @ObservedObject var admin: Admin
+    var toCommunity = 0  // one more: scrolled to «From the community» (an update announced)
     @State private var asking: CommunityItem?  // a community plugin to install or update: it asks first
 
     let kinds = ["feature", "skill", "library", "brain", "llm", "stt", "tts", "wake", "vad"]
 
     var body: some View {
         let shared = admin.community.filter { $0.kind == "plugin" }
-        Form {
-            ForEach(kinds, id: \.self) { kind in
-                // The ones that are on first, then the rest; each opens its page.
-                let found = admin.plugins.filter { $0.kind == kind }.sorted { $0.on && !$1.on }
-                if !found.isEmpty {
-                    Section(title(kind)) {
-                        ForEach(found) { plugin in
-                            PageLink(page: .plugin(plugin.id)) { row(plugin) }
+        ScrollViewReader { scroller in
+            Form {
+                ForEach(kinds, id: \.self) { kind in
+                    // The ones that are on first, then the rest; each opens its page.
+                    let found = admin.plugins.filter { $0.kind == kind }.sorted { $0.on && !$1.on }
+                    if !found.isEmpty {
+                        Section(title(kind)) {
+                            ForEach(found) { plugin in
+                                PageLink(page: .plugin(plugin.id)) { row(plugin) }
+                            }
                         }
                     }
                 }
+                // From the community (the plugin «community»): the catalog's plugins, to install (after
+                // a warning: it is code that runs here), update or remove. Themes are in the Themes window.
+                Section {
+                    if !admin.communityOn {
+                        Text(T("Turn on the plugin «Community».")).foregroundStyle(.secondary)
+                    } else if let why = admin.communityError {
+                        Text(why).foregroundStyle(.orange)
+                    } else if shared.isEmpty {
+                        Text(T("Nothing to install yet.")).foregroundStyle(.secondary)
+                    }
+                    ForEach(shared) { item in
+                        CommunityRow(item: item, admin: admin) { asking = item }
+                    }
+                    if admin.communityOn {
+                        Button(T("Reload the catalog")) { Task { await admin.loadCommunity(refresh: true) } }
+                            .buttonStyle(.link)
+                    }
+                } header: {
+                    Text(T("From the community"))
+                } footer: {
+                    Text(T("Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions."))
+                }
+                .id("community")
             }
-            // From the community (the plugin «community»): the catalog's plugins, to install (after
-            // a warning: it is code that runs here), update or remove. Themes are in the Themes window.
-            Section {
-                if !admin.communityOn {
-                    Text(T("Turn on the plugin «Community».")).foregroundStyle(.secondary)
-                } else if let why = admin.communityError {
-                    Text(why).foregroundStyle(.orange)
-                } else if shared.isEmpty {
-                    Text(T("Nothing to install yet.")).foregroundStyle(.secondary)
-                }
-                ForEach(shared) { item in
-                    CommunityRow(item: item, admin: admin) { asking = item }
-                }
-                if admin.communityOn {
-                    Button(T("Reload the catalog")) { Task { await admin.loadCommunity(refresh: true) } }
-                        .buttonStyle(.link)
-                }
-            } header: {
-                Text(T("From the community"))
-            } footer: {
-                Text(T("Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions."))
+            .formStyle(.grouped)
+            .task(id: toCommunity) {
+                guard toCommunity > 0 else { return }
+                try? await Task.sleep(nanoseconds: 400_000_000)  // once the plugins are listed above it
+                withAnimation { scroller.scrollTo("community", anchor: .top) }
             }
         }
-        .formStyle(.grouped)
         .alert((asking?.installed == nil ? T("Install «%s»?") : T("Update «%s»?")).replacingOccurrences(of: "%s", with: asking?.name ?? ""),
                isPresented: Binding(get: { asking != nil }, set: { if !$0 { asking = nil } }), presenting: asking) { item in
             Button(item.installed == nil ? T("Install") : T("Update")) { Task { await admin.install(item) } }

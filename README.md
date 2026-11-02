@@ -851,6 +851,14 @@ server requires that confirmation too), it goes whole into your plugins folder o
 file matches its SHA-256, it never replaces a system plugin, and it starts off: turn it on in
 Plugins after restarting. Updates and removal from the same place.
 
+**Updates are announced, never installed by themselves.** With something from the catalog
+installed, the server reads the catalog once a day (and a few minutes after starting) and notes
+the new versions (`GET /admin/community/updates`, for the apps). The Mac app and the Windows and
+Linux app show a notification once per new version («Hay una actualización de Bedside (1.1.0)», or
+«Hay actualizaciones de 2 temas y plugins») and, while updates wait, «Actualizaciones de la
+comunidad (2)…» in their menu. Both open where to install them: the Themes window's «De la
+comunidad» tab for themes, Settings → Plugins → «De la comunidad» for plugins.
+
 ## Skills without an LLM
 
 Time and date, timers, alarms, reminders, sums, unit conversions and volume are

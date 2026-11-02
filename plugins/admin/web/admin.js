@@ -164,7 +164,7 @@ var timer = null;
 
 function section(id) {
   if (id.indexOf('group/') === 0) return id;
-  if (id.indexOf('plugin/') === 0 || id === 'plugins' || id === 'mail' || id === 'voices') return 'plugins';
+  if (id.indexOf('plugin/') === 0 || id === 'plugins' || id === 'community' || id === 'mail' || id === 'voices') return 'plugins';
   if (id.indexOf('device/') === 0) return 'devices';
   return id;
 }
@@ -187,9 +187,14 @@ function show(id) {
   else if (id === 'mail') mailPage(main);
   else if (id === 'voices') voicesPage(main);
   else if (id === 'memory') memoryPage(main);
+  else if (id === 'community') plugins(main, true);
   else ({ pair: pair, devices: devices, plugins: plugins, admins: adminsPage })[id](main);
-  if (id !== 'search') history.replaceState(null, '', '#' + id);
+  // #community is a way in, kept as #plugins: asked again (the app's notification), it is a change the page hears
+  if (id !== 'search') history.replaceState(null, '', '#' + (id === 'community' ? 'plugins' : id));
 }
+window.addEventListener('hashchange', function () {
+  if (location.hash === '#community' && !$('#app').hidden && WINDOW !== 'devices' && WINDOW !== 'pair') show('community');
+});
 
 /// Over a page: the way back to where it hangs from (as the Mac's back button over a page).
 function back(main, id, title) {
@@ -492,7 +497,8 @@ var LLM_NAMES = { claude: 'Claude', codex: 'Codex', gemini: 'Gemini', opencode: 
 var KINDS = [['feature', 'Features'], ['skill', 'Skills'], ['library', 'Libraries'], ['brain', 'Brain'], ['llm', 'LLMs'],
              ['stt', 'Speech recognition'], ['tts', 'Voices'], ['wake', 'Wake word'], ['vad', 'Voice detection']];
 
-function plugins(main) {
+// #community (an update announced by the app): Plugins, scrolled to «From the community».
+function plugins(main, toCommunity) {
   if (!WINDOW) main.appendChild(el('h1', { text: T('Plugins') }));
   api('GET', '/admin/plugins').then(function (data) {
     KINDS.forEach(function (kind) {
@@ -505,7 +511,7 @@ function plugins(main) {
       main.appendChild(box);
       mine.forEach(function (p) { box.appendChild(pluginRow(p)); });
     });
-    community(main);  // the catalog's plugins, after the installed ones
+    community(main, toCommunity);  // the catalog's plugins, after the installed ones
   }).catch(function () {});
 }
 
@@ -862,8 +868,10 @@ function mailPage(main) {
 // The community (the plugin «community»): the catalog's plugins, under Plugins, «From the community»:
 // what is installed and whether an update exists; install (a plugin asks first, and starts off), update,
 // remove. Its themes are in the Themes page.
-function community(main) {
-  main.appendChild(el('h2', { text: T('From the community') }));
+function community(main, toCommunity) {
+  var heading = el('h2', { id: 'community', text: T('From the community') });
+  main.appendChild(heading);
+  if (toCommunity) heading.scrollIntoView({ block: 'start' });
   var box = el('div');
   main.appendChild(box);
   function load(refresh) {
@@ -1004,7 +1012,7 @@ fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.
   }).catch(function () {}).then(function () {
     sidebar();
     var wanted = location.hash.slice(1);
-    var known = ['pair', 'devices', 'settings', 'plugins', 'admins', 'mail', 'voices', 'memory'];
+    var known = ['pair', 'devices', 'settings', 'plugins', 'community', 'admins', 'mail', 'voices', 'memory'];
     var allowed = WINDOW === 'devices' ? function (id) { return section(id) === 'devices'; }
                 : WINDOW === 'pair' ? function (id) { return id === 'pair'; }
                 : WINDOW === 'settings' ? function (id) { return ['pair', 'devices', 'admins'].indexOf(section(id)) < 0; }
