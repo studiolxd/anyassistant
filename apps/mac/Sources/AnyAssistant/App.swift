@@ -84,6 +84,7 @@ final class Delegate: NSObject, NSApplicationDelegate {
             let server = Server.shared
             let client = Client.shared
             defer { client.begin() }
+            CommunityUpdates.shared.begin()  // the community's updates (with the server here): a notification, a menu item
             if client.role == .client { return }  // no server here: another Mac's
             if server.installed {
                 server.launch()
@@ -210,6 +211,7 @@ func M(_ english: String) -> String {
 struct MenuView: View {
     @ObservedObject var server: Server
     @ObservedObject var client: Client
+    @ObservedObject var updates = CommunityUpdates.shared
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
     @State private var login = SMAppService.mainApp.status == .enabled
@@ -297,6 +299,11 @@ struct MenuView: View {
             if client.refused { Button(M("Allow the microphone…")) { client.openPrivacy() } }
             if client.cameraRefused { Button(M("Allow the camera…")) { client.openPrivacy("Privacy_Camera") } }
             Button(M("Themes…")) { open("themes") }  // every state of each theme, to see them (the plugin «themes»)
+            if !updates.pending.isEmpty {  // where to install them (it never installs them by itself)
+                Button(String(format: M("Community updates (%d)…"), updates.pending.count)) {
+                    CommunityUpdates.open(CommunityUpdates.place(updates.pending))
+                }
+            }
             Divider()
             Button(M("Pair a device…")) { open("pair") }
             Button(M("Devices…")) { open("devices") }

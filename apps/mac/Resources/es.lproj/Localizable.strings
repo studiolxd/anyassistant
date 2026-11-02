@@ -276,3 +276,8 @@
 "Rename…" = "Cambiar nombre…";
 "Rename" = "Cambiar nombre";
 "What it remembers about them keeps the new name too." = "Sus recuerdos pasan al nombre nuevo. Si ya hay una voz con ese nombre, se juntan en una.";
+
+/* Updates from the community (Updates.swift) */
+"Community updates (%d)…" = "Actualizaciones de la comunidad (%d)…";
+"There's an update of %@ (%@)" = "Hay una actualización de %@ (%@)";
+"There are updates of %d themes and plugins" = "Hay actualizaciones de %d temas y plugins";
