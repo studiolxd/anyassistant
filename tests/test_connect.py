@@ -96,7 +96,7 @@ def test_a_wrong_or_expired_code_shows_the_form_again_with_the_reason(pairing):
 def test_the_qr_opened_on_a_phone_offers_the_app_with_the_code_or_the_browser(pairing):
     body = get(path="/connect?code=482913", agent=PHONE).text
     assert "anyassistant://connect?host=192.168.1.40&amp;port=8080&amp;code=482913&amp;server=3f2a&amp;name=Eva" in body
-    assert 'value="482913"' in body and "Continue in the browser" in body
+    assert 'value="482913"' in body and "Connect" in body
     laptop = get(path="/connect?code=482913").text
     assert "anyassistant://" not in laptop and ">Connect<" in laptop  # no app for a laptop: the code, in the browser
 
@@ -128,7 +128,7 @@ def test_with_https_the_certificate_comes_first_then_the_https_page(pairing, mon
 
 def test_the_page_is_in_the_servers_language(pairing, es):
     body = get(path="/connect?code=482913", agent=PHONE).text
-    assert 'lang="es"' in body and "Abrir en la app" in body and "Continuar en el navegador" in body
+    assert 'lang="es"' in body and "Abrir en la app" in body and "Conectar" in body
 
 
 def test_the_admin_status_gives_what_the_qr_and_the_addresses_need(monkeypatch):

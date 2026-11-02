@@ -228,10 +228,16 @@ body.ui { color-scheme: dark; }
 /* A panel: a short task on a screen of its own (pairing, the QR page). .centered fills the screen
    and centres it; .panel is a column at most 400px wide, the logo centred, the words to the left,
    the field and the buttons full width. No flex `gap` (old Chrome): margins. */
-.ui.centered { display: flex; align-items: center; justify-content: center; box-sizing: border-box;
-  min-height: 100%; padding: var(--space-6); }
-body.ui.centered { margin: 0; min-height: 100vh; background: var(--color-background); }  /* a page that is only a panel */
-.ui .panel { width: 100%; max-width: 400px; text-align: left; }
+.ui.centered { display: flex; flex-direction: column; box-sizing: border-box; min-height: 100%;
+  /* inside the safe area (a notch, the home bar), with the panel's own margin */
+  padding: calc(var(--space-6) + env(safe-area-inset-top, 0px)) calc(var(--space-6) + env(safe-area-inset-right, 0px))
+           calc(var(--space-6) + env(safe-area-inset-bottom, 0px)) calc(var(--space-6) + env(safe-area-inset-left, 0px)); }
+/* A page that is only a panel: the screen's visible height (dvh: without the browser's bars; vh for
+   old browsers). */
+body.ui.centered { margin: 0; min-height: 100vh; min-height: 100dvh; background: var(--color-background); }
+/* margin: auto centres it when it fits; when it doesn't, it starts at the top and scrolls (never
+   pushed down or cut). */
+.ui .panel { width: 100%; max-width: 400px; margin: auto; text-align: left; }
 .ui .panel .logo.large { margin: 0 auto var(--space-7); }
 .ui .panel h1 { font-size: var(--text-2xl); font-weight: var(--weight-semibold); margin: 0 0 var(--space-2); }
 .ui .panel h2 { font-size: var(--text-lg); font-weight: var(--weight-semibold); margin: var(--space-7) 0 var(--space-2); }
@@ -246,6 +252,21 @@ body.ui.centered { margin: 0; min-height: 100vh; background: var(--color-backgro
 .ui .panel .code { display: block; width: 100%; box-sizing: border-box; margin: 0 0 var(--space-4);
   padding: var(--space-2) var(--space-3); font-family: var(--font-mono); font-size: var(--text-code);
   font-weight: var(--weight-medium); text-align: center; letter-spacing: 0.3em; border-radius: var(--radius-lg); }
+.ui .panel .center { text-align: center; }
+/* «o» between two ways, on a thin line. */
+.ui .panel .divider { display: flex; align-items: center; margin: var(--space-6) 0; color: var(--color-text-secondary);
+  font-size: var(--text-sm); }
+.ui .panel .divider::before, .ui .panel .divider::after { content: ""; flex: 1; border-top: 1px solid var(--color-border); }
+.ui .panel .divider::before { margin-right: var(--space-3); }
+.ui .panel .divider::after { margin-left: var(--space-3); }
 .ui .panel .button { display: block; width: 100%; box-sizing: border-box; min-height: 50px; margin: var(--space-3) 0;
   padding: var(--space-3) var(--space-5); font-size: var(--text-lg); font-weight: var(--weight-semibold);
   text-align: center; border-radius: var(--radius-lg); }
+/* Short screens (an iPhone 7, an SE): a smaller logo and title, less room between, so it all fits. */
+@media (max-height: 700px) {
+  .ui .panel .logo.large { width: 48px; height: 48px; margin-bottom: var(--space-5); }
+  .ui .panel h1 { font-size: var(--text-xl); }
+  .ui .panel .description { margin-bottom: var(--space-6); }
+  .ui .panel .code { font-size: 32px; }
+  .ui .panel .divider { margin: var(--space-4) 0; }
+}

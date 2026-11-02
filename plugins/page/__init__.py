@@ -111,16 +111,14 @@ def _connect_page(request, code: str, problem: bool):
         link = _android_app_link(link, str(request.url))
     e = html.escape
     parts = [f"<h1>{e(t('title'))}</h1>"]
-    if not paired:  # what to do here: the app or the code on a phone; the code on a computer
-        parts.append(f'<p class="description">{e(t("about_phone") if _mobile(agent) else t("about_computer"))}</p>')
-    if _mobile(agent):
-        parts.append(f'<a class="button" href="{e(link)}">{e(t("app"))}</a>')
+    # The code first (whoever scans with the camera mostly hasn't the app: with it, they scan in it);
+    # on a phone, the app below as the other way.
     if not paired:
+        parts.append(f'<p class="description">{e(t("about"))}</p>')
         parts.append(f'<form method="post" action="/connect"><label for="code">{e(t("code"))}</label>'
                      f'<input id="code" class="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{e(code)}">'
                      + (f'<p class="error">{e(t("wrong"))}</p>' if problem else "")
-                     + f'<button type="submit" class="{"button secondary" if _mobile(agent) else "button"}">'
-                     + f'{e(t("continue") if _mobile(agent) else t("connect"))}</button></form>')
+                     + f'<button type="submit" class="button">{e(t("connect"))}</button></form>')
     else:
         if pairing is None:
             parts.append(f'<p class="muted">{e(t("no_code"))}</p>')
@@ -129,6 +127,10 @@ def _connect_page(request, code: str, problem: bool):
                          f'<a class="button secondary" href="/https/ca.crt">{e(t("certificate_get"))}</a>'
                          f'<p class="muted">{e(t("certificate_android"))}</p><h2>{e(t("then"))}</h2>')
         parts.append(f'<a class="button" href="{e(page)}">{e(t("open"))}</a>')
+    if _mobile(agent):  # the app: the other way
+        parts.append(f'<p class="divider">{e(t("or"))}</p>'
+                     f'<a class="button secondary" href="{e(link)}">{e(t("app"))}</a>'
+                     f'<p class="muted center">{e(t("app_note"))}</p>')
     body = (WEB / "connect.html").read_text().replace("{lang}", i18n.L.code).replace("{title}", e(t("title")))
     return http.Response(text=body.replace("{body}", "\n".join(parts)), content_type="text/html")
 

@@ -45,7 +45,7 @@ def test_the_components_apply_only_inside_ui():
     """The device's page also shows a theme (someone else's HTML): .card, .row… must stay its own."""
     css = without_comments(TOKENS)
     components = css[css.index("}", css.index(":root")) + 1:]  # after the tokens
-    selectors = re.findall(r"([^{}]+)\{", components)
+    selectors = [x for x in re.findall(r"([^{}]+)\{", components) if not x.strip().startswith("@media")]
     assert selectors
     for group in selectors:
         for selector in group.split(","):
