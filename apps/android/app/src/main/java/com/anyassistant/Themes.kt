@@ -11,6 +11,18 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -216,13 +228,67 @@ fun TimerLines(face: FaceState, size: TextUnit, color: Color = Color.White, icon
 
 @Composable
 fun CaptionLines(face: FaceState, accent: Color, older: Color = Color.White, olderAlpha: Float = 0.6f, modifier: Modifier = Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+    val lastOne = face.captions.lastOrNull()
+    WordsArea(lastOne?.let { face.aim(it.id, it.answer, it.text) } ?: Aim("", 0f), lastOne?.id ?: "", modifier,
+        Alignment.CenterHorizontally, Arrangement.spacedBy(5.dp)) {
         for (caption in face.captions) {
-            val last = caption.id == face.captions.lastOrNull()?.id
-            Text(caption.text, Modifier.alpha(if (last) 1f else olderAlpha),
+            val last = caption.id == lastOne?.id
+            Text(caption.text, Modifier.word(caption.id).alpha(if (last) 1f else olderAlpha),
                 color = if (caption.assistant) accent else if (last) Color.White else older,
                 fontSize = with(LocalDensity.current) { (if (last) 24f else 17.6f).dp.toSp() }, textAlign = TextAlign.Center)
         }
+    }
+}
+
+/** Where a WordsArea scrolls to: the word with that key, at that fraction of it (0 its top, 1 its end). */
+data class Aim(val key: String, val y: Float)
+
+/** Inside a WordsArea: Modifier.word(key) marks what an Aim can point at. */
+class WordsScope(column: ColumnScope, private val places: MutableMap<String, Pair<Float, Float>>) : ColumnScope by column {
+    fun Modifier.word(key: String): Modifier = onPlaced { places[key] = it.positionInParent().y to it.size.height.toFloat() }
+}
+
+/** The words (the captions, what you said, the answer) in their own area, as the page's: it scrolls
+ *  without a bar (a finger) and follows `aim` (FaceState.aim: the end of what you said, the sentence
+ *  the voice is saying); dragged by hand, it stops following until back at the end or new words
+ *  arrive (`fresh` changes). A fade at the edge where there is more. Its height is the modifier's
+ *  (a fixed one, or weight(1f, fill = false): as tall as the words, down to the bottom). */
+@Composable
+fun WordsArea(aim: Aim, fresh: Any, modifier: Modifier = Modifier, alignment: Alignment.Horizontal = Alignment.Start,
+              arrangement: Arrangement.Vertical = Arrangement.Top, content: @Composable WordsScope.() -> Unit) {
+    val state = rememberScrollState()
+    val places = remember { mutableStateMapOf<String, Pair<Float, Float>>() }
+    var following by remember { mutableStateOf(true) }
+    var view by remember { mutableStateOf(0f) }
+    LaunchedEffect(state) {  // a finger: it stops following
+        state.interactionSource.interactions.collect { if (it is DragInteraction.Start) following = false }
+    }
+    LaunchedEffect(state) {  // back at the end (and still): following again
+        snapshotFlow { Triple(state.value, state.maxValue, state.isScrollInProgress) }.collect { (at, end, moving) ->
+            if (!following && !moving && at >= end - 2) following = true
+        }
+    }
+    LaunchedEffect(fresh) { following = true }
+    val place = places[aim.key]
+    LaunchedEffect(aim, following, place, view, state.maxValue) {
+        if (!following || place == null) return@LaunchedEffect
+        val (top, height) = place
+        val target = (top + aim.y * height - aim.y * view).toInt().coerceIn(0, state.maxValue)
+        if (target != state.value) state.animateScrollTo(target, tween(450))
+    }
+    Column(modifier
+        .onSizeChanged { view = it.height.toFloat() }
+        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            val edge = 28.dp.toPx()
+            if (state.value > 1) drawRect(Brush.verticalGradient(0f to Color.Transparent, 1f to Color.Black, startY = 0f, endY = edge),
+                size = Size(size.width, edge), blendMode = BlendMode.DstIn)
+            if (state.value < state.maxValue - 1) drawRect(Brush.verticalGradient(0f to Color.Black, 1f to Color.Transparent,
+                startY = size.height - edge, endY = size.height), Offset(0f, size.height - edge), Size(size.width, edge), blendMode = BlendMode.DstIn)
+        }
+        .verticalScroll(state), horizontalAlignment = alignment, verticalArrangement = arrangement) {
+        WordsScope(this, places).content()
     }
 }
 
@@ -278,14 +344,14 @@ fun EyesTheme(face: FaceState, s: Sizes) {
         while (true) { delay((2500 + Random.nextDouble() * 4500).toLong()); blink = true; delay(140); blink = false }
     }
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxWidth().padding(top = s.height * (if (s.landscape) 0.10f else 0.28f)),
+        Column(Modifier.fillMaxSize().padding(top = s.height * (if (s.landscape) 0.10f else 0.28f)),
             horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.graphicsLayer { scaleX = if (s.landscape) 0.85f else 1f; scaleY = scaleX }) { EyesFace(face, s, look, accent, blink) }
             StatusLine(face, 22.sp, modifier = Modifier.padding(top = 27.dp))
             TimerLines(face, s.sp(if (s.landscape) 4.5f else 5f), modifier = Modifier.padding(top = s.dp(if (s.landscape) 1.5f else 3f)))
-            if (look != "asleep") {
-                CaptionLines(face, accent, modifier = Modifier.width(s.width * (if (s.landscape) 0.7f else 0.9f))
-                    .heightIn(min = if (s.landscape) 0.dp else 112.dp).padding(top = 10.dp))
+            if (look != "asleep") {  // from 112 up to the space left down to the bottom: the eyes above don't move
+                CaptionLines(face, accent, modifier = Modifier.padding(top = 10.dp, bottom = s.dp(2f)).weight(1f, fill = false)
+                    .width(s.width * (if (s.landscape) 0.7f else 0.9f)).heightIn(min = if (s.landscape) 0.dp else 112.dp))
             }
             FaceEndMark()
         }
@@ -452,8 +518,9 @@ fun OrbTheme(face: FaceState, s: Sizes) {
         TimerLines(face, s.sp(if (s.landscape) 4.5f else 5f), Color(0xffbbbbbb), icons = false,
             modifier = Modifier.padding(top = s.dp(if (s.landscape) 1.5f else 3f)))
         if (look != "asleep") {
-            CaptionLines(face, tone, Color(0xff666666), 1f, Modifier.width(s.width * (if (s.landscape) 0.7f else 0.9f))
-                .heightIn(min = if (s.landscape) 0.dp else 112.dp).padding(top = 10.dp))
+            // A fixed height (the column is centred: so the sphere doesn't move); longer, it scrolls.
+            CaptionLines(face, tone, Color(0xff666666), 1f, Modifier.padding(top = 10.dp).width(s.width * (if (s.landscape) 0.7f else 0.9f))
+                .height(if (s.landscape) s.height * 0.2f else maxOf(112.dp, s.height * 0.2f)))
         }
         FaceEndMark()
     }
@@ -487,8 +554,11 @@ fun BedsideTheme(face: FaceState, s: Sizes) {
         }
         StatusLine(face, s.sp(4f), glow, modifier = Modifier.alpha(if (asleep) 0.2f else 0.5f))
         TimerLines(face, s.sp(5f), glow, icons = false, spacing = 0.dp, modifier = Modifier.alpha(0.6f).padding(top = s.dp(3f)))
-        if (!asleep && face.shows("show_answer")) {
-            Text(face.answer, Modifier.width(s.width * 0.8f).alpha(0.7f).padding(top = 16.dp), color = glow, fontSize = s.sp(5f), textAlign = TextAlign.Center)
+        if (!asleep && face.shows("show_answer")) {  // four lines, always (the column is centred: so the ember doesn't move)
+            WordsArea(face.aim("answer", face.answerId, face.answer), face.answerId,
+                Modifier.padding(top = 16.dp).width(s.width * 0.8f).height(s.dp(25f)), Alignment.CenterHorizontally) {
+                Text(face.answer, Modifier.word("answer").fillMaxWidth().alpha(0.7f), color = glow, fontSize = s.sp(5f), textAlign = TextAlign.Center)
+            }
         }
         FaceEndMark()
     }
@@ -526,7 +596,7 @@ fun MinimalTheme(face: FaceState, s: Sizes) {
                 }
             }
         }
-        Column(Modifier.fillMaxWidth().padding(top = top).padding(horizontal = s.dp(6f))) {
+        Column(Modifier.fillMaxSize().padding(top = top).padding(horizontal = s.dp(6f))) {
             Canvas(Modifier.height(s.dp(14f)).width(s.dp(12f))) {
                 val r = s.dp(6f).toPx() * (0.8f + face.voice * 0.5f + face.speech * 0.5f)
                 val c = Offset(size.width / 2, s.dp(6f).toPx())
@@ -540,10 +610,18 @@ fun MinimalTheme(face: FaceState, s: Sizes) {
             TimerLines(face, s.sp(if (s.landscape) 5.5f else 7f), ink, icons = false, alignment = Alignment.Start, spacing = s.dp(1f),
                 modifier = Modifier.padding(top = s.dp(if (s.landscape) 1f else 3f)))
             if (!asleep) {
+                // What you said: two lines at most (its end); the answer, the space down to the bottom.
                 if (face.shows("show_heard") && face.heard.isNotEmpty()) {
-                    Text(face.heard, Modifier.alpha(0.75f).padding(bottom = s.dp(2f)), color = ink, fontSize = s.sp(6f))
+                    WordsArea(Aim("heard", 1f), face.heardCount, Modifier.padding(bottom = s.dp(2f)).heightIn(max = s.dp(15f))) {
+                        Text(face.heard, Modifier.word("heard").fillMaxWidth().alpha(0.75f), color = ink, fontSize = s.sp(6f))
+                    }
                 }
-                if (face.shows("show_answer") && face.answer.isNotEmpty()) Text(face.answer, color = ink, fontSize = s.sp(7f))
+                if (face.shows("show_answer") && face.answer.isNotEmpty()) {
+                    WordsArea(face.aim("answer", face.answerId, face.answer), face.answerId,
+                        Modifier.padding(bottom = s.dp(4f)).weight(1f, fill = false)) {
+                        Text(face.answer, Modifier.word("answer").fillMaxWidth(), color = ink, fontSize = s.sp(7f))
+                    }
+                }
             }
             FaceEndMark()
         }

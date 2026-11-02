@@ -20,7 +20,9 @@ import java.util.Locale
 import java.util.UUID
 
 class FaceState {
-    data class Caption(val id: String, val text: String, val assistant: Boolean)
+    data class Caption(val id: String, val text: String, val assistant: Boolean, val answer: String? = null)  // answer: its id, for «speaking»
+    /** The sentence being said: the answer's id and where it starts in its text (UTF-16). */
+    data class Said(val id: String, val start: Int)
     data class Item(val kind: String, val at: Double, val label: String)
 
     var state by mutableStateOf("connecting")
@@ -34,7 +36,10 @@ class FaceState {
     var screen by mutableStateOf<Map<String, Any>>(emptyMap())
     val captions = mutableStateListOf<Caption>()
     var heard by mutableStateOf("")
+    var heardCount by mutableStateOf(0)  // each new thing you said (it shows from its end)
     var answer by mutableStateOf("")
+    var answerId by mutableStateOf("")
+    var said by mutableStateOf<Said?>(null)
     var items by mutableStateOf<List<Item>>(emptyList())
     var alarmLabel by mutableStateOf("")
     var photo by mutableStateOf<Bitmap?>(null)
@@ -112,6 +117,9 @@ class FaceState {
                 if (look == "asleep") cameraShown = false
             }
             "text" -> caption(message)
+            "speaking" -> if (message.has("id") && message.has("start")) {  // the voice starts a sentence: its words follow it
+                said = Said(message.get("id").toString(), message.optInt("start"))
+            }
             "timers" -> {
                 val list = message.optJSONArray("items")
                 items = (0 until (list?.length() ?: 0)).mapNotNull { i ->
@@ -129,15 +137,26 @@ class FaceState {
         val text = message.optString("text")
         val assistant = message.optString("author") == "assistant"
         if (!shows(if (assistant) "show_answer" else "show_heard")) return
-        if (assistant) answer = text else heard = text
-        val id = if (message.has("id")) "a-" + message.get("id") else null
+        val raw = if (message.has("id")) message.get("id").toString() else null
+        if (assistant) { answer = text; answerId = raw ?: "" } else { heard = text; heardCount++ }
+        val id = raw?.let { "a-$it" }
         val index = if (id != null) captions.indexOfFirst { it.id == id } else -1
         if (index >= 0) {
             captions[index] = captions[index].copy(text = text)
             return
         }
-        captions.add(Caption(id ?: UUID.randomUUID().toString(), text, assistant))
+        captions.add(Caption(id ?: UUID.randomUUID().toString(), text, assistant, if (assistant) raw else null))
         while (captions.size > history + 1) captions.removeAt(0)
+    }
+
+    /** Where an area of words should be while it follows (WordsArea): what you said, its end; an
+     *  answer, its start until the voice says it, then the sentence being said (its place in the
+     *  text, as a fraction: the area's same fraction shows it). */
+    fun aim(key: String, answer: String?, text: String): Aim {
+        if (answer == null) return Aim(key, 1f)
+        val said = said
+        if (said == null || said.id != answer || text.isEmpty()) return Aim(key, 0f)
+        return Aim(key, minOf(1f, said.start.toFloat() / text.length))
     }
 
     /** «¿Qué ves?»: the photo it looks at, with a scanning sweep until it answers. */
