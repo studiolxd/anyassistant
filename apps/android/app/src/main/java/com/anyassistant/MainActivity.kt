@@ -302,14 +302,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** «Idioma de la interfaz»: Automático (the phone's), English, Español. The app's texts, its face's
+    /** «Idioma de la interfaz»: Idioma del sistema (the phone's), English, Español. The app's texts, its face's
      *  (the server's) and the server's record for this device; the screen is made again in it. */
     @Composable
     private fun LanguageChoice() {
         var chosen by remember { mutableStateOf(Interface.chosen(this)) }
         Text(getString(R.string.interface_language), Modifier.padding(top = 16.dp), color = Color.Gray, fontSize = 13.sp)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("auto" to getString(R.string.automatic), "en" to "English", "es" to "Español").forEach { (code, name) ->
+            listOf("auto" to getString(R.string.system_language), "en" to "English", "es" to "Español").forEach { (code, name) ->
                 val on = chosen == code
                 Text(name, Modifier.weight(1f).clip(RoundedCornerShape(50))
                     .background(if (on) Color(0xff34aff7) else Color.White.copy(alpha = 0.08f))

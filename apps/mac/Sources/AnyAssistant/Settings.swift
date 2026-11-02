@@ -504,7 +504,7 @@ struct OptionsView: View {
 }
 
 /// This app's interface language (its menus, windows and face), apart from the one the assistant
-/// speaks («Idioma»): Automático is the Mac's. Kept on the server for this Mac's device too.
+/// speaks («Idioma»): Idioma del sistema is the Mac's. Kept on the server for this Mac's device too.
 struct InterfaceLanguageRow: View {
     let admin: Admin
     @State private var chosen = Interface.chosen
@@ -512,7 +512,7 @@ struct InterfaceLanguageRow: View {
     var body: some View {
         Section {
             Picker(T("Interface Language"), selection: $chosen) {
-                Text(T("Automatic")).tag("auto")
+                Text(T("System language")).tag("auto")
                 Text("English").tag("en")
                 Text("Español").tag("es")
             }

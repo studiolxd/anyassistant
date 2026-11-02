@@ -144,7 +144,8 @@ Two languages, apart:
   whole server: its voice, its answers, its voice commands, the wake phrase).
 - **The interface**: the texts of each screen (the device's page, the apps, the web admin,
   the themes page, the QR page `/connect`). Each device and each browser chooses its own
-  (**Idioma de la interfaz**: Automático, English, Español); the assistant can speak
+  (**Idioma de la interfaz**: in the apps, Idioma del sistema, English or Español; in a
+  browser, the one in use, its own until another is chosen); the assistant can speak
   Spanish while an iPad shows its screen in English.
 
 The interface's language of a request (`web.ui_language`), in this order:

@@ -40,5 +40,5 @@
 
 /* The interface's language: this app's (apart from the one the assistant speaks, the server's) */
 "Interface Language" = "Idioma de la interfaz";
-"Automatic" = "Automático";
+"System language" = "Idioma del sistema";
 "The language of this app and its screen. The assistant speaks the server's." = "El idioma de esta app y de su pantalla. El asistente habla el del servidor.";

@@ -1,4 +1,4 @@
-// The interface's language: the app's setting «Idioma de la interfaz» (Automático: the phone's).
+// The interface's language: the app's setting «Idioma de la interfaz» (Idioma del sistema: the phone's).
 // Not the language the assistant speaks, which is the server's. The app's own texts follow it
 // (Android 13 or later: its per-app language, LocaleManager; before: its activity's and services'
 // context, wrap), and so do the face's from the server (/config?ui=…); it is kept on the server for

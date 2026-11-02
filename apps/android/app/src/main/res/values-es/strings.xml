@@ -47,6 +47,6 @@
     <string name="connecting_to">Conectando con %1$s…</string>
     <string name="microphone_needed">AnyAssistant necesita el micrófono. Permítelo en Ajustes → Aplicaciones → AnyAssistant → Permisos.</string>
     <string name="interface_language">Idioma de la interfaz</string>
-    <string name="automatic">Automático</string>
+    <string name="system_language">Idioma del sistema</string>
     <string name="interface_language_note">El idioma de esta app y de su pantalla. El asistente habla el del servidor.</string>
 </resources>

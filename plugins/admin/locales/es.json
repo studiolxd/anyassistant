@@ -191,7 +191,7 @@
     "Or open %s in the other browser and type the code.": "O abre %s en el otro navegador y escribe el código.",
     "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.": "Escribe el código de administración que muestra el servidor en Administradores → «Administrar desde otro navegador», o en su terminal con bin/anyassistant admin-code.",
     "Interface Language": "Idioma de la interfaz",
-    "Automatic": "Automático",
+    "System language": "Idioma del sistema",
     "The language of its screen and its app. The assistant speaks the one in General.": "El idioma de su pantalla y de su app. El asistente habla el de General."
   }
 }

@@ -162,7 +162,7 @@ struct SettingsView: View {
     var changed: Bool { connectedTo.map { $0.host != mac.host || $0.port != mac.port } ?? false }
     @AppStorage("background") private var background = true
     @AppStorage("awake") private var awake = true
-    @State private var language = Interface.chosen  // the interface's: «Automático», «English», «Español»
+    @State private var language = Interface.chosen  // the interface's: «Idioma del sistema», «English», «Español»
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -176,7 +176,7 @@ struct SettingsView: View {
                 }
                 Section {
                     Picker(T("Interface Language"), selection: $language) {
-                        Text(T("Automatic")).tag("auto")
+                        Text(T("System language")).tag("auto")
                         Text("English").tag("en")
                         Text("Español").tag("es")
                     }

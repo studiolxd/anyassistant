@@ -1,5 +1,5 @@
 // The apps' texts (Resources/<lang>.lproj/Localizable.strings of each app; the English is the key),
-// in the interface's language: the app's setting «Idioma de la interfaz» (Automático: the device's
+// in the interface's language: the app's setting «Idioma de la interfaz» (Idioma del sistema: the device's
 // system language). Not the language the assistant speaks, which is the server's.
 //
 // The iPhone, iPad and Mac apps keep their choice on the server too, for this device (its page and

@@ -368,7 +368,7 @@ function devicePage(main, id) {
     fields.appendChild(row(T('Room'), T('The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».'), room));
     main.appendChild(fields);
     // Its interface's language (its page, its app's face): apart from the one the assistant speaks.
-    var ui = el('select', {}, [el('option', { value: 'auto', text: T('Automatic') })]
+    var ui = el('select', {}, [el('option', { value: 'auto', text: T('System language') })]
       .concat(Object.keys(data.ui_languages || {}).map(function (c) { return el('option', { value: c, text: data.ui_languages[c] }); })));
     ui.value = d.ui_language || 'auto';
     ui.addEventListener('change', function () {
@@ -1068,13 +1068,14 @@ function sidebar() {
 }
 
 // This browser's interface language (a cookie: the themes page and the device's page here follow
-// it too); Automatic: the browser's own. Not the one the assistant speaks (General).
+// it too). It shows the one in use: until one is chosen, the browser's (me.lang); chosen, it stays.
+// Not the one the assistant speaks (General).
 function languagePicker(me) {
-  var pick = el('select', { class: 'language', 'aria-label': T('Interface Language') }, [el('option', { value: 'auto', text: T('Automatic') })]
-    .concat(Object.keys(me.ui_languages || {}).map(function (c) { return el('option', { value: c, text: me.ui_languages[c] }); })));
-  pick.value = me.ui_language || 'auto';
+  var pick = el('select', { class: 'language', 'aria-label': T('Interface Language') },
+    Object.keys(me.ui_languages || {}).map(function (c) { return el('option', { value: c, text: me.ui_languages[c] }); }));
+  pick.value = me.ui_language && me.ui_language !== 'auto' ? me.ui_language : me.lang;
   pick.addEventListener('change', function () {
-    document.cookie = 'ui_language=' + pick.value + '; path=/; SameSite=Lax; max-age=' + (pick.value === 'auto' ? 0 : 31536000);
+    document.cookie = 'ui_language=' + pick.value + '; path=/; SameSite=Lax; max-age=31536000';
     location.reload();
   });
   return pick;  // no label: the languages say what it is

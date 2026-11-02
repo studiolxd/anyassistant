@@ -282,6 +282,6 @@
 
 /* The interface's language: this app's, and each device's (apart from the one the assistant speaks) */
 "Interface Language" = "Idioma de la interfaz";
-"Automatic" = "Automático";
+"System language" = "Idioma del sistema";
 "The language of this app and its screen. The assistant speaks the one chosen in «Language»." = "El idioma de esta app y de su pantalla. El asistente habla el elegido en «Idioma».";
 "The language of its screen and its app. The assistant speaks the one in General." = "El idioma de su pantalla y de su app. El asistente habla el de General.";

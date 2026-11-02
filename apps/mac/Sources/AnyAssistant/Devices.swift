@@ -239,7 +239,7 @@ struct DeviceDetail: View {
                 Picker(T("Interface Language"), selection: Binding(get: { item.uiLanguage }, set: { new in
                     Task { await devices.setUILanguage(item, new) }
                 })) {
-                    Text(T("Automatic")).tag("auto")
+                    Text(T("System language")).tag("auto")
                     ForEach(devices.uiLanguages, id: \.code) { Text($0.name).tag($0.code) }
                 }
             } footer: {

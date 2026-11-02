@@ -185,7 +185,7 @@
     "Or open %s in the other browser and type the code.": "Or open %s in the other browser and type the code.",
     "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.": "Type the admin code the server shows in Admins → «Administer from another browser», or in its terminal with bin/anyassistant admin-code.",
     "Interface Language": "Interface Language",
-    "Automatic": "Automatic",
+    "System language": "System language",
     "The language of its screen and its app. The assistant speaks the one in General.": "The language of its screen and its app. The assistant speaks the one in General."
   }
 }
