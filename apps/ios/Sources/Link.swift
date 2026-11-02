@@ -160,8 +160,7 @@ final class Link: NSObject, ObservableObject {
     func configure() async {
         guard let base = await mac.url() else { return }
         var parts = URLComponents(url: base.appendingPathComponent("config"), resolvingAgainstBaseURL: false)!
-        // «skin»: remembered by an older app
-        if let theme = UserDefaults.standard.string(forKey: "theme") ?? UserDefaults.standard.string(forKey: "skin") { parts.queryItems = [URLQueryItem(name: "theme", value: theme)] }
+        if let theme = UserDefaults.standard.string(forKey: "theme") { parts.queryItems = [URLQueryItem(name: "theme", value: theme)] }
         guard let (data, _) = try? await mac.session.data(from: parts.url!),
               let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
         face.configure(config)

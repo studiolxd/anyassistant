@@ -45,7 +45,6 @@ MEMORY = HOME / "memory.json"
 TIMERS = HOME / "timers.json"
 PAIRED = HOME / "paired.json"
 THEMES = HOME / ("themes.local" if HOME == APP else "themes")  # yours; settings «themes_dir» may move them
-OLD_THEMES = HOME / ("skins.local" if HOME == APP else "skins")  # from when themes were called skins: moved to THEMES when found
 GOOGLE_CLIENT = HOME / "google-client.json"
 GOG = HOME / ".gog"
 

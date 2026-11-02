@@ -77,8 +77,8 @@ class Transcriber:
 
     def on_message(self, data: dict):
         page = kernel.module("page")
-        if data.get("type") in ("theme", "skin") and page and data.get("name") in page.themes.available():
-            self.theme = data["name"]  # this device's theme: its sounds («skin»: an older app)
+        if data.get("type") == "theme" and page and data.get("name") in page.themes.available():
+            self.theme = data["name"]  # this device's theme: its sounds
         elif data.get("type") == "tap":
             events.emit("tap", self)  # the screen was tapped (tap-to-wake…)
 

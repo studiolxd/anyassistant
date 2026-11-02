@@ -79,7 +79,7 @@ async def _theme_file(request):
 async def _config(request):
     """What the page needs: its texts in the active language (locale «ui»), the settings and the theme
     (?theme=: this device's own), and what other plugins add (@web.config)."""
-    chosen = request.query.get("theme") or request.query.get("skin", "")  # «skin»: an older app
+    chosen = request.query.get("theme", "")
     return http.json_response({
         "lang": i18n.L.code, "ui": i18n.L.data["ui"],
         "name": settings.get("name"), "video": settings.get("video"),

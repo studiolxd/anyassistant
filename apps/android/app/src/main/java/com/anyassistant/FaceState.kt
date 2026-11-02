@@ -86,7 +86,7 @@ class FaceState {
         screen = config.optJSONObject("screen")?.let { o -> o.keys().asSequence().associateWith { o.get(it) } } ?: emptyMap()
         val found = mutableMapOf<String, String>()
         config.optJSONObject("ui")?.let { o -> o.keys().forEach { found[it] = o.optString(it) } }
-        val themeInfo = config.optJSONObject("theme") ?: config.optJSONObject("skin") ?: JSONObject()  // «skin»: an older server
+        val themeInfo = config.optJSONObject("theme") ?: JSONObject()
         themeInfo.optJSONObject("ui")?.let { o -> o.keys().forEach { found[it] = o.optString(it) } }  // the theme's own words
         texts = found
         theme = themeInfo.optString("name", "eyes")

@@ -78,7 +78,7 @@ final class FaceModel: ObservableObject {
         wake = config["wake_phrase"] as? String ?? wake
         screen = config["screen"] as? [String: Any] ?? [:]
         var found = config["ui"] as? [String: String] ?? [:]
-        let themeInfo = config["theme"] as? [String: Any] ?? config["skin"] as? [String: Any] ?? [:]  // «skin»: an older server
+        let themeInfo = config["theme"] as? [String: Any] ?? [:]
         for (key, value) in themeInfo["ui"] as? [String: String] ?? [:] { found[key] = value }  // the theme's own words
         texts = found
         theme = themeInfo["name"] as? String ?? "eyes"

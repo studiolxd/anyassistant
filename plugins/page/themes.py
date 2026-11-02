@@ -12,9 +12,7 @@ A theme is a folder:
       preview.png      optional
 
 System themes live in plugins/page/themes/; yours in «themes_dir» (paths.THEMES by default:
-themes.local/ while developing, not in git). Themes were called skins: a folder from then
-(paths.OLD_THEMES) is moved to the new place, and one of yours with skin.json, skin.html and
-skin.css still loads. Jarvis fills the blocks; the theme
+themes.local/ while developing, not in git). Jarvis fills the blocks; the theme
 styles them with CSS, from body[data-state] / [data-look] and live CSS variables
 (--voice, --speech, --bar-1…5). The theme's HTML is cleaned: no scripts, no on…
 attributes, nothing loaded from outside (and the page forbids it too): the page
@@ -52,24 +50,13 @@ ASSETS = {".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".woff", ".w
 def folders() -> list[Path]:
     import settings
 
-    user = Path(settings.get("themes_dir") or _yours())
+    user = Path(settings.get("themes_dir") or paths.THEMES)
     return [SYSTEM, user if user.is_absolute() else paths.HOME / user]
 
 
-def _yours() -> Path:
-    """paths.THEMES; a folder from when themes were called skins (paths.OLD_THEMES) is moved there first."""
-    if not paths.THEMES.exists() and paths.OLD_THEMES.is_dir():
-        try:
-            paths.OLD_THEMES.rename(paths.THEMES)
-        except OSError:
-            return paths.OLD_THEMES
-    return paths.THEMES
-
-
 def part(path: Path, kind: str) -> Path:
-    """The theme's theme.<kind> (json, html, css); or its skin.<kind>, from when themes were called skins."""
-    new, old = path / f"theme.{kind}", path / f"skin.{kind}"
-    return old if not new.exists() and old.exists() else new
+    """The theme's theme.<kind> (json, html, css)."""
+    return path / f"theme.{kind}"
 
 
 def available() -> dict[str, Path]:
@@ -196,7 +183,7 @@ def for_page(name: str, language: str) -> dict:
     options = {**info.get("options", {}), **(settings.get("theme_options") or {})}
     return {"name": name, "title": info.get("name", name), "html": html, "css": f"/theme/{name}/theme.css",
             "version": int(max((p.stat().st_mtime for p in path.rglob("*") if p.is_file()), default=0)),
-            "ui": texts.get("ui", {}), "texts": texts.get("theme", texts.get("skin", {})),
+            "ui": texts.get("ui", {}), "texts": texts.get("theme", {}),
             "options": {k: str(v) for k, v in options.items() if re.fullmatch(r"[\w-]+", k)}}
 
 
@@ -206,8 +193,6 @@ def asset(name: str, path: str) -> Path | None:
     if not base:
         return None
     target = (base / path).resolve()
-    if path in ("theme.css", "theme.json", "theme.html"):  # or skin.css…, from when themes were called skins
-        target = part(base, path.split(".")[1]).resolve()
     if base.resolve() not in target.parents or target.suffix.lower() not in ASSETS or not target.is_file():
         return None
     return target
@@ -254,7 +239,7 @@ def check(path: Path) -> list[str]:
     for code_file in (path / "locales").glob("*.json") if (path / "locales").is_dir() else []:
         try:
             data = json.loads(code_file.read_text())
-            extra = set(data) - {"ui", "theme", "skin"}  # «skin»: from when themes were called skins
+            extra = set(data) - {"ui", "theme"}
             if extra:
                 problems.append(f"locales/{code_file.name}: only «ui» and «theme» count, not {', '.join(sorted(extra))}")
         except ValueError:
@@ -285,7 +270,7 @@ def new(name: str, source: str = DEFAULT) -> Path:
 
 # --- Yours, by voice (tools.py): create, read, edit, delete; never the system's ---
 
-EDITABLE = re.compile(r"(theme|skin)\.(json|html|css)|locales/[a-z]{2}\.json")  # skin.*: from when themes were called skins
+EDITABLE = re.compile(r"theme\.(json|html|css)|locales/[a-z]{2}\.json")
 MAX_FILE = 100_000
 
 
@@ -305,11 +290,6 @@ def files(name: str) -> dict[str, str]:
     return found
 
 
-def file_of(path: Path, name: str) -> Path:
-    """theme.css (or skin.css, said either way) as it is in that folder."""
-    return part(path, name.split(".")[1])
-
-
 def write(name: str, file: str, content: str) -> list[str]:
     """Replaces a text file of one of your themes; returns what the check says about it."""
     path = folder(name)
@@ -323,7 +303,7 @@ def write(name: str, file: str, content: str) -> list[str]:
         raise ValueError("too big: at most 100 KB per file")
     if file.endswith(".json"):
         json.loads(content)  # ValueError if it isn't JSON
-    target = file_of(path, file) if file.startswith(("theme.", "skin.")) else path / file
+    target = path / file
     target.parent.mkdir(exist_ok=True)
     target.write_text(content)
     return check(path)
@@ -348,7 +328,7 @@ def _tools():
 
         return tools.session()
 
-    @tool("The screen's look (a theme, which the user may also call a «skin»: eyes, orb… see get_settings), for every "
+    @tool("The screen's look (a theme: eyes, orb… see get_settings), for every "
           "device or only the one the user is talking to (this_device).")
     def set_theme(theme: str, this_device: bool = False) -> str:
         import settings

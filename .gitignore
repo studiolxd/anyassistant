@@ -14,8 +14,6 @@ memory.json
 timers.json
 paired.json
 themes.local/
-# from when themes were called skins (moved to themes.local/ when found)
-skins.local/
 plugins.local/
 google-client.json
 .gog/

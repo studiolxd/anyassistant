@@ -160,7 +160,7 @@ class Link(private val context: Context) {
     suspend fun configure() {
         val base = mac.url() ?: return
         val prefs = context.getSharedPreferences("anyassistant", Context.MODE_PRIVATE)
-        val theme = prefs.getString("theme", null) ?: prefs.getString("skin", null)  // «skin»: remembered by an older app
+        val theme = prefs.getString("theme", null)
         val config = withContext(Dispatchers.IO) {
             runCatching {
                 mac.client.newCall(mac.request("$base/config" + (theme?.let { "?theme=$it" } ?: "")).build()).execute()

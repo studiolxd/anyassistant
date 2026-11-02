@@ -42,7 +42,7 @@ function deviceTheme(name) {
   try {
     if (name === 'default') localStorage.removeItem('theme');
     else if (name !== undefined) localStorage.setItem('theme', name);
-    return (asked !== 'default' && asked) || localStorage.getItem('theme') || localStorage.getItem('skin') || '';  // «skin»: remembered by an older page
+    return (asked !== 'default' && asked) || localStorage.getItem('theme') || '';
   } catch (e) {
     return asked !== 'default' && asked || '';
   }
@@ -67,7 +67,6 @@ function loadTexts() {
     T = {};
     for (var key in data.ui) T[key] = data.ui[key];
     for (key in data.theme.ui) T[key] = data.theme.ui[key];  // the theme may say it its way
-    if (!data.theme && data.skin) { data.theme = data.skin; data.themes = data.skins; }  // an older server
     settings = data;
     document.documentElement.lang = data.lang;
     Theme.language(data.lang);
