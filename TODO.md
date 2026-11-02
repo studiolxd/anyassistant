@@ -8,8 +8,8 @@
 - [ ] **Firmar el instalador de Windows** cuando lo instale más gente (Azure Artifact
   Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de España).
 - [ ] **Que las apps se actualicen solas**: hecho (Sparkle en el Mac; electron-updater en Windows y
-  Linux). Probado en el Mac (2 nov, de la 477 a la 0.2.0); falta una actualización real en Windows y
-  Linux, de la 0.2.0 a la siguiente.
+  Linux). Probado en el Mac (2 nov, de la 477 a la 0.2.0) y en Linux sin app (`anyassistant update`,
+  de la 0.2.4 a la 0.2.5); falta una actualización real en Windows con la app.
 - [ ] **Versión para Windows en ARM.**
 - [ ] **Versión para Raspberry Pi** (Linux en ARM).
 
@@ -22,6 +22,9 @@
   todos los dispositivos).
 
 ## Windows y Linux
+
+- [ ] **Sin `gog` instalado (Google), no llenar el log**: hoy el plugin de Google deja un error a cada
+  intento («gog can't answer»: no encuentra `gog`); decirlo una vez y cómo instalarlo.
 
 Cómo se hizo: `docs/windows-y-linux.md`.
 
