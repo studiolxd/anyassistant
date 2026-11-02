@@ -255,30 +255,76 @@ final class Admin: ObservableObject {
 
 /// Settings: «General», the core's by topic; «Plugins», each one's page (on or off, what it does and
 /// its options, its accounts or voices). Every option lives in one place; the search finds it.
-struct SettingsView: View {
-    @StateObject private var admin = Admin()
-    @State private var section: String? = "assistant"
-    @State private var search = ""
-    @State private var path = NavigationPath()
-    @State private var columns = NavigationSplitViewVisibility.all
+/// Where the settings window is inside a section: a plugin's page, its mail accounts, its voices.
+/// Kept here (not a NavigationStack: in a window it draws the title bar broken), with a back
+/// button over the page.
+enum SettingsPage: Hashable {
+    case plugin(String), mail, voices
+}
+
+@MainActor
+final class SettingsNavigation: ObservableObject {
+    @Published var pages: [SettingsPage] = []
+
+    func open(_ page: SettingsPage) { pages.append(page) }
+    func back() { _ = pages.popLast() }
+}
+
+/// A row that opens a page (as a NavigationLink would): its content and a chevron.
+struct PageLink<Content: View>: View {
+    let page: SettingsPage
+    @ViewBuilder let content: Content
+    @EnvironmentObject private var navigation: SettingsNavigation
 
     var body: some View {
-        // The sections always visible: no button to fold the sidebar (there are only a few).
-        // The sidebar always there: folded (dragging its edge), it opens again at once.
-        NavigationSplitView(columnVisibility: $columns) {
-            List(selection: $section) {
-                Section(T("General")) {
-                    ForEach(admin.groups, id: \.id) { group in
-                        Label(group.title, systemImage: symbol(group.id)).tag(group.id)
+        Button { navigation.open(page) } label: {
+            HStack {
+                content
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct SettingsView: View {
+    @StateObject private var admin = Admin()
+    @StateObject private var navigation = SettingsNavigation()
+    @State private var section: String? = "assistant"
+    @State private var search = ""
+
+    var body: some View {
+        // A sidebar of a fixed width (a split view can always be dragged), with the search on top.
+        HStack(spacing: 0) {
+            VStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                    TextField(T("Search"), text: $search).textFieldStyle(.plain)
+                    if !search.isEmpty {
+                        Button { search = "" } label: { Image(systemName: "xmark.circle.fill") }
+                            .buttonStyle(.plain).foregroundStyle(.secondary)
                     }
                 }
-                Section {
-                    Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
+                .padding(.horizontal, 8).padding(.vertical, 5)
+                .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.06)))
+                .padding(.horizontal, 10).padding(.top, 10)
+                List(selection: $section) {
+                    Section(T("General")) {
+                        ForEach(admin.groups, id: \.id) { group in
+                            Label(group.title, systemImage: symbol(group.id)).tag(group.id)
+                        }
+                    }
+                    Section {
+                        Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
+                    }
                 }
+                .listStyle(.sidebar)
             }
-            .navigationSplitViewColumnWidth(min: 240, ideal: 240, max: 240)  // fixed (min = max: a single width only sets the first one): room for the search field
-            .toolbar(removing: .sidebarToggle)
-        } detail: {
+            .frame(width: 240)
+            .background(.regularMaterial)
+            Divider()
             VStack(spacing: 0) {
                 if admin.restartNeeded {
                     HStack {
@@ -288,23 +334,24 @@ struct SettingsView: View {
                     }
                     .padding(10).background(.yellow.opacity(0.2))
                 }
-                NavigationStack(path: $path) {
-                    Group {
-                        if admin.unreachable {
-                            ServerUnavailable { Task { await admin.load() } }
-                        } else if !search.trimmingCharacters(in: .whitespaces).isEmpty {
-                            SearchResults(admin: admin, search: search)
-                        } else if section == "plugins" {
-                            PluginsView(admin: admin)
-                        } else if let section {
-                            OptionsView(admin: admin, group: section)
-                        }
+                if let page = navigation.pages.last, search.trimmingCharacters(in: .whitespaces).isEmpty {
+                    HStack(spacing: 8) {
+                        Button { navigation.back() } label: { Image(systemName: "chevron.left") }
+                            .buttonStyle(.borderless).help(T("Back"))
+                        Text(title(page)).font(.headline)
+                        Spacer()
                     }
-                    .navigationDestination(for: String.self) { id in
-                        if let plugin = admin.plugins.first(where: { $0.id == id }) {
-                            PluginPage(admin: admin, plugin: plugin)
-                        }
-                    }
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    Divider()
+                    pageView(page)
+                } else if admin.unreachable {
+                    ServerUnavailable { Task { await admin.load() } }
+                } else if !search.trimmingCharacters(in: .whitespaces).isEmpty {
+                    SearchResults(admin: admin, search: search)
+                } else if section == "plugins" {
+                    PluginsView(admin: admin)
+                } else if let section {
+                    OptionsView(admin: admin, group: section)
                 }
                 if let error = admin.error {  // what couldn't be saved, where «Saved.» goes
                     Label(error, systemImage: "exclamationmark.triangle.fill")
@@ -313,10 +360,11 @@ struct SettingsView: View {
                     Text(note).font(.caption).foregroundStyle(.secondary).padding(6)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .searchable(text: $search, placement: .sidebar, prompt: T("Search"))
-        .onChange(of: columns) { _, now in if now != .all { columns = .all } }
-        .onChange(of: section) { _, _ in path = NavigationPath(); search = "" }
+        .environmentObject(navigation)
+        .onChange(of: section) { _, _ in navigation.pages = []; search = "" }
+        .onChange(of: search) { _, now in if !now.isEmpty { navigation.pages = [] } }
         .task { await admin.load() }
         // Kept up to date: the plugins every few seconds (they change by voice too); the
         // options when you come back to the window (not while you type in one).
@@ -325,6 +373,23 @@ struct SettingsView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
             Task { await admin.load() }
+        }
+    }
+
+    @ViewBuilder func pageView(_ page: SettingsPage) -> some View {
+        switch page {
+        case .plugin(let id):
+            if let plugin = admin.plugins.first(where: { $0.id == id }) { PluginPage(admin: admin, plugin: plugin) }
+        case .mail: MailView()
+        case .voices: VoicesView()
+        }
+    }
+
+    func title(_ page: SettingsPage) -> String {
+        switch page {
+        case .plugin(let id): admin.plugins.first { $0.id == id }?.name ?? id
+        case .mail: T("Mail accounts")
+        case .voices: T("Known voices")
         }
     }
 
@@ -359,7 +424,7 @@ struct SearchResults: View {
             if !plugins.isEmpty {
                 Section(T("Plugins")) {
                     ForEach(plugins) { plugin in
-                        NavigationLink(value: plugin.id) { Text(plugin.name) }
+                        PageLink(page: .plugin(plugin.id)) { Text(plugin.name) }
                     }
                 }
             }
@@ -563,7 +628,7 @@ struct PluginsView: View {
                 if !found.isEmpty {
                     Section(title(kind)) {
                         ForEach(found) { plugin in
-                            NavigationLink(value: plugin.id) { row(plugin) }
+                            PageLink(page: .plugin(plugin.id)) { row(plugin) }
                         }
                     }
                 }
@@ -700,10 +765,10 @@ struct PluginPage: View {
                 .font(.footnote).foregroundStyle(.secondary)
             }
             if plugin.id == "mail" {
-                Section { NavigationLink(T("Mail accounts")) { MailView() } }
+                Section { PageLink(page: .mail) { Text(T("Mail accounts")) } }
             }
             if plugin.id == "voices" {
-                Section { NavigationLink(T("Known voices")) { VoicesView() } }
+                Section { PageLink(page: .voices) { Text(T("Known voices")) } }
             }
             if !options.isEmpty {
                 Section(T("Options")) {
@@ -713,7 +778,6 @@ struct PluginPage: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(current.name)
         .alert(T("Turn it off?"), isPresented: $asking) {
             Button(T("Turn it off"), role: .destructive) { Task { await admin.turn(current, on: false) } }
             Button(T("Cancel"), role: .cancel) {}
