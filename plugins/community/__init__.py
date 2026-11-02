@@ -314,7 +314,9 @@ async def look_for_updates() -> list[dict]:
             announced[_key(u["kind"], u["id"])] = u["to"]
         last = record.get("notice") if isinstance(record.get("notice"), dict) else {}
         _save_record(announced=announced,
-                     notice={"id": int(last.get("id", 0)) + 1, "time": time.time(), "updates": new})
+                     notice={"id": max(int(last.get("id", 0)) + 1, int(time.time())),  # always up (even
+                                                                                     # if community.json goes)
+                             "time": time.time(), "updates": new})
         log.info("community: updates: %s", ", ".join(f"{u['kind']} «{u['id']}» {u['to']}" for u in new))
     return new
 

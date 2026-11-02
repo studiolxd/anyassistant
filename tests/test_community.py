@@ -347,18 +347,19 @@ def test_updates_are_announced_once_per_new_version(mine):
         new = await community.look_for_updates()
         assert new == [{"kind": "theme", "id": "aurora", "name": "Aurora", "from": "1.0.0", "to": "1.1.0"}]
         _, answer = await waiting()
-        assert answer["updates"] == new and answer["notice"]["id"] == 1 and answer["notice"]["updates"] == new
+        first = answer["notice"]["id"]
+        assert answer["updates"] == new and first >= 1 and answer["notice"]["updates"] == new
         # Looked for again (another day, a restart): the same version isn't announced again
         assert await community.look_for_updates() == []
         _, answer = await waiting()
-        assert answer["notice"]["id"] == 1 and answer["updates"] == new
+        assert answer["notice"]["id"] == first and answer["updates"] == new
 
         # Another version of the plugin: a new notice, with only it; the theme still waits
         catalog.package("plugin", "greeter", PLUGIN, version="2.2")
         new = await community.look_for_updates()
         assert [(u["id"], u["from"], u["to"]) for u in new] == [("greeter", "2.1", "2.2")]
         _, answer = await waiting()
-        assert answer["notice"]["id"] == 2 and [u["id"] for u in answer["notice"]["updates"]] == ["greeter"]
+        assert answer["notice"]["id"] > first and [u["id"] for u in answer["notice"]["updates"]] == ["greeter"]
         assert sorted(u["id"] for u in answer["updates"]) == ["aurora", "greeter"]
 
         # Installed: no longer waiting, nor in the notice; nothing was installed by itself
