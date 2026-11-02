@@ -23,6 +23,28 @@ Esta guía explica el formato del índice y cómo publicar un paquete.
   su versión: así la app sabe qué hay instalado, cuándo hay una actualización, y qué puede quitar.
   Un tema o plugin tuyo que no venga del catálogo nunca se toca.
 
+## Cómo se avisa de las actualizaciones
+
+Las actualizaciones **se avisan, nunca se instalan solas**.
+
+- Si hay algo instalado desde el catálogo, el servidor lee el catálogo **una vez al día** (y unos
+  minutos después de arrancar) y apunta en `community.json` las versiones nuevas que encuentra.
+  Cada versión nueva se avisa **una sola vez**: si mañana sigue pendiente, no se vuelve a avisar;
+  si sale otra versión, sí.
+- Las apps (Mac, Windows y Linux) muestran una **notificación** por cada versión nueva: «Hay una
+  actualización de Bedside (1.1.0)», o «Hay actualizaciones de 2 temas y plugins» si hay varias.
+  Mientras haya actualizaciones pendientes, su menú muestra «Actualizaciones de la comunidad (2)…».
+- La notificación y el menú abren dónde instalarlas: para un tema, la ventana «Temas» en su
+  pestaña «De la comunidad» (`/themes#community`); para un plugin (o si hay de los dos tipos),
+  Ajustes → Plugins → «De la comunidad» (en la administración web, `/admin#community`).
+- No se avisa de una actualización que necesita una versión más nueva de AnyAssistant.
+- Por voz, no se avisa.
+
+Para las apps: `GET /admin/community/updates` (solo el propietario) devuelve `updates` (las
+pendientes: `kind`, `id`, `name`, `from`, `to`) y `notice`, el último aviso (`id`, un número que
+sube con cada aviso, y sus `updates` aún pendientes). Cada app recuerda el último número que
+mostró. Esta consulta no lee el catálogo: solo dice lo que encontró la última lectura.
+
 ## Qué hace el servidor al instalar
 
 1. Descarga **todos** los archivos del paquete a una carpeta provisional (`.installing`, junto

@@ -8,6 +8,14 @@ GitHub repository; «community_catalog» is its address.
                                        updates it; {"remove": {"kind", "id"}}: removes it
     GET  /admin/community/image?kind=theme&id=…   a theme's screenshot (fetched by the server,
                                        cached: the pages load nothing from outside)
+    GET  /admin/community/updates      the updates waiting (of what is installed), and the last
+                                       notice: what the apps announce, once per new version
+
+Updates are looked for by themselves: once a day (and a few minutes after starting), only if
+something from the catalog is installed. A version found for the first time makes a new notice
+(its number goes up); the apps (Mac, Windows and Linux) show a notification for each notice
+they haven't shown yet, and an item in their menu while updates wait. Nothing is ever installed
+by itself: you install an update where you install the rest.
 
 Installing downloads every file of the package, checks its SHA-256 against the catalog, and only
 then writes it, whole (to a staging folder next to its place, then moved) into your folder: a
@@ -61,6 +69,9 @@ MAX_PACKAGE = 50 * 1024 * 1024
 MAX_IMAGE = 3 * 1024 * 1024
 MAX_INDEX = 2 * 1024 * 1024
 CACHE_TIME = 600  # seconds the catalog is kept before asking again
+CHECK_EVERY = 24 * 3600  # seconds between looking for updates (only with something installed)
+FIRST_CHECK = 180  # seconds after starting before the first look
+RETRY = 3600  # seconds before trying again when the catalog couldn't be read
 TIMEOUT = aiohttp.ClientTimeout(total=120, connect=20)
 STAGING = ".installing"  # inside the destination's folder: no theme.json or plugin.json right in it, so it's never listed
 
@@ -99,18 +110,30 @@ def is_system(kind: str, package_id: str) -> bool:
     return (paths.PLUGINS / package_id / "plugin.json").exists()
 
 
-def installed() -> dict:
-    """{«kind:id»: {"kind", "id", "version", "name", "installed"}}: what came from the catalog."""
+def _record() -> dict:
+    """community.json: {"installed": {…}, "announced": {«kind:id»: version}, "notice": {…}}."""
     try:
-        found = json.loads(FILE.read_text()).get("installed", {})
+        found = json.loads(FILE.read_text())
         return found if isinstance(found, dict) else {}
     except (OSError, ValueError):
         return {}
 
 
-def _save_installed(found: dict):
+def _save_record(**changes):
+    record = _record()
+    record.update(changes)
     FILE.parent.mkdir(parents=True, exist_ok=True)
-    FILE.write_text(json.dumps({"installed": found}, ensure_ascii=False, indent=2) + "\n")
+    FILE.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+
+
+def installed() -> dict:
+    """{«kind:id»: {"kind", "id", "version", "name", "installed"}}: what came from the catalog."""
+    found = _record().get("installed", {})
+    return found if isinstance(found, dict) else {}
+
+
+def _save_installed(found: dict):
+    _save_record(installed=found)
 
 
 def _key(kind: str, package_id: str) -> str:
@@ -254,6 +277,68 @@ def describe(packages: list[dict]) -> list[dict]:
                       "update": bool(mine) and _newer(entry["version"], mine["version"]),
                       "can": not why, "why": why})
     return found
+
+
+# --- Updates: looked for once a day, each new version announced once ---
+
+def updates(packages: list[dict] | None = None) -> list[dict]:
+    """The updates waiting, of what is installed: [{"kind", "id", "name", "from", "to"}]. Without
+    packages, the catalog last read (none if it hasn't been read yet). Only ones that can be
+    installed here (not one that needs a newer AnyAssistant)."""
+    if packages is None:
+        url = settings.get("community_catalog") or DEFAULT_CATALOG
+        packages = _catalog["data"]["packages"] if _catalog.get("url") == url else []
+    return [{"kind": p["kind"], "id": p["id"], "name": p["name"], "from": p["installed"], "to": p["version"]}
+            for p in describe(packages) if p["update"] and p["can"]]
+
+
+def notice() -> dict | None:
+    """The last notice: {"id", "time", "updates"} (its updates that still wait), or None."""
+    found = _record().get("notice")
+    if not isinstance(found, dict) or not isinstance(found.get("id"), int):
+        return None
+    waiting = {(u["kind"], u["id"], u["to"]) for u in updates()}
+    return {"id": found["id"], "time": found.get("time", 0),
+            "updates": [u for u in found.get("updates", []) if (u.get("kind"), u.get("id"), u.get("to")) in waiting]}
+
+
+async def look_for_updates() -> list[dict]:
+    """Reads the catalog and notes the versions found for the first time: a new notice with them
+    (its number one more). What is new; nothing is installed."""
+    found = updates((await catalog(refresh=True))["packages"])
+    record = _record()
+    announced = record.get("announced") if isinstance(record.get("announced"), dict) else {}
+    new = [u for u in found if announced.get(_key(u["kind"], u["id"])) != u["to"]]
+    if new:
+        for u in new:
+            announced[_key(u["kind"], u["id"])] = u["to"]
+        last = record.get("notice") if isinstance(record.get("notice"), dict) else {}
+        _save_record(announced=announced,
+                     notice={"id": int(last.get("id", 0)) + 1, "time": time.time(), "updates": new})
+        log.info("community: updates: %s", ", ".join(f"{u['kind']} «{u['id']}» {u['to']}" for u in new))
+    return new
+
+
+@web.startup
+async def _watch(app):
+    async def loop():
+        await asyncio.sleep(FIRST_CHECK)
+        next_look = 0.0
+        while True:
+            try:
+                if kernel.enabled("community") and installed() and time.time() >= next_look:
+                    try:
+                        await look_for_updates()
+                        next_look = time.time() + CHECK_EVERY
+                    except ValueError as e:  # the catalog couldn't be read: later
+                        log.info("community: no updates looked for: %s", e)
+                        next_look = time.time() + RETRY
+            except Exception as e:
+                log.warning("community: updates: %r", e)
+                next_look = time.time() + RETRY
+            await asyncio.sleep(600)
+
+    app["community-updates"] = asyncio.ensure_future(loop())
 
 
 # --- Installing, updating, removing ---
@@ -430,6 +515,14 @@ async def _change(request):
     except ValueError as e:
         return http.json_response({"error": str(e)}, status=400)
     return http.json_response({"error": "install or remove"}, status=400)
+
+
+@web.route("GET", "/admin/community/updates")
+@web.only_the_owner
+async def _updates(request):
+    """For the apps: the updates waiting (their menu item) and the last notice (a notification,
+    once: they remember the last number they showed). It doesn't read the catalog."""
+    return http.json_response({"updates": updates(), "notice": notice()})
 
 
 @web.route("GET", "/admin/community/image")

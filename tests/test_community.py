@@ -325,6 +325,92 @@ def test_removing(mine):
     serve(test)
 
 
+# --- Updates announced ---
+
+async def waiting(remote="127.0.0.1"):
+    answer = await community._updates(request(path="/admin/community/updates", remote=remote))
+    return answer.status, json.loads(answer.body)
+
+
+def test_updates_are_announced_once_per_new_version(mine):
+    async def test(catalog):
+        catalog.package("theme", "aurora", THEME)
+        catalog.package("plugin", "greeter", PLUGIN, version="2.1")
+        catalog.package("theme", "other", THEME)  # in the catalog, not installed: never announced
+        await change({"install": {"kind": "theme", "id": "aurora"}})
+        await change({"install": {"kind": "plugin", "id": "greeter"}, "confirm": True})
+        assert await community.look_for_updates() == []
+        status, answer = await waiting()
+        assert status == 200 and answer == {"updates": [], "notice": None}
+
+        catalog.package("theme", "aurora", THEME, version="1.1.0")
+        new = await community.look_for_updates()
+        assert new == [{"kind": "theme", "id": "aurora", "name": "Aurora", "from": "1.0.0", "to": "1.1.0"}]
+        _, answer = await waiting()
+        assert answer["updates"] == new and answer["notice"]["id"] == 1 and answer["notice"]["updates"] == new
+        # Looked for again (another day, a restart): the same version isn't announced again
+        assert await community.look_for_updates() == []
+        _, answer = await waiting()
+        assert answer["notice"]["id"] == 1 and answer["updates"] == new
+
+        # Another version of the plugin: a new notice, with only it; the theme still waits
+        catalog.package("plugin", "greeter", PLUGIN, version="2.2")
+        new = await community.look_for_updates()
+        assert [(u["id"], u["from"], u["to"]) for u in new] == [("greeter", "2.1", "2.2")]
+        _, answer = await waiting()
+        assert answer["notice"]["id"] == 2 and [u["id"] for u in answer["notice"]["updates"]] == ["greeter"]
+        assert sorted(u["id"] for u in answer["updates"]) == ["aurora", "greeter"]
+
+        # Installed: no longer waiting, nor in the notice; nothing was installed by itself
+        assert community.installed()["plugin:greeter"]["version"] == "2.1"
+        await change({"install": {"kind": "plugin", "id": "greeter"}, "confirm": True})
+        _, answer = await waiting()
+        assert [u["id"] for u in answer["updates"]] == ["aurora"] and answer["notice"]["updates"] == []
+        assert "installed" in json.loads((mine / "community.json").read_text())
+    serve(test)
+
+
+def test_an_update_that_needs_a_newer_version_isnt_announced(mine):
+    async def test(catalog):
+        catalog.package("theme", "aurora", THEME)
+        await change({"install": {"kind": "theme", "id": "aurora"}})
+        catalog.package("theme", "aurora", THEME, version="2.0", min_version=10 ** 9)
+        new = await community.look_for_updates()
+        assert new == ([{"kind": "theme", "id": "aurora", "name": "Aurora", "from": "1.0.0", "to": "2.0"}]
+                       if community.version_here() is None else [])
+    serve(test)
+
+
+def test_updates_only_for_the_owner(mine):
+    status, _ = asyncio.run(waiting(remote="192.168.1.9"))
+    assert status == 403
+
+
+def test_updates_are_looked_for_only_with_something_installed(mine, monkeypatch):
+    looked = []
+
+    async def look():
+        looked.append(1)
+        return []
+
+    monkeypatch.setattr(community, "FIRST_CHECK", 0)
+    monkeypatch.setattr(community, "look_for_updates", look)
+    monkeypatch.setattr(kernel, "enabled", lambda plugin_id: True)
+    slept = asyncio.sleep
+
+    async def go():
+        app = {}
+        monkeypatch.setattr(asyncio, "sleep", lambda seconds: slept(0))
+        await community._watch(app)
+        await slept(0.01)
+        assert looked == []  # nothing installed: the catalog isn't read
+        community._save_installed({"theme:aurora": {"kind": "theme", "id": "aurora", "version": "1.0.0"}})
+        await slept(0.01)
+        assert looked == [1]  # once, then not again for a day
+        app["community-updates"].cancel()
+    asyncio.run(go())
+
+
 def test_a_themes_screenshot_comes_through_the_server(mine):
     async def test(catalog):
         catalog.package("theme", "aurora", THEME, screenshot="{base}/themes/aurora/preview.png")
