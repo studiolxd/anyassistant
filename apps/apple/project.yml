@@ -69,6 +69,7 @@ targets:
         WKApplication: true
         WKRunsIndependentlyOfCompanionApp: true
         WKCompanionAppBundleIdentifier: com.anyassistant
+        WKBackgroundModes: [self-care]  # Staying: on while it thinks and speaks, wrist down too
         ITSAppUsesNonExemptEncryption: false
         NSMicrophoneUsageDescription: "To hear what you ask AnyAssistant: the sentence goes to your Mac, nowhere else."
         NSLocalNetworkUsageDescription: "To talk to AnyAssistant on your Mac."

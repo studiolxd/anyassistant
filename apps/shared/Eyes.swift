@@ -41,7 +41,6 @@ struct EyesFace: View {
     /// question, alarm, error.
     let look: String
     let accent: Color
-    let background: Color
     /// The voice heard and the voice said, 0…1 (the eyes grow with one, the mouth moves with the other).
     let voice: CGFloat
     let speech: CGFloat
@@ -104,7 +103,7 @@ struct EyesFace: View {
     /// One eye: its size, and what covers part of it (a crescent: ‿ or ^; a lid: sad).
     private func eye(left: Bool) -> some View {
         var (width, height): (CGFloat, CGFloat) = (26, 17)
-        var cover: CGFloat?  // where the background-coloured oval moves: up, a crescent below (‿); down, above (^)
+        var cover: CGFloat?  // where the oval cut out moves: up, a crescent below (‿); down, above (^)
         var lid: Double?
         switch look {
         case "asleep": (width, height, cover) = (26, 11, -3.5)
@@ -117,20 +116,28 @@ struct EyesFace: View {
         default: break
         }
         let w = width * v, h = height * v
-        return ZStack {
-            Ellipse().fill(accent).frame(width: w, height: h)
-            if let cover {
-                Ellipse().fill(background).frame(width: w * 1.01, height: h).offset(y: cover * v)
+        // The cover and the lid are cut out of the eye (not painted over it in the background's
+        // colour, which left a thin ring where their edges met the eye's); the cover a little
+        // wider than the eye, so that their sides never meet.
+        return Ellipse().fill(accent)
+            .frame(width: w, height: h)
+            .mask {
+                ZStack {
+                    Ellipse()
+                    if let cover {
+                        Ellipse().frame(width: w * 1.08, height: h).offset(y: cover * v)
+                            .blendMode(.destinationOut)
+                    }
+                    if let lid {
+                        // As the page's: turned on its own centre, 62 % above the eye's (not around
+                        // the eye's, which swung it sideways).
+                        Rectangle().frame(width: w * 1.8, height: h)
+                            .rotationEffect(.degrees(lid)).offset(y: -0.62 * h)
+                            .blendMode(.destinationOut)
+                    }
+                }
+                .compositingGroup()
             }
-            if let lid {
-                // As the page's: turned on its own centre, 62 % above the eye's (not around the
-                // eye's, which swung it sideways).
-                Rectangle().fill(background).frame(width: w * 1.8, height: h)
-                    .rotationEffect(.degrees(lid)).offset(y: -0.62 * h)
-            }
-        }
-        .frame(width: w, height: h)
-        .clipShape(Ellipse())  // the lid and the cover only take from this eye, never its neighbour
         .scaleEffect(x: 1, y: blink ? 0.1 : 1)
         .rotationEffect(.degrees(left ? -7 : 7))
         .animation(.easeOut(duration: 0.2), value: look)

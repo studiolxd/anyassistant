@@ -339,7 +339,7 @@ struct EyesTheme: View {
         let accent = face.color("accent", Color(hex: "#34aff7")!)
         ZStack(alignment: .top) {
             VStack(spacing: 0) {
-                EyesFace(look: look, accent: accent, background: face.background,
+                EyesFace(look: look, accent: accent,
                          voice: levels.voice, speech: levels.speech, v: v)
                     .scaleEffect(landscape ? 0.85 : 1)
                     .padding(.vertical, landscape ? -2 * v : 0)

@@ -2,7 +2,10 @@
 // say something and it hears (its eyes grow with your voice), thinks, and answers aloud (its
 // mouth moves); then it listens again. Wrist down, it sleeps and the microphone is closed. A tap
 // sends what it hears now, or stops it talking; holding the face opens its settings (and what went
-// wrong, if something did: then the face is sad and the watch taps your wrist).
+// wrong, if something did: then the face is sad and the watch taps your wrist). While it thinks and
+// speaks it stays on, wrist down too (Staying), so the answer is heard to its end.
+// «-demo <look>» (a launch argument): that face, still, without the microphone (the simulator's
+// can't be opened; and to see each face).
 
 import SwiftUI
 import WatchKit
@@ -15,14 +18,17 @@ struct TalkView: View {
     @State private var waiting = false
     @State private var problem: String?
     @State private var settings = false
+    @State private var staying = Staying()
+    private let demo = UserDefaults.standard.string(forKey: "demo")
 
     /// In front, lit, and not in its settings: it may listen.
     private var awake: Bool { phase == .active && !dimmed && !settings }
 
     private var look: String {
-        if !awake { return "asleep" }
+        if let demo { return demo }
         if waiting { return "thinking" }
-        if voice.playing { return "speaking" }
+        if voice.playing { return "speaking" }  // wrist down too: it is still saying it
+        if !awake { return "asleep" }
         if voice.hearing { return "hearing" }
         return problem != nil ? "error" : "awake"
     }
@@ -30,10 +36,11 @@ struct TalkView: View {
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
-            // The face (62 v × 45 v) as large as it fits.
-            let v = min(size.width * 0.9 / 62, size.height * 0.8 / 45)
-            EyesFace(look: look, accent: Color(red: 0x34 / 255, green: 0xaf / 255, blue: 0xf7 / 255), background: .black,
-                     voice: voice.voice, speech: voice.speech, v: v)
+            // The face as large as it fits: 62 v × 45 v at rest, up to 83 v wide (eyes grown by
+            // the voice heard, or looking aside) and 50 v high (floating, looking up).
+            let v = min(size.width * 0.94 / 83, size.height * 0.85 / 50)
+            EyesFace(look: look, accent: Color(red: 0x34 / 255, green: 0xaf / 255, blue: 0xf7 / 255),
+                     voice: demo != nil ? 1 : voice.voice, speech: demo != nil ? 0.7 : voice.speech, v: v)
                 .frame(width: size.width, height: size.height)
         }
         .background(Color.black)
@@ -48,14 +55,14 @@ struct TalkView: View {
             update()
         }
         .onChange(of: awake) { update() }
-        .onChange(of: waiting) { update() }
-        .onChange(of: voice.playing) { update() }
+        .onChange(of: waiting) { update(); stay() }
+        .onChange(of: voice.playing) { update(); stay() }
         .onChange(of: voice.hearing) { _, now in if now { problem = nil } }
     }
 
     /// The microphone open while it may listen and has nothing else to do; closed otherwise.
     private func update() {
-        guard awake, !waiting, !voice.playing else {
+        guard demo == nil, awake, !waiting, !voice.playing else {
             voice.close()
             return
         }
@@ -71,6 +78,11 @@ struct TalkView: View {
                 fail(error.localizedDescription)
             }
         }
+    }
+
+    /// On while it thinks or speaks; then as any app (wrist down: the clock).
+    private func stay() {
+        if waiting || voice.playing { staying.begin() } else { staying.end() }
     }
 
     private func tap() {
