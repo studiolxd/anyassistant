@@ -25,10 +25,12 @@
   la alarma con la pantalla bloqueada, la cámara).
 - [ ] **Probar la app del Mac como cliente de otro servidor.**
 - [ ] **El Apple Watch**: recibir los avisos en la muñeca (alarmas, agenda, «la cocina dice…», con
-  vibración: notificaciones push).
-- [ ] **El Apple Watch**: usarlo fuera de casa (el servidor accesible desde fuera: Tailscale…).
-- [ ] **El Apple Watch**: una complicación para la esfera.
-- [ ] **El Apple Watch**: el botón Acción.
+  vibración). Primero, comprobar si las alarmas de AlarmKit del iPhone ya avisan en el reloj.
+- [ ] **La cuenta atrás de los temporizadores en el iPhone**: en la pantalla bloqueada y en la Dynamic
+  Island, como los del Reloj de Apple (un widget de Live Activity; los temporizadores, con cuenta
+  atrás en AlarmKit y no como alarmas a una hora fija).
+- [ ] **El Apple Watch**: usarlo fuera de casa (el servidor accesible desde fuera: Tailscale…; afecta a
+  todos los dispositivos).
 
 ## Windows y Linux
 
@@ -96,6 +98,13 @@ LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
 - [x] **El Apple Watch emparejado como el iPhone** (2 nov): el iPhone le pasa la IP del servidor, el
   certificado y el emparejamiento (el reloj no tiene Bonjour ni resuelve `.local`); sin teclado ni
   ajustes de servidor. Habla con el servidor directamente y sigue encendido mientras contesta.
+- [x] **La complicación del Apple Watch** (2 nov): lo próximo (un temporizador con su cuenta atrás,
+  una alarma o un recordatorio) en la esfera, en sus cuatro formas; los ojos si no hay nada.
+- [x] **El doble toque del Apple Watch** (2 nov), como tocar la cara: se calla, olvida la pregunta,
+  envía ya; y «Habla con AnyAssistant» para Siri, Atajos y el botón Acción de los Ultra.
+- [x] **El servidor no suena nunca** (2 nov), ni sin dispositivos conectados; lo que se pone desde el
+  reloj suena en el iPhone como alarma propia.
+- [x] **Las horas en letras** (2 nov): «a las siete y cinco» son las 7:05 (eran las 12).
 - [x] **La app de iPhone y iPad en TestFlight**, con la del reloj dentro (`apps/apple/testflight.sh`).
 - [x] **El diseño de las páginas web**, con el estilo y el vocabulario de las apps: la página de
   temas, la administración web, la pantalla de emparejar con el código y la página del QR.
