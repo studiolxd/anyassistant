@@ -14,7 +14,7 @@
     <string name="pair">Emparejar</string>
     <string name="pair_how">Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.</string>
     <string name="wrong_code">El código no es correcto o ha caducado.</string>
-    <string name="mac_not_answering">El servidor no responde. Comprueba que AnyAssistant esté en marcha y que este dispositivo esté en la misma red.</string>
+    <string name="mac_not_answering">El servidor no responde. Comprueba que el servidor de AnyAssistant esté activo y que este dispositivo esté en la misma red.</string>
     <string name="looking_for_mac">Buscando el servidor…</string>
     <string name="pair_again_needed">Hay que emparejarlo de nuevo.</string>
     <string name="listening">%1$s te escucha</string>

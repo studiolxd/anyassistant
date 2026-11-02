@@ -19,7 +19,7 @@
 "It couldn't be saved." = "No se ha podido guardar.";
 "It couldn't prepare the program." = "No se ha podido preparar la instalación. Inténtalo de nuevo.";
 "It is a security plugin: without it, that protection is gone." = "Protege tu asistente. Si lo apagas, esa protección desaparece.";
-"It stopped; starting it again…" = "Se ha parado. Lo vuelvo a encender…";
+"It stopped; starting it again…" = "Se ha detenido. Iniciándolo de nuevo…";
 "LLMs" = "Modelos de lenguaje (LLM)";
 "Libraries" = "Bibliotecas";
 "No code needed: pairing is off." = "No hace falta código: cualquier dispositivo de tu red puede conectarse.";
@@ -33,8 +33,8 @@
 "Quit AnyAssistant" = "Salir de AnyAssistant";
 "Restart" = "Reiniciar";
 "Restarting…" = "Reiniciando…";
-"Running · a device connected" = "Listo · hay un dispositivo conectado";
-"Running · no device" = "Listo · esperando a un dispositivo";
+"Running · a device connected" = "Activo · hay un dispositivo conectado";
+"Running · no device" = "Activo · esperando a un dispositivo";
 "Saved." = "Guardado.";
 "Set it up step by step" = "Personalizar…";
 "Settings" = "Ajustes";
@@ -43,15 +43,15 @@
 "Skills" = "Habilidades";
 "Some changes apply after restarting." = "Algunos cambios se notarán cuando lo reinicies.";
 "Speech recognition" = "Reconocimiento de voz";
-"Start" = "Encender";
-"Starting…" = "Encendiéndose…";
+"Start" = "Iniciar";
+"Starting…" = "Iniciando…";
 "Step by step" = "Personalizar";
-"Stop" = "Apagar";
-"Stopped" = "Apagado";
+"Stop" = "Detener";
+"Stopped" = "Detenido";
 "Taking over from launchd…" = "Preparándolo todo…";
-"The server isn't answering: is it running?" = "El servidor no responde. Comprueba que AnyAssistant esté en marcha.";
-"Turn it off" = "Apagarlo";
-"Turn it off?" = "¿Seguro que quieres apagarlo?";
+"The server isn't answering: is it running?" = "El servidor no responde. Comprueba que el servidor de AnyAssistant esté activo.";
+"Turn it off" = "Detener";
+"Turn it off?" = "¿Detener el servidor?";
 "Updating…" = "Actualizando…";
 "Voice detection" = "Detección de voz";
 "Voices" = "Voces";
@@ -82,7 +82,7 @@
 "No device has connected yet: pair one from the menu." = "Aún no se ha conectado ningún dispositivo: conecta uno desde el menú.";
 "The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina»." = "La habitación es como la dices por voz: «pon una alarma en la cocina». También se cambia por voz desde el propio dispositivo: «esta es la de la cocina».";
 "Not set yet" = "Sin asignar";
-"Running · %d devices connected" = "Listo · %d dispositivos conectados";
+"Running · %d devices connected" = "Activo · %d dispositivos conectados";
 "a device" = "un dispositivo";
 "talking to you" = "hablando contigo";
 "Mail accounts" = "Cuentas de correo";
@@ -139,7 +139,7 @@
 "Back" = "Atrás";
 "Connect" = "Conectar";
 "That code isn't right (or it's too old): ask for another." = "El código no es correcto o ha caducado.";
-"That Mac doesn't answer: is AnyAssistant running there, on this network?" = "El servidor no responde. Comprueba que AnyAssistant esté en marcha y que este dispositivo esté en la misma red.";
+"That Mac doesn't answer: is AnyAssistant running there, on this network?" = "El servidor no responde. Comprueba que el servidor de AnyAssistant esté activo y que este dispositivo esté en la misma red.";
 "The server is on another Mac: use this one only to talk to it" = "Conectarse a otro servidor…";
 "Allow the microphone…" = "Permitir el micrófono…";
 
@@ -164,7 +164,7 @@
 "Open in the browser" = "Abrir en el navegador";
 
 /* The menu's devices; each one's LLM */
-"Running" = "Funcionando";
+"Running" = "Activo";
 "No device connected" = "Ningún dispositivo conectado";
 "and %d more" = "y %d más";
 "Its LLM" = "Su LLM";
@@ -182,7 +182,7 @@
 "The name or IP address of the server." = "El nombre o la dirección IP del servidor.";
 "Pairing code" = "Código de emparejamiento";
 "Pair" = "Emparejar";
-"AnyAssistant is now running on this device." = "AnyAssistant ya está en marcha en este dispositivo.";
+"AnyAssistant is now running on this device." = "AnyAssistant ya está activo en este dispositivo.";
 "Saved in the keychain" = "Guardada en el Llavero";
 "Not set" = "Sin indicar";
 "OpenAI-compatible" = "Compatible con OpenAI";
@@ -226,7 +226,7 @@
 "Done" = "Listo";
 "The server isn't responding" = "El servidor no responde";
 "AnyAssistant's server is stopped." = "El servidor de AnyAssistant está detenido.";
-"Make sure AnyAssistant is running." = "Comprueba que AnyAssistant esté en marcha.";
+"Make sure AnyAssistant is running." = "Comprueba que el servidor de AnyAssistant esté activo.";
 "Start the Server" = "Iniciar el servidor";
 "Try Again" = "Reintentar";
 "Calibrate" = "Calibrar";

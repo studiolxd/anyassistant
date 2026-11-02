@@ -16,7 +16,7 @@
     ],
     "llm_failed": "Perdona, no he podido responder.",
     "hermes_approval": "Hermes quiere hacer esto: {action}. ¿Lo hago?",
-    "llm_down": "No puedo hablar con {name}: ¿está en marcha?",
+    "llm_down": "No puedo hablar con {name}. Comprueba que esté activo.",
     "llm_key": "{name} no acepta la clave: revísala con bin/anyassistant llm-key.",
     "llm_limit": "{name} dice que he llegado a su límite de uso. Prueba en un rato."
   },

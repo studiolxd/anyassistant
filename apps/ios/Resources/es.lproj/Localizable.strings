@@ -11,7 +11,7 @@
 "Done" = "Hecho";
 "Pair" = "Emparejar";
 "That code isn't right (or it expired)." = "El código no es correcto o ha caducado.";
-"The server isn't answering: is AnyAssistant running and this device on the same network?" = "El servidor no responde. Comprueba que AnyAssistant esté en marcha y que este dispositivo esté en la misma red.";
+"The server isn't answering: is AnyAssistant running and this device on the same network?" = "El servidor no responde. Comprueba que el servidor de AnyAssistant esté activo y que este dispositivo esté en la misma red.";
 "Looking for the server…" = "Buscando el servidor…";
 "Alarm" = "Alarma";
 "Reminder" = "Recordatorio";

@@ -219,8 +219,8 @@
     "gemini_login": "No has iniciado sesión en Gemini CLI",
     "opencode": "OpenCode no está instalado",
     "openai": "Falta la clave de API (Ajustes → Asistente)",
-    "ollama": "Ollama no está en marcha o no tiene ningún modelo",
-    "hermes": "La pasarela de Hermes no está en marcha"
+    "ollama": "Ollama no está activo o no tiene ningún modelo",
+    "hermes": "La pasarela de Hermes no está activa"
   },
   "options_title": {
     "name": "Nombre",
