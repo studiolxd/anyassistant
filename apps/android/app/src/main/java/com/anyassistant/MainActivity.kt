@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.ui.text.style.TextAlign
@@ -80,9 +81,12 @@ class MainActivity : ComponentActivity() {
     private val link get() = App.link
     private var paired by mutableStateOf(false)
     private var repairing by mutableStateOf(false)  // «Pair again»: the code screen with a way back (what it had stays)
+    private var invited by mutableStateOf<Invitation?>(null)  // what the QR or the link said: pairing with it
+    private var scanAllowed by mutableStateOf(false)  // the camera, for «Escanear código»
     private val prefs get() = getSharedPreferences("anyassistant", Context.MODE_PRIVATE)
 
     private val ask = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { begin() }
+    private val askCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { scanAllowed = it }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,10 +106,18 @@ class MainActivity : ComponentActivity() {
         opened(intent)
     }
 
-    /** «Hablar» (the shortcut, the quick settings, the assistant gesture): it listens. */
+    /** «Hablar» (the shortcut, the quick settings, the assistant gesture): it listens. Opened by
+     *  «Abrir en la app» on the QR's page, or the QR itself (anyassistant://connect?…, http://…/connect):
+     *  it pairs with what the link says; paired already, with a way back if it fails. */
     private fun opened(intent: Intent) {
         if (intent.action == TALK || intent.action == Intent.ACTION_ASSIST || intent.action == Intent.ACTION_VOICE_COMMAND) {
             if (link.mac.paired) link.talk()
+        }
+        if (intent.action == Intent.ACTION_VIEW) {
+            val invitation = intent.data?.let(Invitation::parse) ?: return
+            intent.data = null  // once
+            if (paired) { link.stop(); ListenService.stop(this); repairing = true; paired = false }
+            invited = invitation
         }
     }
 
@@ -251,11 +263,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private enum class Step { CHOOSE, MANUAL, CODE }
+    private enum class Step { CHOOSE, SCAN, MANUAL, CODE }
 
-    /** Pairing as Android's own Wi-Fi settings: the servers announcing themselves here or «Other
-     *  server…», then the pairing code; a server that asks for none connects at once. A top bar
-     *  with back and its title; the step's action, a filled button at the bottom, over the keyboard. */
+    /** Pairing as Android's own Wi-Fi settings: «Escanear código» (the QR that «Conectar otro
+     *  dispositivo» shows on the server: it pairs by itself, as the app opened by the QR page's link
+     *  does), the servers announcing themselves here or «Other server…», then the pairing code; a
+     *  server that asks for none connects at once. A top bar with back and its title; the step's
+     *  action, a filled button at the bottom, over the keyboard. */
     @Composable
     private fun Pair() {
         val context = LocalContext.current
@@ -302,6 +316,26 @@ class MainActivity : ComponentActivity() {
                 busy = false
             }
         }
+        // What a QR or a link said: where the server is and its code; nothing to type.
+        val invitation = invited
+        androidx.compose.runtime.LaunchedEffect(invitation) {
+            if (invitation == null) return@LaunchedEffect
+            invited = null
+            link.mac.host = invitation.host
+            link.mac.port = invitation.port
+            link.mac.moved()
+            server = invitation.name ?: invitation.host
+            code = invitation.code ?: ""
+            problem = null
+            step = Step.CODE
+            if (invitation.code != null) pair() else withoutCode()
+        }
+        val scan = {
+            problem = null
+            scanAllowed = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            if (!scanAllowed) askCamera.launch(Manifest.permission.CAMERA)
+            step = Step.SCAN
+        }
         val back: (() -> Unit)? = when {
             step != Step.CHOOSE -> ({ problem = null; step = Step.CHOOSE })
             repairing -> ({ repairing = false; paired = true; begin() })  // from «Pair again»: as it was
@@ -316,12 +350,14 @@ class MainActivity : ComponentActivity() {
                             getString(if (step == Step.CHOOSE) R.string.cancel else R.string.back), tint = Color.White)
                     }
                 } else Spacer(Modifier.width(16.dp))
-                Text(getString(when (step) { Step.CHOOSE -> R.string.connect; Step.MANUAL -> R.string.other_server; Step.CODE -> R.string.pair }),
+                Text(getString(when (step) { Step.CHOOSE -> R.string.connect; Step.SCAN -> R.string.scan_code; Step.MANUAL -> R.string.other_server; Step.CODE -> R.string.pair }),
                     fontSize = 22.sp, color = Color.White)
             }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
                 when (step) {
                     Step.CHOOSE -> {
+                        ListRow(Icons.Outlined.QrCodeScanner, getString(R.string.scan_code), null, enabled = !busy, onClick = scan)
+                        Text(getString(R.string.scan_hint), Modifier.padding(16.dp), color = Color.Gray, fontSize = 13.sp)
                         Text(getString(R.string.servers_here_title), Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
                             color = Color.Gray, fontSize = 13.sp)
                         if (servers.found.isEmpty()) {
@@ -343,6 +379,11 @@ class MainActivity : ComponentActivity() {
                         ListRow(Icons.Outlined.Add, getString(R.string.other_server_more), null, enabled = !busy) {
                             problem = null; step = Step.MANUAL
                         }
+                    }
+                    Step.SCAN -> {
+                        if (scanAllowed) Scanner(this@MainActivity) { found -> invited = found }
+                        else Text(getString(R.string.camera_needed), Modifier.padding(16.dp), color = Color.Gray)
+                        Text(getString(R.string.scan_hint), Modifier.padding(16.dp), color = Color.Gray, fontSize = 13.sp)
                     }
                     Step.MANUAL -> {
                         OutlinedTextField(host, { host = it }, label = { Text(getString(R.string.mac_address)) },
@@ -370,7 +411,7 @@ class MainActivity : ComponentActivity() {
                 problem?.let { Text(it, Modifier.padding(16.dp), color = Color(0xffff6b6b)) }
             }
             // The step's action: a filled button at the bottom, over the keyboard.
-            if (step != Step.CHOOSE) {
+            if (step != Step.CHOOSE && step != Step.SCAN) {
                 Button(onClick = { if (step == Step.MANUAL) next() else pair() },
                     enabled = !busy && (if (step == Step.MANUAL) host.isNotBlank() else code.length == 6),
                     modifier = Modifier.fillMaxWidth().padding(16.dp).height(52.dp)) {

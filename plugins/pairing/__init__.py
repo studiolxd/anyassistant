@@ -113,15 +113,19 @@ async def _new_code(request):
     return http.json_response({"code": new_code(), "seconds": CODE_LIFETIME, "pairing": True})
 
 
+def welcome(response, token: str):
+    """The device's cookie, on the answer that pairs it (/pair, and the page's /connect)."""
+    response.set_cookie(COOKIE, token, max_age=10 * 365 * 24 * 3600, httponly=True, samesite="Strict")
+    return response
+
+
 @web.route("POST", "/pair")
 async def _pair(request):
     data = await request.json()
     token = pair(data.get("code", ""), request.headers.get("User-Agent", "?"))
     if not token:
         return http.json_response({"paired": False}, status=403)
-    response = http.json_response({"paired": True})
-    response.set_cookie(COOKIE, token, max_age=10 * 365 * 24 * 3600, httponly=True, samesite="Strict")
-    return response
+    return welcome(http.json_response({"paired": True}), token)
 
 
 # --- In the installer ---

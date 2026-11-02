@@ -54,6 +54,23 @@
                 <action android:name="com.anyassistant.TALK" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <!-- «Abrir en la app» on the QR's page («Conectar otro dispositivo» on the server):
+                 anyassistant://connect?host=…&port=…&code=…: it pairs by itself. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="anyassistant" android:host="connect" />
+            </intent-filter>
+            <!-- The QR's own address (http://<ip>:<port>/connect?code=…): before Android 12, the phone
+                 offers the app when its camera reads it; from 12 on, a web link not verified with
+                 its domain (none: a local address) opens the browser, whose page offers the app. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" android:host="*" android:pathPrefix="/connect" />
+            </intent-filter>
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
 

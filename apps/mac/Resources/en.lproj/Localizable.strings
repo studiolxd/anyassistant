@@ -1,20 +1,14 @@
 /* AnyAssistant: English. The key is the English text in the code; this is what is shown. */
 
-"1. The certificate" = "1. The certificate";
-"2. The page" = "2. Connect";
 "A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "Install the AnyAssistant server on this device, or connect to another server.";
-"An old device (it doesn't open .local names): use the address" = "An older device that can't open that address? Use the IP instead";
-"Another code" = "Get another code";
 "AnyAssistant needs it to work as usual." = "AnyAssistant needs it to work properly.";
 "Brain" = "Brain";
 "Cancel" = "Cancel";
 "Copying the program and preparing Python…" = "Preparing the installation…";
-"Done: the page" = "Done, next step";
 "Features" = "Features";
 "If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)." = "Doesn't it install by itself? On Android, go to Settings → Security → Install from storage and pick AnyAssistant.crt.";
 "Install" = "Install";
 "Install steps again…" = "Set it up again…";
-"Install the certificate" = "First, the certificate";
 "Install with what comes" = "Install";
 "Installed" = "Installation complete";
 "Installed, with problems" = "Installation completed with errors";
@@ -30,10 +24,8 @@
 "Libraries" = "Libraries";
 "No code needed: pairing is off." = "No code needed: any device on your network can connect.";
 "Not installed yet" = "Not installed yet";
-"Once per device: scan it, or open this address, to download it." = "You only need to do this once on each device. Scan the code or open:";
 "Open AnyAssistant at login" = "Open AnyAssistant at login";
 "Open at login" = "Open at login";
-"Open the page" = "Now, connect the device";
 "Pair a device" = "Connect another device";
 "Pair a device…" = "Connect another device…";
 "Pair your tablet or phone" = "Connect another device";
@@ -44,7 +36,6 @@
 "Running · a device connected" = "Ready · a device is connected";
 "Running · no device" = "Ready · waiting for a device";
 "Saved." = "Saved.";
-"Scan it with the tablet or phone: it pairs by itself. Or open" = "Scan the code with the tablet or phone and that's it: it connects by itself. You can also open:";
 "Set it up step by step" = "Customize…";
 "Settings" = "Settings";
 "Settings…" = "Settings…";
@@ -62,14 +53,12 @@
 "Turn it off" = "Turn it off";
 "Turn it off?" = "Turn it off?";
 "Updating…" = "Updating…";
-"Valid for 5 minutes, for one device." = "It works for 5 minutes and for one device.";
 "Voice detection" = "Voice detection";
 "Voices" = "Voices";
 "Waiting for the server…" = "Waiting for the assistant to start…";
 "Wake word" = "Wake word";
 "Yes" = "Yes";
 "You can change everything later. The speech models download once (a few hundred MB)." = "The speech models are downloaded during installation (a few hundred MB). You can change any setting later.";
-"and type the code" = "and type this code:";
 "command not found:" = "needs installing:";
 "needs a restart" = "applies after a restart";
 "yours" = "yours";
@@ -254,3 +243,14 @@
 "Quiet" = "Quiet";
 "Some noise" = "Some noise";
 "Noisy" = "Noisy";
+"Scan the code with the device's camera. With the app installed, it connects by itself; otherwise, it goes on in the browser." = "Scan the code with the device's camera. With the app installed, it connects by itself; otherwise, it goes on in the browser.";
+"Valid for 5 minutes" = "Valid for 5 minutes";
+"Another code" = "Another code";
+"Connect by hand" = "Connect by hand";
+"App" = "App";
+"Browser" = "Browser";
+"Choose «%@ on %@»" = "Choose “%@ on %@”";
+"and type the code" = "and type the code";
+"First, install the certificate:" = "First, install the certificate:";
+"Then, open:" = "Then, open:";
+"On old devices: %@" = "On old devices: %@";

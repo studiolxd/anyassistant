@@ -1,7 +1,8 @@
-// Pairing, once, as iOS's own Wi-Fi settings: the servers announcing themselves on this network
-// (Bonjour) or «Other server…», then the pairing code («Conectar otro dispositivo» on the server
-// shows it). A server that asks for no code connects at once. Back is the navigation bar's; the
-// step's action, its top right; nothing but fields and rows in the content.
+// Pairing, once, as iOS's own Wi-Fi settings: «Escanear código» (the QR that «Conectar otro
+// dispositivo» shows on the server: it pairs by itself, as the app opened by the QR page's link
+// does), the servers announcing themselves on this network (Bonjour) or «Other server…», then
+// the pairing code. A server that asks for no code connects at once. Back is the navigation bar's;
+// the step's action, its top right; nothing but fields and rows in the content.
 
 import SwiftUI
 
@@ -10,10 +11,31 @@ struct PairView: View {
     @StateObject private var browser = ServerBrowser()
     @State private var connecting: String?  // the server connecting without a code
     @State private var problem: String?
+    @State private var scanning = false
+    @State private var invited: Mac.Invitation?  // pairing with what a QR or a link said
 
     var body: some View {
         NavigationView {
             List {
+                Section {
+                    if let invited {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                            Text(String(format: T("Connecting to %@…"), invited.name ?? invited.host)).foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 6)
+                    } else {
+                        Button { scanning = true } label: {
+                            HStack(spacing: 14) {
+                                Image(systemName: "qrcode.viewfinder").font(.title3).foregroundColor(.accentColor).frame(width: 28)
+                                Text(T("Scan the code")).foregroundColor(.primary)
+                            }
+                            .padding(.vertical, 6)
+                        }
+                    }
+                } footer: {
+                    Text(T("The QR code that «Connect another device» shows on the server."))
+                }
                 Section {
                     if browser.servers.isEmpty {
                         HStack(spacing: 12) {
@@ -51,8 +73,27 @@ struct PairView: View {
             }
         }
         .navigationViewStyle(.stack)
+        .sheet(isPresented: $scanning) { ScanView { invitation in mac.invite(invitation) } }
         .onAppear { browser.start() }
         .onDisappear { browser.stop() }
+        .onReceive(mac.$invited) { invitation in
+            guard let invitation, invited == nil else { return }
+            pair(invitation)
+        }
+    }
+
+    /// What a QR or a link said: where the server is and its code; nothing to type.
+    func pair(_ invitation: Mac.Invitation) {
+        invited = invitation
+        problem = nil
+        Task {
+            defer { invited = nil }
+            do { try await mac.pair(invitation) } catch Mac.Failure.wrongCode {
+                problem = T("That code isn't right (or it expired).")
+            } catch {
+                problem = T("The server isn't answering: is AnyAssistant running and this device on the same network?")
+            }
+        }
     }
 
     func row(_ server: ServerBrowser.Found) -> some View {

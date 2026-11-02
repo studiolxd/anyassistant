@@ -308,6 +308,27 @@ final class Server: ObservableObject {
         return info["port"] as? Int
     }
 
+    /// What «Conectar otro dispositivo» shows (GET /admin/status): the QR's address («connect»; the
+    /// code goes after it), the addresses to type (anyassistant.local, and the IP for old devices),
+    /// the certificate's if HTTPS is on, and whether a code is needed.
+    struct Connecting {
+        let name: String, computer: String, port: Int, address: String, connect: String, local: String
+        let certificate: String?
+        let pairing: Bool
+    }
+
+    func connecting() async -> Connecting? {
+        guard let (raw, response) = try? await URLSession.shared.data(
+                from: URL(string: "http://127.0.0.1:\(port)/admin/status")!),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let info = try? JSONSerialization.jsonObject(with: raw) as? [String: Any],
+              let connect = info["connect"] as? String else { return nil }
+        return Connecting(name: info["name"] as? String ?? "AnyAssistant", computer: info["computer"] as? String ?? "",
+                          port: info["port"] as? Int ?? port, address: info["address"] as? String ?? address,
+                          connect: connect, local: info["local"] as? String ?? "http://anyassistant.local:\(port)",
+                          certificate: info["certificate"] as? String, pairing: info["pairing"] as? Bool ?? false)
+    }
+
     enum Pairing: Equatable { case code(String), off, unreachable }
 
     /// A pairing code; .off if the plugin «pairing» is off (devices need none); .unreachable if

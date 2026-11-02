@@ -61,9 +61,11 @@ button:disabled { opacity: .5; cursor: default; }
 .mono { font-family: ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
 .pair { display: flex; gap: 26px; align-items: flex-start; flex-wrap: wrap; padding: 16px 0; }
 .pair img { width: 220px; height: 220px; background: #fff; border-radius: 8px; }
-.tabs { display: inline-flex; gap: 4px; background: var(--line); padding: 3px; border-radius: 8px; }
-.tabs button { background: none; color: var(--text); padding: 5px 12px; }
-.tabs button.on { background: var(--panel); }
+.hand { border-top: 1px solid var(--line); padding: 4px 0 10px; }
+.hand summary { cursor: pointer; font-weight: 600; padding: 10px 0; }
+.hand .step { display: flex; gap: 14px; align-items: baseline; padding: 4px 0; }
+.hand .step > b { flex: 0 0 90px; font-weight: 500; }
+.hand .step p { margin: 4px 0; }
 form.inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 0; }
 .error { color: var(--bad); }
 #login { max-width: 380px; margin: 12vh auto; text-align: center; padding: 0 16px; }

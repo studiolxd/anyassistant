@@ -42,4 +42,7 @@
     <string name="host_hint">El nombre o la dirección IP del servidor.</string>
     <string name="pairing_code">Código de emparejamiento</string>
     <string name="connecting">Conectando…</string>
+    <string name="scan_code">Escanear código</string>
+    <string name="scan_hint">El código QR que muestra «Conectar otro dispositivo» en el servidor: se conecta solo.</string>
+    <string name="camera_needed">Permite la cámara para escanear el código.</string>
 </resources>

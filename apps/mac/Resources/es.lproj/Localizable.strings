@@ -1,20 +1,14 @@
 /* AnyAssistant: Spanish. The key is the English text in the code; this is what is shown. */
 
-"1. The certificate" = "1. El certificado";
-"2. The page" = "2. Conectar";
 "A voice assistant on this Mac, with an old phone or tablet as its eyes, mouth and ears." = "Instala el servidor de AnyAssistant en este dispositivo o conéctate a otro servidor.";
-"An old device (it doesn't open .local names): use the address" = "¿Es un dispositivo antiguo y no abre esa dirección? Usar la IP";
-"Another code" = "Pedir otro código";
 "AnyAssistant needs it to work as usual." = "AnyAssistant lo necesita para funcionar bien.";
 "Brain" = "Cerebro";
 "Cancel" = "Cancelar";
 "Copying the program and preparing Python…" = "Preparando la instalación…";
-"Done: the page" = "Hecho, siguiente paso";
 "Features" = "Funciones";
 "If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)." = "¿No se instala solo? En Android, ve a Ajustes → Seguridad → Instalar desde almacenamiento y elige AnyAssistant.crt.";
 "Install" = "Instalar";
 "Install steps again…" = "Volver a configurar…";
-"Install the certificate" = "Primero, el certificado";
 "Install with what comes" = "Instalar";
 "Installed" = "Instalación completada";
 "Installed, with problems" = "Instalación completada con errores";
@@ -30,10 +24,8 @@
 "Libraries" = "Bibliotecas";
 "No code needed: pairing is off." = "No hace falta código: cualquier dispositivo de tu red puede conectarse.";
 "Not installed yet" = "Todavía no está instalado";
-"Once per device: scan it, or open this address, to download it." = "Solo hay que hacerlo una vez en cada dispositivo. Escanea el código o abre:";
 "Open AnyAssistant at login" = "Abrir AnyAssistant al iniciar sesión";
 "Open at login" = "Abrir al iniciar sesión";
-"Open the page" = "Ahora, conecta el dispositivo";
 "Pair a device" = "Conectar otro dispositivo";
 "Pair a device…" = "Conectar otro dispositivo…";
 "Pair your tablet or phone" = "Conectar otro dispositivo";
@@ -44,7 +36,6 @@
 "Running · a device connected" = "Listo · hay un dispositivo conectado";
 "Running · no device" = "Listo · esperando a un dispositivo";
 "Saved." = "Guardado.";
-"Scan it with the tablet or phone: it pairs by itself. Or open" = "Escanea el código con la tablet o el móvil y listo: se conecta solo. También puedes abrir:";
 "Set it up step by step" = "Personalizar…";
 "Settings" = "Ajustes";
 "Settings…" = "Ajustes…";
@@ -62,14 +53,12 @@
 "Turn it off" = "Apagarlo";
 "Turn it off?" = "¿Seguro que quieres apagarlo?";
 "Updating…" = "Actualizando…";
-"Valid for 5 minutes, for one device." = "Sirve durante 5 minutos y para un solo dispositivo.";
 "Voice detection" = "Detección de voz";
 "Voices" = "Voces";
 "Waiting for the server…" = "Esperando a que el asistente arranque…";
 "Wake word" = "Palabra para despertarlo";
 "Yes" = "Sí";
 "You can change everything later. The speech models download once (a few hundred MB)." = "Durante la instalación se descargan los modelos de voz (unos cientos de MB). Podrás cambiar cualquier ajuste más adelante.";
-"and type the code" = "y escribir este código:";
 "command not found:" = "falta instalar:";
 "needs a restart" = "se aplica al reiniciar";
 "yours" = "tuyo";
@@ -254,3 +243,14 @@
 "Quiet" = "Silenciosa";
 "Some noise" = "Algo de ruido";
 "Noisy" = "Ruidosa";
+"Scan the code with the device's camera. With the app installed, it connects by itself; otherwise, it goes on in the browser." = "Escanea el código con la cámara del dispositivo. Con la app instalada, se conecta sola; si no, sigue en el navegador.";
+"Valid for 5 minutes" = "Válido 5 minutos";
+"Another code" = "Otro código";
+"Connect by hand" = "Conectar a mano";
+"App" = "App";
+"Browser" = "Navegador";
+"Choose «%@ on %@»" = "Elige «%@ en %@»";
+"and type the code" = "e introduce el código";
+"First, install the certificate:" = "Primero, instala el certificado:";
+"Then, open:" = "Después, abre:";
+"On old devices: %@" = "En dispositivos antiguos: %@";

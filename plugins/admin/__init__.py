@@ -327,11 +327,21 @@ def _addresses() -> list[str]:
 @web.route("GET", "/admin/status")
 @_local
 async def _status(request):
+    """For «Conectar otro dispositivo» (the Mac app and the page here): what the QR says («connect»,
+    the code goes after it), the addresses to type («local», and «address» for old devices), the
+    certificate's if HTTPS is on, and whether a code is needed."""
     version = paths.APP / "VERSION"
+    port = settings.get("port") or 8080
+    addresses = _addresses()
+    address = addresses[0] if addresses else "127.0.0.1"
+    page = kernel.module("page")
     return http.json_response({
         "name": settings.get("name") or "Jarvis", "computer": socket.gethostname().split(".")[0],
         "version": version.read_text().strip() if version.exists() else "development",
-        "port": settings.get("port") or 8080, "addresses": _addresses(),
+        "port": port, "addresses": addresses, "address": address,
+        "connect": page.connect_url(address, port) if page else None,
+        "local": f"http://anyassistant.local:{port}",
+        "certificate": f"http://{address}:{port}/https/ca.crt" if kernel.enabled("https") else None,
         "https_port": (settings.get("https_port") or 443) if kernel.enabled("https") else None,
         "bonjour": kernel.enabled("bonjour"), "pairing": kernel.enabled("pairing"),
         "devices": [{"device": s.device, "connected": s.pc.connectionState == "connected"}
