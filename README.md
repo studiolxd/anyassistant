@@ -1120,3 +1120,7 @@ so they need no account or network; they run on a free port, next to a running J
 - `tests/` — pytest; `test_e2e.py` drives the real server.
 
 See `TODO.md` for what's next.
+
+## License
+
+MIT: see [LICENSE](LICENSE).

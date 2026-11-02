@@ -7,8 +7,6 @@ releases: el instalador .exe, el AppImage y el .deb), y la app de Android en un 
 
 - [ ] **Registrar tu voz** («Eva, aprende mi voz», o Ajustes → Voces) y afinar `voice_match`
   (abajo, «Quién habla»): hoy no hay ninguna voz aprendida, así que escucha a cualquiera.
-- [ ] **Licencia del repositorio** (público en github.com/studiolxd/anyassistant, sin licencia:
-  se puede leer, no reutilizar): MIT, Apache 2.0… o ninguna, a propósito.
 
 ## Las apps
 
@@ -169,6 +167,8 @@ Java no tiene cancelación de eco).
   35 s con la voz sintética (test_memory_with_claude); pasó al repetirlo.
 
 ## Hecho
+
+- [x] **Licencia del repositorio**: MIT (`LICENSE`).
 
 - [x] **Gemini CLI y OpenCode con tus cuentas** (1 nov, `llm-gemini`, `llm-opencode`, por ACP:
   `server/llm/acp.py`): «usa Gemini», «usa OpenCode». Un proceso por dispositivo, una sesión por
