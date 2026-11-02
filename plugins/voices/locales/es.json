@@ -55,7 +55,15 @@
       "again": "Un poco más larga: repite la frase entera.",
       "done": "Ya conoce tu voz, {name}.",
       "cancelled": "No se ha aprendido nada."
-    }
+    },
+    "learn_verbs": [
+      "aprend",
+      "registr"
+    ],
+    "voice_words": [
+      "voz",
+      "vos"
+    ]
   },
   "speech": {
     "voice_name": "Vamos a aprender tu voz. ¿Cómo te llamas?",

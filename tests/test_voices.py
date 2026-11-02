@@ -161,6 +161,30 @@ def test_the_skill_to_start_it(es):
     assert not voices.LearnVoice().hear("¿Qué hora es?", Assistant())
 
 
+@pytest.mark.parametrize("said", ["Apréndeme voz.", "apréndete mi voz", "registra mi vos"])
+def test_the_skill_to_start_it_as_transcribed(es, said):
+    assert voices.LearnVoice().hear(said, Assistant())
+
+
+def test_a_longer_sentence_about_voices_isnt_it(es):
+    assert not voices.LearnVoice().hear("aprendí a cambiar la voz del asistente ayer por la tarde", Assistant())
+
+
+def test_repeating_what_it_said_while_learning_isnt_its_echo(monkeypatch):
+    """Learning a voice, you repeat its «Di: …»: not dropped as its echo by its words."""
+    from plugins.brain_assistant import Assistant as Brain
+
+    a = object.__new__(Brain)
+    a.said, a.saying = [], "di hoy hace un buen día para salir a pasear por el parque".split()
+    seen = []
+    monkeypatch.setattr(Brain, "_talked_over", lambda self: None)
+    monkeypatch.setattr(kernel, "module", lambda name: None)
+    monkeypatch.setattr(Brain, "_handle", lambda self, text, timings: seen.append(text))
+    a.learning = object()
+    a._heard("Hoy hace un buen día para salir a pasear por el parque.", {"over": True, "stt_ms": 100, "audio_s": 3})
+    assert seen  # heard, not dropped
+
+
 def say(tmp_path, voice, text):
     import soundfile
 

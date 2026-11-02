@@ -358,7 +358,9 @@ class Assistant(Transcriber):
             self.stop()
 
     def _heard(self, text: str, timings: dict):
-        if self._is_echo(text, timings):
+        # Learning a voice, you repeat what it just said («Di: …»): not its echo by its words (the
+        # loudness, in the ear, still tells a real echo).
+        if getattr(self, "learning", None) is None and self._is_echo(text, timings):
             log.info("echo dropped: «%s»", settings.private(text))
             return
         if timings.get("over"):

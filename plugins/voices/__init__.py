@@ -548,8 +548,13 @@ class LearnVoice(Skill):
     local = False
 
     def hear(self, text: str, assistant) -> bool:
-        said = " ".join(words(text))
-        if any(phrase in said for phrase in i18n.L.list("voices.learn")):
+        found = words(text)
+        said = " ".join(found)
+        # «aprende mi voz» and its variants («apréndeme voz», «registra mi voz»): a short sentence with a
+        # word for learning and the word for voice (as transcribed: «aprendeme», «vos»…)
+        loose = len(found) <= 5 and any(w.startswith(tuple(i18n.L.list("voices.learn_verbs"))) for w in found) \
+            and any(w in i18n.L.list("voices.voice_words") for w in found)
+        if loose or any(phrase in said for phrase in i18n.L.list("voices.learn")):
             assistant.show_heard(text)
             start(assistant)
             return True

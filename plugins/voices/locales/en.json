@@ -44,7 +44,14 @@
       "again": "A little longer: say the whole phrase again.",
       "done": "It knows your voice, {name}.",
       "cancelled": "Nothing was learnt."
-    }
+    },
+    "learn_verbs": [
+      "learn",
+      "register"
+    ],
+    "voice_words": [
+      "voice"
+    ]
   },
   "speech": {
     "voice_name": "Let's learn your voice. What's your name?",
