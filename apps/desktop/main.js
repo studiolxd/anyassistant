@@ -19,7 +19,7 @@ const TEXTS = {
   'It failed': 'Ha fallado', 'Show %s': 'Mostrar a %s', 'Connect another device': 'Conectar otro dispositivo',
   'Administer': 'Administrar', 'Start': 'Arrancar', 'Stop': 'Parar', 'Restart': 'Reiniciar',
   'Log': 'Registro', 'No device connected': 'Ningún dispositivo conectado', 'and %s more': 'y %s más', 'Allow the microphone': 'Permitir el micrófono', 'Allow the camera': 'Permitir la cámara', 'Hide %s': 'Ocultar a %s', 'Open at login': 'Abrir al iniciar sesión', 'Quit AnyAssistant': 'Salir de AnyAssistant',
-  'started by systemd': 'lo arranca systemd',
+  'started by systemd': 'lo arranca systemd', 'Themes': 'Temas',
   'uv isn\'t installed: it brings Python and the server\'s packages.': 'uv no está instalado: trae Python y los paquetes del servidor.',
   'Install it and open AnyAssistant again:': 'Instálalo y vuelve a abrir AnyAssistant:',
   'The server keeps running (systemd): only the app closes.': 'El servidor sigue funcionando (systemd): solo se cierra la app.',
@@ -177,7 +177,7 @@ function menu() {
     faceShown()  // «Hide Eva» while its window is open
       ? { label: T('Hide %s', name), click: () => windows.face.close() }
       : { label: T('Show %s', name), enabled: running, click: showFace },
-    { label: 'Skins', enabled: running, click: () => open('skins', '/skins', { width: 1100, height: 780, title: 'Skins', dark: true }) },
+    { label: T('Themes'), enabled: running, click: () => open('themes', '/themes', { width: 1100, height: 780, title: T('Themes'), dark: true }) },
     ...(refused('microphone') ? [{ label: T('Allow the microphone'), click: () => shell.openExternal(PRIVACY.microphone) }] : []),
     ...(refused('camera') ? [{ label: T('Allow the camera'), click: () => shell.openExternal(PRIVACY.camera) }] : []),
     { label: T('Connect another device'), enabled: running, click: () => showAdmin('#pair') },

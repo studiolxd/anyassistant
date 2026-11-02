@@ -82,7 +82,7 @@ def normalize(pcm: np.ndarray, peak: float = 0.95) -> np.ndarray:
     return np.clip(pcm.astype(np.float32) * (peak * 32767 / maximum), -32768, 32767).astype(np.int16)
 
 
-# --- WAV files (sounds of skins and plugins) ---
+# --- WAV files (sounds of themes and plugins) ---
 
 _sounds: dict[tuple[str, float], np.ndarray | None] = {}
 
@@ -117,4 +117,4 @@ def _read_wav(file: Path) -> np.ndarray | None:
         return None
 
 
-# --- Checking a skin ---
+# --- Checking a theme ---

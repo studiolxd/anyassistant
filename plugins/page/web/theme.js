@@ -1,6 +1,6 @@
-// The skin: the screen's look (skins/<name>: skin.html and skin.css), applied from /config.
+// The theme: the screen's look (themes/<name>: theme.html and theme.css), applied from /config.
 // Jarvis fills the blocks ([data-block="status"], "clock", "captions"…) and gives the
-// skin, for its CSS, without any JavaScript of its own:
+// theme, for its CSS, without any JavaScript of its own:
 //   body[data-state]  the state as it comes (asleep, awake, hearing, thinking, looking,
 //                     speaking, question, alarm, error…)
 //   body[data-look]   the same, with the ones that look alike grouped (listening → awake…)
@@ -9,13 +9,13 @@
 //                     and its own as five moving bars (a mouth)
 // Transforms and opacity only, if possible: the tablet is modest (Chrome 81).
 
-var Skin = (function () {
+var Theme = (function () {
   var LOOKS_LIKE = {
     connected: 'awake', listening: 'awake', recording: 'hearing',
     repeating: 'speaking', transcribing: 'thinking', connecting: 'awake'
   };
   var screen = document.getElementById('screen');
-  var stylesheet = document.getElementById('skin-css');
+  var stylesheet = document.getElementById('theme-css');
   var applied = '';
   var current = '';
   var look = '';
@@ -23,15 +23,15 @@ var Skin = (function () {
 
   function block(name) { return screen.querySelector('[data-block="' + name + '"]'); }
 
-  // Puts the skin on the screen; true if it changed (the page then redraws its blocks).
-  function apply(skin) {
-    var key = skin.name + ':' + skin.version + ':' + JSON.stringify(skin.options) + JSON.stringify(skin.texts);
+  // Puts the theme on the screen; true if it changed (the page then redraws its blocks).
+  function apply(theme) {
+    var key = theme.name + ':' + theme.version + ':' + JSON.stringify(theme.options) + JSON.stringify(theme.texts);
     if (key === applied) return false;
     applied = key;
-    stylesheet.href = skin.css + '?v=' + skin.version;
-    screen.innerHTML = skin.html;
-    for (var name in skin.options) document.documentElement.style.setProperty('--' + name, skin.options[name]);
-    texts = skin.texts || {};
+    stylesheet.href = theme.css + '?v=' + theme.version;
+    screen.innerHTML = theme.html;
+    for (var name in theme.options) document.documentElement.style.setProperty('--' + name, theme.options[name]);
+    texts = theme.texts || {};
     var labelled = screen.querySelectorAll('[data-text]');
     for (var i = 0; i < labelled.length; i++) labelled[i].textContent = texts[labelled[i].getAttribute('data-text')] || '';
     build();
@@ -40,7 +40,7 @@ var Skin = (function () {
   }
 
   // What the blocks need inside: the clock's two parts, the camera's video, the photo.
-  // Without camera or photo blocks in the skin, Jarvis adds its own: they must work.
+  // Without camera or photo blocks in the theme, Jarvis adds its own: they must work.
   function build() {
     ['camera', 'photo'].forEach(function (name) {
       if (block(name)) return;
@@ -123,7 +123,7 @@ var Skin = (function () {
     requestAnimationFrame(loop);
   })();
 
-  // --- Blinking, at irregular intervals (the skin decides what blinking looks like) ---
+  // --- Blinking, at irregular intervals (the theme decides what blinking looks like) ---
   function blink() {
     if (look !== 'asleep' && look !== 'error') {
       document.body.classList.add('blink');

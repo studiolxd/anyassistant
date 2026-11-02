@@ -1,4 +1,4 @@
-"""The server's web side: the page, its configuration and skins, WebRTC signaling,
+"""The server's web side: the page, its configuration and themes, WebRTC signaling,
 the hooks plugins use (routes, guards like pairing's, /config, startup tasks). main.py chooses the brain and runs it."""
 
 import asyncio
@@ -181,8 +181,8 @@ async def no_cache(request: web.Request, handler):
     # dead connection instead of opening a new one.
     response = await handler(request)
     response.headers["Cache-Control"] = "no-store"
-    if request.path in ("/", "/skins"):
-        # Skins are someone else's HTML and CSS on a page with the microphone and the camera:
+    if request.path in ("/", "/themes"):
+        # Themes are someone else's HTML and CSS on a page with the microphone and the camera:
         # nothing from outside, and no scripts but Jarvis's own.
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "

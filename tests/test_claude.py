@@ -96,7 +96,7 @@ def test_a_slow_tool_gets_a_filler(monkeypatch, es):
 
 
 def test_a_quick_tool_or_a_confirmation_does_not(monkeypatch, es):
-    said = answer(monkeypatch, [(0, tool_use("mcp__anyassistant__set_skin")), (0.05, TOOL_RESULT),
+    said = answer(monkeypatch, [(0, tool_use("mcp__anyassistant__set_theme")), (0.05, TOOL_RESULT),
                                 (0.4, text("¿Cambio la cara?")), (0, END)])
     assert said == "¿Cambio la cara?"
 

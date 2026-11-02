@@ -133,7 +133,7 @@ the preferences, so `bin/anyassistant start` needs no options:
   "name": "Jarvis",
   "instructions": ["I'm a freelance designer.", "I invoice with Holded."],
   "voice": {"es": "Mónica", "en": "Samantha"},
-  "skin": "eyes",
+  "theme": "eyes",
   "video": "auto"
 }
 ```
@@ -222,9 +222,9 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 
 | Option | Default | |
 |---|---|---|
-| `skin` | `"eyes"` | the screen's look: eyes, orb, minimal, bedside or yours (a device's ?skin= wins) |
-| `skin_options` | — | the skin's options: {"accent": "#ff7a45"} |
-| `skins_dir` | — | your skins (default: skins in your data folder) *(restarts)* |
+| `theme` | `"eyes"` | the screen's look: eyes, orb, minimal, bedside or yours (a device's ?theme= wins) |
+| `theme_options` | — | the theme's options: {"accent": "#ff7a45"} |
+| `themes_dir` | — | your themes (default: themes in your data folder) *(restarts)* |
 | `video` | `"auto"` | camera quality; auto: each device by its memory (a device's ?video= wins) |
 | `show_time` | `true` | the time while asleep |
 | `show_date` | `true` | the date while asleep |
@@ -282,7 +282,7 @@ LLM hears it with the next question.
 
 The page changes at once when a screen option changes.
 
-A wrong value (`"skin": "smiley"`) stops the server with the reason.
+A wrong value (`"theme": "smiley"`) stops the server with the reason.
 
 **Pairing** (the plugin `pairing`, off by default): with `"plugins": {"pairing": true}`, a device must enter a code before using
 Jarvis. `bin/anyassistant pair` shows one on the Mac (6 digits, 5 minutes, one device);
@@ -316,8 +316,8 @@ another Mac» when installing: its address and the code). `apps/mac/install-dev.
 developing.
 
 **The iPhone and iPad app** (`apps/ios`, iOS 15 or later, and the plugin `stream-api`): native.
-Its face is drawn as the page's skins (Eyes, Orb, Bedside, Minimal: `apps/ios/Sources/Skins.swift`,
-the same looks; a new skin has to be drawn there too, else it shows as Eyes), following the Mac's
+Its face is drawn as the page's themes (Eyes, Orb, Bedside, Minimal: `apps/ios/Sources/Themes.swift`,
+the same looks; a new theme has to be drawn there too, else it shows as Eyes), following the Mac's
 state, texts and screen settings (its `/config`). The microphone and the speaker go over a
 WebSocket (`GET /stream?device=…`: 16-bit mono PCM at 48 kHz both ways, and the page's JSON
 messages), with iOS's echo cancellation; so it keeps listening with the screen off (Settings in
@@ -329,7 +329,7 @@ Siri, Shortcuts and the Action button (iOS 16 or later). Paired with the 6-digit
 trusting only your Mac's authority.
 
 **The Android app** (`apps/android`, Android 8 or later, Kotlin and Compose; the plugin
-`stream-api`): the same as the iPhone's. Its face, the four skins (`Skins.kt`); its microphone
+`stream-api`): the same as the iPhone's. Its face, the four themes (`Themes.kt`); its microphone
 and speaker over the WebSocket, in «communication» mode with Android's echo canceller; it finds
 the Mac by Bonjour (`_anyassistant._tcp`: many Androids don't resolve anyassistant.local), pairs
 with the 6-digit code and talks HTTPS trusting only your Mac's authority. With the screen off it
@@ -363,9 +363,9 @@ unknown one is refused) or `off`; `voice_match` (0.5) how alike. Short sentences
 say little about who: they count as whoever the conversation recognised, unless they
 clearly sound like someone else. The LLM hears who is talking.
 
-**By voice**: «Use the orb skin», «Change your voice to Mónica», «From now on your
+**By voice**: «Use the orb theme», «Change your voice to Mónica», «From now on your
 name is …», with Jarvis's own tools (below). After every answer the server reads
-`settings.json` again (also when you edit it by hand): the skin changes on the
+`settings.json` again (also when you edit it by hand): the theme changes on the
 screen at once, and anything else (voice, name, language…) restarts it when it
 finishes speaking. Options given on the command line don't change.
 
@@ -375,18 +375,18 @@ The server is also an MCP server, `anyassistant`, at `/mcp` (only from the Mac i
 no device on the network, paired or not). Allowed like any other in
 `permissions.json` (`"allowed": {"anyassistant": "all"}`, or a list of tools), Claude
 can manage Jarvis in your own words («show me what you see», «use the round
-skin», «what do you know about me?»):
+theme», «what do you know about me?»):
 
 | Tool | | Your «yes» |
 |---|---|---|
-| `get_status`, `get_settings`, `get_memory` | device and camera, language, LLM, eyes, memory; name, skin, voice; what it remembers | no |
-| `set_skin` | the screen's look, for every device or only this one | no: it only changes the look |
-| `create_skin`, `get_skin`, `edit_skin` | a skin of your own as a copy of another, read its files, rewrite one (it answers what the check finds; the skin on screen changes at once) | no |
-| `delete_skin` | delete one of yours | yes |
+| `get_status`, `get_settings`, `get_memory` | device and camera, language, LLM, eyes, memory; name, theme, voice; what it remembers | no |
+| `set_theme` | the screen's look, for every device or only this one | no: it only changes the look |
+| `create_theme`, `get_theme`, `edit_theme` | a theme of your own as a copy of another, read its files, rewrite one (it answers what the check finds; the theme on screen changes at once) | no |
+| `delete_theme` | delete one of yours | yes |
 | `set_voice`, `set_name`, `set_language` | saved to `settings.json`, applied after the answer | yes |
 | `remember`, `forget` | memory facts | yes |
 | `camera` | shows or hides the live camera on the screen | no: it only changes the screen |
-| `set_screen` | shows or hides parts of the screen for every skin: the time, the date, the transcription, the answers, the timers… (the screen settings) | no: it only changes the screen |
+| `set_screen` | shows or hides parts of the screen for every theme: the time, the date, the transcription, the answers, the timers… (the screen settings) | no: it only changes the screen |
 | `set_detail` | how much it says: concise, neutral, detailed or your own levels | no: it only changes how it talks |
 | `add_detail_level`, `remove_detail_level` | create, change or remove a detail level | yes: its text goes into the prompt |
 | `get_llms`, `set_llm` | the LLMs it can use (and whether each is available); switch to another, with a model | `set_llm`: yes |
@@ -588,10 +588,10 @@ class MyEngine(WakeWord):
 
 and `--wake my-engine [--wake-word …]`. `server/plugins.py` is the shared registry.
 
-## Skins
+## Themes
 
-The screen's look is a **skin**: HTML and CSS anyone can make, **without
-JavaScript**. Four come with Jarvis (`plugins/page/skins/`):
+The screen's look is a **theme**: HTML and CSS anyone can make, **without
+JavaScript**. Four come with Jarvis (`plugins/page/themes/`):
 
 - **`eyes`** (default): two blinking eyes; closed and breathing while asleep,
   brighter and slightly bigger with your voice, looking to one side with dots while
@@ -602,42 +602,42 @@ JavaScript**. Four come with Jarvis (`plugins/page/skins/`):
 - **`minimal`**: high contrast and large text, a light that changes with each state.
 - **`bedside`**: nearly black, only a dim time while asleep, and soft sounds.
 
-Chosen with `skin` for every device, `?skin=bedside` on one (remembered by it;
-`?skin=default` forgets it), or by voice («ponte la skin de mesilla», «only on
+Chosen with `theme` for every device, `?theme=bedside` on one (remembered by it;
+`?theme=default` forgets it), or by voice («ponte el tema de mesilla», «only on
 this one»).
 
-**Making one.** `bin/anyassistant skin new mine --from orb` copies a skin into your
-folder (`skins_dir`, `skins.local/` by default: where an installed Jarvis keeps
-them will come with the installer). A skin is a folder:
+**Making one.** `bin/anyassistant theme new mine --from orb` copies a theme into your
+folder (`themes_dir`, `themes.local/` by default: where an installed Jarvis keeps
+them will come with the installer). A theme is a folder:
 
 ```
-skin.json        {"name": "Mine", "author": "…", "version": "1", "description": "…",
+theme.json        {"name": "Mine", "author": "…", "version": "1", "description": "…",
                   "options": {"accent": "#3ddc97"}}
-skin.html        the layout: where each block goes
-skin.css         its styles and animations for each state
-locales/es.json  optional: {"ui": {"thinking": "Mmm…"}, "skin": {"goodnight": "Buenas noches"}}
+theme.html        the layout: where each block goes
+theme.css         its styles and animations for each state
+locales/es.json  optional: {"ui": {"thinking": "Mmm…"}, "theme": {"goodnight": "Buenas noches"}}
 sounds/          optional: wake.wav, sleep.wav, alarm.wav (16-bit WAV); without them,
                  the plugins' own (sounds: wake, sleep; skill-alarms: alarm)
 images/, fonts/  whatever it uses, inside its folder
 ```
 
-`skin.html` places **blocks**, which Jarvis fills: `<div data-block="clock"></div>`.
+`theme.html` places **blocks**, which Jarvis fills: `<div data-block="clock"></div>`.
 
 | Block | |
 |---|---|
-| `face` | its face: the skin draws it inside (and gets the live variables below) |
+| `face` | its face: the theme draws it inside (and gets the live variables below) |
 | `status` | «Te escucho», «Pensando…», «Di Hey Jarvis» |
 | `heard`, `answer`, `captions` | what you said last, its last answer, or both with `history` |
 | `clock`, `time`, `date` | the clock (both parts, or each on its own) |
 | `timers` | running timers, alarms and reminders |
-| `photo`, `camera` | the photo it looks at, the live camera (if the skin has no place for them, Jarvis adds its own) |
+| `photo`, `camera` | the photo it looks at, the live camera (if the theme has no place for them, Jarvis adds its own) |
 | `stats` | the connection's numbers |
 
 `<p data-text="goodnight"></p>` shows a text of its own, from its `locales`
-(`skin`), and its `ui` texts replace Jarvis's on screen (not what it says or
+(`theme`), and its `ui` texts replace Jarvis's on screen (not what it says or
 understands). Starting and pairing aren't blocks: they always work.
 
-`skin.css` follows the state with:
+`theme.css` follows the state with:
 
 - `body[data-state]`: the state as it comes (`asleep`, `awake`, `hearing`,
   `thinking`, `looking`, `speaking`, `question`, `alarm`, `error`…), and
@@ -646,22 +646,22 @@ understands). Starting and pairing aren't blocks: they always work.
 - On the face block, live, from 0 to 1: `--voice` (your voice), `--speech` (its
   own) and `--bar-1` … `--bar-5` (its own as five moving bars), e.g.
   `transform: scale(calc(1 + var(--voice) * .2))`.
-- Its `options` as variables: `--accent`, changeable with `skin_options`.
+- Its `options` as variables: `--accent`, changeable with `theme_options`.
 - The timers' lines with their kind as a class (`.timers p.timer`, `.alarm`,
-  `.reminder`): Jarvis puts no icon, so a skin that wants one adds it, e.g.
+  `.reminder`): Jarvis puts no icon, so a theme that wants one adds it, e.g.
   `.timers p.alarm::before { content: "⏰ "; }` (and `body[data-state=alarm] .status::before`
   while one rings). Android 4.4's font lacks some emoji (⏱).
 
-**Seeing them**: the Mac app's «Skins…» (or `http://<mac>:8080/skins?skin=mine`) shows every state at once, with a
+**Seeing them**: the Mac app's «Themes…» (or `http://<mac>:8080/themes?theme=mine`) shows every state at once, with a
 simulated voice and timer, and reloads when you save.
 
-**By voice**: «crea una skin a partir del orbe y que piense en lila» — Jarvis copies
-it into your folder, reads it and changes what you asked (`create_skin`,
-`get_skin`, `edit_skin`), then you choose it. Only your skins: the system's ones
-can be copied, never changed or deleted; it writes `skin.json`, `skin.html`,
-`skin.css` and `locales/*.json` (sounds and images you add by hand).
+**By voice**: «crea un tema a partir del orbe y que piense en lila» — Jarvis copies
+it into your folder, reads it and changes what you asked (`create_theme`,
+`get_theme`, `edit_theme`), then you choose it. Only your themes: the system's ones
+can be copied, never changed or deleted; it writes `theme.json`, `theme.html`,
+`theme.css` and `locales/*.json` (sounds and images you add by hand).
 
-**What a skin can't do**: run JavaScript, react to events (`onclick`…) or load
+**What a theme can't do**: run JavaScript, react to events (`onclick`…) or load
 anything from outside: the page has the microphone and the camera. Its HTML is
 cleaned when served and the page forbids the rest (Content-Security-Policy).
 
@@ -1013,7 +1013,7 @@ so they need no account or network; they run on a free port, next to a running J
 - `server/kernel.py`, `server/registry.py` — the core: plugins found, loaded, on or off; engines' registry.
 - `plugins/` — every plugin: engines (`stt-*`, `wake-*`, `llm-*`, `tts-*`, `vad-*`), skills (`skill-*`),
   `tools-system`, `plugin-manager`, and features: `pairing`, `confirmation` (the «yes»), `memory`, `eyes`,
-  `sounds`, `tap-to-wake`, `monitor` (`/monitor`), `skins` (`/skins`: every state of a skin), `mcp-server` (`/mcp`)…
+  `sounds`, `tap-to-wake`, `monitor` (`/monitor`), `themes` (`/themes`: every state of a theme), `mcp-server` (`/mcp`)…
   `server/stt/`, `wake/`, `llm/`, `tts/`, `vad/` keep only what each kind is.
 - `server/text.py`, text utilities;
   `server/swift.py`, builds the plugins' Swift bridges.
@@ -1028,8 +1028,8 @@ so they need no account or network; they run on a free port, next to a running J
 - `server/paths.py`, `server/options.py` — where things live, every option.
 - `bin/anyassistant-confirm` — hook that asks for your «yes» before any action that writes.
 - `plugins/page/` — the device's page: `web/` (plain JS, old Chrome: `app.js`, connection and blocks;
-  `skin.js`, applies a skin, its states and live variables; `system.css`), its texts (`locales/`, «ui»),
-  `skins/` (the system's) and `skins.py` (finds, cleans and checks them).
+  `theme.js`, applies a theme, its states and live variables; `system.css`), its texts (`locales/`, «ui»),
+  `themes/` (the system's) and `themes.py` (finds, cleans and checks them).
 - `tests/` — pytest; `test_e2e.py` drives the real server.
 
 See `TODO.md` for what's next.

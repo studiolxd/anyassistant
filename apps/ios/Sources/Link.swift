@@ -155,19 +155,20 @@ final class Link: NSObject, ObservableObject {
         connected()
     }
 
-    /// The face's texts, skin and screen settings: the Mac's /config (as the page's), for this
-    /// device's skin («pon la skin orb aquí»).
+    /// The face's texts, theme and screen settings: the Mac's /config (as the page's), for this
+    /// device's theme («pon el tema orb aquí»).
     func configure() async {
         guard let base = await mac.url() else { return }
         var parts = URLComponents(url: base.appendingPathComponent("config"), resolvingAgainstBaseURL: false)!
-        if let skin = UserDefaults.standard.string(forKey: "skin") { parts.queryItems = [URLQueryItem(name: "skin", value: skin)] }
+        // «skin»: remembered by an older app
+        if let theme = UserDefaults.standard.string(forKey: "theme") ?? UserDefaults.standard.string(forKey: "skin") { parts.queryItems = [URLQueryItem(name: "theme", value: theme)] }
         guard let (data, _) = try? await mac.session.data(from: parts.url!),
               let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
         face.configure(config)
         #if os(iOS)
         Notices.shared.name = face.name
         #endif
-        send(["type": "skin", "name": face.skin])  // its skin's sounds are played from the Mac
+        send(["type": "theme", "name": face.theme])  // its theme's sounds are played from the Mac
     }
 
     // MARK: Both ways
@@ -213,10 +214,10 @@ final class Link: NSObject, ObservableObject {
         case "photo": takePhoto(message["id"])
         case "look": Task { await showPhoto() }
         case "config": Task { await configure() }
-        case "skin":
+        case "theme":
             let name = message["name"] as? String ?? ""
-            if name == "default" || name.isEmpty { UserDefaults.standard.removeObject(forKey: "skin") }
-            else { UserDefaults.standard.set(name, forKey: "skin") }
+            if name == "default" || name.isEmpty { UserDefaults.standard.removeObject(forKey: "theme") }
+            else { UserDefaults.standard.set(name, forKey: "theme") }
             Task { await configure() }
         default:
             face.receive(message)

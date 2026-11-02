@@ -1,16 +1,16 @@
-// The four skins, drawn natively: Eyes, Orb, Bedside and Minimal (plugins/page/skins: the same
-// looks, sizes in «v» = 1% of the screen's shorter side, as the CSS's vmin). A skin the app
+// The four themes, drawn natively: Eyes, Orb, Bedside and Minimal (plugins/page/themes: the same
+// looks, sizes in «v» = 1% of the screen's shorter side, as the CSS's vmin). A theme the app
 // doesn't have yet is drawn as Eyes.
 
 import AVFoundation
 import SwiftUI
 
-struct SkinView: View {
+struct ThemeView: View {
     @ObservedObject var face: FaceModel
     @ObservedObject var levels: Levels
     let camera: Camera
 
-    @State private var faceEnd: CGFloat = 0  // where the skin's face and words end (FaceEnd)
+    @State private var faceEnd: CGFloat = 0  // where the theme's face and words end (FaceEnd)
 
     var body: some View {
         ZStack {
@@ -26,11 +26,11 @@ struct SkinView: View {
     @ViewBuilder func content(_ size: CGSize) -> some View {
         let v = min(size.width, size.height) / 100
         ZStack(alignment: .top) {
-                switch face.skin {
-                case "orb": OrbSkin(face: face, levels: levels, v: v, size: size)
-                case "bedside": BedsideSkin(face: face, levels: levels, v: v, size: size)
-                case "minimal": MinimalSkin(face: face, levels: levels, v: v, size: size)
-                default: EyesSkin(face: face, levels: levels, v: v, size: size)
+                switch face.theme {
+                case "orb": OrbTheme(face: face, levels: levels, v: v, size: size)
+                case "bedside": BedsideTheme(face: face, levels: levels, v: v, size: size)
+                case "minimal": MinimalTheme(face: face, levels: levels, v: v, size: size)
+                default: EyesTheme(face: face, levels: levels, v: v, size: size)
                 }
                 // «Muestra la cámara»: centred below what the face says, in the space left; the
                 // face doesn't move.
@@ -42,7 +42,7 @@ struct SkinView: View {
                 }
                 Windows(face: face, v: v, size: size)
             }
-            .coordinateSpace(name: "skin")
+            .coordinateSpace(name: "theme")
             .onPreferenceChange(FaceEnd.self) { faceEnd = $0 }
     }
 }
@@ -142,7 +142,7 @@ struct CaptionLines: View {
     }
 }
 
-/// The time and the date, as each skin lays them out.
+/// The time and the date, as each theme lays them out.
 struct Clock<Content: View>: View {
     @ObservedObject var face: FaceModel
     @ViewBuilder var content: (_ time: String?, _ day: String?) -> Content
@@ -155,17 +155,17 @@ struct Clock<Content: View>: View {
     }
 }
 
-/// Where a skin's face and words end (in SkinView's space): the camera goes below.
+/// Where a theme's face and words end (in ThemeView's space): the camera goes below.
 struct FaceEnd: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
 extension View {
-    /// Marks the end of the skin's face and words (each skin, on its column).
+    /// Marks the end of the theme's face and words (each theme, on its column).
     func endsTheFace() -> some View {
         background(GeometryReader { geometry in
-            Color.clear.preference(key: FaceEnd.self, value: geometry.frame(in: .named("skin")).maxY)
+            Color.clear.preference(key: FaceEnd.self, value: geometry.frame(in: .named("theme")).maxY)
         })
     }
 }
@@ -261,7 +261,7 @@ struct CameraPreview: NSViewRepresentable {
 
 /// Two blue eyes that change shape to say how it feels: ovals, happy arcs (^ ^), closed (‿ ‿),
 /// or cut by a lid (sad); floating, looking around, scanning, thinking.
-struct EyesSkin: View {
+struct EyesTheme: View {
     @ObservedObject var face: FaceModel
     @ObservedObject var levels: Levels
     let v: CGFloat
@@ -431,7 +431,7 @@ struct EyesSkin: View {
 // MARK: - Orb
 
 /// A flat sphere that breathes, beats with your voice and sends out waves when it speaks.
-struct OrbSkin: View {
+struct OrbTheme: View {
     @ObservedObject var face: FaceModel
     @ObservedObject var levels: Levels
     let v: CGFloat
@@ -515,7 +515,7 @@ struct OrbSkin: View {
 // MARK: - Bedside
 
 /// For the bedside table: only a dim time while asleep; awake, a grey ember and its answer.
-struct BedsideSkin: View {
+struct BedsideTheme: View {
     @ObservedObject var face: FaceModel
     @ObservedObject var levels: Levels
     let v: CGFloat
@@ -561,7 +561,7 @@ struct BedsideSkin: View {
 // MARK: - Minimal
 
 /// High contrast and large text: a light that changes with each state, and words.
-struct MinimalSkin: View {
+struct MinimalTheme: View {
     @ObservedObject var face: FaceModel
     @ObservedObject var levels: Levels
     let v: CGFloat

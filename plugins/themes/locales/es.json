@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "themes": [
+      "Temas",
+      "http://<servidor>:8080/themes: todos los estados de un tema a la vez, para verlos y elegir (la app la abre)."
+    ]
+  }
+}

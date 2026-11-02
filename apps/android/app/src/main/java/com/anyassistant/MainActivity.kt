@@ -161,13 +161,13 @@ class MainActivity : ComponentActivity() {
     private fun Face() {
         var settings by remember { mutableStateOf(false) }
         Box(Modifier.fillMaxSize().background(Color.Black)) {
-            // A tap: it stops talking or wakes up; held: the settings, always, whatever the skin.
+            // A tap: it stops talking or wakes up; held: the settings, always, whatever the theme.
             Box(Modifier.fillMaxSize().combinedClickable(remember { MutableInteractionSource() }, null,
                 onLongClick = { settings = true }) { link.tap() }) {
-                SkinView(link.face, link.camera)
+                ThemeView(link.face, link.camera)
             }
             // «Ajustes», only asleep or in error (where it's needed), inside the safe area: where the
-            // skin puts it (its options «settings»: bottom, top, bottom-left…) in its colour
+            // theme puts it (its options «settings»: bottom, top, bottom-left…) in its colour
             // («settings_color», else its accent), text or icon («settings_style»).
             val face = link.face
             if (face.look == "asleep" || face.look == "error") {

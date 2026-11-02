@@ -77,15 +77,15 @@ class Transcriber:
 
     def on_message(self, data: dict):
         page = kernel.module("page")
-        if data.get("type") == "skin" and page and data.get("name") in page.skins.available():
-            self.skin = data["name"]  # this device's skin: its sounds
+        if data.get("type") in ("theme", "skin") and page and data.get("name") in page.themes.available():
+            self.theme = data["name"]  # this device's theme: its sounds («skin»: an older app)
         elif data.get("type") == "tap":
             events.emit("tap", self)  # the screen was tapped (tap-to-wake…)
 
     def _beep(self, kind: str):
-        """Wake or sleep: the plugin «sounds» (the skin's, or its own); silence without it."""
+        """Wake or sleep: the plugin «sounds» (the theme's, or its own); silence without it."""
         sounds = kernel.module("sounds")
-        pcm = sounds.sound(kind, getattr(self, "skin", None) or settings.get("skin")) if sounds else None
+        pcm = sounds.sound(kind, getattr(self, "theme", None) or settings.get("theme")) if sounds else None
         if pcm is not None:
             self.speaker.play(louder(pcm, volume()))
 

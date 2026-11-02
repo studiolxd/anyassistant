@@ -1,7 +1,7 @@
 """Preferences: settings.json in the project, so nothing has to be typed when starting.
 
     {"language": "es", "name": "Jarvis", "llm": "claude", "voice": {"es": "Mónica", "en": "Daniel"},
-     "instructions": ["I invoice with Holded."], "skin": "orb", "memory": "auto"}
+     "instructions": ["I invoice with Holded."], "theme": "orb", "memory": "auto"}
 
 Keys are the server's options with underscores instead of dashes (language,
 llm_model, echo_guard, follow_up…); options on the command line win. «voice»
@@ -33,14 +33,33 @@ PATH = paths.SETTINGS
 log = logging.getLogger("settings")
 
 
+# The keys from when themes were called skins: settings.json is rewritten with the new ones once.
+RENAMED = {"skin": "theme", "skin_options": "theme_options", "skins_dir": "themes_dir"}
+
+
 def load() -> dict:
     try:
-        return json.loads(PATH.read_text())
+        found = json.loads(PATH.read_text())
     except FileNotFoundError:
         return {}
     except ValueError as e:
         log.warning("settings.json is not valid JSON (%s): ignored", e)
         return {}
+    if RENAMED.keys() & found.keys():
+        found = migrate(found)
+        try:
+            PATH.write_text(json.dumps(found, ensure_ascii=False, indent=2) + "\n")
+            log.info("settings.json: %s", ", ".join(f"{old} → {new}" for old, new in RENAMED.items()))
+        except OSError as e:
+            log.warning("settings.json: couldn't rewrite it with the new keys (%s)", e)
+    return found
+
+
+def migrate(found: dict) -> dict:
+    """settings.json's keys as they are called now (skin → theme…), in the file's order; when the
+    file has both the old and the new one, the new one stays."""
+    return {RENAMED.get(key, key): value for key, value in found.items()
+            if key not in RENAMED or RENAMED[key] not in found}
 
 
 def save(**changes):

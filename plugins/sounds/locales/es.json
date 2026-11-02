@@ -2,7 +2,7 @@
   "plugins": {
     "sounds": [
       "Sonidos",
-      "Un sonido al despertarse y al dormirse (el de la skin, si trae el suyo)."
+      "Un sonido al despertarse y al dormirse (el del tema, si trae el suyo)."
     ]
   }
 }

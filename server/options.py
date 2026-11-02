@@ -19,7 +19,7 @@ class Option:
     help: str
     group: str
     kind: str = "text"  # text, bool, int, float, choice, json, secret (in the keychain, never in settings.json)
-    choices: object = None  # a list, or a function that lists them (plugins, skins…)
+    choices: object = None  # a list, or a function that lists them (plugins, themes…)
     live: bool = False  # applies without restarting
     screen: bool = False  # the page shows it (sent in /config)
     flag: str = ""  # another command-line name (--lang)

@@ -34,8 +34,8 @@ struct AnyAssistantApp: App {
             DevicesView()
                 .frame(minWidth: 560, minHeight: 360)
         }
-        Window("Skins", id: "skins") {
-            SkinsWindow()
+        Window(T("Themes"), id: "themes") {
+            ThemesWindow()
                 .frame(minWidth: 640, minHeight: 480)
         }
         .defaultSize(width: 1100, height: 780)
@@ -288,7 +288,7 @@ struct MenuView: View {
             Toggle(T("Listen on this Mac"), isOn: $client.listening)
             if client.refused { Button(M("Allow the microphone…")) { client.openPrivacy() } }
             if client.cameraRefused { Button(M("Allow the camera…")) { client.openPrivacy("Privacy_Camera") } }
-            Button(M("Skins…")) { open("skins") }  // every state of each skin, to see them (the plugin «skins»)
+            Button(M("Themes…")) { open("themes") }  // every state of each theme, to see them (the plugin «themes»)
             Divider()
             Button(M("Pair a device…")) { open("pair") }
             Button(M("Devices…")) { open("devices") }

@@ -11,7 +11,7 @@
 #   bin/anyassistant unpair                   forgets every paired device
 #   bin/anyassistant admin-code               a code for a browser to administer it (/admin)
 #   bin/anyassistant llm-key openai           an LLM's API key, into the system's keychain
-#   bin/anyassistant skin list|new <name> [--from orb]   the screen's skins
+#   bin/anyassistant theme list|new <name> [--from orb]   the screen's themes
 #   bin/anyassistant plugins [requirements [--all]]   which are on, what they lack; their Python packages
 #   bin/anyassistant mail add|list|test|remove   mail accounts besides Gmail (IMAP and SMTP)
 #   bin/anyassistant setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)
@@ -90,7 +90,7 @@ case "$1" in
     DATA_TOO=0
     [ "$2" = "--all" ] && DATA_TOO=1
     if [ "$2" != "--all" ] && [ "$2" != "--keep-data" ] && [ -t 0 ]; then
-      printf "Also delete your data (settings, memory, paired devices, your skins) in %s? [y/N] " "$ANYASSISTANT_HOME"
+      printf "Also delete your data (settings, memory, paired devices, your themes) in %s? [y/N] " "$ANYASSISTANT_HOME"
       read -r answer
       case "$answer" in y|Y|s|S|yes|sí|si) DATA_TOO=1 ;; esac
     fi
@@ -219,9 +219,9 @@ else:
     shift
     PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/plugins/mail/cli.py" "$@"
     ;;
-  skin)
+  theme)
     shift
-    PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/plugins/page/skins.py" "$@"
+    PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/plugins/page/themes.py" "$@"
     ;;
   unpair)
     if ! alive; then echo "AnyAssistant isn't running."; exit 1; fi

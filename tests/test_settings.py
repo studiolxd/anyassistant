@@ -103,8 +103,8 @@ def test_the_readme_lists_every_option():
 def test_options_check():
     import options
 
-    assert options.check({"skin": "eyes", "memory": "auto", "detail": "concise"}) == []
-    problems = options.check({"skin": "smiley", "memory": "sometimes", "detail": "verbose"})
+    assert options.check({"theme": "eyes", "memory": "auto", "detail": "concise"}) == []
+    problems = options.check({"theme": "smiley", "memory": "sometimes", "detail": "verbose"})
     assert len(problems) == 3 and any("smiley" in p for p in problems)
 
 

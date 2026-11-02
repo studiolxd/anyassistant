@@ -1,14 +1,14 @@
-// The skins' page (every state of each skin, to see them: the plugin «skins»), in a window of the
+// The themes' page (every state of each theme, to see them: the plugin «themes»), in a window of the
 // app, as Eva's and the settings; «Open in the browser» for whoever edits one (its developer tools).
 
 import SwiftUI
 import WebKit
 
-struct SkinsWindow: View {
+struct ThemesWindow: View {
     @ObservedObject var server = Server.shared
     @State private var reloads = 0
 
-    var page: URL { URL(string: "http://127.0.0.1:\(server.port)/skins")! }
+    var page: URL { URL(string: "http://127.0.0.1:\(server.port)/themes")! }
 
     var body: some View {
         WebPage(url: page, reloads: reloads)

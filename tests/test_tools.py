@@ -32,10 +32,10 @@ def saved(env):
 
 
 def test_settings_are_saved_for_after_the_answer(env):
-    tools.call("set_skin", {"skin": "orb"})
+    tools.call("set_theme", {"theme": "orb"})
     tools.call("set_name", {"name": "Viernes"})
     tools.call("set_language", {"language": "en"})
-    assert saved(env) == {"skin": "orb", "name": "Viernes", "language": "en"}
+    assert saved(env) == {"theme": "orb", "name": "Viernes", "language": "en"}
 
 
 @mac_only  # the Mac's voices
@@ -49,8 +49,8 @@ def test_voice_must_exist_and_speak_the_language(env):
 
 
 @pytest.mark.parametrize("name, arguments", [
-    ("set_skin", {"skin": "smiley"}), ("set_name", {"name": "R2-D2"}), ("set_language", {"language": "zz"}),
-    ("set_skin", {}), ("set_permissions", {"x": 1}), ("forget", {"number": 9}),
+    ("set_theme", {"theme": "smiley"}), ("set_name", {"name": "R2-D2"}), ("set_language", {"language": "zz"}),
+    ("set_theme", {}), ("set_permissions", {"x": 1}), ("forget", {"number": 9}),
 ])
 def test_refusals(env, name, arguments):
     with pytest.raises(tools.ToolError):
@@ -99,7 +99,7 @@ def test_mcp_protocol(env):
     listed = mcp_server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})["result"]["tools"]
     assert {t["name"] for t in listed} == set(tools.available())
     called = mcp_server.handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
-                                "params": {"name": "set_skin", "arguments": {"skin": "smiley"}}})["result"]
+                                "params": {"name": "set_theme", "arguments": {"theme": "smiley"}}})["result"]
     assert called["isError"] and "eyes" in called["content"][0]["text"]
     assert "error" in mcp_server.handle({"jsonrpc": "2.0", "id": 4, "method": "nope"})
 
@@ -177,20 +177,20 @@ def test_a_yes_for_one_call_is_not_for_another(env, asking):
 
 def test_what_doesnt_change_anything_doesnt_ask(env, asking):
     tools.call("get_settings", {})
-    tools.call("set_skin", {"skin": "orb"})
+    tools.call("set_theme", {"theme": "orb"})
     tools.call("set_detail", {"level": "concise"})
     tools.call("set_timer", {"seconds": 60})
     assert kernel.load("confirmation").store.pending() is None
 
 
 def test_showing_or_hiding_parts_of_the_screen(env):
-    """«Quita la transcripción»: a setting for every skin, not a new skin."""
+    """«Quita la transcripción»: a setting for every theme, not a new theme."""
     tools.call("set_screen", {"setting": "show_heard", "value": "no"})
     assert saved(env)["show_heard"] is False
     tools.call("set_screen", {"setting": "history", "value": "0"})
     tools.call("set_screen", {"setting": "clock", "value": "24"})
     assert saved(env)["history"] == 0 and saved(env)["clock"] == "24"
-    for bad in ({"setting": "show_heard", "value": "maybe"}, {"setting": "skin", "value": "orb"},
+    for bad in ({"setting": "show_heard", "value": "maybe"}, {"setting": "theme", "value": "orb"},
                 {"setting": "clock", "value": "13"}, {"setting": "history", "value": "many"}):
         with pytest.raises(tools.ToolError):
             tools.call("set_screen", bad)

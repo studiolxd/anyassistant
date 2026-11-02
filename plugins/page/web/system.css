@@ -1,5 +1,5 @@
-/* What isn't a skin's: starting, pairing, and what blocks need to work. The look of
-   everything else is in the skin (skins/<name>/skin.css), loaded after this. */
+/* What isn't a theme's: starting, pairing, and what blocks need to work. The look of
+   everything else is in the theme (themes/<name>/theme.css), loaded after this. */
 
 html, body {
   margin: 0;
@@ -63,7 +63,7 @@ body.hide-date [data-part="date"], body.hide-date [data-block="date"],
 body.hide-stats [data-block="stats"] { display: none; }
 
 /* The camera (live, mirrored) and the photo it looks at, with a scanning sweep.
-   Skins may move and frame them; without those blocks, these windows appear. */
+   Themes may move and frame them; without those blocks, these windows appear. */
 .system-window {
   position: absolute;
   top: 8%; left: 0; right: 0;

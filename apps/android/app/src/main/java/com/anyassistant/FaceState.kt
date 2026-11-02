@@ -1,4 +1,4 @@
-// What the face shows, as the page has it: the state, the texts in the Mac's language, the skin
+// What the face shows, as the page has it: the state, the texts in the Mac's language, the theme
 // and its colours, the screen settings, what was said, the timers, the photo it looks at. The
 // Mac's messages change it (receive), and its /config (configure). The same as iOS's FaceModel.
 
@@ -30,7 +30,7 @@ class FaceState {
     var lang by mutableStateOf(Locale.getDefault().language)
     var wake by mutableStateOf("")
     var texts by mutableStateOf<Map<String, String>>(emptyMap())
-    var skin by mutableStateOf("eyes")
+    var theme by mutableStateOf("eyes")
     var options by mutableStateOf<Map<String, String>>(emptyMap())
     var screen by mutableStateOf<Map<String, Any>>(emptyMap())
     val captions = mutableStateListOf<Caption>()
@@ -52,7 +52,7 @@ class FaceState {
             "repeating" to "speaking", "transcribing" to "thinking", "connecting" to "awake")
     }
 
-    /** The state as the skins draw it (several states look the same). */
+    /** The state as the themes draw it (several states look the same). */
     val look: String get() = if (problem != null) "error" else looksLike[state] ?: state
 
     fun text(key: String, values: Map<String, String> = emptyMap()): String {
@@ -86,11 +86,11 @@ class FaceState {
         screen = config.optJSONObject("screen")?.let { o -> o.keys().asSequence().associateWith { o.get(it) } } ?: emptyMap()
         val found = mutableMapOf<String, String>()
         config.optJSONObject("ui")?.let { o -> o.keys().forEach { found[it] = o.optString(it) } }
-        val skinInfo = config.optJSONObject("skin") ?: JSONObject()
-        skinInfo.optJSONObject("ui")?.let { o -> o.keys().forEach { found[it] = o.optString(it) } }  // the skin's own words
+        val themeInfo = config.optJSONObject("theme") ?: config.optJSONObject("skin") ?: JSONObject()  // «skin»: an older server
+        themeInfo.optJSONObject("ui")?.let { o -> o.keys().forEach { found[it] = o.optString(it) } }  // the theme's own words
         texts = found
-        skin = skinInfo.optString("name", "eyes")
-        options = skinInfo.optJSONObject("options")?.let { o -> o.keys().asSequence().associateWith { o.optString(it) } } ?: emptyMap()
+        theme = themeInfo.optString("name", "eyes")
+        options = themeInfo.optJSONObject("options")?.let { o -> o.keys().asSequence().associateWith { o.optString(it) } } ?: emptyMap()
     }
 
     // --- The Mac's messages ---

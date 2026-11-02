@@ -1,8 +1,0 @@
-{
-  "name": "Skins",
-  "description": "http://<server>:8080/skins: every state of a skin at once, to see them and choose (the app opens it).",
-  "kind": "feature",
-  "requires": [
-    "page"
-  ]
-}

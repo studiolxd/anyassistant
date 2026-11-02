@@ -106,7 +106,7 @@ class Streamer:
         self.pictured, self.frames = time.time(), self.frames + 1
 
     def message(self, data: dict):
-        token = hub.here.set(self)  # what it starts (a tap, its skin…) is for this device
+        token = hub.here.set(self)  # what it starts (a tap, its theme…) is for this device
         try:
             if data.get("type") == "frame":
                 self.framed(data)

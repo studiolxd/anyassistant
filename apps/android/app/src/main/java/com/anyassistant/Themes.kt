@@ -1,6 +1,6 @@
-// The four skins, drawn natively: Eyes, Orb, Bedside and Minimal (plugins/page/skins: the same
-// looks; sizes in «v» = 1% of the screen's shorter side, as the CSS's vmin). A skin the app
-// doesn't have yet is drawn as Eyes. The same as iOS's Skins.swift.
+// The four themes, drawn natively: Eyes, Orb, Bedside and Minimal (plugins/page/themes: the same
+// looks; sizes in «v» = 1% of the screen's shorter side, as the CSS's vmin). A theme the app
+// doesn't have yet is drawn as Eyes. The same as iOS's Themes.swift.
 
 package com.anyassistant
 
@@ -85,26 +85,26 @@ import kotlin.random.Random
 val grey = Color(0xff888888)
 
 @Composable
-fun SkinView(face: FaceState, camera: Camera) {
+fun ThemeView(face: FaceState, camera: Camera) {
     // The background to the screen's edges; the face, its words, the clock and the camera inside
     // the safe area (not under the camera's cutout, nor the system bars when they show).
-    Box(Modifier.fillMaxSize().background(face.background)) { SkinContent(face, camera) }
+    Box(Modifier.fillMaxSize().background(face.background)) { ThemeContent(face, camera) }
 }
 
 @Composable
-private fun SkinContent(face: FaceState, camera: Camera) {
+private fun ThemeContent(face: FaceState, camera: Camera) {
     BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
         val v = min(maxWidth.value, maxHeight.value) / 100
         val scope = Sizes(v, maxWidth, maxHeight, maxWidth > maxHeight)
-        val end = remember { mutableStateOf(0f) }  // where the skin's face and words end (px, FaceEnd)
+        val end = remember { mutableStateOf(0f) }  // where the theme's face and words end (px, FaceEnd)
         var origin by remember { mutableStateOf(0f) }
         Box(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot().y }) {
             CompositionLocalProvider(LocalFaceEnd provides { y -> end.value = y - origin }) {
-                when (face.skin) {
-                    "orb" -> OrbSkin(face, scope)
-                    "bedside" -> BedsideSkin(face, scope)
-                    "minimal" -> MinimalSkin(face, scope)
-                    else -> EyesSkin(face, scope)
+                when (face.theme) {
+                    "orb" -> OrbTheme(face, scope)
+                    "bedside" -> BedsideTheme(face, scope)
+                    "minimal" -> MinimalTheme(face, scope)
+                    else -> EyesTheme(face, scope)
                 }
             }
         }
@@ -120,7 +120,7 @@ private fun SkinContent(face: FaceState, camera: Camera) {
     }
 }
 
-/** Where a skin's face and words end: each skin puts FaceEndMark() last in its column. */
+/** Where a theme's face and words end: each theme puts FaceEndMark() last in its column. */
 val LocalFaceEnd = staticCompositionLocalOf<(Float) -> Unit> { {} }
 
 @Composable
@@ -152,7 +152,7 @@ fun Sizes.sp(n: Float): TextUnit = with(LocalDensity.current) { dp(n).toSp() }
 
 // --- Motion ---
 
-/** Seconds, a new value each frame (for the skins' continuous motion). */
+/** Seconds, a new value each frame (for the themes' continuous motion). */
 @Composable
 fun clock(): Double {
     val time by produceState(0.0) {
@@ -226,7 +226,7 @@ fun CaptionLines(face: FaceState, accent: Color, older: Color = Color.White, old
     }
 }
 
-/** The time and the date (each skin lays them out). */
+/** The time and the date (each theme lays them out). */
 @Composable
 fun Clock(face: FaceState, content: @Composable (time: String?, day: String?) -> Unit) {
     val now by produceState(Date()) { while (true) { value = Date(); delay(5000) } }
@@ -267,7 +267,7 @@ fun Windows(face: FaceState, s: Sizes) {
 /** Two blue eyes that change shape to say how it feels: ovals, happy arcs (^ ^), closed (‿ ‿),
  *  or cut by a lid (sad); floating, looking around, scanning, thinking. */
 @Composable
-fun EyesSkin(face: FaceState, s: Sizes) {
+fun EyesTheme(face: FaceState, s: Sizes) {
     val look = face.look
     val accent = face.color("accent", hex("#34aff7")!!)
     var blink by remember { mutableStateOf(false) }
@@ -398,7 +398,7 @@ private fun DrawScope.drawEye(center: Offset, w: Float, h: Float, tilt: Float, c
 
 /** A flat sphere that breathes, beats with your voice and sends out waves when it speaks. */
 @Composable
-fun OrbSkin(face: FaceState, s: Sizes) {
+fun OrbTheme(face: FaceState, s: Sizes) {
     val look = face.look
     val tone = when (look) {
         "asleep" -> grey
@@ -460,7 +460,7 @@ fun OrbSkin(face: FaceState, s: Sizes) {
 
 /** For the bedside table: only a dim time while asleep; awake, a grey ember and its answer. */
 @Composable
-fun BedsideSkin(face: FaceState, s: Sizes) {
+fun BedsideTheme(face: FaceState, s: Sizes) {
     val look = face.look
     val asleep = look == "asleep"
     val glow = face.color("glow", hex("#9ca3af")!!)
@@ -495,7 +495,7 @@ fun BedsideSkin(face: FaceState, s: Sizes) {
 
 /** High contrast and large text: a light that changes with each state, and words. */
 @Composable
-fun MinimalSkin(face: FaceState, s: Sizes) {
+fun MinimalTheme(face: FaceState, s: Sizes) {
     val look = face.look
     val asleep = look == "asleep"
     val ink = face.color("text", Color.White)

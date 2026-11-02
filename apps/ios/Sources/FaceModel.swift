@@ -1,5 +1,5 @@
 // What the face shows, as the page has it: the state (asleep, hearing, thinking, speaking…),
-// the texts in the Mac's language, the skin and its colours, the screen settings, what was
+// the texts in the Mac's language, the theme and its colours, the screen settings, what was
 // said, the timers, the photo it looks at. The Mac's messages change it (receive), and its
 // /config (configure): the same as the page's, so the app follows the Mac's settings.
 
@@ -26,7 +26,7 @@ final class FaceModel: ObservableObject {
     @Published var lang = Locale.current.languageCode ?? "en"
     @Published var wake = ""
     @Published var texts: [String: String] = [:]
-    @Published var skin = "eyes"
+    @Published var theme = "eyes"
     @Published var options: [String: String] = [:]
     @Published var screen: [String: Any] = [:]
     @Published var captions: [Caption] = []
@@ -42,7 +42,7 @@ final class FaceModel: ObservableObject {
     private static let looksLike = ["connected": "awake", "listening": "awake", "recording": "hearing",
                                     "repeating": "speaking", "transcribing": "thinking", "connecting": "awake"]
 
-    /// The state as the skins draw it (several states look the same).
+    /// The state as the themes draw it (several states look the same).
     var look: String { problem != nil ? "error" : FaceModel.looksLike[state] ?? state }
 
     // MARK: Texts and settings
@@ -78,11 +78,11 @@ final class FaceModel: ObservableObject {
         wake = config["wake_phrase"] as? String ?? wake
         screen = config["screen"] as? [String: Any] ?? [:]
         var found = config["ui"] as? [String: String] ?? [:]
-        let skinInfo = config["skin"] as? [String: Any] ?? [:]
-        for (key, value) in skinInfo["ui"] as? [String: String] ?? [:] { found[key] = value }  // the skin's own words
+        let themeInfo = config["theme"] as? [String: Any] ?? config["skin"] as? [String: Any] ?? [:]  // «skin»: an older server
+        for (key, value) in themeInfo["ui"] as? [String: String] ?? [:] { found[key] = value }  // the theme's own words
         texts = found
-        skin = skinInfo["name"] as? String ?? "eyes"
-        options = (skinInfo["options"] as? [String: Any] ?? [:]).compactMapValues { $0 as? String }
+        theme = themeInfo["name"] as? String ?? "eyes"
+        options = (themeInfo["options"] as? [String: Any] ?? [:]).compactMapValues { $0 as? String }
     }
 
     // MARK: The Mac's messages
