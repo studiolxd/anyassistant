@@ -520,7 +520,11 @@ function showTray() {
   tray = new Tray(icon);
   tray.on('click', () => ((isClient() || running()) ? showFace() : null));  // Windows: a click shows it
   menu();
-  setInterval(async () => { if (!isClient()) await server.check(); await followDevices(); await followLink(); await followPauseOption(); await followLanguage(); menu(); }, 5000);  // the server, its devices, permissions: as they are
+  setInterval(async () => {  // the server, its devices, permissions, its name: as they are
+    if (!isClient()) await server.check();
+    if (running()) await learnName();  // renamed by voice or in Settings while it runs (only asked at its start before)
+    await followDevices(); await followLink(); await followPauseOption(); await followLanguage(); menu();
+  }, 5000);
   setInterval(lookAtMicrophone, microphone.EVERY * 1000);  // as a client: another app using the microphone
   setInterval(async () => { await followUpdates(); menu(); }, 60 * 1000);  // the community's updates (the server looks once a day)
 }
