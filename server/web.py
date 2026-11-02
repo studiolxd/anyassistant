@@ -164,6 +164,44 @@ def _device(session, current: bool, devices) -> dict:
             "paused": {"why": why, "app": app} if why else None}
 
 
+# --- The installer's «device» steps (installer.device), once the server runs: the app's window ---
+
+def own_device():
+    """This computer's own device (its app's face, connected from 127.0.0.1): where a «device» step
+    is done; the last one connected if there are several."""
+    found = [s for s in hub.all() if getattr(s, "remote", "") in LOCAL and s.device
+             and s.pc.connectionState == "connected" and hasattr(s.brain, "say")]
+    return found[-1] if found else None
+
+
+async def setup_device(request: web.Request) -> web.Response:
+    """GET: {"device": this computer's device (None: not connected yet), "state": where the step is};
+    POST {"do": "start"|"cancel"}: starts it there, or stops it. Only from this computer (or an admin)."""
+    import installer
+
+    if not owner(request):
+        return web.json_response({"owner": False}, status=403)
+    step = installer.device_step(request.match_info["step"])
+    if step is None:
+        return web.json_response({"error": "no such step here (its plugin is off?)"}, status=404)
+    session = own_device()
+    if request.method == "POST":
+        data = await request.json()
+        if session is None:
+            return web.json_response({"error": "no device on this computer is connected"}, status=409)
+        if data.get("do") == "start":
+            token = hub.here.set(session)
+            try:
+                step.function(session)
+            finally:
+                hub.here.reset(token)
+        elif data.get("do") == "cancel" and step.cancel:
+            step.cancel(session.device)
+    device = session.device if session else None
+    state = step.follow(device) if device and step.follow else None
+    return web.json_response({"device": device, "state": state})
+
+
 def contributed(request: web.Request) -> dict:
     """What the plugins add to the page's /config (@web.config)."""
     more = {}
@@ -221,6 +259,8 @@ def application() -> web.Application:
     app = web.Application(middlewares=[no_cache], client_max_size=20 * 1024 * 1024)  # photos
     app.router.add_post("/offer", offer)
     app.router.add_get("/status", status)
+    app.router.add_get("/setup/device/{step}", setup_device)  # the installer's «device» steps
+    app.router.add_post("/setup/device/{step}", setup_device)
     kernel.load_all()
     for method, path, handler, plugin in ROUTES:  # the plugins' own
         app.router.add_route(method, path, _while_on(handler, plugin))

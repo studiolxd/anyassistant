@@ -9,12 +9,18 @@ The core and the plugins declare them, next to what they are about:
     @installer.task("parakeet-model", "Speech recognition model", order=50)
     def download(progress): progress(0.5, "…")       # work, reporting how it goes
 
-    @installer.device("my-voice", "Your voice", order=70)
-    def enroll(progress): …                          # done on the device (the tablet, the app):
-                                                     # the installer only shows how it goes
+    @installer.device("voice", "Your voice", order=95, action="Register my voice", follow=…, cancel=…)
+    def enroll(session): …                           # started on this computer's own device
 
 A step belongs to the plugin loading it: only those of the plugins that are wanted
 (on, or about to be) run. Any step can be done again later: `bin/anyassistant setup <id>`.
+
+A «device» step needs this computer's microphone, so it is done once the server runs: the
+setup only names it («device» in --json; in the terminal, how to do it later), and the app's
+installer window offers it right after installing (its `action` button, or «Not now»), through
+/setup/device/<id> (web.py): `function(session)` starts it on the computer's own device,
+`follow(device)` says where it is ({"state": "running"|"done"|"cancelled", "title", "text",
+"detail", "fraction"}, or None), `cancel(device)` stops it.
 
 How it is shown:
 - terminal (default): asks each question (Enter keeps the default) and shows progress;
@@ -47,6 +53,10 @@ class Step:
     default: Callable | None = None  # question: the answer if none is given
     when: Callable | None = None  # whether it applies now (None: always)
     always: bool = False  # shown even if its plugin is off (a question that turns it on)
+    action: str = ""  # device: its button («Register my voice»)
+    later: str = ""  # device: how to do it later, where the installer can't (the terminal, «Not now»)
+    follow: Callable | None = None  # device: follow(device id) → where it is, or None
+    cancel: Callable | None = None  # device: cancel(device id)
 
     @property
     def shown_title(self) -> str:
@@ -61,12 +71,27 @@ class Step:
 
         return i18n.L.text(f"installer.{self.id}.1", self.help) if self.help else ""
 
+    @property
+    def shown_action(self) -> str:
+        import i18n
+
+        return i18n.L.text(f"installer.{self.id}.2", self.action) if self.action else ""
+
+    @property
+    def shown_later(self) -> str:
+        import i18n
+
+        return i18n.L.text(f"installer.{self.id}.3", self.later) if self.later else ""
+
     def describe(self) -> dict:
         found = {"id": self.id, "title": self.shown_title, "kind": self.kind, "help": self.shown_help,
                  "plugin": self.plugin, "order": self.order}
         if self.kind == "question":
             found["choices"] = _choices(self)
             found["default"] = self.default() if self.default else None
+        if self.kind == "device":
+            found["action"] = self.shown_action
+            found["later"] = self.shown_later
         return found
 
 
@@ -91,9 +116,20 @@ def task(step_id: str, title: str, order: int, help: str = "", when=None):
     return _register("task", step_id, title, order, help=help, when=when)
 
 
-def device(step_id: str, title: str, order: int, help: str = "", when=None):
-    """Something done on the device (the tablet, the app): function(progress) waits for it."""
-    return _register("device", step_id, title, order, help=help, when=when)
+def device(step_id: str, title: str, order: int, help: str = "", action: str = "", later: str = "", when=None,
+           follow=None, cancel=None):
+    """Something done on this computer's own device once the server runs (its microphone):
+    function(session) starts it, follow(device id) says where it is, cancel(device id) stops it."""
+    return _register("device", step_id, title, order, help=help, action=action, later=later, when=when,
+                     follow=follow, cancel=cancel)
+
+
+def device_step(step_id: str) -> Step | None:
+    """For the server: a «device» step whose plugin is on."""
+    import kernel
+
+    step = STEPS.get(step_id)
+    return step if step and step.kind == "device" and kernel.enabled(step.plugin) else None
 
 
 class Skip(Exception):
@@ -171,6 +207,11 @@ class Terminal:
     def skipped(self, step, text):
         print(f"      – {text}")
 
+    def device(self, step, index, total):
+        """Here there is no device: how to do it later."""
+        self.step(step, index, total)
+        self.skipped(step, step.shown_later)
+
     def error(self, step, text):
         print(f"\r      ✗ {text}")
 
@@ -199,6 +240,10 @@ class Lines:
     def skipped(self, step, text):
         self._emit(event="skipped", id=step.id, text=text)
 
+    def device(self, step, index, total):
+        """For the window to offer once the server runs."""
+        self._emit(event="device", index=index, total=total, **step.describe())
+
     def error(self, step, text):
         self._emit(event="error", id=step.id, text=text)
 
@@ -214,6 +259,9 @@ def run(view, answers: dict, only: list[str] | None = None, skip: set | None = N
         if step.plugin and not step.always and not kernel.wanted(step.plugin):
             continue  # turned off by an earlier answer
         if step.when and not step.when():
+            continue
+        if step.kind == "device":
+            view.device(step, index, len(chosen))
             continue
         view.step(step, index, len(chosen))
         last = [0.0]

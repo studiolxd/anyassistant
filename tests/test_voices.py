@@ -1,6 +1,7 @@
 """The plugin «voices»: who is speaking (learning a voice, only known voices count)."""
 
 import asyncio
+import json
 import shutil
 import subprocess
 
@@ -435,3 +436,70 @@ def test_off_it_deletes_what_it_learnt_that_way(monkeypatch):
     voices.adapt(long, "Suvi")
     voices.learn("Suvi", [unit(1, 0)], device="mac")  # learnt again on that device: its recent ones go
     assert voices.people()[0]["recent"] == []
+
+
+class Session:
+    """A connected device, as hub keeps it."""
+
+    def __init__(self, device, remote, brain):
+        self.id, self.device, self.remote, self.brain = device, device, remote, brain
+        self.pc = type("PC", (), {"connectionState": "connected"})()
+
+
+def test_the_installer_registers_the_voice_on_this_computer(monkeypatch, es):
+    """The installer's «Your voice» (a device step), through /setup/device/voice: started on this
+    computer's own device (not a tablet), followed, cancelled."""
+    import hub
+    import web
+    from test_admin_web import request
+
+    monkeypatch.setattr(voices, "progress", {})
+    here, tablet = Assistant(), Assistant()
+    monkeypatch.setattr(hub, "sessions", {"mac1": Session("mac1", "127.0.0.1", here),
+                                          "tab1": Session("tab1", "192.168.1.40", tablet)})
+
+    def call(method="GET", body=None, remote="127.0.0.1"):
+        made = request(method, "/setup/device/voice", remote=remote, body=body)
+        made.match_info["step"] = "voice"
+        answer = asyncio.run(web.setup_device(made))
+        return answer.status, json.loads(answer.body)
+
+    assert call() == (200, {"device": "mac1", "state": None})  # not started yet
+    assert call(remote="192.168.1.40")[0] == 403  # only this computer (or an admin)
+    status, answer = call("POST", {"do": "start"})
+    assert status == 200 and isinstance(here.learning, voices.Learning) and tablet.learning is None
+    assert answer["state"] == {"state": "running", "title": "Di tu nombre", "text": "",
+                               "detail": "En voz alta, por ejemplo: «Me llamo Ana».", "fraction": 0}
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 0))
+    voices.screen(here, "Me llamo suvi", {}, SECOND, None)
+    state = call()[1]["state"]
+    assert state["title"] == f"Frase 1 de {voices.PHRASES}" and state["text"] == voices.progress["mac1"]["phrase"]
+    assert state["detail"] == "Léela en voz alta."
+    voices.screen(here, "una frase", {}, np.zeros(32000, np.float32), None)
+    here.run()
+    assert call()[1]["state"]["fraction"] == 1 / voices.PHRASES
+    status, answer = call("POST", {"do": "cancel"})
+    assert answer["state"] == {"state": "cancelled", "title": "", "text": "No se ha aprendido nada.", "detail": "",
+                               "fraction": None}
+    call("POST", {"do": "start"})
+    voices.screen(here, "Soy Suvi", {}, SECOND, None)
+    for _ in range(voices.PHRASES):
+        voices.screen(here, "una frase", {}, np.zeros(32000, np.float32), None)
+        here.run()
+    assert call()[1]["state"]["state"] == "done" and call()[1]["state"]["text"] == "Ya conoce tu voz, Suvi."
+    assert [p["name"] for p in voices.people()] == ["Suvi"]
+
+
+def test_no_device_on_this_computer_yet(monkeypatch):
+    import hub
+    import web
+    from test_admin_web import request
+
+    monkeypatch.setattr(hub, "sessions", {"tab1": Session("tab1", "192.168.1.40", Assistant())})
+    made = request("POST", "/setup/device/voice", remote="127.0.0.1", body={"do": "start"})
+    made.match_info["step"] = "voice"
+    answer = asyncio.run(web.setup_device(made))
+    assert answer.status == 409
+    made = request("GET", "/setup/device/nothing", remote="127.0.0.1")
+    made.match_info["step"] = "nothing"
+    assert asyncio.run(web.setup_device(made)).status == 404
