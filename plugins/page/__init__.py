@@ -104,7 +104,8 @@ def _connect_page(request, code: str, problem: bool):
     page = https.address(host) if https else "/"
     if paired and not https and not _mobile(agent):
         raise http.HTTPFound("/")
-    t = lambda key: i18n.L.text(f"connect.{key}", key)  # noqa: E731
+    texts = web.ui(request)  # the browser's language (its cookie, Accept-Language), not the assistant's
+    t = lambda key: texts.text(f"connect.{key}", key)  # noqa: E731
     name = settings.get("name") or "Jarvis"
     link = app_url(host, port, None if paired else code, web.identity(), name)
     if "Android" in agent:
@@ -131,7 +132,7 @@ def _connect_page(request, code: str, problem: bool):
         parts.append(f'<p class="divider">{e(t("or"))}</p>'
                      f'<a class="button secondary" href="{e(link)}">{e(t("app"))}</a>'
                      f'<p class="muted center">{e(t("app_note"))}</p>')
-    body = (WEB / "connect.html").read_text().replace("{lang}", i18n.L.code).replace("{title}", e(t("title")))
+    body = (WEB / "connect.html").read_text().replace("{lang}", texts.code).replace("{title}", e(t("title")))
     return http.Response(text=body.replace("{body}", "\n".join(parts)), content_type="text/html")
 
 
@@ -162,7 +163,7 @@ async def _index(request):
     https = kernel.module("https")
     if https and not request.secure and request.remote not in LOCAL and "app" not in request.query:
         raise http.HTTPFound(https.address(request.url.raw_host or https.NAME, request.path_qs))
-    return web.page(WEB / "index.html")
+    return web.page(WEB / "index.html", request)
 
 
 @web.route("GET", "/web/{path:.+}")
@@ -182,17 +183,23 @@ async def _theme_file(request):
 
 @web.route("GET", "/config")
 async def _config(request):
-    """What the page needs: its texts in the active language (locale «ui»), the settings and the theme
-    (?theme=: this device's own), and what other plugins add (@web.config)."""
+    """What the page needs: its texts in its interface's language (locale «ui»; web.ui_language: ?ui=,
+    the device's own by ?device=, the browser's; not necessarily the one the assistant speaks), the
+    settings and the theme (?theme=: this device's own), and what other plugins add (@web.config)."""
     chosen = request.query.get("theme", "")
+    texts = web.ui(request)
+    devices = kernel.module("devices")
     return http.json_response({
-        "lang": i18n.L.code, "ui": i18n.L.data["ui"],
+        "lang": texts.code, "ui": texts.data["ui"],
+        # This device's own choice («auto», «es», «en»): its app keeps its setting in step.
+        "ui_language": (devices.ui_language(request.query.get("device")) if devices else "") or "auto",
         "name": settings.get("name"), "video": settings.get("video"),
-        "theme": themes.for_page(chosen if chosen in themes.available() else settings.get("theme"), i18n.L.code),
+        "theme": themes.for_page(chosen if chosen in themes.available() else settings.get("theme"), texts.code),
         "themes": [{"name": name, "title": themes.manifest(name).get("name", name),
-                   "description": themes.description(name, i18n.L.code)} for name in themes.available()],
+                   "description": themes.description(name, texts.code)} for name in themes.available()],
         "screen": {key: settings.get(key) for key in options.SCREEN},
-        # How it is woken, as the screen says it («Ey, Eva»): for the demo and the themes page, before a brain says it.
+        # How it is woken, as the screen says it («Ey, Eva»): for the demo and the themes page, before a brain
+        # says it. In the assistant's language: it's what you say to it.
         "wake_phrase": i18n.L.text("wake.phrase", "Hey, {name}").format(name=(settings.get("name") or "Jarvis").title()),
         **web.contributed(request),
     })

@@ -21,6 +21,10 @@ function toApp(m) {
   } catch (e) {}
 }
 
+// The interface's language: an app's (?ui=, and with each «config» it forwards), else this device's
+// own (kept on the server by its id), else the browser's. Not necessarily the one the assistant speaks.
+var UI = new URLSearchParams(location.search).get('ui') || '';
+
 // A message to the Mac, on the call's control channel (in an app, to the app: a tap).
 function tell(m) {
   if (APP) return toApp(m);
@@ -74,7 +78,12 @@ function text(key, values) {
 // Texts, settings and theme; again after reconnecting, in case they changed («speak English», a restart).
 function loadTexts() {
   var theme = deviceTheme();
-  return fetch('/config' + (theme ? '?theme=' + encodeURIComponent(theme) : '')).then(function (r) {
+  var query = [];
+  if (theme) query.push('theme=' + encodeURIComponent(theme));
+  if (UI) query.push('ui=' + encodeURIComponent(UI));
+  // This device's id: its own interface language, chosen in Devices (not an app's view: the app says it).
+  else if (!APP && !new URLSearchParams(location.search).has('demo') && deviceId()) query.push('device=' + encodeURIComponent(deviceId()));
+  return fetch('/config' + (query.length ? '?' + query.join('&') : '')).then(function (r) {
     return r.json();
   }).then(function (data) {
     T = {};
@@ -431,7 +440,7 @@ function message(m) {
   else if (m.type === 'speaking') Words.speaking(m);
   else if (m.type === 'pause' || m.type === 'resume') holdMicrophone(m.type === 'pause');  // the server paused it
   else if (m.type === 'look') showPhoto(m.at);
-  else if (m.type === 'config') loadTexts();  // the settings changed
+  else if (m.type === 'config') { if (APP && m.ui) UI = m.ui; loadTexts(); }  // the settings changed
   else if (m.type === 'camera') showCamera(m.on);
   else if (m.type === 'photo') takePhoto(m.id);
   else if (m.type === 'timers') showTimers(m.items);

@@ -195,6 +195,9 @@
     "What it remembers about them keeps the new name too.": "Sus recuerdos pasan al nombre nuevo. Si ya hay una voz con ese nombre, se juntan en una.",
     "Community themes": "Temas de la comunidad",
     "Uninstall": "Desinstalar",
-    "Uninstall «%s»?": "¿Desinstalar «%s»?"
+    "Uninstall «%s»?": "¿Desinstalar «%s»?",
+    "Interface Language": "Idioma de la interfaz",
+    "Automatic": "Automático",
+    "The language of its screen and its app. The assistant speaks the one in General.": "El idioma de su pantalla y de su app. El asistente habla el de General."
   }
 }

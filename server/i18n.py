@@ -5,6 +5,9 @@ from another language falls back to it, so adding a language is adding a file.
 The language comes from --lang or, by default, the Mac's preferred language when
 there is a locale for it.
 
+The interfaces (the pages, the apps' faces) may be in another language than the one the
+assistant speaks and understands (L): each device or browser chooses its own (choose(), ui()).
+
 Modules read the active locale at call time (`i18n.L("speech.wait")`), never at
 import time, so it can be chosen after they are loaded.
 
@@ -161,6 +164,65 @@ def _calendar(locale: Locale, t) -> dict:
 
 
 L = Locale("en")
+_ui: dict[str, Locale] = {}  # another language's texts, for an interface (a page, an app's face) in it
+_ui_languages: dict[str, list[str]] = {}  # the languages with interface texts, found once
+
+
+def interface_languages() -> list[str]:
+    """The languages the interfaces have texts in (a «ui» in a locale, the page plugin's): a page or
+    an app's face can be in one of them, whatever language the assistant speaks."""
+    if "" not in _ui_languages:
+        import kernel
+
+        found = []
+        for code in available():
+            for path in [LOCALES / f"{code}.json", *kernel.locale_files(code)]:
+                try:
+                    if "ui" in json.loads(path.read_text()):
+                        found.append(code)
+                        break
+                except (OSError, ValueError):
+                    pass
+        _ui_languages[""] = found
+    return _ui_languages[""]
+
+
+def _accepted(header: str) -> list[str]:
+    """A browser's Accept-Language («es-ES,es;q=0.9,en;q=0.8»): its languages, the preferred first."""
+    found = []
+    for position, part in enumerate(header.split(",")):
+        code, _, rest = part.strip().partition(";")
+        weight = 1.0
+        if rest.strip().startswith("q="):
+            try:
+                weight = float(rest.strip()[2:])
+            except ValueError:
+                weight = 0.0
+        code = code.strip().lower()[:2]
+        if code.isalpha() and len(code) == 2 and weight > 0:
+            found.append((-weight, position, code))
+    return [code for _, _, code in sorted(found)]
+
+
+def choose(chosen: str | None = None, accept: str = "") -> str:
+    """The interface's language for a request: the one chosen (a device's or a browser's), else the
+    first of the browser's (Accept-Language) there are texts for, else the assistant's; else English."""
+    languages = interface_languages()
+    if chosen in languages:
+        return chosen
+    for code in _accepted(accept or ""):
+        if code in languages:
+            return code
+    return L.code if L.code in languages else "en"
+
+
+def ui(code: str) -> Locale:
+    """The texts of an interface in that language (L itself when it's the assistant's)."""
+    if code == L.code:
+        return L
+    if code not in _ui:
+        _ui[code] = Locale(code if code in available() else "en")
+    return _ui[code]
 
 
 def native_name(code: str) -> str:
@@ -177,5 +239,7 @@ def use(code: str) -> Locale:
     if code not in available():
         raise ValueError(f"No locale «{code}». Available: {', '.join(available())}")
     L = Locale(code)
+    _ui.clear()
+    _ui_languages.clear()
     log.info("language: %s", L.name)
     return L

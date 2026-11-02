@@ -15,7 +15,7 @@ FILES = {"themes.js", "themes.css"}
 
 @web.route("GET", "/themes")
 async def _themes(request):
-    return web.page(HERE / "themes.html")
+    return web.page(HERE / "themes.html", request)
 
 
 @web.route("GET", "/themes/{file}")

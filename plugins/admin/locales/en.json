@@ -189,6 +189,9 @@
     "What it remembers about them keeps the new name too.": "What it remembers about them goes to the new name. If a voice already has that name, they become one.",
     "Community themes": "Community themes",
     "Uninstall": "Uninstall",
-    "Uninstall «%s»?": "Uninstall «%s»?"
+    "Uninstall «%s»?": "Uninstall «%s»?",
+    "Interface Language": "Interface Language",
+    "Automatic": "Automatic",
+    "The language of its screen and its app. The assistant speaks the one in General.": "The language of its screen and its app. The assistant speaks the one in General."
   }
 }

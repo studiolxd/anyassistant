@@ -211,9 +211,29 @@ def contributed(request: web.Request) -> dict:
     return more
 
 
-def page(file) -> web.Response:
-    """A plugin's HTML page (a Path), declaring the active language (lang="…") from the start."""
-    html = file.read_text().replace('<html lang="en"', f'<html lang="{i18n.L.code}"', 1)
+UI_COOKIE = "ui_language"  # a browser's own interface language (the admin page's selector)
+
+
+def ui_language(request: web.Request) -> str:
+    """The language of the interface a request is for (not the assistant's, i18n.L): ?ui=, else the
+    device's own (?device=, kept by the plugin «devices»), else the browser's cookie, else its
+    Accept-Language, else the assistant's; only one with interface texts, else English."""
+    chosen = request.query.get("ui", "")
+    if chosen not in i18n.interface_languages():
+        devices = kernel.module("devices")
+        chosen = (devices.ui_language(request.query.get("device")) if devices else "") or request.cookies.get(UI_COOKIE, "")
+    return i18n.choose(chosen, request.headers.get("Accept-Language", ""))
+
+
+def ui(request: web.Request) -> i18n.Locale:
+    """The interface's texts for a request (ui_language)."""
+    return i18n.ui(ui_language(request))
+
+
+def page(file, request: web.Request | None = None) -> web.Response:
+    """A plugin's HTML page (a Path), declaring its interface's language (lang="…") from the start."""
+    code = ui_language(request) if request is not None else i18n.L.code
+    html = file.read_text().replace('<html lang="en"', f'<html lang="{code}"', 1)
     return web.Response(text=html, content_type="text/html")
 
 

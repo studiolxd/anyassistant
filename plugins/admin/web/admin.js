@@ -320,7 +320,15 @@ function devicePage(main, id) {
     fields.appendChild(row(T('Name'), '', name));
     fields.appendChild(row(T('Room'), T('The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».'), room));
     main.appendChild(fields);
-    main.appendChild(el('div', { class: 'card' }, [row(T('Language model'), T('The one that answers on this device.'), llm)]));
+    // Its interface's language (its page, its app's face): apart from the one the assistant speaks.
+    var ui = el('select', {}, [el('option', { value: 'auto', text: T('Automatic') })]
+      .concat(Object.keys(data.ui_languages || {}).map(function (c) { return el('option', { value: c, text: data.ui_languages[c] }); })));
+    ui.value = d.ui_language || 'auto';
+    ui.addEventListener('change', function () {
+      api('POST', '/devices', { id: d.id, ui_language: ui.value }).then(function (r) { flash(ui, !r.error); });
+    });
+    main.appendChild(el('div', { class: 'card' }, [row(T('Language model'), T('The one that answers on this device.'), llm),
+      row(T('Interface Language'), T('The language of its screen and its app. The assistant speaks the one in General.'), ui)]));
     // Its room's noise (the plugin «calibration»): measured, or a calibration going on there.
     var noise = d.noise || {};
     var levels = { quiet: 'Quiet', some: 'Some noise', noisy: 'Noisy' };
@@ -990,6 +998,19 @@ function sidebar() {
   if (!WINDOW) { nav.appendChild(el('div', { class: 'group' })); item('admins', T('Admins')); }
 }
 
+// This browser's interface language (a cookie: the themes page and the device's page here follow
+// it too); Automatic: the browser's own. Not the one the assistant speaks (General).
+function languagePicker(me) {
+  var pick = el('select', { 'aria-label': T('Interface Language') }, [el('option', { value: 'auto', text: T('Automatic') })]
+    .concat(Object.keys(me.ui_languages || {}).map(function (c) { return el('option', { value: c, text: me.ui_languages[c] }); })));
+  pick.value = me.ui_language || 'auto';
+  pick.addEventListener('change', function () {
+    document.cookie = 'ui_language=' + pick.value + '; path=/; SameSite=Lax; max-age=' + (pick.value === 'auto' ? 0 : 31536000);
+    location.reload();
+  });
+  return el('label', { class: 'language' }, [el('span', { text: T('Interface Language') }), pick]);
+}
+
 // --- Start ---
 
 fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (me) {
@@ -1002,6 +1023,7 @@ fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.
   restartButton.hidden = Boolean(WINDOW);
   restartButton.textContent = T('Restart');
   restartButton.onclick = function () { if (confirm(T('Restart the server now?'))) restart(); };
+  if (!WINDOW) $('aside .foot').insertBefore(languagePicker(me), restartButton);  // the apps' windows: the app's own setting
   api('GET', '/admin/status').then(function (s) {
     $('#title').textContent = s.name;
     $('#subtitle').textContent = s.computer + ' · ' + s.version;
