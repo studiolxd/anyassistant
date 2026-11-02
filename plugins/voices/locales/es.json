@@ -46,7 +46,16 @@
       "Recuérdame que tengo que llamar a mi madre esta tarde.",
       "¿Qué tengo en la agenda para el fin de semana?",
       "Envía un mensaje a la cocina diciendo que la cena está lista."
-    ]
+    ],
+    "guide": {
+      "name": "Di tu nombre",
+      "name_detail": "En voz alta, por ejemplo: «Me llamo Ana».",
+      "phrase": "Frase {number} de {total}",
+      "read": "Léela en voz alta.",
+      "again": "Un poco más larga: repite la frase entera.",
+      "done": "Ya conoce tu voz, {name}.",
+      "cancelled": "No se ha aprendido nada."
+    }
   },
   "speech": {
     "voice_name": "Vamos a aprender tu voz. ¿Cómo te llamas?",
@@ -64,5 +73,13 @@
     "voice_check": "Qué exige una voz conocida",
     "voice_adapt": "Seguir aprendiendo voces",
     "voice_match": "Exigencia de parecido"
+  },
+  "installer": {
+    "voice": [
+      "Tu voz",
+      "Lee unas frases en voz alta para que reconozca tu voz. Desde entonces, solo hará caso a las voces que conozca.",
+      "Registrar mi voz",
+      "Más tarde, pídelo en un dispositivo: «aprende mi voz»."
+    ]
   }
 }

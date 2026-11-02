@@ -42,3 +42,40 @@ def test_list_describes_the_questions_for_a_form():
         installer.main(["--list", "--json", "memory"])
     (memory,) = json.loads(out.getvalue())
     assert memory["kind"] == "question" and [c["value"] for c in memory["choices"]] == ["off", "explicit", "auto"]
+
+
+def test_a_device_step_is_only_named_by_the_setup(monkeypatch):
+    """«Your voice» needs this computer's microphone: the window offers it once the server runs; here,
+    only named (--json) or how to do it later (the terminal, headless)."""
+    voices = installer.kernel.load("voices")
+    monkeypatch.setattr(voices, "people", lambda: [])
+    monkeypatch.setattr(installer.i18n, "detect", lambda: "en")  # this computer's language may be another
+    started = []
+    monkeypatch.setattr(installer.STEPS["voice"], "function", lambda session: started.append(session))
+    out = io.StringIO()
+    with redirect_stdout(out):
+        assert installer.main(["--json", "voice"]) == 0
+    events = [json.loads(line) for line in out.getvalue().splitlines()]
+    (device,) = [e for e in events if e["event"] != "finished"]
+    assert device["event"] == "device" and device["id"] == "voice" and device["plugin"] == "voices"
+    assert device["action"] == "Register my voice" and "learn my voice" in device["later"]
+    out = io.StringIO()
+    with redirect_stdout(out):
+        assert installer.main(["--defaults", "voice"]) == 0
+    assert "– Later, ask for it on a device: «learn my voice»." in out.getvalue()
+    assert started == []  # never run by the setup itself
+
+
+def test_a_device_step_is_left_out_once_done(monkeypatch):
+    voices = installer.kernel.load("voices")
+    monkeypatch.setattr(voices, "people", lambda: [{"name": "Suvi"}])
+    out = io.StringIO()
+    with redirect_stdout(out):
+        installer.main(["--json", "voice"])
+    assert [json.loads(line)["event"] for line in out.getvalue().splitlines()] == ["finished"]
+
+
+def test_a_device_step_in_spanish(es):
+    step = installer.STEPS["voice"].describe()
+    assert (step["title"], step["action"]) == ("Tu voz", "Registrar mi voz")
+    assert step["help"].startswith("Lee unas frases") and "«aprende mi voz»" in step["later"]

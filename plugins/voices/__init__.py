@@ -38,6 +38,7 @@ import numpy as np
 
 import hub
 import i18n
+import installer
 import models
 import options
 import paths
@@ -560,6 +561,44 @@ class LearnVoice(Skill):
         return False
 
 
+def cancel(device: str):
+    """Stops the learning going on in that device, if any."""
+    session = hub.by_device(device)
+    learning = getattr(session.brain, "learning", None) if session else None
+    if learning is not None:
+        learning.cancel()
+
+
+# --- The installer: your voice, right after installing (on this computer's own device) ---
+
+def guide(device: str) -> dict | None:
+    """Where the learning on that device is, as the installer's window shows a «device» step."""
+    found = progress.get(device)
+    if not found:
+        return None
+    step = found["step"]
+    if step == "name":
+        return {"state": "running", "title": i18n.L("voices.guide.name"), "text": "",
+                "detail": i18n.L("voices.guide.name_detail"), "fraction": 0}
+    if step == "phrase":
+        return {"state": "running", "title": i18n.L("voices.guide.phrase", number=found["number"], total=found["total"]),
+                "text": found["phrase"], "detail": i18n.L("voices.guide.again" if found["again"] else "voices.guide.read"),
+                "fraction": (found["number"] - 1) / found["total"]}
+    if step == "done":
+        return {"state": "done", "title": "", "text": i18n.L("voices.guide.done", name=found["name"]), "detail": "",
+                "fraction": 1}
+    return {"state": "cancelled", "title": "", "text": i18n.L("voices.guide.cancelled"), "detail": "", "fraction": None}
+
+
+@installer.device("voice", "Your voice", order=95,
+                  help="Read a few phrases out loud so it knows your voice. From then on, it only listens to the "
+                       "voices it knows.",
+                  action="Register my voice", later="Later, ask for it on a device: «learn my voice».",
+                  when=lambda: not people(), follow=guide, cancel=cancel)
+def _register(session):
+    start(session.brain)
+
+
 # --- For the Mac app: who is known; learning one on a device; forgetting ---
 
 
@@ -597,10 +636,7 @@ async def _change(request):
         finally:
             hub.here.reset(token)
     elif "cancel" in data:
-        session = hub.by_device(str(data["cancel"]))
-        learning = getattr(session.brain, "learning", None) if session else None
-        if learning is not None:
-            learning.cancel()
+        cancel(str(data["cancel"]))
     elif "forget" in data:
         forget(str(data["forget"]))
     return http.json_response(_listing())

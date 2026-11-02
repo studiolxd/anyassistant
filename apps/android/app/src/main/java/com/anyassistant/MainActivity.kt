@@ -330,7 +330,7 @@ class MainActivity : ComponentActivity() {
         val wrongCode = context.getString(R.string.wrong_code)
         val withoutCode = {
             busy = true
-            scope.launch { problem = try { link.mac.pair(""); done(); null } catch (e: Exception) { notAnswering }; busy = false }
+            scope.launch { problem = try { link.mac.pair(""); done(); null } catch (e: Exception) { android.util.Log.w("AnyAssistant", "pairing", e); notAnswering }; busy = false }
         }
         val pair = {
             if (!busy && code.length == 6) {
@@ -339,7 +339,7 @@ class MainActivity : ComponentActivity() {
                 scope.launch {
                     problem = try { link.mac.pair(code); done(); null }
                     catch (e: Mac.WrongCode) { code = ""; wrongCode }
-                    catch (e: Exception) { notAnswering }
+                    catch (e: Exception) { android.util.Log.w("AnyAssistant", "pairing", e); notAnswering }
                     busy = false
                 }
             }
@@ -375,7 +375,7 @@ class MainActivity : ComponentActivity() {
             port = invitation.port.toString()
             problem = try { link.mac.pair(invitation.code ?: ""); done(); null }
             catch (e: Mac.WrongCode) { wrongCode }
-            catch (e: Exception) { notAnswering }
+            catch (e: Exception) { android.util.Log.w("AnyAssistant", "pairing", e); notAnswering }
             pairingWith = null
         }
         val scan = {
@@ -433,7 +433,7 @@ class MainActivity : ComponentActivity() {
                                     // Pairing is off on that server: nothing to type.
                                     connecting = found.id
                                     scope.launch {
-                                        problem = try { busy = true; link.mac.pair(""); done(); null } catch (e: Exception) { notAnswering }
+                                        problem = try { busy = true; link.mac.pair(""); done(); null } catch (e: Exception) { android.util.Log.w("AnyAssistant", "pairing", e); notAnswering }
                                         busy = false
                                         connecting = null
                                     }

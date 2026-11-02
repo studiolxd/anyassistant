@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('anyassistant', {
     installDefaults: () => ipcRenderer.invoke('setup:install-defaults'),
     askQuestions: () => ipcRenderer.invoke('setup:ask-questions'),
     install: (answers, startAtLogin) => ipcRenderer.invoke('setup:install', answers, startAtLogin),
+    startDevice: () => ipcRenderer.invoke('setup:device-start'),
+    skipDevice: () => ipcRenderer.invoke('setup:device-skip'),
     phase: (next) => ipcRenderer.invoke('setup:phase', next),
     servers: () => ipcRenderer.invoke('setup:servers'),
     probe: (host, port) => ipcRenderer.invoke('setup:probe', host, port),

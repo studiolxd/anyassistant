@@ -1,7 +1,8 @@
 // The installer in a window (as the Mac's Setup.swift and SetupView): welcome with the app's icon,
 // «Install» (every default), «Customize…» (the installer's questions first) or «Connect to another
 // server…» (the servers on this network, or a host and port, then the pairing code); the program's
-// Python while it prepares, the steps as they go, and «Installed». The same steps as
+// Python while it prepares, the steps as they go, its «device» steps (your voice: on this computer,
+// once the server runs, through its /setup/device/<id>) and «Installed». The same steps as
 // bin/anyassistant setup, through its JSON (setup.html draws them; this side runs them).
 
 const { BrowserWindow, ipcMain, app, session } = require('electron');
@@ -12,6 +13,9 @@ let window = null;
 let given = {};  // what main.js gives: the server, the texts and what to do when it ends
 let phase = 'welcome';
 let browser = null;
+let devices = [];  // the «device» steps still to offer, the first one now
+let following = null;  // the one going on: {id, stage}
+let failed = false;
 
 function configure(options) { given = options; }
 
@@ -19,9 +23,12 @@ function say(event, data) {
   if (window && !window.isDestroyed()) window.webContents.send(event, data);
 }
 
+let shown = {};  // what the phase showed last: the same again when the window opens again
+
 function show(next, data) {
   phase = next;
-  say('setup:phase', { phase: next, ...data });
+  shown = data || {};
+  say('setup:phase', { phase: next, ...shown });
 }
 
 /// The installer: its own window (before installing there is no menu to open it from). Closed
@@ -31,7 +38,7 @@ function open() {
   if (window && !window.isDestroyed()) {
     window.show();
     window.focus();
-    show(phase);
+    show(phase, shown);
     return;
   }
   window = new BrowserWindow({
@@ -41,7 +48,7 @@ function open() {
     webPreferences: { contextIsolation: true, sandbox: true, preload: path.join(__dirname, 'preload.js') },
   });
   window.loadFile(path.join(__dirname, 'setup.html'));
-  window.webContents.on('did-finish-load', () => show(phase));
+  window.webContents.on('did-finish-load', () => show(phase, shown));
   window.on('closed', () => {
     window = null;
     if (browser) { browser.stop(); browser = null; }
@@ -89,13 +96,79 @@ async function installWithAnswers(answers, startAtLogin) {
 
 async function install(args, startAtLogin = true) {
   show('installing');
+  devices = [];
   const code = await given.server.setup(['--json', ...args], (line) => {
     const event = decode(line);
+    if (event && event.event === 'device') devices.push(event);  // done on this computer once installed
     if (event && event.event) say('setup:event', event);
   });
   if (startAtLogin && given.setOpensAtLogin) { try { given.setOpensAtLogin(true); } catch (e) { /* */ } }
-  show('finished', { failed: code !== 0 });
+  failed = code !== 0;
   if (given.installed) given.installed();
+  nextDevice();
+}
+
+// --- «Device» steps: on this computer, once the server runs ---
+
+function nextDevice() {
+  following = null;
+  if (devices.length) show('device', { step: devices[0], stage: 'offer' });
+  else show('finished', { failed });
+}
+
+async function call(id, body) {
+  try {
+    const r = await fetch(`${given.server.url}/setup/device/${id}`, {
+      method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : {},
+      body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(5000),
+    });
+    return { status: r.status, answer: await r.json() };
+  } catch (e) { return { status: 0, answer: {} }; }
+}
+
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/// Its end: the step's row says how it went; then the next one, or «Installed».
+function ended(step, status, text) {
+  if (following && following.id === step.id) following = null;
+  devices.shift();
+  say('setup:event', { event: status, id: step.id, text });
+  nextDevice();
+}
+
+/// Its button: once the server and this computer's own device are up, it starts there; then, how it goes.
+async function startDevice() {
+  const step = devices[0];
+  if (!step || following) return;
+  const mine = following = { id: step.id, stage: 'waiting' };
+  if (given.listenHere) given.listenHere();  // its face, with the microphone
+  show('device', { step, stage: 'waiting' });
+  for (;;) {  // the server starting, this computer's device connecting
+    if (following !== mine) return;
+    const { status, answer } = await call(step.id);
+    if (status === 404) return ended(step, 'skipped', step.later);  // its plugin isn't on
+    if (status === 200 && answer.device) break;
+    await pause(1000);
+  }
+  let { status, answer } = await call(step.id, { do: 'start' });
+  mine.stage = 'running';
+  while (following === mine) {
+    if (status !== 200) return ended(step, 'error', answer.error || '');
+    const state = answer.state;
+    if (state && state.state === 'done') return ended(step, 'done', state.text || '');
+    if (state && state.state === 'cancelled') return ended(step, 'skipped', state.text || '');
+    if (state) show('device', { step, stage: 'running', ...state });
+    await pause(500);
+    ({ status, answer } = await call(step.id));
+  }
+}
+
+/// «Not now» (or cancelling it while it waits for the server): how to do it later.
+function skipDevice() {
+  const step = devices[0];
+  if (!step) return;
+  if (following && following.stage === 'running') { call(step.id, { do: 'cancel' }); return; }  // its end comes as the server says it
+  ended(step, 'skipped', step.later);
 }
 
 // --- Another server (this device only talks to it): as the iPhone pairs ---
@@ -144,6 +217,8 @@ function browse(on) {
 ipcMain.handle('setup:install-defaults', () => installWithDefaults());
 ipcMain.handle('setup:ask-questions', () => askQuestions());
 ipcMain.handle('setup:install', (e, answers, startAtLogin) => installWithAnswers(answers, startAtLogin));
+ipcMain.handle('setup:device-start', () => startDevice());
+ipcMain.handle('setup:device-skip', () => skipDevice());
 ipcMain.handle('setup:phase', (e, next) => { phase = next; browse(next === 'another'); });
 ipcMain.handle('setup:servers', () => others());
 ipcMain.handle('setup:probe', (e, host, port) => probe(host, port));

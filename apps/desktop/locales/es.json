@@ -77,5 +77,8 @@
   "To get the code, open AnyAssistant on the server and select Connect another device.": "Para obtener el código, abre AnyAssistant en el servidor y selecciona Conectar otro dispositivo.",
   "Pair": "Emparejar",
   "That code isn't right (or it's too old): ask for another.": "El código no es correcto o ha caducado.",
-  "That Mac doesn't answer: is AnyAssistant running there, on this network?": "El servidor no responde. Comprueba que el servidor de AnyAssistant esté activo y que este dispositivo esté en la misma red."
+  "That Mac doesn't answer: is AnyAssistant running there, on this network?": "El servidor no responde. Comprueba que el servidor de AnyAssistant esté activo y que este dispositivo esté en la misma red.",
+  "Not now": "Ahora no",
+  "Cancel": "Cancelar",
+  "Waiting for the server…": "Esperando a que el servidor se inicie…"
 }

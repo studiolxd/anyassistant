@@ -78,6 +78,12 @@ the device), so a plugin brings its own. Any of them again later:
 `bin/anyassistant setup memory`. For the app's window: `bin/anyassistant setup --list --json`
 (the questions) and `bin/anyassistant setup --json --set llm=apple …` (one event per line).
 
+A «device» step needs this computer's microphone, so the setup only names it: the Mac app's and
+the Windows and Linux app's installer offer it right after installing, once the server runs, on
+the computer's own device (its button, or «Not now»; through `/setup/device/<id>`); the terminal
+says how to do it later. The plugin «voices» brings one, «Your voice»: you read a few phrases out
+loud and it knows you (only while it knows nobody yet).
+
 ## Running it
 
 ```

@@ -55,7 +55,7 @@
 "Updating…" = "Actualizando…";
 "Voice detection" = "Detección de voz";
 "Voices" = "Voces";
-"Waiting for the server…" = "Esperando a que el asistente arranque…";
+"Waiting for the server…" = "Esperando a que el servidor se inicie…";
 "Wake word" = "Palabra para despertarlo";
 "Yes" = "Sí";
 "You can change everything later. The speech models download once (a few hundred MB)." = "Durante la instalación se descargan los modelos de voz (unos cientos de MB). Podrás cambiar cualquier ajuste más adelante.";
@@ -259,3 +259,4 @@
 "On old devices: %@" = "En dispositivos antiguos: %@";
 "Getting ready: keep silent near the device…" = "Preparando: guarda silencio cerca del dispositivo…";
 "Measuring… %d" = "Midiendo… %d";
+"Not now" = "Ahora no";
