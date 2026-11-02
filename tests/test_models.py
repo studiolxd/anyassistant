@@ -42,6 +42,11 @@ def test_the_plugins_ask_for_models_that_are_pinned():
                    stt_parakeet_onnx.MODEL, *stt_faster_whisper.REPOS.values(), voices.MODEL[0], "kokoro"):
         assert wanted in models.MODELS, wanted
     assert stt_parakeet_onnx.MODEL == "nemo-parakeet-tdt-0.6b-v3"
+    from plugins import tts_piper
+
+    assert set(tts_piper.DEFAULTS.values()) <= set(tts_piper.VOICES)
+    for voice in tts_piper.VOICES:  # each Piper voice: its model and its settings
+        assert set(models.MODELS["piper-" + voice].files) == {f"{voice}.onnx", f"{voice}.onnx.json"}, voice
     assert voices.MODEL[1] in models.MODELS[voices.MODEL[0]].files
     assert {"base", "small", "large-v3-turbo"} <= set(stt_faster_whisper.REPOS)
 

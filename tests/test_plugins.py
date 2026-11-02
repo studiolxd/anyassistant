@@ -16,7 +16,7 @@ import wake
     (stt, {"parakeet": "stt-parakeet", "mlx-whisper": "stt-mlx-whisper"}),
     (wake, {"whisper": "wake-whisper", "openwakeword": "wake-openwakeword"}),
     (llm, {"claude": "llm-claude", "apple": "llm-apple", "hermes": "llm-openai", "openai": "llm-openai"}),
-    (tts, {"avspeech": "tts-avspeech", "macos": "tts-macos"}),
+    (tts, {"avspeech": "tts-avspeech", "macos": "tts-macos", "kokoro": "tts-kokoro", "piper": "tts-piper"}),
     (vad, {"silero": "vad-silero"}),
 ])
 def test_plugins_are_registered(registry, expected):
@@ -27,7 +27,7 @@ def test_plugins_are_registered(registry, expected):
 def test_listing_does_not_import_models():
     for registry in (stt, wake, llm, tts, vad):
         registry.available()
-    assert not {"mlx_whisper", "parakeet_mlx", "openwakeword", "torch"} & sys.modules.keys()
+    assert not {"mlx_whisper", "parakeet_mlx", "openwakeword", "torch", "piper", "kokoro_onnx"} & sys.modules.keys()
 
 
 def test_unknown_plugin():
