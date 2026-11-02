@@ -112,6 +112,6 @@ targets:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant.watchkitapp.complication
+        PRODUCT_BUNDLE_IDENTIFIER: com.anyassistant.watchkitapp.widget
         PRODUCT_NAME: AnyAssistantComplication
         SKIP_INSTALL: true
