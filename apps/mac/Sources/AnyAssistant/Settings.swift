@@ -260,10 +260,12 @@ struct SettingsView: View {
     @State private var section: String? = "assistant"
     @State private var search = ""
     @State private var path = NavigationPath()
+    @State private var columns = NavigationSplitViewVisibility.all
 
     var body: some View {
         // The sections always visible: no button to fold the sidebar (there are only a few).
-        NavigationSplitView(columnVisibility: .constant(.all)) {
+        // The sidebar always there: folded (dragging its edge), it opens again at once.
+        NavigationSplitView(columnVisibility: $columns) {
             List(selection: $section) {
                 Section(T("General")) {
                     ForEach(admin.groups, id: \.id) { group in
@@ -313,6 +315,7 @@ struct SettingsView: View {
             }
         }
         .searchable(text: $search, placement: .sidebar, prompt: T("Search"))
+        .onChange(of: columns) { _, now in if now != .all { columns = .all } }
         .onChange(of: section) { _, _ in path = NavigationPath(); search = "" }
         .task { await admin.load() }
         // Kept up to date: the plugins every few seconds (they change by voice too); the
