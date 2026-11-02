@@ -1,5 +1,8 @@
-// Press to talk: tap the button, say it, tap again (or it stops by itself after 15 s). What it
-// heard and its answer stay on screen; the answer is also said aloud.
+// The face, alone: Eyes' eyes and mouth on black, nothing else. While you look at it, it listens:
+// say something and it hears (its eyes grow with your voice), thinks, and answers aloud (its
+// mouth moves); then it listens again. Wrist down, it sleeps and the microphone is closed. A tap
+// sends what it hears now, or stops it talking; holding the face opens its settings (and what went
+// wrong, if something did: then the face is sad and the watch taps your wrist).
 
 import SwiftUI
 import WatchKit
@@ -7,85 +10,114 @@ import WatchKit
 struct TalkView: View {
     @ObservedObject var mac: Mac
     @StateObject private var voice = Voice()
-    @State private var heard = ""
-    @State private var answer = ""
+    @Environment(\.scenePhase) private var phase
+    @Environment(\.isLuminanceReduced) private var dimmed
     @State private var waiting = false
     @State private var problem: String?
     @State private var settings = false
 
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                Button(action: press) {
-                    ZStack {
-                        Circle().fill(voice.recording ? Color.red : Color.accentColor).frame(width: 84, height: 84)
-                        if waiting {
-                            ProgressView()
-                        } else {
-                            Image(systemName: voice.recording ? "stop.fill" : "mic.fill").font(.title)
-                        }
-                    }
-                }
-                .buttonStyle(.plain)
-                .disabled(waiting)
-                Text(voice.recording ? T("Listening… tap to send") : waiting ? T("Thinking…") : T("Tap and talk"))
-                    .font(.footnote).foregroundStyle(.secondary)
-                if !heard.isEmpty { Text("«\(heard)»").font(.footnote).foregroundStyle(.secondary) }
-                if !answer.isEmpty { Text(answer).font(.body) }
-                if let problem { Text(problem).font(.footnote).foregroundStyle(.red) }
-                Button(T("Settings")) { settings = true }.font(.footnote).buttonStyle(.borderless).padding(.top, 8)
-            }
-            .padding(.horizontal, 4)
-        }
-        .sheet(isPresented: $settings) { SettingsView(mac: mac) }
+    /// In front, lit, and not in its settings: it may listen.
+    private var awake: Bool { phase == .active && !dimmed && !settings }
+
+    private var look: String {
+        if !awake { return "asleep" }
+        if waiting { return "thinking" }
+        if voice.playing { return "speaking" }
+        if voice.hearing { return "hearing" }
+        return problem != nil ? "error" : "awake"
     }
 
-    func press() {
-        if voice.recording {
-            guard let wav = voice.stop() else { return }
-            send(wav)
+    var body: some View {
+        GeometryReader { geometry in
+            let size = geometry.size
+            // The face (62 v × 45 v) as large as it fits.
+            let v = min(size.width * 0.9 / 62, size.height * 0.8 / 45)
+            EyesFace(look: look, accent: Color(red: 0x34 / 255, green: 0xaf / 255, blue: 0xf7 / 255), background: .black,
+                     voice: voice.voice, speech: voice.speech, v: v)
+                .frame(width: size.width, height: size.height)
+        }
+        .background(Color.black)
+        .ignoresSafeArea()
+        .contentShape(Rectangle())
+        .onTapGesture(perform: tap)
+        .onLongPressGesture(minimumDuration: 0.8) { settings = true }
+        .persistentSystemOverlays(.hidden)
+        .sheet(isPresented: $settings) { SettingsView(mac: mac, problem: problem) }
+        .onAppear {
+            voice.heard = { send($0) }
+            update()
+        }
+        .onChange(of: awake) { update() }
+        .onChange(of: waiting) { update() }
+        .onChange(of: voice.playing) { update() }
+        .onChange(of: voice.hearing) { _, now in if now { problem = nil } }
+    }
+
+    /// The microphone open while it may listen and has nothing else to do; closed otherwise.
+    private func update() {
+        guard awake, !waiting, !voice.playing else {
+            voice.close()
             return
         }
         Task {
-            guard await voice.allowed() else { problem = T("It needs the microphone (Settings → Privacy)."); return }
+            guard await voice.allowed() else {
+                fail(T("It needs the microphone (Settings → Privacy)."))
+                return
+            }
+            guard awake, !waiting, !voice.playing else { return }
             do {
-                try voice.start()
-                problem = nil
-                WKInterfaceDevice.current().play(.start)
+                try voice.listen()
             } catch {
-                problem = error.localizedDescription
+                fail(error.localizedDescription)
             }
         }
     }
 
-    func send(_ wav: Data) {
+    private func tap() {
+        if voice.playing {
+            voice.stopPlaying()
+        } else if voice.hearing {
+            voice.finish()
+        } else if problem != nil {
+            problem = nil
+            update()
+        }
+    }
+
+    private func send(_ wav: Data) {
         waiting = true
         WKInterfaceDevice.current().play(.click)
         Task {
-            defer { waiting = false }
+            defer { waiting = false }  // after the answer starts: the microphone stays closed meanwhile
             do {
                 let found = try await mac.talk(wav)
-                heard = found.heard
-                answer = found.answer
-                voice.play(found.audio)
-                if found.heard.isEmpty && found.answer.isEmpty { problem = T("It didn't catch that.") }
+                voice.play(found.audio)  // nothing heard, nothing said: it listens again
             } catch Mac.Failure.unreachable {
-                problem = T("The server isn't answering: is AnyAssistant running, and the watch on the same network?")
+                fail(T("The server isn't answering: is AnyAssistant running, and the watch on the same network?"))
             } catch Mac.Failure.wrongCode {
-                problem = T("It has to be paired again.")
+                fail(T("It has to be paired again."))
             } catch {
-                problem = "\(error)"
+                fail("\(error)")
             }
         }
+    }
+
+    private func fail(_ why: String) {
+        problem = why
+        WKInterfaceDevice.current().play(.failure)
     }
 }
 
 struct SettingsView: View {
     @ObservedObject var mac: Mac
+    var problem: String? = nil
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         Form {
+            if let problem {
+                Section { Text(problem).font(.footnote).foregroundStyle(.red) }
+            }
             Section(T("Server")) {
                 TextField(T("Address"), text: $mac.host)
                 TextField(T("Port"), value: $mac.port, format: .number.grouping(.never))

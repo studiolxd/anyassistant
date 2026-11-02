@@ -1,5 +1,5 @@
-// AnyAssistant on the Apple Watch: press to talk. The sentence goes to your Mac (POST /talk, the
-// plugin «talk-api»), which answers in text and voice, as on any other device: its own
+// AnyAssistant on the Apple Watch: Eyes' face, listening while you look at it. Each sentence goes
+// to your server (POST /talk, the plugin «talk-api»), which answers in voice, as on any other device: its own
 // conversation, your voice checked, «dile a la cocina…». Paired once with the 6-digit code the
 // Mac app shows («Pair a device…»).
 

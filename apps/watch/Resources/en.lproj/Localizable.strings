@@ -1,9 +1,4 @@
-"Listening… tap to send" = "Listening… tap to send";
-"Thinking…" = "Thinking…";
-"Tap and talk" = "Tap and talk";
-"Settings" = "Settings";
 "It needs the microphone (Settings → Privacy)." = "It needs the microphone (Settings → Privacy).";
-"It didn't catch that." = "It didn't catch that.";
 "The server isn't answering: is AnyAssistant running, and the watch on the same network?" = "The server isn't responding. Make sure AnyAssistant is running and the watch is on the same network.";
 "It has to be paired again." = "It has to be paired again.";
 "Server" = "Server";
