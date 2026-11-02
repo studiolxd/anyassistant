@@ -41,7 +41,7 @@ speech recognition with Parakeet v3 in ONNX (`stt-parakeet-onnx`, on the CPU, wi
 fallback) or Whisper (`stt-faster-whisper`, CPU or an NVIDIA card), the voice Kokoro
 (`tts-kokoro`: ef_dora in Spanish, af_heart in English), the wake word with faster-whisper.
 **Windows** for now runs from the project (`uv run server/main.py`); its app comes later. Apple's
-model is only on the Mac; the plan is in `TODO.md` («El servidor en Windows y Linux»).
+model is only on the Mac; how each piece was made, in `docs/windows-y-linux.md`.
 
 **The Windows and Linux app** (`apps/desktop`, Electron): in the tray, as the Mac app in the menu
 bar, with the same menu and windows. The first time, its installer window (as the Mac's: «Install»,
