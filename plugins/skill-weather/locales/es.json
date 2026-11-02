@@ -65,7 +65,7 @@
     ]
   },
   "options": {
-    "location": "tu ciudad, para el tiempo (por ejemplo, Valencia)"
+    "location": "Para el tiempo. Por ejemplo, Valencia."
   },
   "installer": {
     "location": [
@@ -75,5 +75,8 @@
   },
   "options_empty": {
     "location": "ninguna: dices la ciudad cada vez"
+  },
+  "options_title": {
+    "location": "Ciudad"
   }
 }

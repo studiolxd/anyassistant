@@ -14,5 +14,15 @@
     "email_subject": "You have a new email from {sender}: {subject}.",
     "email_untitled": "no subject",
     "email_account": "In {account}: {sentence}"
+  },
+  "options_title": {
+    "email_notice_query": "Gmail filter",
+    "email_notice_says": "What it says of each email",
+    "email_check_minutes": "Check frequency"
+  },
+  "options": {
+    "email_notice_query": "Which Gmail emails it gives notice of, as a Gmail search. If not set, the unread ones in Primary. For other accounts, the unread ones in the inbox.",
+    "email_notice_says": "",
+    "email_check_minutes": "How often, in minutes, it looks for new emails."
   }
 }

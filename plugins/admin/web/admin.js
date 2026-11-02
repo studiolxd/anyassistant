@@ -266,7 +266,7 @@ function settingsPage(main) {
         hits.forEach(function (p) { pbox.appendChild(pluginRow(p)); });
       }
       var places = {};
-      data.options.filter(function (o) { return o.group !== 'plugins' && (o.help + ' ' + o.name).toLowerCase().indexOf(words) >= 0; })
+      data.options.filter(function (o) { return o.group !== 'plugins' && (o.title + ' ' + o.help + ' ' + o.name).toLowerCase().indexOf(words) >= 0; })
         .forEach(function (o) { var at = o.plugin ? names[o.plugin] || o.plugin : (data.groups.filter(function (g) { return g.id === o.group; })[0] || {}).title || o.group; (places[at] = places[at] || []).push(o); });
       Object.keys(places).sort().forEach(function (at) {
         list.appendChild(el('h2', { text: at }));
@@ -344,9 +344,9 @@ function option(o) {
     });
   }
   return el('div', { class: 'row' }, [
-    el('div', { class: 'what' }, [el('b', { text: o.name }),
+    el('div', { class: 'what', title: o.name }, [el('b', { text: o.title || o.help }),
       o.live ? null : el('span', { class: 'pill', text: T('restarts') }),
-      el('div', { class: 'muted', text: o.help })]),
+      o.title && o.help ? el('div', { class: 'muted', text: o.help }) : null]),
     el('div', { class: 'field' }, [field])
   ]);
 }

@@ -14,6 +14,7 @@ final class OptionItem: ObservableObject, Identifiable {
     let group: String
     let plugin: String?  // the plugin that brings it (nil: the core's)
     let kind: String  // text, longtext, bool, int, float, choice, json, dict
+    let title: String  // short, as a setting's name («Hora en reposo»); empty: its help is the title
     let help: String
     let live: Bool
     let choices: [String]?
@@ -35,6 +36,7 @@ final class OptionItem: ObservableObject, Identifiable {
         group = raw["group"] as? String ?? ""
         plugin = raw["plugin"] as? String
         kind = raw["kind"] as? String ?? "text"
+        title = raw["title"] as? String ?? ""
         help = raw["help"] as? String ?? ""
         live = raw["live"] as? Bool ?? false
         choices = (raw["choices"] as? [Any])?.map { "\($0)" }
@@ -277,7 +279,7 @@ struct SearchResults: View {
     var body: some View {
         let words = search.lowercased()
         let options = admin.options.filter {
-            $0.group != "plugins" && ($0.help.lowercased().contains(words) || $0.name.lowercased().contains(words))
+            $0.group != "plugins" && [$0.title, $0.help, $0.name].contains { $0.lowercased().contains(words) }
         }
         let plugins = admin.plugins.filter {
             $0.name.lowercased().contains(words) || $0.description.lowercased().contains(words)
@@ -326,8 +328,16 @@ struct OptionRow: View {
     @State private var saved = ""  // what was last saved: not saved again for nothing
     @State private var pending: Task<Void, Never>?  // a save a moment after you stop typing
 
-    /// Its help, as a title («La hora mientras duerme»); its name goes below.
-    var label: String { option.help.prefix(1).uppercased() + option.help.dropFirst() }
+    /// Its title («Hora en reposo»); without one, its help as the title.
+    var label: String {
+        let shown = option.title.isEmpty ? option.help : option.title
+        return shown.prefix(1).uppercased() + shown.dropFirst()
+    }
+    /// What goes under it, in grey: its help (if the title isn't it) and whether it restarts.
+    var note: String {
+        [option.title.isEmpty ? "" : option.help, option.live ? "" : T("Applies after restarting.")]
+            .filter { !$0.isEmpty }.joined(separator: " ")
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -378,9 +388,11 @@ struct OptionRow: View {
                         .onChange(of: editing) { _, now in if !now { save() } }  // leaving the field saves it
                 }
             }
-            Text(option.name + (option.live ? "" : " · " + T("needs a restart")))
-                .font(.caption.monospaced()).foregroundStyle(.secondary)
+            if !note.isEmpty {
+                Text(note).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .help(option.name)  // its name in settings.json, on hover
         .onAppear { saved = option.text }
     }
 }

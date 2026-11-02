@@ -9,6 +9,9 @@
     "fallback": "{name} no responde; te contesto con el modelo local."
   },
   "options": {
-    "conversations": "cuántos dispositivos pueden estar en una conversación a la vez (cada uno con su LLM: con Claude, dos procesos cada uno); 1: de una en una, los demás se duermen"
+    "conversations": "Cuántos dispositivos pueden conversar al mismo tiempo, cada uno con su modelo. Con 1, los demás esperan."
+  },
+  "options_title": {
+    "conversations": "Conversaciones a la vez"
   }
 }

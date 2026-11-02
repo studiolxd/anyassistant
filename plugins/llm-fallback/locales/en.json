@@ -1,0 +1,8 @@
+{
+  "options_title": {
+    "llm_fallback": "Fallback model"
+  },
+  "options": {
+    "llm_fallback": "It answers when the main one can't. «Automatic»: Apple's if there is one."
+  }
+}

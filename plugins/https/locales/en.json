@@ -1,0 +1,10 @@
+{
+  "options_title": {
+    "https_port": "HTTPS port",
+    "https_redirect_port": "Redirect port"
+  },
+  "options": {
+    "https_port": "",
+    "https_redirect_port": "The HTTP port that leads to the HTTPS page. 0: none."
+  }
+}

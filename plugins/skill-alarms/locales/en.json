@@ -86,5 +86,15 @@
       "where_set": "Where they were set",
       "everywhere": "On every device"
     }
+  },
+  "options_title": {
+    "ring_seconds": "Ring duration",
+    "snooze_minutes": "Snooze minutes",
+    "alarm_rings": "Where they ring"
+  },
+  "options": {
+    "ring_seconds": "Seconds it rings if nobody stops it. 0: until someone does (30 minutes at most).",
+    "snooze_minutes": "When you say «snooze» without saying how long.",
+    "alarm_rings": "On every device, or on the one they were set on."
   }
 }

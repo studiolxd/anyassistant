@@ -6,7 +6,7 @@
     ]
   },
   "options": {
-    "interpreter": "un LLM para skills dichas de forma rara: auto (uno local si lo hay: el de Apple) o el nombre de un LLM"
+    "interpreter": "Entiende habilidades dichas de forma poco habitual. «Automático»: uno local si lo hay."
   },
   "skills": {
     "interpreter_example": {
@@ -17,5 +17,8 @@
         "text": "saque la ropa"
       }
     }
+  },
+  "options_title": {
+    "interpreter": "Modelo del intérprete"
   }
 }

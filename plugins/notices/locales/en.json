@@ -4,5 +4,13 @@
       "everywhere": "On every device",
       "last": "On the last one you talked to"
     }
+  },
+  "options_title": {
+    "quiet_hours": "Quiet hours",
+    "notices_where": "Where to give notices"
+  },
+  "options": {
+    "quiet_hours": "For example, 23:00-08:00. Alarms still ring.",
+    "notices_where": "On every device, or on the last one you talked to."
   }
 }

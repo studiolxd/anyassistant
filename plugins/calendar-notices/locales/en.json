@@ -3,5 +3,11 @@
     "calendar_soon": "In {duration}: {title}.",
     "calendar_now": "Now: {title}.",
     "calendar_untitled": "an event with no title"
+  },
+  "options_title": {
+    "calendar_notice_minutes": "Notice in advance"
+  },
+  "options": {
+    "calendar_notice_minutes": "Minutes before an event."
   }
 }

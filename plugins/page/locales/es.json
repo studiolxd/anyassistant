@@ -37,23 +37,39 @@
     ]
   },
   "options": {
-    "skin": "el aspecto de la pantalla: eyes, orb, minimal, bedside o las tuyas (?skin= en un dispositivo manda)",
-    "skin_options": "las opciones de la skin: {\"accent\": \"#ff7a45\"}",
-    "skins_dir": "tus skins (de serie, skins en tu carpeta de datos)",
-    "video": "calidad de la cámara; auto: cada dispositivo según su memoria",
-    "show_time": "la hora mientras duerme",
-    "show_date": "la fecha mientras duerme",
-    "show_hint": "«Di “Ey, {name}”» mientras duerme",
-    "show_status": "«Te escucho», «Pensando…» mientras está despierto",
-    "show_heard": "lo que has dicho",
-    "show_answer": "lo que responde",
-    "history": "frases anteriores que se quedan en pantalla",
-    "show_timers": "temporizadores, alarmas y recordatorios en marcha",
-    "show_stats": "el RTT, el jitter y las pérdidas de la conexión",
-    "clock": "12 o 24 horas (auto: lo del idioma)"
+    "skin": "",
+    "skin_options": "Por ejemplo, el color de acento.",
+    "skins_dir": "Si no se indica, la de tu carpeta de datos.",
+    "video": "«Automático»: según la memoria de cada dispositivo.",
+    "show_time": "",
+    "show_date": "",
+    "show_hint": "«Di “Ey, {name}”» en reposo.",
+    "show_status": "«Te escucho», «Pensando…» mientras está activo.",
+    "show_heard": "",
+    "show_answer": "",
+    "history": "Cuántas frases anteriores siguen visibles.",
+    "show_timers": "Los que están en marcha.",
+    "show_stats": "Latencia, variación y pérdidas, para diagnosticar.",
+    "clock": "12 o 24 horas. «Automático»: el del idioma."
   },
   "options_empty": {
     "skin_options": "las de la skin",
     "skins_dir": "skins en tu carpeta de datos"
+  },
+  "options_title": {
+    "skin": "Tema",
+    "skin_options": "Opciones del tema",
+    "skins_dir": "Carpeta de temas propios",
+    "show_time": "Hora en reposo",
+    "show_date": "Fecha en reposo",
+    "show_hint": "Indicación para activarlo",
+    "show_status": "Estado",
+    "show_heard": "Lo que dices",
+    "show_answer": "Lo que responde",
+    "history": "Frases en pantalla",
+    "show_timers": "Temporizadores y alarmas",
+    "clock": "Formato de hora",
+    "video": "Calidad de la cámara",
+    "show_stats": "Datos de conexión"
   }
 }

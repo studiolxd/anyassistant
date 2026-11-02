@@ -29,5 +29,37 @@
     "demo_reminder": "Take out the laundry",
     "demo_heard": "What time is it?",
     "demo_answer": "It's 8:42 in the evening."
+  },
+  "options_title": {
+    "skin": "Theme",
+    "skin_options": "Theme options",
+    "skins_dir": "Your themes folder",
+    "show_time": "Time while asleep",
+    "show_date": "Date while asleep",
+    "show_hint": "How to wake it",
+    "show_status": "Status",
+    "show_heard": "What you say",
+    "show_answer": "What it answers",
+    "history": "Sentences on screen",
+    "show_timers": "Timers and alarms",
+    "clock": "Time format",
+    "video": "Camera quality",
+    "show_stats": "Connection data"
+  },
+  "options": {
+    "skin": "",
+    "skin_options": "For example, the accent color.",
+    "skins_dir": "If not set, the one in your data folder.",
+    "show_time": "",
+    "show_date": "",
+    "show_hint": "«Say “Hey, {name}”» while asleep.",
+    "show_status": "«Listening», «Thinking…» while awake.",
+    "show_heard": "",
+    "show_answer": "",
+    "history": "How many earlier sentences stay visible.",
+    "show_timers": "The running ones.",
+    "clock": "12 or 24 hours. «Automatic»: the language's.",
+    "video": "«Automatic»: by each device's memory.",
+    "show_stats": "Latency, jitter and losses, for troubleshooting."
   }
 }

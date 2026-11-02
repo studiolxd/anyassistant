@@ -45,7 +45,7 @@ TIMEOUT = 20
 
 options.add(Option("mail_accounts", [], "mail accounts besides Gmail (IMAP and SMTP); add them with "
                    "`bin/anyassistant mail add you@domain.com` (the password goes to the Keychain)", "assistant",
-                   "json", live=True))
+                   "json", live=True, hidden=True))  # edited on the plugin's page, as accounts
 
 # Servers of the known providers, by the address's domain: (imap, smtp).
 KNOWN = {

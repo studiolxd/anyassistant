@@ -6,6 +6,9 @@
     ]
   },
   "options": {
-    "llm_fallback": "si el LLM no puede responder, responde otro: auto (el modelo local de Apple si lo hay), el nombre de un LLM o none"
+    "llm_fallback": "Responde si el principal no puede. «Automático»: el de Apple si lo hay."
+  },
+  "options_title": {
+    "llm_fallback": "Modelo de respaldo"
   }
 }

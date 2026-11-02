@@ -21,10 +21,14 @@
     "llm_limit": "{name} dice que he llegado a su límite de uso. Prueba en un rato."
   },
   "options": {
-    "openai_url": "el servicio compatible con OpenAI (OpenRouter, Groq, LM Studio…); vacío: OpenAI",
-    "openai_key": "la clave de API para «Compatible con OpenAI» (se guarda en el Llavero)"
+    "openai_url": "OpenRouter, Groq, LM Studio… Si no se indica, OpenAI.",
+    "openai_key": "Se guarda en el Llavero."
   },
   "options_empty": {
     "openai_url": "https://api.openai.com/v1"
+  },
+  "options_title": {
+    "openai_key": "Clave de API",
+    "openai_url": "URL del servicio"
   }
 }

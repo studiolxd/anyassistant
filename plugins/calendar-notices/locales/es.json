@@ -6,11 +6,14 @@
     ]
   },
   "options": {
-    "calendar_notice_minutes": "cuántos minutos antes de un evento avisa"
+    "calendar_notice_minutes": "Minutos antes de un evento."
   },
   "speech": {
     "calendar_soon": "Dentro de {duration}: {title}.",
     "calendar_now": "Ahora: {title}.",
     "calendar_untitled": "un evento sin título"
+  },
+  "options_title": {
+    "calendar_notice_minutes": "Antelación"
   }
 }

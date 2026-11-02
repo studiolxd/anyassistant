@@ -18,5 +18,13 @@
     "morning_more_emails": "You have more than {count} unread emails.",
     "morning_untitled": "something untitled",
     "morning_date_with": "Today is {date}: {items}."
+  },
+  "options_title": {
+    "morning_after_alarm": "Summary when the alarm stops",
+    "unread_query": "Gmail filter"
+  },
+  "options": {
+    "morning_after_alarm": "When you stop the first alarm of the day, before 12.",
+    "unread_query": "Which Gmail emails it counts, as a Gmail search. For other accounts, the unread ones in the inbox."
   }
 }

@@ -1,5 +1,11 @@
 {
   "speech": {
     "fallback": "{name} isn't answering; I'll answer with the local model."
+  },
+  "options_title": {
+    "conversations": "Conversations at once"
+  },
+  "options": {
+    "conversations": "How many devices can talk at the same time, each with its model. With 1, the others wait."
   }
 }

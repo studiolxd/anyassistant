@@ -6,8 +6,8 @@
     ]
   },
   "options": {
-    "morning_after_alarm": "el resumen de la mañana al parar la primera alarma del día (antes de las 12)",
-    "unread_query": "qué emails cuenta el resumen (una búsqueda de Gmail)"
+    "morning_after_alarm": "Al parar la primera alarma del día, antes de las 12.",
+    "unread_query": "Qué correos de Gmail cuenta, como búsqueda de Gmail. De las demás cuentas cuenta los no leídos de la bandeja de entrada."
   },
   "morning": {
     "greetings": [
@@ -29,5 +29,9 @@
     "morning_more_emails": "Tienes más de {count} emails sin leer.",
     "morning_untitled": "algo sin título",
     "morning_date_with": "Hoy es {date}: {items}."
+  },
+  "options_title": {
+    "morning_after_alarm": "Resumen al parar la alarma",
+    "unread_query": "Filtro de Gmail"
   }
 }

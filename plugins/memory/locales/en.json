@@ -29,5 +29,17 @@
       ],
       "summary": "Corrected their name, moved to Seville and mentioned their cat."
     }
+  },
+  "options_title": {
+    "memory": "What it remembers",
+    "memory_facts": "Facts before summarizing",
+    "memory_conversations": "Summarized conversations",
+    "memory_days": "Days each summary is kept"
+  },
+  "options": {
+    "memory": "Only what you ask, or also what it learns about you.",
+    "memory_facts": "How many facts it keeps before summarizing them.",
+    "memory_conversations": "How many summaries it keeps.",
+    "memory_days": ""
   }
 }

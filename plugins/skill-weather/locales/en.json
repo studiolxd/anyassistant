@@ -55,5 +55,11 @@
     "95": "thunderstorms",
     "96": "thunderstorms with hail",
     "99": "thunderstorms with hail"
+  },
+  "options_title": {
+    "location": "City"
+  },
+  "options": {
+    "location": "For the weather. For example, Valencia."
   }
 }

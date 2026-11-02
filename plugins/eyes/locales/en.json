@@ -15,5 +15,11 @@
       "written",
       "text"
     ]
+  },
+  "options_title": {
+    "read_photo": "Full-resolution photo to read"
+  },
+  "options": {
+    "read_photo": "When you ask it to read something."
   }
 }

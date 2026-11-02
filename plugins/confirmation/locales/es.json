@@ -6,8 +6,8 @@
     ]
   },
   "options": {
-    "confirm_wait": "segundos para responder «sí» a una acción que cambia algo",
-    "confirm_valid": "segundos que vale un «sí»"
+    "confirm_wait": "Segundos para decir «sí» a una acción que cambia algo.",
+    "confirm_valid": "Segundos durante los que vale un «sí»."
   },
   "commands": {
     "no": [
@@ -37,5 +37,9 @@
       "afirmativo",
       "confirmado"
     ]
+  },
+  "options_title": {
+    "confirm_wait": "Tiempo para confirmar",
+    "confirm_valid": "Validez del «sí»"
   }
 }

@@ -6,10 +6,10 @@
     ]
   },
   "options": {
-    "memory": "qué recuerda: solo lo que le pides (explicit) o también lo que aprende (auto)",
-    "memory_facts": "datos antes de que el LLM los resuma",
-    "memory_conversations": "resúmenes de conversaciones que guarda",
-    "memory_days": "días que guarda el resumen de una conversación"
+    "memory": "Solo lo que le pides, o también lo que aprende de ti.",
+    "memory_facts": "Cuántos datos guarda antes de resumirlos.",
+    "memory_conversations": "Cuántos resúmenes guarda.",
+    "memory_days": ""
   },
   "installer": {
     "memory": [
@@ -47,5 +47,11 @@
       ],
       "summary": "Corrigió su nombre, se mudó a Sevilla y habló de su gata."
     }
+  },
+  "options_title": {
+    "memory": "Qué recuerda",
+    "memory_facts": "Datos antes de resumir",
+    "memory_conversations": "Conversaciones resumidas",
+    "memory_days": "Días que guarda cada resumen"
   }
 }

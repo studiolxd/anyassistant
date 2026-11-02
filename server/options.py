@@ -25,6 +25,7 @@ class Option:
     flag: str = ""  # another command-line name (--lang)
     plugin: str | None = None  # the plugin that added it (None: the core's); its texts are in its locales
     empty: str = ""  # what happens when it isn't set («the language's voice»), for the app
+    hidden: bool = False  # not in the settings (edited elsewhere: the mail accounts, on their page)
     keychain: tuple = ()  # a secret: (service, account) in the system's keychain
     prefer: tuple = ()  # an engine: the default is the first of these this computer has (resolve())
 

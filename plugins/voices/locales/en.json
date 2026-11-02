@@ -7,9 +7,28 @@
     }
   },
   "voices": {
-    "learn": ["learn my voice", "learn a voice", "learn a new voice", "remember my voice"],
-    "forget": ["forget my voice"],
-    "name_lead": ["my", "name", "is", "i", "am", "i'm", "its", "it's", "hi", "call", "me"],
+    "learn": [
+      "learn my voice",
+      "learn a voice",
+      "learn a new voice",
+      "remember my voice"
+    ],
+    "forget": [
+      "forget my voice"
+    ],
+    "name_lead": [
+      "my",
+      "name",
+      "is",
+      "i",
+      "am",
+      "i'm",
+      "its",
+      "it's",
+      "hi",
+      "call",
+      "me"
+    ],
     "phrases": [
       "It's a lovely day to go for a walk in the park.",
       "Set an alarm for half past seven tomorrow morning, please.",
@@ -27,5 +46,15 @@
     "voice_cancelled": "OK, let's leave it.",
     "voice_forgotten": "I've forgotten your voice, {name}.",
     "voice_refused": "I don't recognise your voice: I won't do that."
+  },
+  "options_title": {
+    "voice_check": "What needs a known voice",
+    "voice_adapt": "Keep learning voices",
+    "voice_match": "Required likeness"
+  },
+  "options": {
+    "voice_check": "Once a voice has been learnt.",
+    "voice_adapt": "From what each person says. It only keeps voice prints, never the audio; turning it off deletes what was learnt this way.",
+    "voice_match": "From 0 to 1. Higher: stricter."
   }
 }

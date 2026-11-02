@@ -20,5 +20,13 @@
       "correct",
       "absolutely"
     ]
+  },
+  "options_title": {
+    "confirm_wait": "Time to confirm",
+    "confirm_valid": "How long a «yes» lasts"
+  },
+  "options": {
+    "confirm_wait": "Seconds to say «yes» to an action that changes something.",
+    "confirm_valid": "Seconds a «yes» stays valid."
   }
 }

@@ -8,5 +8,11 @@
         "text": "take the laundry out"
       }
     }
+  },
+  "options_title": {
+    "interpreter": "Interpreter model"
+  },
+  "options": {
+    "interpreter": "It understands skills said in unusual ways. «Automatic»: a local one if there is one."
   }
 }

@@ -6,13 +6,17 @@
     ]
   },
   "options": {
-    "quiet_hours": "horas en que no avisa de nada (p. ej. 23:00-08:00; vacío: a cualquier hora); las alarmas suenan igual",
-    "notices_where": "dónde avisa: en todos los dispositivos, o en el último con el que hablaste"
+    "quiet_hours": "Por ejemplo, 23:00-08:00. Las alarmas suenan igual.",
+    "notices_where": "En todos los dispositivos o en el último con el que hablaste."
   },
   "choices": {
     "notices_where": {
       "everywhere": "En todos los dispositivos",
       "last": "En el último con el que hablaste"
     }
+  },
+  "options_title": {
+    "quiet_hours": "Horas sin avisos",
+    "notices_where": "Dónde avisar"
   }
 }

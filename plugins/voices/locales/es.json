@@ -6,9 +6,9 @@
     ]
   },
   "options": {
-    "voice_check": "qué exige una voz conocida, una vez aprendida alguna",
-    "voice_adapt": "seguir aprendiendo cada voz de lo que dice esa persona (solo huellas de voz, nunca el audio; desactivado: se borra lo aprendido así)",
-    "voice_match": "cuánto debe parecerse una voz a una conocida (0–1; más alto: más estricto)"
+    "voice_check": "Una vez aprendida alguna voz.",
+    "voice_adapt": "De lo que dice cada persona. Solo guarda huellas de voz, nunca el audio; al desactivarlo se borra lo aprendido así.",
+    "voice_match": "De 0 a 1. Más alto: más estricto."
   },
   "choices": {
     "voice_check": {
@@ -18,9 +18,28 @@
     }
   },
   "voices": {
-    "learn": ["aprende mi voz", "aprende una voz", "registra mi voz", "registra una voz", "aprende la voz", "conoce mi voz"],
-    "forget": ["olvida mi voz", "borra mi voz"],
-    "name_lead": ["me", "llamo", "soy", "mi", "nombre", "es", "pues", "hola"],
+    "learn": [
+      "aprende mi voz",
+      "aprende una voz",
+      "registra mi voz",
+      "registra una voz",
+      "aprende la voz",
+      "conoce mi voz"
+    ],
+    "forget": [
+      "olvida mi voz",
+      "borra mi voz"
+    ],
+    "name_lead": [
+      "me",
+      "llamo",
+      "soy",
+      "mi",
+      "nombre",
+      "es",
+      "pues",
+      "hola"
+    ],
     "phrases": [
       "Hoy hace un buen día para salir a pasear por el parque.",
       "Pon una alarma mañana a las siete y media, por favor.",
@@ -38,5 +57,10 @@
     "voice_cancelled": "Vale, lo dejamos.",
     "voice_forgotten": "He olvidado tu voz, {name}.",
     "voice_refused": "No reconozco tu voz: eso no lo hago."
+  },
+  "options_title": {
+    "voice_check": "Qué exige una voz conocida",
+    "voice_adapt": "Seguir aprendiendo voces",
+    "voice_match": "Exigencia de parecido"
   }
 }

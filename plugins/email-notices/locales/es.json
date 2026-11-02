@@ -6,9 +6,9 @@
     ]
   },
   "options": {
-    "email_notice_query": "qué emails avisa (una búsqueda de Gmail; por defecto, los no leídos de Principal)",
-    "email_notice_says": "qué dice de cada email nuevo",
-    "email_check_minutes": "cada cuántos minutos mira si hay emails nuevos"
+    "email_notice_query": "Qué correos de Gmail avisa, como búsqueda de Gmail. Si no se indica, los no leídos de Principal. De las demás cuentas avisa de los no leídos de la bandeja de entrada.",
+    "email_notice_says": "",
+    "email_check_minutes": "Cada cuántos minutos busca correos nuevos."
   },
   "choices": {
     "email_notice_says": {
@@ -25,5 +25,10 @@
     "email_subject": "Tienes un email nuevo de {sender}: {subject}.",
     "email_untitled": "sin asunto",
     "email_account": "En {account}: {sentence}"
+  },
+  "options_title": {
+    "email_notice_query": "Filtro de Gmail",
+    "email_notice_says": "Qué dice de cada correo",
+    "email_check_minutes": "Frecuencia de comprobación"
   }
 }
