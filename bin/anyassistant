@@ -18,13 +18,21 @@
 #   bin/anyassistant setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)
 #   bin/anyassistant corpus fetch|status|run|baseline   the audio corpus that measures how it listens (docs/corpus.md)
 #   bin/anyassistant run [server options]     in the foreground (what launchd runs)
+#   bin/anyassistant version            which version is installed
 #   bin/anyassistant update             installed: the new version from where it came (or the latest
 #                                       release, if that copy isn't there any more), then restarts
 #   bin/anyassistant uninstall [--all|--keep-data]   installed: removes it (your data, if you say so)
 #
 # Options also come from settings.json. The PID, the port and the log go to the cache
 # folder (.build/ while developing; $ANYASSISTANT_CACHE).
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Its own folder, also when run through a link (install.sh's ~/.local/bin/anyassistant): the link's
+# folder isn't the program's.
+SELF="$0"
+while [ -L "$SELF" ]; do
+  LINKED="$(readlink "$SELF")"
+  case "$LINKED" in /*) SELF="$LINKED" ;; *) SELF="$(dirname "$SELF")/$LINKED" ;; esac
+done
+ROOT="$(cd "$(dirname "$SELF")/.." && pwd)"
 # An installed copy says where its data and cache are (install.sh writes it).
 if [ -f "$ROOT/install.env" ]; then
   set -a; . "$ROOT/install.env"; set +a
@@ -72,6 +80,11 @@ PY
 PORT=$(cat "$PORTFILE" 2>/dev/null || echo 8080)
 
 case "$1" in
+  version|--version)
+    # Which version is installed: its release (0.2.3) if it came from one, and its build («<commits>-<hash>»).
+    BUILD="$(cat "$ROOT/VERSION" 2>/dev/null || git -C "$ROOT" describe --tags --always 2>/dev/null)"
+    echo "AnyAssistant ${BUILD:-?}"
+    ;;
   run)
     # In the foreground, as launchd starts it (the installed service): its PID is the server's.
     shift
