@@ -221,7 +221,10 @@ class Mac(private val context: Context) {
                 cookie = answer.headers("Set-Cookie").firstOrNull { it.startsWith("jarvis_device=") }?.substringBefore(";")
             }
         }
-        // HTTPS, if the Mac has it: its authority, to trust it (and nothing else) from now on.
+        // HTTPS, if the Mac has it: its authority, to trust it (and nothing else) from now on; if it
+        // has none (now), what another server (or this one before) had goes.
+        authority = null
+        httpsPort = 0
         runCatching {
             val info = plainClient.newCall(Request.Builder().url("$plain/https/info").build()).execute().use {
                 if (it.code == 200) JSONObject(it.body.string()) else null

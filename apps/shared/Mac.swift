@@ -72,7 +72,10 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
 
     /// Its name, then its IP: the first that answers soon (nil: none does).
     func reachable(_ url: (String) -> URL) async -> (String, Int)? {
-        for name in [host, address].compactMap({ $0 }) where !name.isEmpty {
+        // This device's own server (the Mac app's): only there; by the network's address it would be
+        // refused as another device while it restarts.
+        let own = host == "127.0.0.1" || host == "localhost"
+        for name in (own ? [host] : [host, address].compactMap({ $0 })) where !name.isEmpty {
             var request = URLRequest(url: url(name).appendingPathComponent("status"))
             request.timeoutInterval = 8
             if let (raw, found) = try? await session.data(for: request), let status = (found as? HTTPURLResponse)?.statusCode {
@@ -118,6 +121,10 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
             UserDefaults.standard.set(der, forKey: "authority")
             httpsPort = info["port"] as? Int ?? 443
             copyCookies(from: plain, to: name)  // the pairing's cookie, for the HTTPS address too
+        } else {  // this server has no HTTPS (now): what another one (or this one before) had goes
+            authority = nil
+            UserDefaults.standard.removeObject(forKey: "authority")
+            httpsPort = nil
         }
         // Its IP, for when its name isn't found (the certificate is for it too).
         if let (raw, _) = try? await session.data(from: plain.appendingPathComponent("https/info")),
@@ -137,7 +144,7 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
     /// and its name isn't found from here): its address now, from its Bonjour announcement.
     func url() async -> URL? {
         if let (name, _) = await reachable({ self.base($0) }) { exact = false; return base(name) }
-        if exact { return nil }  // moved by hand: there or nowhere (not the old one, nor another found)
+        if exact || host == "127.0.0.1" || host == "localhost" { return nil }  // moved by hand, or its own: there or nowhere
         guard let found = await discover(), found != address else { return nil }
         for known in [host, address].compactMap({ $0 }) {  // the pairing's cookie, for the new address
             copyCookies(from: URL(string: "http://\(known):\(port)")!, to: found)
