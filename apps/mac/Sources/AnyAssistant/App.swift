@@ -360,6 +360,7 @@ struct SetupView: View {
             case .preparing: working(setup.note)
             case .questions: form
             case .installing, .finished: progress
+            case .device: deviceStep
             }
         }
         .padding(28)
@@ -503,9 +504,47 @@ struct SetupView: View {
         }
     }
 
+    /// A «device» step, right after installing (your voice): what it is and its button, or «Not now»;
+    /// then, while it waits for the server, and what to do now (the phrase to read).
+    @ViewBuilder var deviceStep: some View {
+        let step = setup.devices.first
+        let now = setup.device
+        VStack(spacing: 14) {
+            Spacer()
+            switch now.stage {
+            case .offer:
+                Image(systemName: "waveform.circle.fill").font(.system(size: 54)).foregroundStyle(.tint)
+                Text(step?.title ?? "").font(.title2.bold())
+                Text(step?.help ?? "").font(.title3).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            case .waiting:
+                ProgressView()
+                Text(T("Waiting for the server…")).foregroundStyle(.secondary)
+            case .running:
+                Text(now.title).font(.headline)
+                if let fraction = now.fraction { ProgressView(value: fraction).frame(width: 280) }
+                Text(now.text).font(.system(size: 26, weight: .semibold))
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+                Text(now.detail).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            }
+            Spacer()
+            HStack {
+                Spacer()
+                Button(now.stage == .running ? T("Cancel") : T("Not now")) { setup.skipDevice() }
+                if now.stage == .offer {
+                    Button(step?.action ?? "") { setup.startDevice() }
+                        .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
     @ViewBuilder func symbol(_ status: StepRow.Status) -> some View {
         switch status {
         case .running: ProgressView().controlSize(.small)
+        case .later: Image(systemName: "clock").foregroundStyle(.secondary)
         case .done: Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
         case .skipped: Image(systemName: "minus.circle").foregroundStyle(.secondary)
         case .failed: Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
