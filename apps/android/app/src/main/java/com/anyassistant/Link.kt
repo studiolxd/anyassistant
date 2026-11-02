@@ -113,11 +113,12 @@ class Link(private val context: Context) {
 
     private fun connected() {
         set(State.CONNECTED)
-        audio.start { pcm, level ->
+        val listening = audio.start { pcm, level ->
             socket?.send(pcm.toByteString())
             val now = System.currentTimeMillis()
             if (now - lastLevel > 33) { lastLevel = now; scope.launch { face.voice = level } }  // the face follows your voice
         }
+        if (!listening) report("no microphone: the recorder didn't start")
         scope.launch { configure() }
         if (tapWhenConnected) {
             tapWhenConnected = false
@@ -246,8 +247,8 @@ class Link(private val context: Context) {
     private fun takePhoto(id: Int) {
         if (!eyes || !inFront) return
         camera.photo { jpeg ->
-            if (jpeg == null) return@photo
             scope.launch {
+                if (jpeg == null || jpeg.isEmpty()) return@launch report("photo: none (no camera, or it failed)")
                 val base = mac.url() ?: return@launch
                 withContext(Dispatchers.IO) {
                     runCatching {

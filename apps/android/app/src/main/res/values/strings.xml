@@ -9,15 +9,13 @@
     <string name="keep_listening_note">With the screen off it listens while its notification is there; «Stop listening» in it, or here, stops it.</string>
     <string name="keep_screen_on">Keep the screen on</string>
     <string name="mac_address">Host</string>
-    <string name="found_by_itself">Empty: found by itself (or 192.168.1.10)</string>
     <string name="connect">Connect</string>
     <string name="connected">Connected</string>
     <string name="pair_again">Pair again</string>
     <string name="pair">Pair</string>
     <string name="pair_how">To get the code, open AnyAssistant on the server and select Connect another device.</string>
-    <string name="code_from_mac">Code from the server</string>
-    <string name="wrong_code">That code isn\'t right (or it expired).</string>
-    <string name="mac_not_answering">The server isn\'t answering: is AnyAssistant running and this device on the same network?</string>
+    <string name="wrong_code">The code is incorrect or has expired.</string>
+    <string name="mac_not_answering">The server isn\'t responding. Make sure AnyAssistant is running and this device is on the same network.</string>
     <string name="looking_for_mac">Looking for the server…</string>
     <string name="pair_again_needed">It has to be paired again.</string>
     <string name="listening">%1$s is listening</string>
@@ -44,6 +42,7 @@
     <string name="pairing_code">Pairing code</string>
     <string name="connecting">Connecting…</string>
     <string name="scan_code">Scan the code</string>
-    <string name="scan_hint">The QR code that «Connect another device» shows on the server: it connects by itself.</string>
-    <string name="camera_needed">Allow the camera to scan the code.</string>
+    <string name="scan_hint">The QR code that “Connect another device” shows on the server.</string>
+    <string name="camera_needed">Allow the camera in Settings to scan the code.</string>
+    <string name="connecting_to">Connecting to %1$s…</string>
 </resources>

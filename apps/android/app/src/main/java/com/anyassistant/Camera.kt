@@ -36,6 +36,7 @@ class Camera(private val context: Context) {
     private var owner: LifecycleOwner? = null
     private var showing: PreviewView? = null
     private var lastFrame = 0L
+    @Volatile private var latest: ByteArray? = null  // the last frame, for a photo that fails
     @Volatile var running = false
         private set
 
@@ -47,7 +48,7 @@ class Camera(private val context: Context) {
             val now = System.currentTimeMillis()
             if (now - lastFrame >= 1000 && onFrame != null) {
                 lastFrame = now
-                jpeg(upright(image), 960, 70)?.let { onFrame?.invoke(it) }
+                jpeg(upright(image), 960, 70)?.let { latest = it; onFrame?.invoke(it) }
             }
             image.close()
         }
@@ -83,7 +84,7 @@ class Camera(private val context: Context) {
         }, ContextCompat.getMainExecutor(context))
     }
 
-    /** A photo at full resolution (null: no camera). */
+    /** A photo at full resolution; failed, the last frame (null: no camera). */
     fun photo(done: (ByteArray?) -> Unit) {
         val wasRunning = running
         if (!wasRunning) start()
@@ -92,12 +93,12 @@ class Camera(private val context: Context) {
                 val bytes = jpeg(upright(image), 4096, 90)
                 image.close()
                 if (!wasRunning) ContextCompat.getMainExecutor(context).execute { stop() }
-                done(bytes)
+                done(bytes ?: latest)
             }
 
             override fun onError(exception: ImageCaptureException) {
                 if (!wasRunning) ContextCompat.getMainExecutor(context).execute { stop() }
-                done(null)
+                done(latest)
             }
         })
     }
