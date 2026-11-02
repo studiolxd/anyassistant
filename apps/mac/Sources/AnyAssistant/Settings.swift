@@ -276,7 +276,7 @@ struct SettingsView: View {
                     Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
                 }
             }
-            .navigationSplitViewColumnWidth(240)  // fixed: room for the search field
+            .navigationSplitViewColumnWidth(min: 240, ideal: 240, max: 240)  // fixed (min = max: a single width only sets the first one): room for the search field
             .toolbar(removing: .sidebarToggle)
         } detail: {
             VStack(spacing: 0) {
