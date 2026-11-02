@@ -1023,7 +1023,8 @@ fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.
   restartButton.hidden = Boolean(WINDOW);
   restartButton.textContent = T('Restart');
   restartButton.onclick = function () { if (confirm(T('Restart the server now?'))) restart(); };
-  if (!WINDOW) $('aside .foot').insertBefore(languagePicker(me), restartButton);  // the apps' windows: the app's own setting
+  // In the Windows and Linux app's Settings too: the app follows the cookie (its menu, its face's device).
+  if (!WINDOW || WINDOW === 'settings') $('aside .foot').insertBefore(languagePicker(me), restartButton);
   api('GET', '/admin/status').then(function (s) {
     $('#title').textContent = s.name;
     $('#subtitle').textContent = s.computer + ' · ' + s.version;

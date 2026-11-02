@@ -17,10 +17,14 @@ const microphone = require('./microphone');
 const updates = require('./updates');
 
 // Its texts: the key is the English in the code (the Mac app's); locales/<language>.json says it
-// in the system's language (app.getLocale: known once the app is ready).
+// in the interface's language: the one chosen in its Settings («Idioma de la interfaz», the admin
+// page's cookie), else the system's (app.getLocale: known once the app is ready).
 let TEXTS = {};
+const UI_LANGUAGES = ['en', 'es'];
+const interfaceCode = () => (UI_LANGUAGES.includes(state.ui_language) ? state.ui_language
+  : (app.getLocale() || '').startsWith('es') ? 'es' : 'en');
 function loadTexts() {
-  TEXTS = require((app.getLocale() || '').startsWith('es') ? './locales/es.json' : './locales/en.json');
+  TEXTS = require(interfaceCode() === 'es' ? './locales/es.json' : './locales/en.json');
 }
 const T = (english, ...values) => {
   let text = TEXTS[english] || english;
@@ -64,7 +68,8 @@ const windows = {};
 // --- What the app remembers (app.json, with your data): whether it listens on this device, and another server it talks to ---
 
 const stateFile = () => path.join(server.data, 'app.json');
-let state = { listening: true, client: null };  // client: {host, port, name}: another server; null: this one
+// ui_language: the interface's (auto, es, en); ui_unsaved: chosen here, not on the server yet.
+let state = { listening: true, client: null, ui_language: 'auto', ui_unsaved: false };  // client: {host, port, name}: another server; null: this one
 try { state = { ...state, ...JSON.parse(fs.readFileSync(stateFile(), 'utf8')) }; } catch (e) { /* the first time */ }
 function remember(changes) {
   Object.assign(state, changes);
@@ -297,6 +302,66 @@ async function followPauseOption() {
   } catch (e) { /* not now: as it was */ }
 }
 
+// --- The interface's language («Idioma de la interfaz»): chosen in its Settings (the admin page's
+// selector, a cookie of the app's pages); the app follows it (its menu) and keeps it on the server
+// for its face's device, as the Mac app does; one chosen there (Devices) comes here.
+
+const UI_COOKIE = 'ui_language';
+let languageAsked = 0;
+
+function chooseLanguage(code, fromServer = false) {
+  code = UI_LANGUAGES.includes(code) ? code : 'auto';
+  if (code === (state.ui_language || 'auto')) return;
+  remember({ ui_language: code, ui_unsaved: !fromServer });
+  loadTexts();
+  menu();
+  if (fromServer) {  // its pages too (the cookie)
+    const cookies = session.defaultSession.cookies;
+    (code === 'auto' ? cookies.remove(base(), UI_COOKIE)
+      : cookies.set({ url: base(), name: UI_COOKIE, value: code, expirationDate: Date.now() / 1000 + 365 * 86400 })).catch(() => {});
+  } else {
+    saveLanguage();
+  }
+}
+
+/// Its face's device id (the page's own, kept in it), or null while the face isn't there.
+async function faceDevice() {
+  const made = windows.face;
+  if (!made || made.isDestroyed() || !made.webContents.getURL().startsWith('http')) return null;
+  try { return await made.webContents.executeJavaScript('localStorage.getItem("device")'); } catch (e) { return null; }
+}
+
+async function saveLanguage() {
+  const device = await faceDevice();
+  if (!device) return;
+  try {
+    const r = await session.defaultSession.fetch(base() + '/devices/ui_language', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(3000),
+      body: JSON.stringify({ device, ui_language: state.ui_language || 'auto' }) });
+    if (r.ok || r.status === 404) remember({ ui_unsaved: false });  // 404: the plugin «devices» is off
+  } catch (e) { /* not now: next time */ }
+}
+
+async function followLanguage() {
+  if (Date.now() - languageAsked < 30000) return;
+  languageAsked = Date.now();
+  if (state.ui_unsaved) return saveLanguage();
+  const device = await faceDevice();
+  if (!device) return;
+  try {
+    const r = await session.defaultSession.fetch(base() + '/config?device=' + encodeURIComponent(device), { signal: AbortSignal.timeout(3000) });
+    const theirs = (await r.json()).ui_language;
+    if (theirs) chooseLanguage(theirs, true);
+  } catch (e) { /* not now */ }
+}
+
+function watchLanguageCookie() {
+  session.defaultSession.cookies.on('changed', (e, cookie, cause, removed) => {
+    if (cookie.name !== UI_COOKIE || (removed && cause === 'overwrite')) return;
+    chooseLanguage(removed ? 'auto' : cookie.value);
+  });
+}
+
 const faceRuns = () => Boolean(windows.face && !windows.face.isDestroyed() && windows.face.webContents.getURL().startsWith('http'));
 
 // What the page does (its own functions: tell, holdMicrophone): once per connection (a page that
@@ -417,7 +482,7 @@ function showTray() {
   tray = new Tray(icon);
   tray.on('click', () => ((isClient() || running()) ? showFace() : null));  // Windows: a click shows it
   menu();
-  setInterval(async () => { if (!isClient()) await server.check(); await followDevices(); await followLink(); await followPauseOption(); menu(); }, 5000);  // the server, its devices, permissions: as they are
+  setInterval(async () => { if (!isClient()) await server.check(); await followDevices(); await followLink(); await followPauseOption(); await followLanguage(); menu(); }, 5000);  // the server, its devices, permissions: as they are
   setInterval(lookAtMicrophone, microphone.EVERY * 1000);  // as a client: another app using the microphone
   setInterval(async () => { await followUpdates(); menu(); }, 60 * 1000);  // the community's updates (the server looks once a day)
 }
@@ -488,6 +553,7 @@ app.on('before-quit', async (e) => {
 
 app.whenReady().then(async () => {
   loadTexts();
+  watchLanguageCookie();
   if (process.platform === 'win32') app.setAppUserModelId('com.anyassistant.desktop');  // its notifications, as the installer's shortcut
   permissions();
   setup.configure({ server, T,

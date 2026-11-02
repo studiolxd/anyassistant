@@ -6,11 +6,6 @@ import AppKit
 import Foundation
 import SwiftUI
 
-/// A text in the Mac's language: the English one is the key (Resources/<lang>.lproj/Localizable.strings).
-func T(_ english: String) -> String {
-    NSLocalizedString(english, comment: "")
-}
-
 /// An LLM's name as its maker writes it: «OpenAI», «OpenCode», «Claude».
 func llmName(_ id: String) -> String {
     ["claude": "Claude", "codex": "Codex", "gemini": "Gemini", "opencode": "OpenCode", "openai": T("OpenAI-compatible"),

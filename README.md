@@ -136,6 +136,40 @@ inglés en Suiza?» goes to the LLM. Each locale lists the verbs
 (`commands.language`) and the languages' names (`languages`): a new language needs
 its name added to the others.
 
+### What it speaks, and the interface
+
+Two languages, apart:
+
+- **What the assistant speaks and understands**: the one above (`language`, one for the
+  whole server: its voice, its answers, its voice commands, the wake phrase).
+- **The interface**: the texts of each screen (the device's page, the apps, the web admin,
+  the themes page, the QR page `/connect`). Each device and each browser chooses its own
+  (**Idioma de la interfaz**: Automático, English, Español); the assistant can speak
+  Spanish while an iPad shows its screen in English.
+
+The interface's language of a request (`web.ui_language`), in this order:
+
+1. `?ui=<lang>` (the apps ask `/config?ui=…` with their own setting);
+2. the device's own, `ui_language` in `devices.json` (`/config?device=<id>`: the page sends
+   its id), set in **Devices** (the Mac app's sheet of a device, the web admin's page of a
+   device) or by the device's app (`POST /devices/ui_language`);
+3. the browser's cookie `ui_language` (the selector at the bottom of the web admin's sidebar;
+   the themes page and the page in that browser follow it);
+4. the browser's `Accept-Language`;
+5. the assistant's language.
+
+Only a language with interface texts counts (a `ui` in its locale: `en`, `es`); else
+English. `i18n.ui(code)` loads another language's texts alongside `i18n.L`, which stays the
+assistant's.
+
+The apps: **Idioma de la interfaz** in their settings (the Mac's Settings → Asistente; the
+iPhone and iPad's Ajustes; Android's Ajustes; the Windows and Linux app's Settings window,
+the admin page's selector) changes the app's own texts (Apple: the chosen `.lproj`; Android:
+its per-app language, or its context before Android 13; the desktop app: its `locales/`)
+and the face's texts it asks the server for, and saves it on the server for that device, so
+both agree: one chosen in Devices reaches the app too. The Apple Watch follows its own
+system's language (the iPhone's, unless set apart).
+
 ## Settings
 
 `settings.json` in the project (not in git; see `settings.example.json`) holds

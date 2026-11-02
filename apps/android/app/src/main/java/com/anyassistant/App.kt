@@ -18,8 +18,11 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 
 class App : Application() {
+    override fun attachBaseContext(base: Context) = super.attachBaseContext(Interface.wrap(base))
+
     override fun onCreate() {
         super.onCreate()
+        Interface.apply(this)  // the interface's language chosen in the app (Android 13 or later: its own)
         Notices.channels(this)
         link = Link(this)
     }
@@ -32,6 +35,8 @@ class App : Application() {
 
 /** While it listens: a quiet notification («Eva is listening»), so Android lets it keep the microphone. */
 class ListenService : Service() {
+    override fun attachBaseContext(base: Context) = super.attachBaseContext(Interface.wrap(base))
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

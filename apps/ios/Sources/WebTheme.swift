@@ -1,4 +1,4 @@
-// Every theme but Eyes: the server's page for the apps (/?app&theme=<name>: plugins/page/web, the
+// Every theme but Eyes: the server's page for the apps (/?app&theme=<name>&ui=<lang>: plugins/page/web, the
 // same page a browser shows, so a theme from the community looks the same here) in a web view, fed
 // by the app. The app keeps the microphone, the audio, the camera, the notifications and the
 // connection (Link): the page opens none of them. It gets what the server says (forward), the
@@ -77,7 +77,8 @@ final class WebFace: NSObject, ObservableObject {
     private func load(_ theme: String, in view: WKWebView) {
         guard let base, var parts = URLComponents(url: base, resolvingAgainstBaseURL: false) else { return }
         parts.path = "/"
-        parts.queryItems = [URLQueryItem(name: "app", value: nil), URLQueryItem(name: "theme", value: theme)]
+        parts.queryItems = [URLQueryItem(name: "app", value: nil), URLQueryItem(name: "theme", value: theme),
+                            URLQueryItem(name: "ui", value: Interface.code)]  // the app's interface language
         guard let url = parts.url else { return }
         let store = view.configuration.websiteDataStore.httpCookieStore
         let group = DispatchGroup()

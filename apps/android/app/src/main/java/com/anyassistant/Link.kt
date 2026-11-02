@@ -9,6 +9,7 @@
 
 package com.anyassistant
 
+import android.net.Uri
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.util.Base64
@@ -194,22 +195,51 @@ class Link(private val context: Context) {
         }
     }
 
-    /** The face's texts, theme and screen settings: the Mac's /config (as the page's), for this device's theme. */
-    suspend fun configure() {
+    /** The interface's language changed here (the app's screen made again in it), or from the server. */
+    var interfaceLanguageShown: (() -> Unit)? = null
+
+    /** The face's texts, theme and screen settings: the Mac's /config (as the page's), for this device's
+     *  theme and its interface's language (the app's setting, kept on the server for this device too: a
+     *  choice made here goes there; one made there, in the Mac's Devices, comes here). */
+    suspend fun configure(again: Boolean = true) {
         val base = mac.url() ?: return
+        if (Interface.unsaved(context)) saveInterfaceLanguage(base)
         val prefs = context.getSharedPreferences("anyassistant", Context.MODE_PRIVATE)
         val theme = prefs.getString("theme", null)
+        val query = "?device=" + Uri.encode(mac.device) + "&ui=" + Interface.code(context) + (theme?.let { "&theme=" + Uri.encode(it) } ?: "")
         val config = withContext(Dispatchers.IO) {
             runCatching {
-                mac.client.newCall(mac.request("$base/config" + (theme?.let { "?theme=$it" } ?: "")).build()).execute()
+                mac.client.newCall(mac.request("$base/config$query").build()).execute()
                     .use { if (it.code == 200) JSONObject(it.body.string()) else null }
             }.getOrNull()
         } ?: return
+        val theirs = config.optString("ui_language", "")
+        if (again && theirs.isNotEmpty() && theirs != Interface.chosen(context) && !Interface.unsaved(context)) {
+            Interface.choose(context, theirs, fromServer = true)  // changed in the Mac's Devices: this app too
+            interfaceLanguageShown?.invoke()
+            return configure(again = false)
+        }
         web.configured(base, mac.cookie)
         face.configure(config)
-        web.forward(JSONObject().put("type", "config"))  // the page reads its texts and settings again
+        web.forward(JSONObject().put("type", "config").put("ui", face.lang))  // the page reads its texts and settings again
         send(JSONObject().put("type", "theme").put("name", face.theme))  // its theme's sounds are played from the Mac
         fetchAlarmSound(base, face.theme)
+    }
+
+    /** The interface's language chosen in the app's settings: saved on the server, the face's texts in it. */
+    fun interfaceLanguageChanged() {
+        scope.launch { configure(again = false) }
+    }
+
+    private suspend fun saveInterfaceLanguage(base: String) {
+        val body = JSONObject().put("device", mac.device).put("ui_language", Interface.chosen(context)).toString()
+        val status = withContext(Dispatchers.IO) {
+            runCatching {
+                mac.client.newCall(mac.request("$base/devices/ui_language")
+                    .post(body.toRequestBody("application/json".toMediaType())).build()).execute().use { it.code }
+            }.getOrNull()
+        }
+        if (status == 200 || status == 404) Interface.saved(context)  // 404: the plugin «devices» is off
     }
 
     /** The theme's alarm (the Mac's /alarm.wav, as it rings there), kept for the phone's own alarms. */

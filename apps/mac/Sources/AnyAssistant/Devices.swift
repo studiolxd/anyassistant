@@ -1,7 +1,8 @@
 // The devices (the plugin «devices», only from the Mac), as System Settings lists Bluetooth's: a
 // row each (its icon, name, room and state; the connected ones first) and «Conectar otro
 // dispositivo…»; a click opens its sheet (as a Bluetooth device's: no navigation in the window,
-// whose title bar it would break): its state, name and room, its language model, its room's noise
+// whose title bar it would break): its state, name and room, its language model, its interface's
+// language («Idioma de la interfaz»: its screen and its app), its room's noise
 // (the plugin «calibration»: «Calibrar» measures a few seconds of silence there), and «Olvidar este
 // dispositivo».
 
@@ -16,6 +17,7 @@ struct DeviceItem: Identifiable, Equatable {
     let seen: Date?
     let press: Bool  // talks a sentence at a time (the watch): never «connected»
     var llm: String = ""  // its own LLM; "": the general one
+    var uiLanguage: String = "auto"  // its interface's language: auto, es, en
     var kind: String = ""  // «iPhone», «Mac»…: its icon
     var noise: String = ""  // its room, measured: quiet, some, noisy; "": not measured
     var noiseDb: Double?
@@ -32,6 +34,7 @@ final class Devices: ObservableObject {
     @Published var off = false  // the plugin «devices» is off (or the server is older)
     @Published var llms: [String] = []  // the LLMs a device may use
     @Published var general = "claude"  // the general one
+    @Published var uiLanguages: [(code: String, name: String)] = [("en", "English"), ("es", "Español")]  // for its interface
 
     let server = Server.shared
 
@@ -70,6 +73,7 @@ final class Devices: ObservableObject {
                        current: $0["current"] as? Bool ?? false,
                        seen: ($0["seen"] as? Double).map { Date(timeIntervalSince1970: $0) },
                        press: $0["press"] as? Bool ?? false, llm: $0["llm"] as? String ?? "",
+                       uiLanguage: $0["ui_language"] as? String ?? "auto",
                        kind: $0["kind"] as? String ?? "",
                        noise: ($0["noise"] as? [String: Any])?["noise"] as? String ?? "",
                        noiseDb: ($0["noise"] as? [String: Any])?["db"] as? Double,
@@ -80,6 +84,14 @@ final class Devices: ObservableObject {
         .sorted { ($0.connected ? 0 : 1, $0.name) < ($1.connected ? 0 : 1, $1.name) }
         llms = answer["llms"] as? [String] ?? llms
         general = answer["general"] as? String ?? general
+        if let found = answer["ui_languages"] as? [String: String] {
+            uiLanguages = found.sorted { $0.key < $1.key }.map { (code: $0.key, name: $0.value) }
+        }
+    }
+
+    /// Its interface's language (its screen, its app): «auto» is its own system's or browser's.
+    func setUILanguage(_ item: DeviceItem, _ code: String) async {
+        if let answer = await call(["id": item.id, "ui_language": code]) { show(answer) }
     }
 
     /// Its own LLM ("": back to the general one), from its next question.
@@ -222,6 +234,16 @@ struct DeviceDetail: View {
                 }
             } footer: {
                 Text(T("The one that answers on this device.")).font(.caption).foregroundStyle(.secondary)
+            }
+            Section {
+                Picker(T("Interface Language"), selection: Binding(get: { item.uiLanguage }, set: { new in
+                    Task { await devices.setUILanguage(item, new) }
+                })) {
+                    Text(T("Automatic")).tag("auto")
+                    ForEach(devices.uiLanguages, id: \.code) { Text($0.name).tag($0.code) }
+                }
+            } footer: {
+                Text(T("The language of its screen and its app. The assistant speaks the one in General.")).font(.caption).foregroundStyle(.secondary)
             }
             Section {
                 LabeledContent(T("Room noise")) {

@@ -37,3 +37,8 @@
 "The QR code that «Connect another device» shows on the server." = "El código QR que muestra «Conectar otro dispositivo» en el servidor.";
 "Allow the camera in Settings to scan the code." = "Permite la cámara en Ajustes para escanear el código.";
 "Connecting to %@…" = "Conectando con %@…";
+
+/* The interface's language: this app's (apart from the one the assistant speaks, the server's) */
+"Interface Language" = "Idioma de la interfaz";
+"Automatic" = "Automático";
+"The language of this app and its screen. The assistant speaks the server's." = "El idioma de esta app y de su pantalla. El asistente habla el del servidor.";
