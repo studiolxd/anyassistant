@@ -390,3 +390,10 @@ def test_tools_for_the_llm(mac, es):
     assert control.go_to_window("marca").startswith("Brought «MARCA") and mac.raised[-1].app == "Safari"
     assert control.go_to_window("safari").startswith("Brought «MARCA")  # its window, by the app's name
     assert control.type_text("hola") == "Typed 4 characters." and mac.typed == ["hola"]
+
+
+def test_a_windows_path_says_its_name():
+    """Windows' paths («C:\\Users\\…»): the file's name is said, not the whole path; and how deep it is counts."""
+    assert Found(r"C:\Users\ana\Documents\Informe septiembre.pdf", False).name == "Informe septiembre.pdf"
+    assert Found("C:\\Users\\ana\\Dev\\", True).name == "Dev"
+    assert matching.depth(r"C:\Users\ana\Dev") == matching.depth("/Users/ana/Dev") == 3

@@ -149,7 +149,7 @@ def test_the_admin_pages_spanish_is_the_macs():
 def test_the_desktop_apps_texts_are_in_spanish_and_the_macs():
     """The Windows and Linux app: every text it shows has its Spanish, the Mac's where it says the same."""
     used = set()
-    for file in ("main.js", "setup.js", "updates.js", "setup.html", "unavailable.html"):
+    for file in ("main.js", "setup.js", "updates.js", "app-updates.js", "setup.html", "unavailable.html"):
         used |= keys_in((DESKTOP / file).read_text())
     spanish = {k: v for k, v in json.loads((DESKTOP / "locales/es.json").read_text()).items() if k != "_"}
     assert used <= spanish.keys(), used - spanish.keys()

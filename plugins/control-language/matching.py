@@ -197,7 +197,7 @@ class Found:
 
     @property
     def name(self) -> str:
-        return self.path.rstrip("/").rsplit("/", 1)[-1]
+        return re.split(r"[\\/]", self.path.rstrip("/\\"))[-1]  # Windows' paths too (C:\\Users\\…)
 
 
 # Paths nobody means when they say a name out loud: caches, backups, a package manager's copy of
@@ -228,7 +228,7 @@ def _file_score(name: str, query: str) -> int:
 
 
 def depth(path: str) -> int:
-    return path.count("/")
+    return path.count("/") + path.count("\\")
 
 
 def rank_files(query: str, folder: bool, found: list[Found]) -> list[Found]:
