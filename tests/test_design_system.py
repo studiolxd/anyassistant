@@ -24,13 +24,15 @@ def declared(block: str) -> dict[str, str]:
     return dict(re.findall(r"(--[a-z0-9-]+)\s*:\s*([^;]+);", block))
 
 
-def test_the_tokens_are_there_dark_and_light():
-    dark_block, light_block = without_comments(TOKENS).split("@media (prefers-color-scheme: light)")[:2]
-    dark, light = declared(dark_block), declared(light_block.split(".ui")[0])
-    assert dark["--color-primary"] == "#34AFF7" and light["--color-primary"] == "#0A8FD8"
+def test_the_tokens_are_there_dark_only():
+    """Dark only: the brand's blue (the logo's, Eyes') the same everywhere."""
+    css = without_comments(TOKENS)
+    assert "prefers-color-scheme" not in css
+    dark = declared(css.split("/* --- Components")[0] if "/* --- Components" in css else css.split(".ui")[0])
+    assert dark["--color-primary"] == "#34AFF7"
     colours = ["primary", "primary-text", "background", "surface", "surface-raised", "border", "text",
                "text-secondary", "success", "warning", "danger"]
-    assert all(f"--color-{c}" in dark and f"--color-{c}" in light for c in colours)
+    assert all(f"--color-{c}" in dark for c in colours)
     others = ["--font-family", "--font-mono", "--weight-regular", "--weight-medium", "--weight-semibold",
               "--shadow", "--duration", "--easing", "--content-width"]
     others += [f"--text-{s}" for s in ("xs", "sm", "md", "lg", "xl", "2xl", "code")]
@@ -41,13 +43,13 @@ def test_the_tokens_are_there_dark_and_light():
 
 def test_the_components_apply_only_inside_ui():
     """The device's page also shows a theme (someone else's HTML): .card, .row… must stay its own."""
-    components = without_comments(TOKENS).split("@media (prefers-color-scheme: light)")[1]
-    components = components[components.index("}", components.index("}") + 1) + 1:]  # after the light block
+    css = without_comments(TOKENS)
+    components = css[css.index("}", css.index(":root")) + 1:]  # after the tokens
     selectors = re.findall(r"([^{}]+)\{", components)
     assert selectors
     for group in selectors:
         for selector in group.split(","):
-            assert selector.strip().startswith(".ui"), selector
+            assert selector.strip().startswith((".ui", "body.ui")), selector
     for name in ("button", "secondary", "danger", "link", "field", "card", "row", "segmented", "badge", "header"):
         assert f".{name}" in components, name
 

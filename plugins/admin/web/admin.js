@@ -223,7 +223,7 @@ function pair(main) {
     }
     box.appendChild(el('div', { class: 'pair' }, [
       el('img', { src: '/admin/qr?text=' + encodeURIComponent(connect), alt: connect }),
-      el('div', { style: 'flex:1;min-width:240px' }, words)
+      el('div', { class: 'grow' }, words)
     ]));
     function step(title, how) {
       return el('div', { class: 'step' }, [el('b', { text: title }), el('div', {}, how)]);
@@ -648,7 +648,7 @@ function voicesPage(main) {
 // and what happens, until it ends.
 function guide(learn, drawPeople) {
   learn.innerHTML = '';
-  var box = el('div', { style: 'padding:12px 0' });
+  var box = el('div', { class: 'padded' });
   learn.appendChild(box);
   var device = el('select');
   var name = el('input', { placeholder: T('the person\'s: «Suvi»') });
@@ -657,12 +657,12 @@ function guide(learn, drawPeople) {
   function row(title, field) {
     return el('div', { class: 'row' }, [el('div', { class: 'what', text: title }), el('div', { class: 'control' }, [field])]);
   }
-  box.appendChild(el('h2', { style: 'margin-top:4px', text: T('Learn a voice') }));
+  box.appendChild(el('h2', { class: 'tight', text: T('Learn a voice') }));
   box.appendChild(el('p', { class: 'muted', text: T('Stand in front of the device you talk to most: its microphone is the one that will hear you. Then read the phrases this window shows, one at a time.') }));
   box.appendChild(row(T('On the device'), device));
   box.appendChild(row(T('Name'), name));
   box.appendChild(note);
-  box.appendChild(el('p', { style: 'text-align:right' }, [start]));
+  box.appendChild(el('p', { class: 'end' }, [start]));
   // The connected devices, as they are now (renamed, connected), while choosing.
   function listDevices() {
     api('GET', '/devices').then(function (data) {
@@ -703,7 +703,7 @@ function guide(learn, drawPeople) {
           box.appendChild(el('p', { class: 'muted', text: T('Listening on the device…') }));
         } else if (now.step === 'phrase') {
           box.appendChild(el('div', { class: 'between' }, [el('b', { text: T('Phrase %d of %d').replace('%d', now.number).replace('%d', now.total) }), cancel]));
-          box.appendChild(el('progress', { value: now.number - 1, max: now.total, style: 'display:block;width:100%;margin:8px 0' }));
+          box.appendChild(el('progress', { value: now.number - 1, max: now.total, class: 'progress' }));
           box.appendChild(el('p', { class: 'muted', text: T('Read it out loud:') }));
           box.appendChild(el('p', { class: 'phrase', text: now.phrase }));
           if (now.again) box.appendChild(el('p', { class: 'warn', text: T('A little longer: say the whole phrase again.') }));
@@ -737,7 +737,7 @@ function memoryPage(main) {
     return api('POST', '/admin/memory', body).then(function (r) { draw(r); if (r.error) problem(box, r.error); });
   }
   function row(who, fact, names) {
-    var text = el('input', { type: 'text', value: fact, style: 'width:100%' });
+    var text = el('input', { type: 'text', value: fact, class: 'field wide' });
     text.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') text.blur();
       if (e.key === 'Escape') { text.value = fact; text.blur(); }
@@ -860,7 +860,7 @@ function mailPage(main) {
       row(T('Address'), address), row(T('Name'), label), row(T('Password'), secret),
       el('details', { class: 'hand' }, [el('summary', { text: T('Servers') }), row('IMAP', imap), row('SMTP', smtp), row(T('Login'), user)]),
       note,
-      el('p', { style: 'text-align:right' }, [busy, ' ', add])
+      el('p', { class: 'end' }, [busy, ' ', add])
     ]));
   }).catch(function () {});
 }
@@ -954,7 +954,7 @@ function adminsPage(main) {
   api('GET', '/admin/admins').then(draw).catch(function () {});
   main.appendChild(el('h2', { text: T('A code for another browser') }));
   var shown = el('div');
-  main.appendChild(el('div', { class: 'card' }, [el('div', { style: 'padding:14px 0' }, [
+  main.appendChild(el('div', { class: 'card' }, [el('div', { class: 'padded' }, [
     el('button', { text: T('Make a code'), onclick: function () {
       api('POST', '/admin/code').then(function (r) {
         shown.innerHTML = '';

@@ -862,7 +862,7 @@ comunidad» tab for themes, Settings → Plugins → «De la comunidad» for plu
 **A page of its own** (as `/themes`, `/admin`, `/connect`) uses the design system,
 `plugins/page/web/tokens.css` (served at `/web/tokens.css`): link it first, versioned
 (`<link rel="stylesheet" href="/web/tokens.css?v=1">`), then your stylesheet, and put `class="ui"`
-on `<body>`. It brings the tokens, dark by default and light with the system's appearance
+on `<body>`. It brings the tokens, dark only (the brand's blue the same everywhere)
 (`--color-primary`, `--color-background`, `--color-surface`, `--color-text`, `--color-text-secondary`,
 `--color-success`/`warning`/`danger`, `--font-family`, `--text-xs`…`--text-code`, `--space-1`…`--space-8`,
 `--radius-sm`/`md`/`lg`/`full`, `--shadow`, `--duration`, `--easing`, `--content-width`) and, inside

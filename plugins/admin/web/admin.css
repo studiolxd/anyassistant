@@ -130,3 +130,11 @@ body.window-devices main { max-width: none; }
   .row .control { max-width: 100%; width: 100%; }
   .row .control textarea { width: 100%; }
 }
+
+/* Small layout helpers (instead of inline styles in admin.js). */
+.grow { flex: 1; min-width: 240px; }
+.padded { padding: var(--space-3) 0; }
+.tight { margin-top: var(--space-1); }
+.end { text-align: right; }
+.wide { width: 100%; box-sizing: border-box; }
+progress.progress { display: block; width: 100%; margin: var(--space-2) 0; }
