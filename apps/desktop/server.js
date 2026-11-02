@@ -1,6 +1,9 @@
 // The server, run by the app (as the Mac app does): it finds the program and your data, adopts a
 // server already running (Linux's systemd service, another start), or starts its own and keeps
-// an eye on it. Stopped cleanly through /admin/stop (Windows has no signals for it).
+// an eye on it. Stopped cleanly through /admin/stop (Windows has no signals for it). «Restart» by
+// voice (or the admin page's): the server it started ends with RESTART (it asks for it in
+// ANYASSISTANT_RESTART_EXIT) and the app starts it again, not counted as a failure (on Windows
+// os.execv would be another process, out of the app's sight).
 
 const { spawn, execFileSync } = require('child_process');
 const fs = require('fs');
@@ -10,6 +13,7 @@ const { EventEmitter } = require('events');
 
 const home = os.homedir();
 const WINDOWS = process.platform === 'win32';
+const RESTART = 75;  // the exit code of a server that asks to be started again
 
 function exists(p) {
   try { fs.accessSync(p); return true; } catch (e) { return false; }
@@ -141,7 +145,7 @@ class Server extends EventEmitter {
 
   environment() {
     return { ...process.env, ANYASSISTANT_APP: '1', ANYASSISTANT_HOME: this.data, ANYASSISTANT_CACHE: this.cache,
-             PYTHONUNBUFFERED: '1', PYTHONUTF8: '1' };
+             ANYASSISTANT_RESTART_EXIT: String(RESTART), PYTHONUNBUFFERED: '1', PYTHONUTF8: '1' };
   }
 
   // Runs a program to the end: its output, line by line, to «line»; the exit code (-1: it couldn't run).
@@ -224,10 +228,11 @@ class Server extends EventEmitter {
   async ended(code) {
     this.child = null;
     if (this.stopping) return this.set('stopped');
-    this.set('failed', 'crashed');  // «It stopped; starting it again…» (as the Mac says), unless it is just restarting
-    // «Reinicia» by voice on Windows: the server becomes another process (os.execv). Still there?
+    if (code === RESTART) return this.start();  // «reinicia»: it asked to be started again (not a failure)
+    this.set('failed', 'crashed');  // «It stopped; starting it again…» (as the Mac says)
     await new Promise((r) => setTimeout(r, 4000));
-    if (await this.answers()) { this.ours = false; return this.set('running'); }
+    if (this.child || this.stopping) return;  // started or stopped by hand meanwhile
+    if (await this.answers()) { this.ours = false; return this.set('running'); }  // another one has its port
     // Ended by itself: again, unless it keeps failing (3 times in 5 minutes).
     const now = Date.now();
     this.crashes = this.crashes.filter((t) => now - t < 300000).concat(now);
