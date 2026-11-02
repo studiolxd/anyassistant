@@ -266,7 +266,8 @@ class Assistant(Transcriber):
         self.send({"type": "timers", "items": alarms.timers.pending() if alarms else []})
 
     async def ring(self, item: dict):
-        """A timer, alarm or reminder is due: it rings until stopped (or ring_seconds), saying what it is."""
+        """A timer, alarm or reminder is due: it rings until stopped (or ring_seconds). Only a reminder is
+        also said (its text); a timer or an alarm is just its sound (words between rings only interrupt it)."""
         log.info("ringing: %s", item["kind"])
         self.ringing = self.rang = item
         self.ear.wake_up("alarm")  # so it hears «stop» or «snooze» without its name
@@ -282,7 +283,7 @@ class Assistant(Transcriber):
             self.toning_until = time.time() + len(tone) / 48000 + 0.1
             self.speaker.play(tone)
             await asyncio.sleep(len(tone) / 48000 + 0.3)
-            if not said:
+            if not said and item["kind"] == "reminder":
                 said = True
                 self._say(sentence)
                 await asyncio.sleep(3)

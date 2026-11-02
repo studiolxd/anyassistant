@@ -204,7 +204,7 @@ def _player() -> list[str] | None:
 
 
 async def ring_here(item: dict):
-    """No device connected: it rings on the server's own computer (and, on the Mac, says why)."""
+    """No device connected: it rings on the server's own computer (and, on the Mac, says a reminder's text)."""
     log.info("ringing here: %s", item["kind"])
     for _ in range(3):
         if sys.platform == "win32":
@@ -216,7 +216,7 @@ async def ring_here(item: dict):
         else:
             log.warning("nothing here plays sounds (pw-play, paplay or aplay)")
             return
-    if sys.platform == "darwin":
+    if sys.platform == "darwin" and item["kind"] == "reminder":  # a reminder's text; a timer or alarm, just its sound
         await (await asyncio.create_subprocess_exec("say", "-v", i18n.L.tts_voice, ring_sentence(item))).wait()
 
 
