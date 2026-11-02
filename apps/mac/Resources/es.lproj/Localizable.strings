@@ -203,3 +203,24 @@
 "Off" = "Desactivado";
 "Options" = "Opciones";
 "Applies after restarting." = "Se aplica al reiniciar.";
+
+/* The community catalog: themes and plugins other people share (Settings → Plugins; the Themes window) */
+"From the community" = "De la comunidad";
+"Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions." = "Plugins que comparte otra gente, de un catálogo público. Cada paquete se revisa antes de publicarlo. Un plugin se ejecuta en este servidor con tus permisos.";
+"Turn on the plugin «Community»." = "Activa el plugin «Comunidad».";
+"Nothing to install yet." = "Todavía no hay nada que instalar.";
+"Reload the catalog" = "Volver a cargar el catálogo";
+"update available" = "hay una actualización";
+"installed" = "instalado";
+"by" = "de";
+"version" = "versión";
+"Update" = "Actualizar";
+"Install «%s»?" = "¿Instalar «%s»?";
+"Update «%s»?" = "¿Actualizar «%s»?";
+"Remove «%s»?" = "¿Quitar «%s»?";
+"A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it." = "Un plugin es código que se ejecuta en este servidor con tus permisos. Instálalo solo si confías en su autor. Empieza desactivado: actívalo en Plugins cuando quieras usarlo.";
+"Installed." = "Instalado.";
+"Installed. It is off: turn it on in Plugins after restarting." = "Instalado. Está desactivado: actívalo en Plugins después de reiniciar.";
+"Updated. It applies after restarting." = "Actualizado. Se aplica al reiniciar.";
+"Removed." = "Quitado.";
+"Removed. It applies after restarting." = "Quitado. Se aplica al reiniciar.";

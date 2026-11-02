@@ -97,11 +97,30 @@ struct PluginItem: Identifiable {
     let missing: [String]
 }
 
+/// A package of the community catalog (the plugin «community»): a theme or a plugin other people share.
+struct CommunityItem: Identifiable {
+    let kind: String  // theme or plugin
+    let packageId: String
+    let name: String
+    let author: String
+    let version: String
+    let description: String
+    let installed: String?  // the version installed from the catalog, if any
+    let update: Bool  // the catalog has a newer one
+    let can: Bool  // it can be installed here; else «why» says what stops it
+    let why: String
+
+    var id: String { kind + ":" + packageId }
+}
+
 @MainActor
 final class Admin: ObservableObject {
     @Published var groups: [(id: String, title: String)] = []
     @Published var options: [OptionItem] = []
     @Published var plugins: [PluginItem] = []
+    @Published var community: [CommunityItem] = []
+    @Published var communityOn = true  // the plugin «community» answers
+    @Published var communityError: String?  // the catalog couldn't be read
     @Published var note: String?
     @Published var error: String?
     @Published var restartNeeded = false
@@ -117,7 +136,8 @@ final class Admin: ObservableObject {
         return groups.first { $0.id == place }?.title ?? place
     }
 
-    private func call(_ path: String, _ body: [String: Any]? = nil) async -> [String: Any]? {
+    /// A route of the admin's; nil if it failed (and «error» says so, unless quiet: a plugin that is off).
+    private func call(_ path: String, _ body: [String: Any]? = nil, quiet: Bool = false) async -> [String: Any]? {
         var request = URLRequest(url: URL(string: "http://127.0.0.1:\(server.port)/admin/\(path)")!)
         if let body {
             request.httpMethod = "POST"
@@ -126,11 +146,11 @@ final class Admin: ObservableObject {
         }
         guard let (raw, response) = try? await URLSession.shared.data(for: request),
               let answer = try? JSONSerialization.jsonObject(with: raw) as? [String: Any] else {
-            error = T("The server isn't answering: is it running?")
+            if !quiet { error = T("The server isn't answering: is it running?") }
             return nil
         }
         if (response as? HTTPURLResponse)?.statusCode != 200 {
-            error = answer["error"] as? String ?? T("It couldn't be saved.")
+            if !quiet { error = answer["error"] as? String ?? T("It couldn't be saved.") }
             return nil
         }
         error = nil
@@ -139,6 +159,47 @@ final class Admin: ObservableObject {
 
     func load() async {
         await loadSettings()
+        await loadPlugins()
+        await loadCommunity()
+    }
+
+    /// The community catalog: each package, what is installed and whether an update exists.
+    func loadCommunity(refresh: Bool = false) async {
+        guard let answer = await call("community" + (refresh ? "?refresh=1" : ""), quiet: true) else {
+            communityOn = false
+            return
+        }
+        communityOn = true
+        communityError = answer["error"] as? String
+        community = (answer["packages"] as? [[String: Any]] ?? []).map {
+            CommunityItem(kind: $0["kind"] as? String ?? "", packageId: $0["id"] as? String ?? "",
+                          name: $0["name"] as? String ?? "", author: $0["author"] as? String ?? "",
+                          version: $0["version"] as? String ?? "", description: $0["description"] as? String ?? "",
+                          installed: $0["installed"] as? String, update: $0["update"] as? Bool ?? false,
+                          can: $0["can"] as? Bool ?? false, why: $0["why"] as? String ?? "")
+        }
+    }
+
+    /// Installs or updates a package (a plugin: after the user confirmed, and it starts off).
+    func install(_ item: CommunityItem) async {
+        note = T("Installing…")
+        guard let answer = await call("community", ["install": ["kind": item.kind, "id": item.packageId],
+                                                    "confirm": item.kind == "plugin"]) else {
+            note = nil
+            return
+        }
+        if answer["restart"] as? Bool == true { restartNeeded = true }
+        note = answer["updated"] as? Bool == true ? T("Updated. It applies after restarting.")
+             : item.kind == "plugin" ? T("Installed. It is off: turn it on in Plugins after restarting.") : T("Installed.")
+        await loadCommunity()
+        await loadPlugins()
+    }
+
+    func remove(_ item: CommunityItem) async {
+        guard let answer = await call("community", ["remove": ["kind": item.kind, "id": item.packageId]]) else { return }
+        if answer["restart"] as? Bool == true { restartNeeded = true }
+        note = item.kind == "plugin" ? T("Removed. It applies after restarting.") : T("Removed.")
+        await loadCommunity()
         await loadPlugins()
     }
 
@@ -482,10 +543,12 @@ struct DictEditor: View {
 
 struct PluginsView: View {
     @ObservedObject var admin: Admin
+    @State private var asking: CommunityItem?  // a community plugin to install or update: it asks first
 
     let kinds = ["feature", "skill", "library", "brain", "llm", "stt", "tts", "wake", "vad"]
 
     var body: some View {
+        let shared = admin.community.filter { $0.kind == "plugin" }
         Form {
             ForEach(kinds, id: \.self) { kind in
                 // The ones that are on first, then the rest; each opens its page.
@@ -498,8 +561,37 @@ struct PluginsView: View {
                     }
                 }
             }
+            // From the community (the plugin «community»): the catalog's plugins, to install (after
+            // a warning: it is code that runs here), update or remove. Themes are in the Themes window.
+            Section {
+                if !admin.communityOn {
+                    Text(T("Turn on the plugin «Community».")).foregroundStyle(.secondary)
+                } else if let why = admin.communityError {
+                    Text(why).foregroundStyle(.orange)
+                } else if shared.isEmpty {
+                    Text(T("Nothing to install yet.")).foregroundStyle(.secondary)
+                }
+                ForEach(shared) { item in
+                    CommunityRow(item: item, admin: admin) { asking = item }
+                }
+                if admin.communityOn {
+                    Button(T("Reload the catalog")) { Task { await admin.loadCommunity(refresh: true) } }
+                        .buttonStyle(.link)
+                }
+            } header: {
+                Text(T("From the community"))
+            } footer: {
+                Text(T("Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions."))
+            }
         }
         .formStyle(.grouped)
+        .alert((asking?.installed == nil ? T("Install «%s»?") : T("Update «%s»?")).replacingOccurrences(of: "%s", with: asking?.name ?? ""),
+               isPresented: Binding(get: { asking != nil }, set: { if !$0 { asking = nil } }), presenting: asking) { item in
+            Button(item.installed == nil ? T("Install") : T("Update")) { Task { await admin.install(item) } }
+            Button(T("Cancel"), role: .cancel) {}
+        } message: { _ in
+            Text(T("A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it."))
+        }
     }
 
     func row(_ plugin: PluginItem) -> some View {
@@ -529,6 +621,43 @@ struct PluginsView: View {
         case "vad": T("Voice detection")
         case "library": T("Libraries")
         default: kind
+        }
+    }
+}
+
+/// A package of the community catalog: what it is, what is installed, and what can be done with it.
+struct CommunityRow: View {
+    let item: CommunityItem
+    @ObservedObject var admin: Admin
+    let install: () -> Void  // asks first (a plugin)
+    @State private var removing = false
+
+    var body: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(item.name)
+                    if let installed = item.installed {
+                        Text(item.update ? T("update available") : T("installed") + " " + installed)
+                            .font(.caption).foregroundStyle(item.update ? .orange : .secondary)
+                    }
+                }
+                Text([item.author.isEmpty ? "" : T("by") + " " + item.author, T("version") + " " + item.version]
+                        .filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.caption).foregroundStyle(.secondary)
+                Text(item.description).font(.caption).foregroundStyle(.secondary)
+                if !item.can { Text(item.why).font(.caption).foregroundStyle(.orange) }
+            }
+            Spacer()
+            if item.installed != nil {
+                if item.update && item.can { Button(T("Update")) { install() } }
+                Button(T("Remove"), role: .destructive) { removing = true }
+            } else if item.can {
+                Button(T("Install")) { install() }
+            }
+        }
+        .confirmationDialog(T("Remove «%s»?").replacingOccurrences(of: "%s", with: item.name), isPresented: $removing) {
+            Button(T("Remove"), role: .destructive) { Task { await admin.remove(item) } }
         }
     }
 }
