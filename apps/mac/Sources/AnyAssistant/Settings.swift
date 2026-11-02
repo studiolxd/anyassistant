@@ -334,7 +334,7 @@ struct SettingsView: View {
                     }
                     .padding(10).background(.yellow.opacity(0.2))
                 }
-                if let page = navigation.pages.last, search.trimmingCharacters(in: .whitespaces).isEmpty {
+                if let page = navigation.pages.last {  // opened from the search too: Back returns to the results
                     HStack(spacing: 8) {
                         Button { navigation.back() } label: { Image(systemName: "chevron.left") }
                             .buttonStyle(.borderless).help(T("Back"))
