@@ -25,7 +25,7 @@
     "monitor_connected": "Connected · {frames} frames received",
     "pair_prompt": "Type the code the server shows in «Connect another device».",
     "pair_button": "Connect",
-    "pair_wrong": "Wrong or expired code: ask the server for another.",
+    "pair_wrong": "The code isn't valid or has expired. Use the one the server shows now.",
     "pair_needed": "This device isn't paired: reload the page",
     "looking": "Looking…",
     "alarm": "{label}",
