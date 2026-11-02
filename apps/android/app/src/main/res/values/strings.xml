@@ -43,4 +43,7 @@
     <string name="host_hint">The name or IP address of the server.</string>
     <string name="pairing_code">Pairing code</string>
     <string name="connecting">Connecting…</string>
+    <string name="scan_code">Scan the code</string>
+    <string name="scan_hint">The QR code that «Connect another device» shows on the server: it connects by itself.</string>
+    <string name="camera_needed">Allow the camera to scan the code.</string>
 </resources>

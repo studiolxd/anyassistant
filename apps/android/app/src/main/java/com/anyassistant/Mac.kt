@@ -245,6 +245,31 @@ class Mac(private val context: Context) {
     }
 }
 
+/** What the QR or the link from «Conectar otro dispositivo» on the server says: where it is and its
+ *  code, so nothing is typed. anyassistant://connect?host=…&port=…&code=…&server=…&name=… (the app's
+ *  own link, on the QR's page), or the QR itself: http://<ip>:<port>/connect?code=…. The same as
+ *  the Apple apps' Mac.Invitation. */
+data class Invitation(val host: String, val port: Int, val code: String?, val name: String?) {
+    companion object {
+        fun parse(text: String): Invitation? = runCatching { android.net.Uri.parse(text) }.getOrNull()?.let(::parse)
+
+        fun parse(uri: android.net.Uri): Invitation? {
+            if (uri.isOpaque) return null
+            val code = uri.getQueryParameter("code")?.takeIf { it.isNotEmpty() }
+            val name = uri.getQueryParameter("name")?.takeIf { it.isNotEmpty() }
+            return when {
+                uri.scheme == "anyassistant" && uri.host == "connect" ->
+                    uri.getQueryParameter("host")?.takeIf { it.isNotEmpty() }?.let {
+                        Invitation(it, uri.getQueryParameter("port")?.toIntOrNull() ?: 8080, code, name)
+                    }
+                (uri.scheme == "http" || uri.scheme == "https") && uri.path == "/connect" && !uri.host.isNullOrEmpty() ->
+                    Invitation(uri.host!!, if (uri.port > 0) uri.port else if (uri.scheme == "https") 443 else 80, code, name)
+                else -> null
+            }
+        }
+    }
+}
+
 /** The servers announcing themselves on this network (Bonjour «_anyassistant._tcp»), as they come
  *  and go: for the first pairing step. Android resolves one at a time: they queue. */
 class Servers(context: Context) {
