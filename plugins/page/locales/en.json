@@ -61,5 +61,21 @@
     "clock": "12 or 24 hours. «Automatic»: the language's.",
     "video": "«Automatic»: by each device's memory.",
     "show_stats": "Latency, jitter and losses, for troubleshooting."
+  },
+  "connect": {
+    "title": "Connect this device",
+    "app": "Open in the app",
+    "app_note": "With the AnyAssistant app installed, it connects by itself.",
+    "browser": "Or go on in the browser: the pairing code",
+    "continue": "Continue in the browser",
+    "connect": "Connect",
+    "wrong": "Wrong or expired code: ask for another on the server.",
+    "no_code": "No code needed: this server asks for none.",
+    "certificate": "First, install the certificate",
+    "certificate_how": "Once per device, so the browser trusts the server (it needs that for the microphone).",
+    "certificate_get": "Download the certificate",
+    "certificate_android": "If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»).",
+    "then": "Then",
+    "open": "Open the page"
   }
 }
