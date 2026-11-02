@@ -6,11 +6,13 @@ sentence at a time, when you press.
 
     POST /talk?device=<id>   a WAV (16-bit mono, any rate)
       → {"heard": "¿qué hora es?", "answer": "Son las 10 y 20.", "audio": "<a WAV, 24 kHz, base64>",
-         "timers": [{"kind": "timer", "at": 1793…, "label": "pasta", "set": 1793…}, …]}
+         "timers": [{"kind": "timer", "at": 1793…, "label": "pasta", "set": 1793…}, …],
+         "notices": ["Dentro de 10 minutos: dentista.", …]}
     GET /timers              → {"timers": […]}: what is next (the watch's complication), without talking
 
 «timers» are the timers, alarms and reminders pending (skill-alarms), soonest first: after a
-sentence that set one, the watch shows it at once.
+sentence that set one, the watch shows it at once. «notices», what this device missed (the
+plugin «notices»: «dile al reloj…», the agenda's…), once: the watch shows them on the wrist.
 
 Pairing (the plugin «pairing») as for the page: POST /pair {"code"} once, then its cookie.
 A conversation lasts while you keep talking (follow_up seconds between sentences); after
@@ -188,7 +190,13 @@ async def talk(talker: Talker, audio: np.ndarray) -> dict:
     answer = " ".join(m["text"] for m in talker.sent
                       if m.get("type") == "text" and m.get("author") == "assistant" and not m.get("partial"))
     return {"heard": heard, "answer": answer, "audio": base64.b64encode(encode(talker.speaker.pcm)).decode(),
-            "timers": pending()}
+            "timers": pending(), "notices": missed(talker.device)}
+
+
+def missed(device: str) -> list[str]:
+    """The notices this device missed (none without the plugin «notices»)."""
+    notices = kernel.module("notices")
+    return notices.missed(device) if notices else []
 
 
 def pending() -> list[dict]:

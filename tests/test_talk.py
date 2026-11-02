@@ -73,6 +73,7 @@ def clean(monkeypatch, tmp_path):
     monkeypatch.setattr(web, "GUARDS", [])
     monkeypatch.setattr(settings, "active", {})
     monkeypatch.setattr(talk, "QUIET", 0.3)
+    monkeypatch.setattr(kernel.load("notices"), "FILE", tmp_path / "notices.json")  # not your data
     talk._talkers.clear()
 
 
@@ -177,3 +178,11 @@ def test_nothing_is_next_without_alarms(monkeypatch):
     module = kernel.module
     monkeypatch.setattr(kernel, "module", lambda name: None if name == "skill-alarms" else module(name))
     assert talk.pending() == []
+
+
+def test_the_answer_brings_what_the_watch_missed():
+    kernel.load("notices").keep("Desde la cocina: a cenar", device="watch1")
+    status, answer = post()
+    assert status == 200 and answer["notices"] == ["Desde la cocina: a cenar"]
+    assert post()[1]["notices"] == []  # once
+

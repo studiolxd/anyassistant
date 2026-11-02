@@ -24,6 +24,7 @@ from aiohttp import web as http
 
 import events
 import hub
+import kernel
 import paths
 import settings
 import tools
@@ -200,7 +201,8 @@ def get_devices() -> str:
         return "no devices yet"
     return "; ".join(f"{d['name']}" + (f" in the {d['room']}" if d["room"] else ", room unknown")
                      + (", connected" if d["connected"] else
-                        ", only while pressed to talk (it can't be told things)" if d["press"] else ", not connected")
+                        ", only while pressed to talk (a message waits for it)" if d["press"]
+                        else ", not connected (a message waits for it)")
                      + (" (you're talking through this one)" if d["current"] else "") for d in found)
 
 
@@ -241,12 +243,29 @@ def tell_device(where: str, text: str) -> str:
         raise ToolError("what should it say?")
     here = tools.session()
     found = [s for s in connected(where, but=here) if hasattr(s.brain, "say")]
-    if not found:
-        raise ToolError(f"no other connected device is «{where}»; the devices: {get_devices()}")
     for session in found:
         session.brain.say(text)
-    log.info("message to %s", ", ".join(describe(s.device) for s in found))
-    return "said on " + ", ".join(describe(s.device) for s in found)
+    # Those that are «where» but not connected (the watch, which never stays): it waits for them.
+    told = {s.device for s in found}
+    mine = here.device if here else None
+    every = where.strip().lower() == "all"  # «all»: those that never stay connected only (not a tablet left off)
+    waiting = [d for d, known in load().items() if d not in told and d != mine
+               and (known.get("press") if every else matches(d, where))]
+    notices = kernel.module("notices")
+    if notices:
+        for device in waiting:
+            notices.keep(text, device=device)
+    else:
+        waiting = []
+    if not found and not waiting:
+        raise ToolError(f"no other device is «{where}»; the devices: {get_devices()}")
+    log.info("message to %s", ", ".join([describe(s.device) for s in found] + [describe(d) + " (waiting)" for d in waiting]))
+    answer = []
+    if found:
+        answer.append("said on " + ", ".join(describe(s.device) for s in found))
+    if waiting:
+        answer.append("waiting for " + ", ".join(describe(d) for d in waiting) + " (it gets it when it connects)")
+    return "; ".join(answer)
 
 
 # --- For the Mac app ---

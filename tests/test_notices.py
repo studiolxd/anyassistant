@@ -1,6 +1,7 @@
 """On its own: notices (politely), calendar notices and the morning summary."""
 
 import asyncio
+import json
 import time
 
 import pytest
@@ -23,7 +24,8 @@ def at(hour, minute=0):
 
 
 @pytest.fixture(autouse=True)
-def clean(monkeypatch):
+def clean(monkeypatch, tmp_path):
+    monkeypatch.setattr(notices, "FILE", tmp_path / "notices.json")  # not your data
     monkeypatch.setattr(settings, "active", {})
     monkeypatch.setattr(hub, "sessions", {})
     monkeypatch.setattr(hub, "active", None)
@@ -208,3 +210,69 @@ def test_the_sender_name():
     assert google._sender("Ana García <ana@x.com>") == "Ana García"
     assert google._sender('"Ana" <ana@x.com>') == "Ana"
     assert google._sender("<ana@x.com>") == "ana@x.com"
+
+
+# --- Kept for those that missed them ---
+
+def test_a_notice_waits_for_those_that_missed_it(monkeypatch):
+    monkeypatch.setattr(notices, "quiet", lambda now=None: False)
+    a, b = two()
+    asyncio.run(notices.tell("Dentro de 10 minutos: dentista."))
+    assert notices.missed("a") == notices.missed("b") == []  # they heard it
+    assert notices.missed("watch") == ["Dentro de 10 minutos: dentista."]
+    assert notices.missed("watch") == []  # once
+
+
+def test_with_nobody_connected_it_is_kept(monkeypatch):
+    monkeypatch.setattr(notices, "quiet", lambda now=None: False)
+    assert not asyncio.run(notices.tell("Hola"))
+    assert notices.missed("watch") == ["Hola"] and notices.missed("phone") == ["Hola"]
+
+
+def test_not_kept_at_night(monkeypatch):
+    monkeypatch.setattr(notices, "quiet", lambda now=None: True)
+    asyncio.run(notices.tell("Hola"))
+    assert notices.missed("watch") == []
+
+
+def test_old_notices_are_forgotten(monkeypatch):
+    now = time.time()
+    notices.keep("general")
+    notices.keep("para el reloj", device="watch")
+    monkeypatch.setattr(time, "time", lambda: now + 2 * 3600)  # two hours later
+    assert notices.missed("watch") == ["para el reloj"]  # a message for it lasts longer
+    assert notices.missed("other") == []
+
+
+def test_a_message_for_one_device_only(monkeypatch):
+    notices.keep("Desde la cocina: a cenar", device="watch")
+    assert notices.missed("phone") == []
+    assert notices.missed("watch") == ["Desde la cocina: a cenar"] and notices.missed("watch") == []
+
+
+def test_the_watch_asks_for_them():
+    from aiohttp.test_utils import make_mocked_request
+
+    notices.keep("Hola", device="watch")
+    request = make_mocked_request("GET", "/notices?device=watch", transport=type("T", (), {
+        "get_extra_info": lambda self, k, d=None: ("127.0.0.1", 1) if k == "peername" else d})())
+    answer = asyncio.run(notices._missed(request))
+    assert answer.status == 200 and json.loads(answer.body) == {"notices": ["Hola"]}
+
+
+def test_a_device_that_connects_gets_what_it_missed(monkeypatch):
+    monkeypatch.setattr(asyncio, "sleep", lambda seconds: _no_wait())  # not the moment its channel takes
+    notices.keep("Hola")
+    sent = []
+    session = Session("phone")
+    session.send = sent.append
+    asyncio.run(notices._catch_up(session))
+    assert sent == [{"type": "notice", "text": "Hola"}]
+    watch = Session("watch")
+    watch.press_to_talk, watch.send = True, sent.append
+    asyncio.run(notices._catch_up(watch))  # it asks for them itself
+    assert len(sent) == 1
+
+
+async def _no_wait():
+    return None

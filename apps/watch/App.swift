@@ -1,8 +1,9 @@
 // AnyAssistant on the Apple Watch: Eyes' face, listening while you look at it. Each sentence goes
 // to your server (POST /talk, the plugin «talk-api»), which answers in voice, as on any other device: its own
 // conversation, your voice checked, «dile a la cocina…». Paired as its iPhone is (Companion):
-// nothing to type here. What is next (timers, alarms, reminders) for the complication: asked when
-// it opens and now and then in the background (GET /timers), and with each answer.
+// nothing to type here. What is next (timers, alarms, reminders) for the complication, and the
+// notices it missed (Wrist): asked when it opens and now and then in the background (GET /timers,
+// GET /notices), and with each answer.
 
 import SwiftUI
 import WatchKit
@@ -21,7 +22,10 @@ struct AnyAssistantApp: App {
                     Unpaired()
                 }
             }
-            .onAppear { Companion.shared.start(mac) }
+            .onAppear {
+                Companion.shared.start(mac)
+                Wrist.shared.start()
+            }
         }
         .onChange(of: phase) { _, now in
             if now == .active { Task { await AnyAssistantApp.refresh() } }
@@ -35,6 +39,7 @@ struct AnyAssistantApp: App {
     @MainActor static func refresh() async {
         let mac = Mac(agent: "AnyAssistant Watch")
         if mac.paired, let timers = await mac.timers(), Upcoming.keep(timers) { Companion.shared.pass(timers) }
+        if mac.paired { Wrist.shared.show(await mac.notices()) }  // what it missed, on the wrist
         WKApplication.shared().scheduleBackgroundRefresh(withPreferredDate: Date().addingTimeInterval(15 * 60),
                                                          userInfo: "timers" as NSString) { _ in }
     }

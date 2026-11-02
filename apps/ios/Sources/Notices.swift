@@ -3,7 +3,8 @@
 // phone's alarms: Alarms). Alarms and timers ring with the theme's alarm (the Mac's /alarm.wav,
 // kept in Library/Sounds); reminders are plain notifications. While it is in the background, its
 // answers and messages from other rooms appear as notifications too. With the app open, the
-// Mac's voice says them: no notification.
+// Mac's voice says them: no notification. A notice it missed while it wasn't connected (the
+// agenda's, «dile al iPhone…»: {"type": "notice"}, when it connects again) is always one.
 
 import UserNotifications
 
@@ -60,6 +61,13 @@ final class Notices: NSObject, UNUserNotificationCenterDelegate {
             } else {
                 schedule(items)
             }
+        case "notice":  // missed while it wasn't connected: not said, so shown even with the app open
+            guard let text = message["text"] as? String, !text.isEmpty else { return }
+            let content = UNMutableNotificationContent()
+            content.title = name
+            content.body = text
+            content.sound = .default
+            center.add(UNNotificationRequest(identifier: "notice-" + UUID().uuidString, content: content, trigger: nil))
         case "text":
             guard !foreground, message["author"] as? String == "assistant", message["partial"] as? Bool != true,
                   let text = message["text"] as? String, !text.isEmpty else { return }
@@ -100,6 +108,7 @@ final class Notices: NSObject, UNUserNotificationCenterDelegate {
     // With the app open, the Mac says it: the notification isn't shown.
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                             withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        Task { @MainActor in completionHandler(self.foreground ? [] : [.banner, .sound]) }
+        let missed = notification.request.identifier.hasPrefix("notice-")
+        Task { @MainActor in completionHandler(self.foreground && !missed ? [] : [.banner, .sound]) }
     }
 }

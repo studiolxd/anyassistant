@@ -125,6 +125,7 @@ struct TalkView: View {
                 if let timers = found.timers, Upcoming.keep(timers) {  // «pon un temporizador»: on the face at once,
                     Companion.shared.pass(timers)  // and the iPhone's own alarms
                 }
+                Wrist.shared.show(found.notices)  // what it missed meanwhile («dile al reloj…»)
                 guard !Task.isCancelled else { return }
                 voice.play(found.audio)  // nothing heard, nothing said: it listens again
             } catch where Task.isCancelled {

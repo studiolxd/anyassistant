@@ -70,6 +70,7 @@ def empty(monkeypatch, tmp_path):
     monkeypatch.setattr(hub, "_claim", None)
     monkeypatch.setattr(devices, "FILE", tmp_path / "devices.json")
     monkeypatch.setattr(paths, "HOME", tmp_path)
+    monkeypatch.setattr(kernel.load("notices"), "FILE", tmp_path / "notices.json")  # not your data
     monkeypatch.setattr(vad, "create", Silence)
 
 
@@ -268,6 +269,19 @@ def test_a_message_to_another_device_is_only_said_there(house, monkeypatch):
     assert said["a"][-1] == "A cenar" and "b" not in said  # every other one, not the one you talk to
     with pytest.raises(devices.ToolError):
         devices.tell_device("garaje", "Hola")
+
+
+def test_a_message_for_the_watch_waits_for_it(house, monkeypatch):
+    notices = kernel.load("notices")
+    for session in house:
+        session.brain.say = lambda text: None
+    known = devices.load()
+    known["w1"] = {"name": "Apple Watch", "room": "", "press": True}  # it talks a sentence at a time
+    devices._save(known)
+    answer = devices.tell_device("el apple watch", "Desde la cocina: a cenar")
+    assert "waiting for" in answer and notices.missed("w1") == ["Desde la cocina: a cenar"]
+    devices.tell_device("all", "A comer")  # «all»: the watch too, not a tablet left off
+    assert notices.missed("w1") == ["A comer"] and notices.missed("k1") == []
 
 
 def test_the_llm_knows_where_you_are_talking_from(house, monkeypatch):

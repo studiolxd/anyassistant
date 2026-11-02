@@ -371,7 +371,20 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
     }
 
     /// «timers»: the timers, alarms and reminders to come, as the server has them now (nil: it didn't say).
-    struct Answer { let heard: String; let answer: String; let audio: Data; var timers: [[String: Any]]? = nil }
+    /// «notices»: what this device missed (the agenda's, «dile al reloj…»), once.
+    struct Answer {
+        let heard: String; let answer: String; let audio: Data
+        var timers: [[String: Any]]? = nil
+        var notices: [String] = []
+    }
+
+    /// The notices this device missed (GET /notices; given once: none again).
+    func notices() async -> [String] {
+        guard let base = await url(),
+              let (raw, response) = try? await session.data(from: with(base.appendingPathComponent("notices"), device: device)),
+              (response as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+        return (try? JSONSerialization.jsonObject(with: raw) as? [String: Any])?["notices"] as? [String] ?? []
+    }
 
     /// The timers, alarms and reminders to come (GET /timers; nil: it doesn't answer).
     func timers() async -> [[String: Any]]? {
@@ -395,7 +408,7 @@ final class Mac: NSObject, ObservableObject, URLSessionDelegate {
         guard status == 200 else { throw Failure.refused(found["error"] as? String ?? "\(status)") }
         return Answer(heard: found["heard"] as? String ?? "", answer: found["answer"] as? String ?? "",
                       audio: Data(base64Encoded: found["audio"] as? String ?? "") ?? Data(),
-                      timers: found["timers"] as? [[String: Any]])
+                      timers: found["timers"] as? [[String: Any]], notices: found["notices"] as? [String] ?? [])
     }
 
     // Only the Mac's own authority is trusted for its HTTPS address.
