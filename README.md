@@ -44,13 +44,19 @@ fallback) or Whisper (`stt-faster-whisper`, CPU or an NVIDIA card), the voice Ko
 model is only on the Mac; the plan is in `TODO.md` («El servidor en Windows y Linux»).
 
 **The Windows and Linux app** (`apps/desktop`, Electron): in the tray, as the Mac app in the menu
-bar. It runs the server (or adopts the one running: Linux's systemd service), and «Show Eva» opens
-its face (the page, with Chromium's microphone, camera and echo cancellation); «Pair a device…» and
-«Administer…» open `/admin`; it can open at login. Its packages (unsigned: on Windows, «More info»
-→ «Run anyway» the first time) are built on GitHub Actions («packages»): the installer `.exe`,
-the AppImage and the `.deb`, with the program and uv inside; the first time it makes its Python and
-downloads the models. Your data goes to `%APPDATA%\AnyAssistant` on Windows,
-`~/.local/share/AnyAssistant` on Linux. While developing: `cd apps/desktop && npm install && npm start`.
+bar, with the same menu and windows. The first time, its installer window (as the Mac's: «Install»,
+«Customize…», or «Connect to another server…» to only talk to another computer's server) makes its
+Python and goes through the same steps as `bin/anyassistant setup`. Then it runs the server (or
+adopts the one running: Linux's systemd service): the menu says how it is and which devices are
+connected, starts, restarts and stops it; «Show Eva» opens its face (the page, with Chromium's
+microphone, camera and echo cancellation) and «Listen on this device» keeps it listening while
+hidden; «Themes», «Connect another device», «Devices» and «Settings» are windows (the admin page,
+`/admin`, each part in its own); «Log», «Set it up again», «Open at login». Its packages (unsigned:
+on Windows, «More info» → «Run anyway» the first time) are built on GitHub Actions («packages»):
+the installer `.exe`, the AppImage and the `.deb`, with the program and uv inside. Your data goes
+to `%APPDATA%\AnyAssistant` on Windows, `~/.local/share/AnyAssistant` on Linux. While developing:
+`cd apps/desktop && npm install && npm start` (`ANYASSISTANT_SETUP=1 npm start` shows the installer
+window too). The differences with the Mac app, and why: `docs/paridad-escritorio.md`.
 
 **Administering it** without the Mac app: the page `/admin` (pair a device with its QR, devices,
 settings, plugins, voices, mail, admins): from the computer itself, or from another one's browser
