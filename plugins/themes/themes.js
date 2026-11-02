@@ -157,6 +157,7 @@ function community() {
     texts = me.texts || {};
     sounds(select.value);  // in its language
     document.getElementById('theme-label').textContent = T('Theme');
+    document.title = 'AnyAssistant · ' + T('Themes');
     tabs();
     section.querySelector('.lead').textContent = T('Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.');
     load(false);

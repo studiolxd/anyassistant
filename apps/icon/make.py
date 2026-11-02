@@ -120,7 +120,7 @@ def main():
 
     # The web page (and the iPad's «Add to Home Screen») and /admin.
     save(full(180), "plugins/page/web/icon.png")
-    save(framed(64), "plugins/admin/web/icon.png")
+    save(framed(128), "plugins/page/web/favicon.png")  # every web page's tab: the app's icon
 
 
 if __name__ == "__main__":

@@ -881,7 +881,7 @@ fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.
   api('GET', '/admin/status').then(function (s) {
     $('#title').textContent = s.name;
     $('#subtitle').textContent = s.computer + ' · ' + s.version;
-    document.title = WINDOW ? T({ settings: 'Settings', devices: 'Devices', pair: 'Pair a device' }[WINDOW] || 'Admin') : s.name + ' · ' + T('Admin');
+    document.title = WINDOW ? T({ settings: 'Settings', devices: 'Devices', pair: 'Pair a device' }[WINDOW] || 'Admin') : 'AnyAssistant · ' + T('Admin');
   }).catch(function () {});
   api('GET', '/admin/settings').then(function (data) {
     groups = data.groups || [];
