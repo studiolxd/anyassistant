@@ -7,13 +7,14 @@
 //
 //   cd apps/desktop && npm install && npm start      (ANYASSISTANT_SETUP=1 npm start: the installer's window too)
 
-const { app, BrowserWindow, Menu, Tray, nativeImage, session, shell, dialog, systemPreferences, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, Notification, Tray, nativeImage, session, shell, dialog, systemPreferences, ipcMain } = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { Server } = require('./server');
 const setup = require('./setup');
 const microphone = require('./microphone');
+const updates = require('./updates');
 
 // Its texts: the key is the English in the code (the Mac app's); locales/<language>.json says it
 // in the system's language (app.getLocale: known once the app is ready).
@@ -161,6 +162,11 @@ const showDevices = () => open('devices', '/admin?window=devices#devices', { wid
 const showPair = () => open('pair', '/admin?window=pair#pair', { width: 680, height: 500, minWidth: 680, minHeight: 440, title: T('Pair a device') });
 const showThemes = () => open('themes', '/themes', { width: 1100, height: 780, minWidth: 640, minHeight: 480, title: T('Themes'), dark: true });
 const WINDOWS = { settings: showSettings, devices: showDevices, pair: showPair };
+// Where to install an update from the community: the themes page's «From the community» tab, or
+// Settings → Plugins → From the community (the admin page's #community).
+const showCommunityThemes = () => open('themes', '/themes#community', { width: 1100, height: 780, minWidth: 640, minHeight: 480, title: T('Themes'), dark: true });
+const showCommunityPlugins = () => open('settings', '/admin?window=settings#community', { width: 940, height: 640, minWidth: 780, minHeight: 520, title: T('Settings') });
+const showUpdates = (where) => (where === 'themes' ? showCommunityThemes() : showCommunityPlugins());
 
 // The page may use the microphone and camera, keep the screen on and go full screen; only the
 // server's own page (this computer's, or the other server it talks to), nothing else.
@@ -229,6 +235,28 @@ function deviceItems() {
   if (connected.length > 5) items.push({ label: T('and %s more', connected.length - 5), click: showDevices });
   return [{ type: 'separator' }, ...items];
 }
+
+// --- Updates from the community (updates.js): a notification once per new version, an item in the menu ---
+
+let pendingUpdates = [];
+async function followUpdates() {
+  if (isClient() || !running()) { pendingUpdates = []; return; }
+  let answer;
+  try { answer = await server.call('GET', '/admin/community/updates'); } catch (e) { pendingUpdates = []; return; }  // the plugin is off
+  const found = updates.read(answer, state.communityNotice);
+  pendingUpdates = found.pending;
+  if (found.notice === null) return;
+  remember({ communityNotice: found.notice });
+  if (!found.announce.length || !Notification.isSupported()) return;
+  const where = updates.place(found.announce);
+  const shown = new Notification({ title: updates.sentence(found.announce, T), icon: path.join(__dirname, 'icons', 'icon.png') });
+  shown.on('click', () => showUpdates(where));
+  shown.show();
+}
+
+const updatesItems = () => (pendingUpdates.length
+  ? [{ label: M('Community updates (%s)…').replace('%s', pendingUpdates.length), click: () => showUpdates(updates.place(pendingUpdates)) }]
+  : []);
 
 // --- The other server, as a client (the Mac's «Conectarse a otro servidor») ---
 
@@ -362,6 +390,7 @@ function serverMenu() {
     { type: 'separator' },
     faceItem(), listenItem(), ...pausedItems(), ...privacyItems(),
     { label: M('Themes…'), enabled: running(), click: showThemes },  // every state of each theme, to see them (the plugin «themes»)
+    ...updatesItems(),  // where to install them (it never installs them by itself)
     { type: 'separator' },
     { label: M('Pair a device…'), click: showPair },
     { label: M('Devices…'), click: showDevices },
@@ -390,6 +419,7 @@ function showTray() {
   menu();
   setInterval(async () => { if (!isClient()) await server.check(); await followDevices(); await followLink(); await followPauseOption(); menu(); }, 5000);  // the server, its devices, permissions: as they are
   setInterval(lookAtMicrophone, microphone.EVERY * 1000);  // as a client: another app using the microphone
+  setInterval(async () => { await followUpdates(); menu(); }, 60 * 1000);  // the community's updates (the server looks once a day)
 }
 
 async function learnName() {
@@ -410,6 +440,7 @@ server.on('change', async () => {
     await learnName();
     retryUnavailable();
     if (state.listening && !faceShown()) face(false);  // it listens on this device too
+    await followUpdates();
   }
   menu();
 });
@@ -457,6 +488,7 @@ app.on('before-quit', async (e) => {
 
 app.whenReady().then(async () => {
   loadTexts();
+  if (process.platform === 'win32') app.setAppUserModelId('com.anyassistant.desktop');  // its notifications, as the installer's shortcut
   permissions();
   setup.configure({ server, T,
     installed: () => { showTray(); server.begin(); menu(); },  // installed now: the menu, and the server runs
