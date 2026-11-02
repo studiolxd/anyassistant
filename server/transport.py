@@ -68,7 +68,7 @@ class Session:
             self.channel.send(json.dumps(data))
 
     def _message(self, data: dict):
-        token = hub.here.set(self)  # what it starts (a tap, its skin…) is for this device
+        token = hub.here.set(self)  # what it starts (a tap, its theme…) is for this device
         try:
             self._handle(data)
         finally:

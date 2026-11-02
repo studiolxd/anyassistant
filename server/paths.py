@@ -1,8 +1,8 @@
 """Where everything lives: the program, your data and what can be thrown away.
 
-    APP    the program (server/, web/, skins/, locales/, bin/): read-only once installed
+    APP    the program (server/, web/, themes/, locales/, bin/): read-only once installed
     HOME   your data: settings.json, permissions.json, .mcp.json, memory.json,
-           timers.json, paired.json, your skins, Google's client and token (.gog/)
+           timers.json, paired.json, your themes, Google's client and token (.gog/)
     CACHE  what can be rebuilt: confirmations, the camera's image, the log, the
            compiled bridges…
 
@@ -44,7 +44,8 @@ MCP = HOME / ".mcp.json"
 MEMORY = HOME / "memory.json"
 TIMERS = HOME / "timers.json"
 PAIRED = HOME / "paired.json"
-SKINS = HOME / ("skins.local" if HOME == APP else "skins")  # yours; settings «skins_dir» may move them
+THEMES = HOME / ("themes.local" if HOME == APP else "themes")  # yours; settings «themes_dir» may move them
+OLD_THEMES = HOME / ("skins.local" if HOME == APP else "skins")  # from when themes were called skins: moved to THEMES when found
 GOOGLE_CLIENT = HOME / "google-client.json"
 GOG = HOME / ".gog"
 

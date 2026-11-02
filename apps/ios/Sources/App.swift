@@ -1,4 +1,4 @@
-// AnyAssistant on the iPhone and the iPad, native: its face is one of the skins (Skins.swift,
+// AnyAssistant on the iPhone and the iPad, native: its face is one of the themes (Themes.swift,
 // drawn as the page's: Eyes, Orb, Bedside, Minimal), following the Mac's state, texts and
 // settings; the microphone and the speaker go over a WebSocket (plugin «stream-api»), so it
 // keeps listening with the screen off. Alarms, timers and reminders are also the phone's own
@@ -51,10 +51,10 @@ struct MainView: View {
     }
 
     var body: some View {
-        SkinView(face: link.face, levels: link.levels, camera: link.camera)
+        ThemeView(face: link.face, levels: link.levels, camera: link.camera)
             .contentShape(Rectangle())
             .onTapGesture { link.tap() }  // it stops talking, or wakes up
-            .onLongPressGesture(minimumDuration: 0.8) { settings = true }  // always, whatever the skin
+            .onLongPressGesture(minimumDuration: 0.8) { settings = true }  // always, whatever the theme
             .overlay { SettingsButton(face: link.face) { settings = true } }
             .statusBarHidden(true)
             .modifier(Quiet())
@@ -86,7 +86,7 @@ struct MainView: View {
 }
 
 /// «Ajustes», only asleep or in error (where it's needed: its address, pairing again…), inside
-/// the safe area. Where it goes and its colour are the skin's (its options «settings»: bottom, top,
+/// the safe area. Where it goes and its colour are the theme's (its options «settings»: bottom, top,
 /// bottom-left…; «settings_style»: text or icon; «settings_color», else its accent).
 /// Holding the screen opens it too, always.
 struct SettingsButton: View {

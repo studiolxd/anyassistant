@@ -171,7 +171,7 @@ def final_texts(messages, author=None):
 
 
 def test_page_and_settings(server, tmp_path):
-    (tmp_path / "settings.json").write_text(json.dumps({"name": "Viernes", "skin": "orb", "video": "low",
+    (tmp_path / "settings.json").write_text(json.dumps({"name": "Viernes", "theme": "orb", "video": "low",
                                                         "show_time": False, "history": 0}))
     url = server("--mode", "parrot", "--lang", "es")
     html = urllib.request.urlopen(url + "/").read().decode()
@@ -179,14 +179,14 @@ def test_page_and_settings(server, tmp_path):
     assert '<html lang="es"' in urllib.request.urlopen(url + "/monitor").read().decode()
     config = json.load(urllib.request.urlopen(url + "/config"))
     assert config["lang"] == "es" and config["ui"]["start"]
-    assert (config["name"], config["skin"]["name"], config["video"]) == ("Viernes", "orb", "low")
-    assert 'data-block="face"' in config["skin"]["html"]
+    assert (config["name"], config["theme"]["name"], config["video"]) == ("Viernes", "orb", "low")
+    assert 'data-block="face"' in config["theme"]["html"]
     assert config["screen"]["show_time"] is False and config["screen"]["history"] == 0
     assert config["screen"]["show_date"] is True  # the default
 
 
 def test_bad_settings_stop_it(tmp_path):
-    (tmp_path / "settings.json").write_text(json.dumps({"skin": "smiley"}))
+    (tmp_path / "settings.json").write_text(json.dumps({"theme": "smiley"}))
     result = subprocess.run([sys.executable, ROOT / "server" / "main.py", "--mode", "parrot"], cwd=ROOT,
                             capture_output=True, text=True, timeout=60,
                             env={**os.environ, "ANYASSISTANT_HOME": str(tmp_path)})

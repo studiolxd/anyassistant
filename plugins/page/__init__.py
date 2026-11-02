@@ -1,10 +1,10 @@
 """The device's page: what a tablet or phone opens at http://<mac>:8080 (web/: plain
-JavaScript for old Chrome), with its texts (locales/, «ui») and its look, the skins
-(skins.py; the system's in skins/, yours in «skins_dir»).
+JavaScript for old Chrome), with its texts (locales/, «ui») and its look, the themes
+(themes.py; the system's in themes/, yours in «themes_dir»).
 
 It is one client of Jarvis among others (native apps would be more): it brings «/»,
-/web/…, /config (what the page needs: texts, settings, skin; other plugins add to it
-with @web.config) and /skin/…, the screen's options, and the skin tools for the LLM.
+/web/…, /config (what the page needs: texts, settings, theme; other plugins add to it
+with @web.config) and /theme/…, the screen's options, and the theme tools for the LLM.
 """
 
 from pathlib import Path
@@ -18,18 +18,18 @@ import settings
 import web
 from options import Option
 
-from . import skins
+from . import themes
 
 HERE = Path(__file__).parent
 WEB = HERE / "web"
 
 for option in (
-    Option("skin", skins.DEFAULT, "the screen's look: eyes, orb, minimal, bedside or yours (a device's ?skin= wins)",
-           "screen", "choice", lambda: list(skins.available()), live=True),
-    Option("skin_options", None, 'the skin\'s options: {"accent": "#ff7a45"}', "screen", "dict", live=True,
-           empty="the skin's own"),
-    Option("skins_dir", None, "your skins (default: skins in your data folder)", "screen",
-           empty="skins in your data folder"),
+    Option("theme", themes.DEFAULT, "the screen's look: eyes, orb, minimal, bedside or yours (a device's ?theme= wins)",
+           "screen", "choice", lambda: list(themes.available()), live=True),
+    Option("theme_options", None, 'the theme\'s options: {"accent": "#ff7a45"}', "screen", "dict", live=True,
+           empty="the theme's own"),
+    Option("themes_dir", None, "your themes (default: themes in your data folder)", "screen",
+           empty="themes in your data folder"),
     Option("video", "auto", "camera quality; auto: each device by its memory (a device's ?video= wins)", "screen",
            "choice", ["auto", "normal", "low", "off"], live=True),
     Option("show_time", True, "the time while asleep", "screen", "bool", live=True, screen=True),
@@ -68,26 +68,26 @@ async def _web_file(request):
     return http.FileResponse(target)
 
 
-@web.route("GET", "/skin/{name}/{path:.+}")
-async def _skin_file(request):
-    """A skin's stylesheet, images, fonts or sounds: only from inside its folder."""
-    path = skins.asset(request.match_info["name"], request.match_info["path"])
+@web.route("GET", "/theme/{name}/{path:.+}")
+async def _theme_file(request):
+    """A theme's stylesheet, images, fonts or sounds: only from inside its folder."""
+    path = themes.asset(request.match_info["name"], request.match_info["path"])
     return http.FileResponse(path) if path else http.Response(status=404)
 
 
 @web.route("GET", "/config")
 async def _config(request):
-    """What the page needs: its texts in the active language (locale «ui»), the settings and the skin
-    (?skin=: this device's own), and what other plugins add (@web.config)."""
-    chosen = request.query.get("skin", "")
+    """What the page needs: its texts in the active language (locale «ui»), the settings and the theme
+    (?theme=: this device's own), and what other plugins add (@web.config)."""
+    chosen = request.query.get("theme") or request.query.get("skin", "")  # «skin»: an older app
     return http.json_response({
         "lang": i18n.L.code, "ui": i18n.L.data["ui"],
         "name": settings.get("name"), "video": settings.get("video"),
-        "skin": skins.for_page(chosen if chosen in skins.available() else settings.get("skin"), i18n.L.code),
-        "skins": [{"name": name, "title": skins.manifest(name).get("name", name),
-                   "description": skins.manifest(name).get("description", "")} for name in skins.available()],
+        "theme": themes.for_page(chosen if chosen in themes.available() else settings.get("theme"), i18n.L.code),
+        "themes": [{"name": name, "title": themes.manifest(name).get("name", name),
+                   "description": themes.manifest(name).get("description", "")} for name in themes.available()],
         "screen": {key: settings.get(key) for key in options.SCREEN},
-        # How it is woken, as the screen says it («Ey, Eva»): for the demo and the skins page, before a brain says it.
+        # How it is woken, as the screen says it («Ey, Eva»): for the demo and the themes page, before a brain says it.
         "wake_phrase": i18n.L.text("wake.phrase", "Hey, {name}").format(name=(settings.get("name") or "Jarvis").title()),
         **web.contributed(request),
     })

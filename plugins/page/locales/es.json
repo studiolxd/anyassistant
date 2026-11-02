@@ -33,13 +33,13 @@
   "plugins": {
     "page": [
       "La página del dispositivo",
-      "La página que abre la tablet o el móvil (http://<mac>:8080): su cara, sus textos, cámara y micrófono, con skins que cualquiera puede hacer."
+      "La página que abre la tablet o el móvil (http://<mac>:8080): su cara, sus textos, cámara y micrófono, con temas que cualquiera puede hacer."
     ]
   },
   "options": {
-    "skin": "",
-    "skin_options": "Por ejemplo, el color de acento.",
-    "skins_dir": "Si no se indica, la de tu carpeta de datos.",
+    "theme": "",
+    "theme_options": "Por ejemplo, el color de acento.",
+    "themes_dir": "Si no se indica, la de tu carpeta de datos.",
     "video": "«Automático»: según la memoria de cada dispositivo.",
     "show_time": "",
     "show_date": "",
@@ -53,13 +53,13 @@
     "clock": "12 o 24 horas. «Automático»: el del idioma."
   },
   "options_empty": {
-    "skin_options": "las de la skin",
-    "skins_dir": "skins en tu carpeta de datos"
+    "theme_options": "las del tema",
+    "themes_dir": "themes en tu carpeta de datos"
   },
   "options_title": {
-    "skin": "Tema",
-    "skin_options": "Opciones del tema",
-    "skins_dir": "Carpeta de temas propios",
+    "theme": "Tema",
+    "theme_options": "Opciones del tema",
+    "themes_dir": "Carpeta de temas propios",
     "show_time": "Hora en reposo",
     "show_date": "Fecha en reposo",
     "show_hint": "Indicación para activarlo",

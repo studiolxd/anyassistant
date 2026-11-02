@@ -29,6 +29,18 @@ def test_save_keeps_the_rest(file):
     assert "Mónica" in file.read_text()  # readable, not \\u00f3
 
 
+def test_the_keys_from_when_themes_were_called_skins(file):
+    file.write_text(json.dumps({"name": "Viernes", "skin": "orb", "skin_options": {"accent": "#ff7a45"},
+                                "skins_dir": "/tmp/mine", "memory": "auto"}))
+    assert settings.load() == {"name": "Viernes", "theme": "orb", "theme_options": {"accent": "#ff7a45"},
+                               "themes_dir": "/tmp/mine", "memory": "auto"}  # the file's order, new names
+    assert "skin" not in file.read_text()  # rewritten once
+    file.write_text(json.dumps({"skin": "orb", "theme": "eyes"}))
+    assert settings.load() == {"theme": "eyes"}  # both: the new one stays
+    file.write_text(json.dumps({"plugins": {"skins": False, "memory": True}}))
+    assert settings.load() == {"plugins": {"themes": False, "memory": True}}  # the plugin «skins» too
+
+
 def test_voice_for_each_language():
     assert settings.voice_for("Eddy", "es") == "Eddy"
     assert settings.voice_for({"es": "Mónica", "en": "Daniel"}, "en") == "Daniel"
@@ -103,8 +115,8 @@ def test_the_readme_lists_every_option():
 def test_options_check():
     import options
 
-    assert options.check({"skin": "eyes", "memory": "auto", "detail": "concise"}) == []
-    problems = options.check({"skin": "smiley", "memory": "sometimes", "detail": "verbose"})
+    assert options.check({"theme": "eyes", "memory": "auto", "detail": "concise"}) == []
+    problems = options.check({"theme": "smiley", "memory": "sometimes", "detail": "verbose"})
     assert len(problems) == 3 and any("smiley" in p for p in problems)
 
 

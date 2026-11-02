@@ -14,7 +14,7 @@ releases: el instalador .exe, el AppImage y el .deb), y la app de Android en un 
 
 - [ ] **iPhone y iPad**: instalar la última versión en el iPhone 16 Pro (el arreglo de los
   textos); subir a TestFlight para el iPhone 7 (iOS 15) y el iPad (iOS 17) y probarlas allí;
-  el sonido de las alarmas, el de la skin (hoy el del sistema); los recordatorios, ¿alarma
+  el sonido de las alarmas, el del tema (hoy el del sistema); los recordatorios, ¿alarma
   (AlarmKit, como ahora) o notificación normal?; un modo demo para la revisión de la App Store
   (el revisor no tiene tu Mac), solo si se publica fuera de TestFlight.
 - [ ] **Android**: probarla en un Android 8 real (el micrófono y la cancelación de eco,
@@ -61,11 +61,11 @@ cada equipo elige los motores que tiene. Cómo se hizo cada pieza:
 
 **La app de Windows y Linux** (servidor y cliente, como la del Mac): Electron. Arranca el
 servidor, tiene el menú de la bandeja, y su cara es la página que ya existe (`/`, las cuatro
-skins), con micrófono, cámara y cancelación de eco de Chromium, iguales en los dos sistemas.
+temas), con micrófono, cámara y cancelación de eco de Chromium, iguales en los dos sistemas.
 Lo que hoy dibuja la app del Mac en SwiftUI (ajustes, dispositivos, emparejar con QR, correo,
 voces) se hace una vez como páginas web de administración (`/admin`, solo desde el propio
 equipo), y valen para los dos y para un Linux sin pantalla. Descartados: Tauri (en Linux usa
-WebKitGTK, con WebRTC flojo) y Compose Desktop (reutilizaría las skins de Android, pero
+WebKitGTK, con WebRTC flojo) y Compose Desktop (reutilizaría los temas de Android, pero
 Java no tiene cancelación de eco).
 
 **Por fases** (cada una se puede usar al acabar):
@@ -191,8 +191,8 @@ Java no tiene cancelación de eco).
 - [x] **Una conversación por dispositivo** (1 nov): cada uno con su LLM (hasta
   `conversations`, 2; con 1, de una en una); dos personas en dos habitaciones no se cortan.
   Sus herramientas actúan en su dispositivo (`/mcp?device=…`).
-- [x] **Skins para verlas** (el antiguo lab, ahora `skins`, `/skins`): todos los estados de
-  cada una, desde el menú de la app («Skins…»); solo para ver. Sin comprobador.
+- [x] **Temas para verlos** (el antiguo lab, ahora `themes`, `/themes`): todos los estados de
+  cada uno, desde el menú de la app («Temas…»); solo para ver. Sin comprobador.
 - [x] **Toma la iniciativa** (1 nov): avisos de la agenda («Dentro de 10 minutos:
   dentista», `calendar-notices`) y el resumen de la mañana («buenos días» o al parar la
   primera alarma: la fecha y los festivos, el tiempo, la agenda y cuántos emails sin leer,
@@ -256,10 +256,10 @@ Java no tiene cancelación de eco).
   una carpeta limpia.
 - [x] **Todo es un plugin** (31 oct): el núcleo solo los encuentra, los carga y los une
   (kernel, web hooks, eventos, tipos). Emparejamiento, confirmación, memoria, ojos, la
-  página y las skins, sonidos, tocar para despertar, monitor, lab, servidor MCP,
+  página y los temas, sonidos, tocar para despertar, monitor, lab, servidor MCP,
   intérprete, los cerebros, «vete a dormir» y «para»… cada uno un plugin, con lo que
   necesita en plugin.json.
-- [x] **Skins**: la pantalla como HTML + CSS que cualquiera puede hacer (bloques,
+- [x] **Temas**: la pantalla como HTML + CSS que cualquiera puede hacer (bloques,
   estados, variables en vivo, opciones, textos, sonidos); ojos, orbe, minimal y mesilla;
   un lab.
 - [x] **No toda frase es para él**: una ventana de `follow_up` (20 s) en lugar de 2

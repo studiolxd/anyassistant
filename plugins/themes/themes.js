@@ -1,8 +1,8 @@
-// The skins: every state of a skin at once (each view is the page in ?demo=<state>),
-// reloading them when the skin's files change. Open it on the Mac while you design one.
+// The themes: every state of a theme at once (each view is the page in ?demo=<state>),
+// reloading them when the theme's files change. Open it on the Mac while you design one.
 
 var STATES = ['asleep', 'awake', 'hearing', 'transcribing', 'thinking', 'looking', 'speaking', 'question', 'alarm', 'error'];
-var select = document.getElementById('skin');
+var select = document.getElementById('theme');
 var version = null;
 
 function views(name) {
@@ -13,7 +13,7 @@ function views(name) {
     var frame = document.createElement('div');
     frame.className = 'frame';
     var iframe = document.createElement('iframe');
-    iframe.src = '/?demo=' + state + '&skin=' + encodeURIComponent(name);
+    iframe.src = '/?demo=' + state + '&theme=' + encodeURIComponent(name);
     frame.appendChild(iframe);
     // A cover over the view (the page inside would take the tap): it opens it full screen.
     var cover = document.createElement('div');
@@ -29,34 +29,34 @@ function views(name) {
 }
 
 function config(name) {
-  return fetch('/config?skin=' + encodeURIComponent(name)).then(function (r) { return r.json(); });
+  return fetch('/config?theme=' + encodeURIComponent(name)).then(function (r) { return r.json(); });
 }
 
-config(new URLSearchParams(location.search).get('skin') || '').then(function (data) {
-  data.skins.forEach(function (skin) {
+config(new URLSearchParams(location.search).get('theme') || '').then(function (data) {
+  data.themes.forEach(function (theme) {
     var option = document.createElement('option');
-    option.value = skin.name;
-    option.textContent = skin.title + ' (' + skin.name + ')';
+    option.value = theme.name;
+    option.textContent = theme.title + ' (' + theme.name + ')';
     select.appendChild(option);
   });
-  select.value = data.skin.name;
+  select.value = data.theme.name;
   show(data);
 });
 
 function show(data) {
-  version = data.skin.version;
-  var about = data.skins.filter(function (s) { return s.name === data.skin.name; })[0];
+  version = data.theme.version;
+  var about = data.themes.filter(function (s) { return s.name === data.theme.name; })[0];
   document.getElementById('about').textContent = about ? about.description : '';
-  history.replaceState(null, '', '/skins?skin=' + encodeURIComponent(data.skin.name));
-  views(data.skin.name);
+  history.replaceState(null, '', '/themes?theme=' + encodeURIComponent(data.theme.name));
+  views(data.theme.name);
 }
 
 select.onchange = function () { config(select.value).then(show); };
 
-// When a file of the skin changes, the views reload.
+// When a file of the theme changes, the views reload.
 setInterval(function () {
   config(select.value).then(function (data) {
-    if (data.skin.version === version) return;
+    if (data.theme.version === version) return;
     show(data);
     var note = document.getElementById('reloaded');
     note.textContent = 'reloaded ' + new Date().toLocaleTimeString();
@@ -71,7 +71,7 @@ var current = 0;
 
 function open(index) {
   current = (index + STATES.length) % STATES.length;
-  document.getElementById('full-view').src = '/?demo=' + STATES[current] + '&skin=' + encodeURIComponent(select.value);
+  document.getElementById('full-view').src = '/?demo=' + STATES[current] + '&theme=' + encodeURIComponent(select.value);
   document.getElementById('full-state').textContent = STATES[current];
   full.hidden = false;
 }

@@ -5,8 +5,8 @@
 var pc = null;
 var channel = null;
 var rtt = null;
-var T = {};  // texts of the active language (locale «ui», and the skin's own)
-var settings = {};  // name, skin, video, screen…
+var T = {};  // texts of the active language (locale «ui», and the theme's own)
+var settings = {};  // name, theme, video, screen…
 var lastState = 'connecting';
 
 // A message to the Mac, on the call's control channel.
@@ -14,9 +14,9 @@ function tell(m) {
   if (channel && channel.readyState === 'open') channel.send(JSON.stringify(m));
 }
 
-// The skin's blocks (they may be missing: a skin shows what it wants).
+// The theme's blocks (they may be missing: a theme shows what it wants).
 function setText(name, value) {
-  var box = Skin.block(name);
+  var box = Theme.block(name);
   if (box) box.textContent = value;
 }
 function status(value) { setText('status', value); }
@@ -36,20 +36,20 @@ function deviceId() {
   }
 }
 
-// This device's own skin: ?skin= (remembered; ?skin=default forgets it), or the one in the settings.
-function deviceSkin(name) {
-  var asked = new URLSearchParams(location.search).get('skin');
+// This device's own theme: ?theme= (remembered; ?theme=default forgets it), or the one in the settings.
+function deviceTheme(name) {
+  var asked = new URLSearchParams(location.search).get('theme');
   try {
-    if (name === 'default') localStorage.removeItem('skin');
-    else if (name !== undefined) localStorage.setItem('skin', name);
-    return (asked !== 'default' && asked) || localStorage.getItem('skin') || '';
+    if (name === 'default') localStorage.removeItem('theme');
+    else if (name !== undefined) localStorage.setItem('theme', name);
+    return (asked !== 'default' && asked) || localStorage.getItem('theme') || localStorage.getItem('skin') || '';  // «skin»: remembered by an older page
   } catch (e) {
     return asked !== 'default' && asked || '';
   }
 }
 (function () {
   var params = new URLSearchParams(location.search);
-  if (params.get('skin') && !params.has('demo')) deviceSkin(params.get('skin'));  // the skins page's views don't
+  if (params.get('theme') && !params.has('demo')) deviceTheme(params.get('theme'));  // the themes page's views don't
 })();
 
 function text(key, values) {
@@ -58,33 +58,34 @@ function text(key, values) {
   return s;
 }
 
-// Texts, settings and skin; again after reconnecting, in case they changed («speak English», a restart).
+// Texts, settings and theme; again after reconnecting, in case they changed («speak English», a restart).
 function loadTexts() {
-  var skin = deviceSkin();
-  return fetch('/config' + (skin ? '?skin=' + encodeURIComponent(skin) : '')).then(function (r) {
+  var theme = deviceTheme();
+  return fetch('/config' + (theme ? '?theme=' + encodeURIComponent(theme) : '')).then(function (r) {
     return r.json();
   }).then(function (data) {
     T = {};
     for (var key in data.ui) T[key] = data.ui[key];
-    for (key in data.skin.ui) T[key] = data.skin.ui[key];  // the skin may say it its way
+    for (key in data.theme.ui) T[key] = data.theme.ui[key];  // the theme may say it its way
+    if (!data.theme && data.skin) { data.theme = data.skin; data.themes = data.skins; }  // an older server
     settings = data;
     document.documentElement.lang = data.lang;
-    Skin.language(data.lang);
-    if (Skin.apply(data.skin)) redraw();
+    Theme.language(data.lang);
+    if (Theme.apply(data.theme)) redraw();
     showScreen(data.screen || {});
-    tellSkin();
+    tellTheme();
   });
 }
 
-// A new skin: what was on screen goes into its blocks.
+// A new theme: what was on screen goes into its blocks.
 function redraw() {
   showState(lastState, lastWake);
   drawTimers();
 }
 
-// The server plays the skin's sounds: it needs to know which one this device has.
-function tellSkin() {
-  if (settings.skin) tell({ type: 'skin', name: settings.skin.name });
+// The server plays the theme's sounds: it needs to know which one this device has.
+function tellTheme() {
+  if (settings.theme) tell({ type: 'theme', name: settings.theme.name });
 }
 
 // What the screen shows (settings show_time, show_date, show_stats, clock…).
@@ -93,7 +94,7 @@ function showScreen(s) {
   screen = s;
   var hide = { 'hide-time': s.show_time === false, 'hide-date': s.show_date === false, 'hide-stats': !s.show_stats };
   for (var name in hide) document.body.classList.toggle(name, hide[name]);
-  Skin.clock(s.clock);
+  Theme.clock(s.clock);
 }
 
 // Loads the texts and then shows the start button (or the demo, or the pairing form).
@@ -254,17 +255,17 @@ async function connect() {
 
   channel = pc.createDataChannel('control');
   channel.onmessage = function (ev) { message(JSON.parse(ev.data)); };
-  channel.onopen = tellSkin;
+  channel.onopen = tellTheme;
 
   pc.ontrack = function (ev) {
     var stream = ev.streams[0] || new MediaStream([ev.track]);
     document.getElementById('speaker').srcObject = stream;
-    Skin.speaker(stream);  // so the face follows its voice
+    Theme.speaker(stream);  // so the face follows its voice
   };
   pc.onconnectionstatechange = function () {
     if (current !== pc) return;
-    if (pc.connectionState === 'connected' && Skin.current() === 'error') {
-      Skin.state('connected');
+    if (pc.connectionState === 'connected' && Theme.current() === 'error') {
+      Theme.state('connected');
       status(text('connected'));
     } else if (pc.connectionState === 'failed') {
       reconnect();
@@ -325,9 +326,9 @@ function showState(state, wakePhrase) {
   } else {
     status(screen.show_status === false && state !== 'error' ? '' : text(state));
   }
-  Skin.state(state);
+  Theme.state(state);
   photoFollows(state);
-  var camera = Skin.block('camera');
+  var camera = Theme.block('camera');
   if (state === 'asleep' && camera && !camera.hidden) showCamera(false);
 }
 
@@ -341,14 +342,14 @@ function message(m) {
   else if (m.type === 'photo') takePhoto(m.id);
   else if (m.type === 'timers') showTimers(m.items);
   else if (m.type === 'alarm') alarmLabel = m.label || '';
-  else if (m.type === 'skin') { deviceSkin(m.name); loadTexts(); }  // «use the orb skin here»
+  else if (m.type === 'theme') { deviceTheme(m.name); loadTexts(); }  // «use the orb theme here»
 }
 
 // «Turn on the camera»: what this device's camera sees, live, like a mirror (the same
 // stream it already sends, so no extra load); «turn off the camera» hides it.
 // Also hidden when it goes to sleep.
 function showCamera(on) {
-  var box = Skin.block('camera');
+  var box = Theme.block('camera');
   var video = box.querySelector('video');
   if (on && media && media.getVideoTracks().length) {
     video.srcObject = media;
@@ -365,16 +366,16 @@ function showCamera(on) {
   }
 }
 
-// The camera below the face and its words (wherever the skin puts them), centred, 4:3, in the
+// The camera below the face and its words (wherever the theme puts them), centred, 4:3, in the
 // space left down to the bottom; never over the eyes.
 var cameraPlacing = null;
 function placeCamera() {
-  var box = Skin.block('camera');
+  var box = Theme.block('camera');
   if (!box || box.hidden) return;
   var unit = Math.min(innerWidth, innerHeight) / 100;
   var end = 0;
   ['face', 'status', 'timers', 'captions'].forEach(function (name) {
-    var part = Skin.block(name);
+    var part = Theme.block(name);
     if (part && !part.hidden && part.offsetParent !== null) end = Math.max(end, part.getBoundingClientRect().bottom);
   });
   if (!end) end = innerHeight * 0.6;
@@ -439,7 +440,7 @@ function videoFrame(track, send) {
 }
 
 // Running timers, alarms and reminders, with a countdown (settings show_timers). Each line
-// carries its kind as a class (timer, alarm, reminder): an icon, if any, is the skin's.
+// carries its kind as a class (timer, alarm, reminder): an icon, if any, is the theme's.
 var alarmLabel = '';
 var timerItems = [];
 function showTimers(items) {
@@ -447,7 +448,7 @@ function showTimers(items) {
   drawTimers();
 }
 function drawTimers() {
-  var box = Skin.block('timers');
+  var box = Theme.block('timers');
   if (!box) return;
   if (screen.show_timers === false) { box.textContent = ''; return; }
   var now = Date.now() / 1000;
@@ -475,13 +476,13 @@ setInterval(drawTimers, 1000);
 // What it looks at through the camera, with a scanning sweep while it thinks about it;
 // it fades out once it starts answering.
 function showPhoto(at) {
-  var photo = Skin.block('photo');
+  var photo = Theme.block('photo');
   var img = photo.querySelector('img');
   img.onload = function () { photo.hidden = false; photo.classList.remove('done'); photo.classList.add('scanning'); };
   img.src = '/eyes.jpg?t=' + at;
 }
 function photoFollows(state) {
-  var photo = Skin.block('photo');
+  var photo = Theme.block('photo');
   if (!photo || photo.hidden || state === 'looking' || state === 'thinking') return;
   photo.classList.remove('scanning');
   photo.classList.add('done');
@@ -493,7 +494,7 @@ function photoFollows(state) {
 function caption(m) {
   if (m.author === 'assistant' ? screen.show_answer === false : screen.show_heard === false) return;
   setText(m.author === 'assistant' ? 'answer' : 'heard', m.text);
-  var list = Skin.block('captions');
+  var list = Theme.block('captions');
   if (!list) return;
   var p = m.id && document.getElementById('answer-' + m.id);
   if (p) {
@@ -533,19 +534,19 @@ function levelMeter(media) {
     analyser.getByteTimeDomainData(buffer);
     var peak = 0;
     for (var i = 0; i < buffer.length; i++) peak = Math.max(peak, Math.abs(buffer[i] - 128));
-    Skin.voice(peak / 128);
+    Theme.voice(peak / 128);
     requestAnimationFrame(loop);
   })();
 }
 
 function fail(message) {
   lastState = 'error';
-  Skin.state('error');
+  Theme.state('error');
   status(message);
 }
 
-// ?demo: without connecting, cycles through every state to see the skin (?demo&skin=orb);
-// ?demo=thinking stays in one (the skins lab shows them all at once).
+// ?demo: without connecting, cycles through every state to see the theme (?demo&theme=orb);
+// ?demo=thinking stays in one (the themes lab shows them all at once).
 var DEMO_STATES = ['asleep', 'awake', 'hearing', 'transcribing', 'looking', 'thinking', 'speaking', 'question', 'alarm', 'error'];
 function demo() {
   document.getElementById('screen').hidden = false;
@@ -565,7 +566,7 @@ function demo() {
   caption({ text: text('demo_heard') });
   caption({ text: text('demo_answer'), author: 'assistant', id: 'demo' });
   setInterval(function () {  // a simulated voice: yours while «hearing»
-    Skin.voice(Skin.current() === 'hearing' ? 0.3 + 0.3 * Math.sin(Date.now() / 150) : 0);
+    Theme.voice(Theme.current() === 'hearing' ? 0.3 + 0.3 * Math.sin(Date.now() / 150) : 0);
   }, 50);
   next();
   if (DEMO_STATES.indexOf(fixed) < 0) setInterval(next, 3000);

@@ -246,7 +246,7 @@ class Assistant(Transcriber):
         sentence = alarms.ring_sentence(item) if alarms else ""
         self.send({"type": "alarm", "label": item.get("label") or sentence})
         self._state("alarm")
-        pcm = alarms.alarm_sound(getattr(self, "skin", None) or settings.get("skin")) if alarms else None
+        pcm = alarms.alarm_sound(getattr(self, "theme", None) or settings.get("theme")) if alarms else None
         tone = louder(pcm, volume()) if pcm is not None else np.zeros(0, np.int16)
         until = time.time() + ring_for(settings.get("ring_seconds"))
         said = False
@@ -493,7 +493,7 @@ class Assistant(Transcriber):
         """After an answer (in which the LLM may have used its own tools): what changed in
         settings.json goes to the page now, or restarts the server when it can't change live."""
         changed = settings.refresh()
-        if changed & ({"skin", "skin_options", "video"} | settings.SCREEN):
+        if changed & ({"theme", "theme_options", "video"} | settings.SCREEN):
             self.send({"type": "config"})  # the page reads /config again
         asked, tools.requested = set(tools.requested), set()  # by its own tools, during the answer
         if changed - settings.LIVE or "restart" in asked:

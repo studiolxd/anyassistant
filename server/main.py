@@ -30,14 +30,14 @@ import brain
 def main():
     parser = options.parser()
     preferences = settings.load()
-    if "face" in preferences:  # before skins, «face» chose between the eyes and the orb
-        preferences.setdefault("skin", preferences.pop("face"))
+    if "face" in preferences:  # before themes, «face» chose between the eyes and the orb
+        preferences.setdefault("theme", preferences.pop("face"))
     known = {a.dest for a in parser._actions}
     for key in preferences.keys() - known:
         print(f"settings.json: unknown key «{key}» (ignored)", file=sys.stderr)
     parser.set_defaults(**{k: v for k, v in preferences.items() if k in known})
     args = parser.parse_args()
-    settings.active = vars(args)  # the skins' list reads skins_dir
+    settings.active = vars(args)  # the themes' list reads themes_dir
     problems = options.check(vars(args))
     if problems:
         parser.error("; ".join(problems))

@@ -426,7 +426,7 @@ extension OptionRow {
     }
 }
 
-/// Name → value pairs (detail levels, the skin's options, a voice per language): rows to edit.
+/// Name → value pairs (detail levels, the theme's options, a voice per language): rows to edit.
 struct DictEditor: View {
     @ObservedObject var option: OptionItem
     let label: String

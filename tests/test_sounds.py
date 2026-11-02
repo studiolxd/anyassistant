@@ -6,7 +6,7 @@ import kernel
 import settings
 from audio import RATE
 
-skins = kernel.load("page").skins
+themes = kernel.load("page").themes
 
 
 class Speaker:
@@ -26,10 +26,10 @@ def test_two_short_notes_without_clicks_rising_and_falling():
     assert np.array_equal(wake[:half], sleep[half:])  # the same notes, the other way round
 
 
-def test_a_skins_own_sound_wins():
+def test_a_themes_own_sound_wins():
     sounds = kernel.load("sounds")
-    assert np.array_equal(sounds.sound("wake", "bedside"), skins.sound("bedside", "wake"))
-    assert not np.array_equal(sounds.sound("wake", "eyes"), skins.sound("bedside", "wake"))
+    assert np.array_equal(sounds.sound("wake", "bedside"), themes.sound("bedside", "wake"))
+    assert not np.array_equal(sounds.sound("wake", "eyes"), themes.sound("bedside", "wake"))
 
 
 def test_off_it_wakes_in_silence(monkeypatch):
@@ -49,4 +49,4 @@ def test_the_alarm_rings_even_without_the_sounds_plugin(monkeypatch):
     alarms = kernel.module("skill-alarms")
     tone = alarms.alarm_sound("eyes")
     assert tone is not None and len(tone) > RATE // 4
-    assert np.array_equal(alarms.alarm_sound("bedside"), skins.sound("bedside", "alarm"))
+    assert np.array_equal(alarms.alarm_sound("bedside"), themes.sound("bedside", "alarm"))

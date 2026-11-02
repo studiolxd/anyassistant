@@ -41,10 +41,10 @@ options.add(Option("alarm_rings", "everywhere", "where timers, alarms and remind
 ALARM = Path(__file__).parent / "sounds" / "alarm.wav"  # three quick high notes
 
 
-def alarm_sound(skin: str | None):
-    """What rings, as 48 kHz PCM: the skin's alarm.wav, or this plugin's."""
+def alarm_sound(theme: str | None):
+    """What rings, as 48 kHz PCM: the theme's alarm.wav, or this plugin's."""
     page = kernel.module("page")
-    own = page.skins.sound(skin, "alarm") if page and skin else None
+    own = page.themes.sound(theme, "alarm") if page and theme else None
     return own if own is not None else audio.wav(ALARM)
 
 

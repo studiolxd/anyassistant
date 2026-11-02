@@ -1,29 +1,31 @@
-"""Skins: the look of the screen, made by anyone with HTML and CSS (no JavaScript).
+"""Themes: the look of the screen, made by anyone with HTML and CSS (no JavaScript).
 
-A skin is a folder:
+A theme is a folder:
 
-    skins/orb/
-      skin.json        {"name": "Orb", "author": "…", "version": "1", "description": "…",
+    themes/orb/
+      theme.json        {"name": "Orb", "author": "…", "version": "1", "description": "…",
                         "options": {"accent": "#3ddc97"}}
-      skin.html        the layout: where each block goes (<div data-block="clock"></div>…)
-      skin.css         its styles and animations for each state
-      locales/es.json  optional: {"ui": {…}} overrides the page's texts, {"skin": {…}} adds its own
+      theme.html        the layout: where each block goes (<div data-block="clock"></div>…)
+      theme.css         its styles and animations for each state
+      locales/es.json  optional: {"ui": {…}} overrides the page's texts, {"theme": {…}} adds its own
       sounds/          optional: wake.wav, sleep.wav, alarm.wav
       preview.png      optional
 
-System skins live in plugins/page/skins/; yours in «skins_dir» (paths.SKINS by default:
-skins.local/ while developing, not in git). Jarvis fills the blocks; the skin
+System themes live in plugins/page/themes/; yours in «themes_dir» (paths.THEMES by default:
+themes.local/ while developing, not in git). Themes were called skins: a folder from then
+(paths.OLD_THEMES) is moved to the new place, and one of yours with skin.json, skin.html and
+skin.css still loads. Jarvis fills the blocks; the theme
 styles them with CSS, from body[data-state] / [data-look] and live CSS variables
-(--voice, --speech, --bar-1…5). The skin's HTML is cleaned: no scripts, no on…
+(--voice, --speech, --bar-1…5). The theme's HTML is cleaned: no scripts, no on…
 attributes, nothing loaded from outside (and the page forbids it too): the page
 has the microphone and the camera.
 
-In the apps (iPhone, iPad, Android) the skin also says where their «Ajustes» button goes,
+In the apps (iPhone, iPad, Android) the theme also says where their «Ajustes» button goes,
 shown asleep or in error: options «settings» (bottom, top, bottom-left, bottom-right,
 top-left, top-right; bottom if not said), «settings_style» (text or icon; text if not said)
 and «settings_color» (else its «accent»).
 
-    bin/anyassistant skin new <name> [--from orb]
+    bin/anyassistant theme new <name> [--from orb]
 """
 
 import json
@@ -38,7 +40,7 @@ import numpy as np
 import audio
 import paths
 
-SYSTEM = Path(__file__).parent / "skins"  # the system's
+SYSTEM = Path(__file__).parent / "themes"  # the system's
 DEFAULT = "eyes"
 BLOCKS = {"face", "status", "captions", "heard", "answer", "clock", "time", "date", "timers", "photo",
           "camera", "stats"}
@@ -50,8 +52,24 @@ ASSETS = {".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".woff", ".w
 def folders() -> list[Path]:
     import settings
 
-    user = Path(settings.get("skins_dir") or paths.SKINS)
+    user = Path(settings.get("themes_dir") or _yours())
     return [SYSTEM, user if user.is_absolute() else paths.HOME / user]
+
+
+def _yours() -> Path:
+    """paths.THEMES; a folder from when themes were called skins (paths.OLD_THEMES) is moved there first."""
+    if not paths.THEMES.exists() and paths.OLD_THEMES.is_dir():
+        try:
+            paths.OLD_THEMES.rename(paths.THEMES)
+        except OSError:
+            return paths.OLD_THEMES
+    return paths.THEMES
+
+
+def part(path: Path, kind: str) -> Path:
+    """The theme's theme.<kind> (json, html, css); or its skin.<kind>, from when themes were called skins."""
+    new, old = path / f"theme.{kind}", path / f"skin.{kind}"
+    return old if not new.exists() and old.exists() else new
 
 
 def available() -> dict[str, Path]:
@@ -60,7 +78,7 @@ def available() -> dict[str, Path]:
     for base in folders():
         if base.is_dir():
             for folder in sorted(base.iterdir()):
-                if (folder / "skin.json").exists():
+                if part(folder, "json").exists():
                     found[folder.name] = folder
     return found
 
@@ -72,12 +90,12 @@ def folder(name: str) -> Path | None:
 def manifest(name: str) -> dict:
     path = folder(name)
     try:
-        return json.loads((path / "skin.json").read_text()) if path else {}
+        return json.loads(part(path, "json").read_text()) if path else {}
     except ValueError:
         return {}
 
 
-# --- Cleaning the skin's HTML ---
+# --- Cleaning the theme's HTML ---
 
 FORBIDDEN_TAGS = {"script", "iframe", "object", "embed", "link", "meta", "base", "form", "input", "button",
                   "textarea", "select", "frame", "frameset", "applet", "audio", "video", "source", "track"}
@@ -85,7 +103,7 @@ VOID = {"area", "br", "col", "hr", "img", "wbr"}
 
 
 def _local(url: str) -> bool:
-    """Only paths inside the skin («images/x.png»), never «http:», «//», «javascript:» or «data:»."""
+    """Only paths inside the theme («images/x.png»), never «http:», «//», «javascript:» or «data:»."""
     url = url.strip().lower()
     return not re.match(r"^([a-z][a-z0-9+.-]*:|//|/)", url) and ".." not in url
 
@@ -152,7 +170,7 @@ def _escape(value: str) -> str:
 
 
 def clean(html: str, base: str = "") -> tuple[str, list[str]]:
-    """The skin's HTML without anything that runs or loads from outside: (html, what was removed)."""
+    """The theme's HTML without anything that runs or loads from outside: (html, what was removed)."""
     cleaner = _Cleaner(base)
     cleaner.feed(html)
     cleaner.close()
@@ -162,32 +180,34 @@ def clean(html: str, base: str = "") -> tuple[str, list[str]]:
 # --- What the page gets ---
 
 def for_page(name: str, language: str) -> dict:
-    """The skin for /config: its cleaned HTML, its stylesheet, texts and options."""
+    """The theme for /config: its cleaned HTML, its stylesheet, texts and options."""
     path = folder(name) or folder(DEFAULT)
     name = path.name
     info = manifest(name)
-    html, _ = clean((path / "skin.html").read_text(), base=f"/skin/{name}/")
+    html, _ = clean(part(path, "html").read_text(), base=f"/theme/{name}/")
     texts = {}
-    for code in ("en", language):  # the skin's English, then its own language
+    for code in ("en", language):  # the theme's English, then its own language
         try:
             texts.update(json.loads((path / "locales" / f"{code}.json").read_text()))
         except (OSError, ValueError):
             pass
     import settings
 
-    options = {**info.get("options", {}), **(settings.get("skin_options") or {})}
-    return {"name": name, "title": info.get("name", name), "html": html, "css": f"/skin/{name}/skin.css",
+    options = {**info.get("options", {}), **(settings.get("theme_options") or {})}
+    return {"name": name, "title": info.get("name", name), "html": html, "css": f"/theme/{name}/theme.css",
             "version": int(max((p.stat().st_mtime for p in path.rglob("*") if p.is_file()), default=0)),
-            "ui": texts.get("ui", {}), "texts": texts.get("skin", {}),
+            "ui": texts.get("ui", {}), "texts": texts.get("theme", texts.get("skin", {})),
             "options": {k: str(v) for k, v in options.items() if re.fullmatch(r"[\w-]+", k)}}
 
 
 def asset(name: str, path: str) -> Path | None:
-    """A file of the skin, only inside its folder and of the allowed kinds."""
+    """A file of the theme, only inside its folder and of the allowed kinds."""
     base = folder(name)
     if not base:
         return None
     target = (base / path).resolve()
+    if path in ("theme.css", "theme.json", "theme.html"):  # or skin.css…, from when themes were called skins
+        target = part(base, path.split(".")[1]).resolve()
     if base.resolve() not in target.parents or target.suffix.lower() not in ASSETS or not target.is_file():
         return None
     return target
@@ -196,7 +216,7 @@ def asset(name: str, path: str) -> Path | None:
 # --- Its sounds ---
 
 def sound(name: str, kind: str) -> np.ndarray | None:
-    """The skin's sound (wake, sleep, alarm) as 48 kHz mono PCM, or None (the plugins' then)."""
+    """The theme's sound (wake, sleep, alarm) as 48 kHz mono PCM, or None (the plugins' then)."""
     path = folder(name)
     file = path / "sounds" / f"{kind}.wav" if path else None
     if not file or not file.exists():
@@ -207,36 +227,36 @@ def sound(name: str, kind: str) -> np.ndarray | None:
 
 
 def check(path: Path) -> list[str]:
-    """What is wrong in a skin, in plain words (missing files, unknown blocks, what gets removed): for
+    """What is wrong in a theme, in plain words (missing files, unknown blocks, what gets removed): for
     the assistant when it edits one of yours; empty if it's fine."""
     problems = []
-    for needed in ("skin.json", "skin.html", "skin.css"):
-        if not (path / needed).exists():
-            problems.append(f"missing {needed}")
+    for needed in ("json", "html", "css"):
+        if not part(path, needed).exists():
+            problems.append(f"missing theme.{needed}")
     if problems:
         return problems
     try:
-        info = json.loads((path / "skin.json").read_text())
+        info = json.loads(part(path, "json").read_text())
         if not info.get("name"):
-            problems.append("skin.json: no «name»")
+            problems.append("theme.json: no «name»")
     except ValueError as e:
-        problems.append(f"skin.json isn't valid JSON: {e}")
-    html = (path / "skin.html").read_text()
+        problems.append(f"theme.json isn't valid JSON: {e}")
+    html = part(path, "html").read_text()
     _, removed = clean(html)
-    problems += [f"skin.html: {r} is removed (no scripts, events or outside resources)" for r in removed]
+    problems += [f"theme.html: {r} is removed (no scripts, events or outside resources)" for r in removed]
     blocks = set(re.findall(r'data-block="([^"]+)"', html))
-    problems += [f"skin.html: unknown block «{b}» (blocks: {', '.join(sorted(BLOCKS))})" for b in blocks - BLOCKS]
+    problems += [f"theme.html: unknown block «{b}» (blocks: {', '.join(sorted(BLOCKS))})" for b in blocks - BLOCKS]
     if not blocks & {"status", "face"}:
-        problems.append("skin.html: neither «face» nor «status»: nothing would show what it is doing")
-    css = re.sub(r"/\*.*?\*/", "", (path / "skin.css").read_text(), flags=re.S)  # not in comments
+        problems.append("theme.html: neither «face» nor «status»: nothing would show what it is doing")
+    css = re.sub(r"/\*.*?\*/", "", part(path, "css").read_text(), flags=re.S)  # not in comments
     if re.search(r"url\(\s*['\"]?(https?:|//)", css) or re.search(r"@import", css):
-        problems.append("skin.css: outside resources (url(http…), @import) are blocked: put them in the skin's folder")
+        problems.append("theme.css: outside resources (url(http…), @import) are blocked: put them in the theme's folder")
     for code_file in (path / "locales").glob("*.json") if (path / "locales").is_dir() else []:
         try:
             data = json.loads(code_file.read_text())
-            extra = set(data) - {"ui", "skin"}
+            extra = set(data) - {"ui", "theme", "skin"}  # «skin»: from when themes were called skins
             if extra:
-                problems.append(f"locales/{code_file.name}: only «ui» and «skin» count, not {', '.join(sorted(extra))}")
+                problems.append(f"locales/{code_file.name}: only «ui» and «theme» count, not {', '.join(sorted(extra))}")
         except ValueError:
             problems.append(f"locales/{code_file.name} isn't valid JSON")
     for kind in SOUNDS:
@@ -247,25 +267,25 @@ def check(path: Path) -> list[str]:
 
 
 def new(name: str, source: str = DEFAULT) -> Path:
-    """A copy of a skin to start from, in your skins folder."""
+    """A copy of a theme to start from, in your themes folder."""
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,30}", name):
-        raise ValueError("a skin's name: lowercase letters, numbers, - and _")
+        raise ValueError("a theme's name: lowercase letters, numbers, - and _")
     origin = folder(source)
     if not origin:
-        raise ValueError(f"no skin «{source}»")
+        raise ValueError(f"no theme «{source}»")
     target = folders()[1] / name
     if target.exists():
         raise ValueError(f"{target} already exists")
     shutil.copytree(origin, target)
-    info = json.loads((target / "skin.json").read_text())
+    info = json.loads(part(target, "json").read_text())
     info.update(name=name.capitalize(), based_on=source)
-    (target / "skin.json").write_text(json.dumps(info, ensure_ascii=False, indent=2) + "\n")
+    part(target, "json").write_text(json.dumps(info, ensure_ascii=False, indent=2) + "\n")
     return target
 
 
 # --- Yours, by voice (tools.py): create, read, edit, delete; never the system's ---
 
-EDITABLE = re.compile(r"skin\.(json|html|css)|locales/[a-z]{2}\.json")
+EDITABLE = re.compile(r"(theme|skin)\.(json|html|css)|locales/[a-z]{2}\.json")  # skin.*: from when themes were called skins
 MAX_FILE = 100_000
 
 
@@ -275,30 +295,35 @@ def is_system(name: str) -> bool:
 
 
 def files(name: str) -> dict[str, str]:
-    """The skin's text files, to read or change them."""
+    """The theme's text files, to read or change them."""
     path = folder(name)
     if not path:
-        raise ValueError(f"no skin «{name}»")
-    found = {f: (path / f).read_text() for f in ("skin.json", "skin.html", "skin.css") if (path / f).exists()}
+        raise ValueError(f"no theme «{name}»")
+    found = {f"theme.{kind}": part(path, kind).read_text() for kind in ("json", "html", "css") if part(path, kind).exists()}
     for locale in sorted((path / "locales").glob("*.json")) if (path / "locales").is_dir() else []:
         found[f"locales/{locale.name}"] = locale.read_text()
     return found
 
 
+def file_of(path: Path, name: str) -> Path:
+    """theme.css (or skin.css, said either way) as it is in that folder."""
+    return part(path, name.split(".")[1])
+
+
 def write(name: str, file: str, content: str) -> list[str]:
-    """Replaces a text file of one of your skins; returns what the check says about it."""
+    """Replaces a text file of one of your themes; returns what the check says about it."""
     path = folder(name)
     if not path:
-        raise ValueError(f"no skin «{name}»")
+        raise ValueError(f"no theme «{name}»")
     if is_system(name):
-        raise ValueError(f"«{name}» is a system skin: make your own copy first (create_skin)")
+        raise ValueError(f"«{name}» is a system theme: make your own copy first (create_theme)")
     if not EDITABLE.fullmatch(file):
-        raise ValueError("files: skin.json, skin.html, skin.css or locales/<language>.json")
+        raise ValueError("files: theme.json, theme.html, theme.css or locales/<language>.json")
     if len(content.encode()) > MAX_FILE:
         raise ValueError("too big: at most 100 KB per file")
     if file.endswith(".json"):
         json.loads(content)  # ValueError if it isn't JSON
-    target = path / file
+    target = file_of(path, file) if file.startswith(("theme.", "skin.")) else path / file
     target.parent.mkdir(exist_ok=True)
     target.write_text(content)
     return check(path)
@@ -307,9 +332,9 @@ def write(name: str, file: str, content: str) -> list[str]:
 def delete(name: str):
     path = folder(name)
     if not path:
-        raise ValueError(f"no skin «{name}»")
+        raise ValueError(f"no theme «{name}»")
     if is_system(name):
-        raise ValueError(f"«{name}» is a system skin: it can't be deleted")
+        raise ValueError(f"«{name}» is a system theme: it can't be deleted")
     shutil.rmtree(path)
 
 
@@ -323,48 +348,48 @@ def _tools():
 
         return tools.session()
 
-    @tool("The screen's look (a skin: eyes, orb… see get_settings), for every device or only the one the user is "
-          "talking to (this_device).")
-    def set_skin(skin: str, this_device: bool = False) -> str:
+    @tool("The screen's look (a theme, which the user may also call a «skin»: eyes, orb… see get_settings), for every "
+          "device or only the one the user is talking to (this_device).")
+    def set_theme(theme: str, this_device: bool = False) -> str:
         import settings
 
-        if skin not in available():
-            raise ToolError(f"skins: {', '.join(available())}")
+        if theme not in available():
+            raise ToolError(f"themes: {', '.join(available())}")
         if this_device:
             connected = device()
             if not connected:
                 raise ToolError("no device connected")
-            connected.send({"type": "skin", "name": skin})
-            return "This device changes its skin now."
-        settings.save(skin=skin)
-        return "Saved: the skin changes when you finish answering."
+            connected.send({"type": "theme", "name": theme})
+            return "This device changes its theme now."
+        settings.save(theme=theme)
+        return "Saved: the theme changes when you finish answering."
 
-    @tool("Create a skin of the user's own as a copy of another (based_on: eyes, orb, minimal, bedside or one of "
+    @tool("Create a theme of the user's own as a copy of another (based_on: eyes, orb, minimal, bedside or one of "
           "theirs), to change its look (colours, shapes, layout). Not to show or hide parts of the screen (the "
-          "time, the transcription, the answers, the timers…): that is set_screen, for every skin.")
-    def create_skin(name: str, based_on: str = DEFAULT) -> str:
+          "time, the transcription, the answers, the timers…): that is set_screen, for every theme.")
+    def create_theme(name: str, based_on: str = DEFAULT) -> str:
         try:
             created = new(name, based_on)
         except ValueError as e:
             raise ToolError(str(e)) from None
-        return f"Created «{name}» from «{based_on}» in {created}. See it at /skins?skin={name}; set_skin to use it."
+        return f"Created «{name}» from «{based_on}» in {created}. See it at /themes?theme={name}; set_theme to use it."
 
-    @tool("Read a skin's files (skin.json, skin.html, skin.css, locales/*.json) before changing it.")
-    def get_skin(name: str) -> str:
+    @tool("Read a theme's files (theme.json, theme.html, theme.css, locales/*.json) before changing it.")
+    def get_theme(name: str) -> str:
         try:
             found = files(name)
         except ValueError as e:
             raise ToolError(str(e)) from None
-        system = " (a system skin: copy it with create_skin to change it)" if is_system(name) else ""
-        return f"Skin «{name}»{system}:\n" + "\n\n".join(f"=== {file} ===\n{text}" for file, text in found.items())
+        system = " (a system theme: copy it with create_theme to change it)" if is_system(name) else ""
+        return f"Theme «{name}»{system}:\n" + "\n\n".join(f"=== {file} ===\n{text}" for file, text in found.items())
 
-    @tool("Replace a whole file of one of the user's skins (not the system's): skin.json, skin.html, skin.css or "
-          "locales/<language>.json. HTML and CSS only, no JavaScript and nothing from outside. skin.html places "
+    @tool("Replace a whole file of one of the user's themes (not the system's): theme.json, theme.html, theme.css or "
+          "locales/<language>.json. HTML and CSS only, no JavaScript and nothing from outside. theme.html places "
           "blocks Jarvis fills (data-block: face, status, heard, answer, captions, clock, time, date, timers, photo, "
-          "camera, stats); skin.css styles them by state with body[data-look] (asleep, awake, hearing, thinking, "
+          "camera, stats); theme.css styles them by state with body[data-look] (asleep, awake, hearing, thinking, "
           "looking, speaking, question, alarm, error), body.blink and, on the face block, the live variables "
           "--voice, --speech, --bar-1…5 (0–1). It answers what is wrong in it, if anything.")
-    def edit_skin(name: str, file: str, content: str) -> str:
+    def edit_theme(name: str, file: str, content: str) -> str:
         import settings
 
         try:
@@ -372,18 +397,18 @@ def _tools():
         except ValueError as e:
             raise ToolError(str(e)) from None
         connected = device()
-        if connected and name in (settings.get("skin"), getattr(connected.brain, "skin", None)):
+        if connected and name in (settings.get("theme"), getattr(connected.brain, "theme", None)):
             connected.send({"type": "config"})  # the one on screen: it changes now
         if problems:
             return "Saved, but: " + "; ".join(problems)
         return "Saved. Nothing wrong in it."
 
-    @tool("Delete one of the user's skins (never a system one).", needs_yes=True)
-    def delete_skin(name: str) -> str:
+    @tool("Delete one of the user's themes (never a system one).", needs_yes=True)
+    def delete_theme(name: str) -> str:
         import settings
 
-        if name == settings.get("skin"):
-            raise ToolError("it is the skin in use: choose another one first (set_skin)")
+        if name == settings.get("theme"):
+            raise ToolError("it is the theme in use: choose another one first (set_theme)")
         try:
             delete(name)
         except ValueError as e:
@@ -399,11 +424,11 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import settings
 
-    settings.active = settings.load()  # skins_dir
+    settings.active = settings.load()  # themes_dir
     args = sys.argv[1:]
     if args[:1] == ["new"] and len(args) >= 2:
         source = args[args.index("--from") + 1] if "--from" in args else DEFAULT
-        print(f"Created {new(args[1], source)}: edit it and choose it with \"skin\": \"{args[1]}\".")
+        print(f"Created {new(args[1], source)}: edit it and choose it with \"theme\": \"{args[1]}\".")
         sys.exit(0)
     if args[:1] == ["list"]:
         for name, path in available().items():

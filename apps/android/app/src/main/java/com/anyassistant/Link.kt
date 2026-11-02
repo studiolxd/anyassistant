@@ -156,18 +156,19 @@ class Link(private val context: Context) {
         }
     }
 
-    /** The face's texts, skin and screen settings: the Mac's /config (as the page's), for this device's skin. */
+    /** The face's texts, theme and screen settings: the Mac's /config (as the page's), for this device's theme. */
     suspend fun configure() {
         val base = mac.url() ?: return
-        val skin = context.getSharedPreferences("anyassistant", Context.MODE_PRIVATE).getString("skin", null)
+        val prefs = context.getSharedPreferences("anyassistant", Context.MODE_PRIVATE)
+        val theme = prefs.getString("theme", null) ?: prefs.getString("skin", null)  // «skin»: remembered by an older app
         val config = withContext(Dispatchers.IO) {
             runCatching {
-                mac.client.newCall(mac.request("$base/config" + (skin?.let { "?skin=$it" } ?: "")).build()).execute()
+                mac.client.newCall(mac.request("$base/config" + (theme?.let { "?theme=$it" } ?: "")).build()).execute()
                     .use { if (it.code == 200) JSONObject(it.body.string()) else null }
             }.getOrNull()
         } ?: return
         face.configure(config)
-        send(JSONObject().put("type", "skin").put("name", face.skin))  // its skin's sounds are played from the Mac
+        send(JSONObject().put("type", "theme").put("name", face.theme))  // its theme's sounds are played from the Mac
     }
 
     // --- Both ways ---
@@ -201,10 +202,10 @@ class Link(private val context: Context) {
             "photo" -> takePhoto(message.optInt("id"))
             "look" -> scope.launch { showPhoto() }
             "config" -> scope.launch { configure() }
-            "skin" -> {
+            "theme" -> {
                 val name = message.optString("name")
                 val prefs = context.getSharedPreferences("anyassistant", Context.MODE_PRIVATE).edit()
-                if (name.isEmpty() || name == "default") prefs.remove("skin") else prefs.putString("skin", name)
+                if (name.isEmpty() || name == "default") prefs.remove("theme") else prefs.putString("theme", name)
                 prefs.apply()
                 scope.launch { configure() }
             }

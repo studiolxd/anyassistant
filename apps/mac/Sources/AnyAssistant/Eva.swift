@@ -145,7 +145,7 @@ struct FaceWindow: View {
 
     var body: some View {
         let link = client.link
-        SkinView(face: link.face, levels: link.levels, camera: link.camera)
+        ThemeView(face: link.face, levels: link.levels, camera: link.camera)
             .contentShape(Rectangle())
             .onTapGesture { link.tap() }
             .overlay(alignment: .bottom) {

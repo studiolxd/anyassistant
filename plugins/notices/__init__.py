@@ -5,7 +5,7 @@
 - Not over anyone: while a device is in a conversation, hearing someone, thinking or
   speaking, it waits (up to WAIT seconds; then it says it anyway, or it would be late).
 - Where: every connected device («notices_where»: everywhere), or the last one you talked
-  to (last). A soft tone first (the skin's «wake» sound), then the sentence, on screen too.
+  to (last). A soft tone first (the theme's «wake» sound), then the sentence, on screen too.
 
     notices = kernel.module("notices")
     await notices.tell("In 10 minutes: dentist.")

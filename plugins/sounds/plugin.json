@@ -1,5 +1,5 @@
 {
   "name": "Sounds",
-  "description": "A sound when it wakes up and when it falls asleep (the skin's, if it has its own).",
+  "description": "A sound when it wakes up and when it falls asleep (the theme's, if it has its own).",
   "kind": "feature"
 }

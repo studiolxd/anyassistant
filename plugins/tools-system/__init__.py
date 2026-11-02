@@ -41,11 +41,11 @@ def get_status() -> str:
             f"eyes: {'on' if kernel.enabled('eyes') else 'off'}; memory: {memory.mode() if (memory := kernel.module('memory')) else 'off'}")
 
 
-@tool("Your name, skin (and the ones there are), detail level, voice and language.")
+@tool("Your name, theme (and the ones there are), detail level, voice and language.")
 def get_settings() -> str:
     import llm
     
-    return (f"name: {settings.get('name')}; skin: {settings.get('skin')} (skins: {', '.join(page.skins.available()) if (page := kernel.module('page')) else '-'}); "
+    return (f"name: {settings.get('name')}; theme: {settings.get('theme')} (themes: {', '.join(page.themes.available()) if (page := kernel.module('page')) else '-'}); "
             f"detail: {settings.get('detail') or 'neutral'} (levels: {', '.join(llm.detail_levels())}); "
             f"voice: {settings.get('voice') or 'the language default'}; language: {i18n.L.code} "
             f"(available: {', '.join(i18n.available())})")
@@ -144,9 +144,9 @@ SCREEN = {"show_time": "the time (asleep)", "show_date": "the date (asleep)", "s
           "clock": "12 or 24 hours, or auto"}
 
 
-@tool("Show or hide parts of the screen, on every device and with any skin: " + "; ".join(
+@tool("Show or hide parts of the screen, on every device and with any theme: " + "; ".join(
       f"{k}: {v}" for k, v in SCREEN.items()) + ". value: yes/no for show_*, a number for history, 12/24/auto for "
-      "clock. Use this (not a new skin) when the user wants something on the screen shown or hidden.",
+      "clock. Use this (not a new theme) when the user wants something on the screen shown or hidden.",
       choices={"setting": list(SCREEN)})
 def set_screen(setting: str, value: str) -> str:
     import options

@@ -118,7 +118,8 @@
 "Their servers come from Internet Accounts; macOS doesn't share their passwords, so you type each one. Exchange, Google and iCloud accounts aren't here." = "Sus servidores vienen de Cuentas de Internet; macOS no comparte sus contraseñas, así que escribes cada una. Las cuentas de Exchange, Google e iCloud no aparecen.";
 "No password" = "Sin contraseña";
 "Try" = "Probar";
-"Skins…" = "Skins…";
+"Themes" = "Temas";
+"Themes…" = "Temas…";
 "Go to that device: it will ask for the phrases." = "Ve a ese dispositivo: te irá pidiendo las frases.";
 "Turn on the plugin «Voices» to teach it who you are." = "Activa el plugin «Voces» para enseñarle quién eres.";
 "Nobody yet: while nobody is known, it listens to everyone." = "Nadie aún: mientras no conozca a nadie, hace caso a todos.";

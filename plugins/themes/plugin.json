@@ -1,0 +1,8 @@
+{
+  "name": "Themes",
+  "description": "http://<server>:8080/themes: every state of a theme at once, to see them and choose (the app opens it).",
+  "kind": "feature",
+  "requires": [
+    "page"
+  ]
+}

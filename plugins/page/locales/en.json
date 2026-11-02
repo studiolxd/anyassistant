@@ -31,9 +31,9 @@
     "demo_answer": "It's 8:42 in the evening."
   },
   "options_title": {
-    "skin": "Theme",
-    "skin_options": "Theme options",
-    "skins_dir": "Your themes folder",
+    "theme": "Theme",
+    "theme_options": "Theme options",
+    "themes_dir": "Your themes folder",
     "show_time": "Time while asleep",
     "show_date": "Date while asleep",
     "show_hint": "How to wake it",
@@ -47,9 +47,9 @@
     "show_stats": "Connection data"
   },
   "options": {
-    "skin": "",
-    "skin_options": "For example, the accent color.",
-    "skins_dir": "If not set, the one in your data folder.",
+    "theme": "",
+    "theme_options": "For example, the accent color.",
+    "themes_dir": "If not set, the one in your data folder.",
     "show_time": "",
     "show_date": "",
     "show_hint": "«Say “Hey, {name}”» while asleep.",
