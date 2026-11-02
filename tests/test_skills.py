@@ -17,7 +17,7 @@ import plugins.skills_language as language
 interpreter = kernel.load("interpreter")
 from plugins.skill_arithmetic.calc import calculate
 from plugins.skills_language import spoken_number as spoken
-from plugins.skills_language.parse import Clock, clock, duration, resolve, tokens
+from plugins.skills_language.parse import Clock, clock, duration, number, resolve, tokens
 from plugins.skill_conversion.units import convert
 
 
@@ -61,6 +61,10 @@ def test_durations_en(en, text, seconds):
     ("a las 7 y media de la tarde", Clock(7, 30, "pm", None)), ("despiértame mañana a las 7", Clock(7, 0, None, 1)),
     ("a las 8 menos cuarto", Clock(7, 45, None, None)), ("a las 19:30", Clock(19, 30, None, None)),
     ("pasado mañana a las 10 de la mañana", Clock(10, 0, "am", 2)), ("a mediodía", Clock(12, 0, None, None)),
+    # In words, as the voice is written: «y» is the minutes, not 7 + 5 (it set them at 12 and 8).
+    ("pongo una alarma a las siete y cinco", Clock(7, 5, None, None)),
+    ("pon una alarma a las siete y un minuto", Clock(7, 1, None, None)),
+    ("a las nueve y veinticinco", Clock(9, 25, None, None)), ("a las siete y media", Clock(7, 30, None, None)),
 ])
 def test_clock_es(es, text, expected):
     assert clock(tokens(text)).value == expected
@@ -229,3 +233,29 @@ def test_only_meant_words_stop_the_alarm(es):
     assert stops_it("Para") and stops_it("Apaga la alarma") and stops_it("Vale")
     assert not stops_it("Kimbo.")  # its own tone, transcribed
     assert not stops_it("Gracias")
+
+
+@pytest.mark.parametrize("text, value", [
+    ("treinta y cinco", 35), ("noventa y nueve", 99), ("siete y cinco", 7), ("veinte y treinta", 20),
+])
+def test_numbers_joined_es(es, text, value):
+    assert number(tokens(text), 0)[0] == value
+
+
+@pytest.mark.parametrize("text, value", [
+    ("two hundred and five", 205), ("a thousand and twenty", 1020), ("seven and five", 7),
+])
+def test_numbers_joined_en(en, text, value):
+    assert number(tokens(text), 0)[0] == value
+
+
+def test_an_alarm_in_words_at_its_minute(store, es, monkeypatch):
+    """At 19:03, «a las siete y cinco» is 19:05 today (it was set at midnight: 7 + 5)."""
+    now = time.localtime()
+    fixed = time.mktime((now.tm_year, now.tm_mon, now.tm_mday, 19, 3, 0, 0, 0, -1))
+    localtime = time.localtime
+    monkeypatch.setattr(time, "time", lambda: fixed)
+    monkeypatch.setattr(time, "localtime", lambda at=None: localtime(fixed if at is None else at))
+    skills.quick("Pongo una alarma a las siete y cinco.")
+    assert [(i["kind"], i["at"]) for i in timers.pending()] == [("alarm", fixed + 120)]
+

@@ -109,8 +109,12 @@ struct Rectangular: View {
                 ProgressView(timerInterval: set...next.at, countsDown: true) { EmptyView() } currentValueLabel: { EmptyView() }
                     .tint(blue)
             } else if let next {
-                Label(when(next.at), systemImage: next.icon)
-                    .font(.system(.title3, design: .rounded).weight(.semibold))
+                // The icon small beside it: as big as the hour, it left no room for it («20:…»).
+                HStack(spacing: 4) {
+                    Image(systemName: next.icon).font(.body).foregroundStyle(blue).widgetAccentable()
+                    Text(when(next.at)).font(.system(.title3, design: .rounded).weight(.semibold))
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                }
             } else {
                 Text("Tap to talk").font(.body).foregroundStyle(.secondary)
             }

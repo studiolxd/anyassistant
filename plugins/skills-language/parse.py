@@ -47,7 +47,8 @@ def number(toks: list[Token], i: int) -> tuple[float, int] | None:
         elif word in v["multipliers"] and found:
             total += max(current, 1) * v["multipliers"][word]
             current, j = 0, j + 1
-        elif word in v["joiners"] and found and j + 1 < len(toks) and toks[j + 1].plain in v["numbers"]:
+        elif (word in v["joiners"] and found and j + 1 < len(toks) and toks[j + 1].plain in v["numbers"]
+              and _joins(total, current, v["numbers"][toks[j + 1].plain])):
             j += 1
         elif word in v["decimal"] and found and j + 1 < len(toks):
             decimals = number(toks, j + 1)
@@ -58,6 +59,17 @@ def number(toks: list[Token], i: int) -> tuple[float, int] | None:
         else:
             break
     return (float(total + current), j) if found else None
+
+
+def _joins(total: float, current: float, following: float) -> bool:
+    """Whether «y» / «and» joins the next number to this one: after tens its units («treinta y cinco»),
+    after hundreds what is less («two hundred and five»), after thousands what is less («mil y…»). Not
+    «siete y cinco» (an hour and its minutes: 7:05, not 12)."""
+    if current >= 20 and current % 10 == 0 and current % 100:
+        return following < 10
+    if current >= 100 and current % 100 == 0:
+        return following < 100
+    return current == 0 and total > 0 and following < 1000
 
 
 def unit_seconds(word: str) -> int | None:
