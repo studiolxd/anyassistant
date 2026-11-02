@@ -1,13 +1,27 @@
 # TODO
 
+# Para publicar
+
+- [ ] **iPhone y iPad en TestFlight**, y probarla en el iPhone 7 (iOS 15).
+- [ ] **Un modo demo para la revisión de la App Store** (el revisor no tiene tu servidor), solo si
+  se publica fuera de TestFlight.
+- [ ] **Publicar la app de Android** (Google Play, o el APK firmado para instalar a mano).
+- [ ] **Versiones en GitHub Releases** con lo que lleva cada una (install.sh copia hoy el
+  checkout de git, o la copia de la app).
+- [ ] **Firmar el instalador de Windows** cuando lo instale más gente (Azure Artifact
+  Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de España).
+- [ ] **Actualizarse sola** (hoy, instalar la versión nueva encima).
+- [ ] **Versiones ARM** (Windows en ARM, Raspberry Pi).
+- [ ] **La app del Mac en Releases** en cada versión sin hacerlo a mano (hoy:
+  `apps/mac/build.sh --release` en este Mac y `gh release upload`; en Actions haría falta el
+  certificado como secreto).
+
+# Desarrollo
+
 ## Las apps
 
-- [ ] **iPhone**: subir a TestFlight para el iPhone 7 (iOS 15) y probarla allí.
-- [ ] **iPhone y iPad**: un modo demo para la revisión de la App Store (el revisor no tiene tu
-  Mac), solo si se publica fuera de TestFlight.
 - [ ] **Android**: probarla en un Android 8 real (el micrófono y la cancelación de eco, Bonjour,
   la alarma con la pantalla bloqueada, la cámara).
-- [ ] **Android**: publicarla (Google Play, o el APK firmado para instalar a mano).
 - [ ] **El Mac**: probarlo como cliente de otro servidor.
 - [ ] **El Apple Watch**: los avisos en la muñeca (alarmas, agenda, «la cocina dice…», con
   vibración: notificaciones push).
@@ -28,8 +42,6 @@ Hoy son funcionales pero sobrias; que sigan el estilo y el vocabulario de las ap
 
 ## El instalador
 
-- [ ] **Versiones en GitHub Releases** con lo que lleva cada una (install.sh copia hoy el
-  checkout de git, o la copia de la app).
 - [ ] **El paso de registro de la voz** en el instalador (`@installer.device`).
 
 ## El servidor en Windows y Linux
@@ -103,13 +115,6 @@ Java no tiene cancelación de eco).
   **v0.1.0 publicada** (1 nov), con la app del Mac también (`AnyAssistant-0.1.0-mac.dmg`, Apple
   Silicon, firmada y notarizada). La siguiente: subir `version` en `apps/desktop/package.json`,
   `git tag v0.1.1 && git push origin v0.1.1`.
-- [ ] **5b. Firmar el instalador de Windows** cuando lo instale más gente (Azure Artifact
-  Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de España).
-- [ ] **5b. Actualizarse sola** (hoy, instalar la versión nueva encima).
-- [ ] **5b. Versiones ARM** (Windows en ARM, Raspberry Pi).
-- [ ] **5b. La app del Mac en Releases** en cada versión sin hacerlo a mano (hoy:
-  `apps/mac/build.sh --release` en este Mac y `gh release upload`; en Actions haría falta el
-  certificado como secreto).
 
 ## Varios dispositivos, lo siguiente
 
@@ -162,7 +167,7 @@ lo primero que se le pide a un asistente de voz en casa.
 - [ ] **Un test end-to-end inestable**: una vez, la palabra de activación no oyó nada en
   35 s con la voz sintética (test_memory_with_claude); pasó al repetirlo.
 
-## Hecho
+# Hecho
 
 - [x] **Apps nativas** para Android, iPhone, iPad, el Apple Watch y Windows y Linux (la app de
   bandeja); el Mac como cliente con su app. La de Android encuentra el servidor con Bonjour y se
@@ -310,7 +315,7 @@ lo primero que se le pide a un asistente de voz en casa.
 - [x] **Tests automáticos**: pytest en `tests/` (`uv run pytest`; `-m e2e` para el
   servidor real).
 
-## Descartados
+# Descartados
 
 - **Tele**: sin micrófono que puedan usar las apps (si acaso, Android TV como pantalla y
   altavoz, con la app de Android).
