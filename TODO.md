@@ -53,12 +53,14 @@ Cómo se hizo: `docs/windows-y-linux.md`.
 
 - [ ] **Probar en tu Windows** los motores, la app de bandeja y la administración web (en curso).
 - [ ] **Probar en tu Linux** los motores, la app de bandeja y la administración web (en curso).
-- [ ] **Hacer funcionar Claude Code en Windows y Linux** (las preguntas abiertas).
+- [ ] **Hacer funcionar Claude Code en Windows** (las preguntas abiertas).
+- [ ] **Hacer funcionar Claude Code en Linux** (las preguntas abiertas).
 - [ ] **Añadir `tts-piper`**: una voz más ligera, para una Raspberry.
 - [ ] **Elegir voz (`set_voice`) entre las de Kokoro** (hoy, solo las del Mac).
 - [ ] **Poder reiniciar por voz en Windows** con la app de bandeja (hoy `os.execv`, que cambia de
   proceso).
-- [ ] **Controlar el equipo sin LLM** en Windows y Linux (aplazado).
+- [ ] **Controlar el equipo sin LLM en Windows.**
+- [ ] **Controlar el equipo sin LLM en Linux.**
 - [ ] **Decidir qué dice la app de bandeja** cuando es cliente de otro servidor y otra app usa el
   micrófono.
 
