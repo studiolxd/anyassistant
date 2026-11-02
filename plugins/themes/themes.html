@@ -7,12 +7,14 @@
   <title>AnyAssistant · Themes</title>
   <link rel="icon" href="/web/favicon.png">
   <link rel="stylesheet" href="/web/tokens.css?v=16">
-  <link rel="stylesheet" href="/themes/themes.css?v=4">
+  <link rel="stylesheet" href="/themes/themes.css?v=7">
 </head>
 <body class="ui">
   <header class="header">
     <img class="logo" src="/web/logo.png" alt="">
     <span class="name">AnyAssistant</span>
+    <!-- The theme shown (on «Instalados»): its name, a menu. -->
+    <select id="theme" class="field" aria-label="Theme"></select>
     <!-- Installed / From the community: only for the owner (who may install), else just the first. -->
     <div class="end">
       <nav id="tabs" class="segmented" hidden>
@@ -22,9 +24,8 @@
     </div>
   </header>
   <div id="toolbar">
-    <label><span id="theme-label">Theme</span> <select id="theme"></select></label>
-    <span id="about"></span>
-    <span id="reloaded"></span>
+    <h1><span id="theme-label">Theme</span>: <span id="theme-name"></span> <span id="reloaded"></span></h1>
+    <p id="about"></p>
   </div>
   <div id="sounds"></div>
   <main id="states"></main>
@@ -48,6 +49,6 @@
       <button id="full-close" aria-label="close">✕</button>
     </div>
   </div>
-  <script src="/themes/themes.js?v=8"></script>
+  <script src="/themes/themes.js?v=10"></script>
 </body>
 </html>

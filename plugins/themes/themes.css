@@ -3,15 +3,16 @@
 body { margin: 0; background: var(--color-background); }
 
 .header { position: sticky; top: 0; z-index: 2; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
-body.community #toolbar, body.community #sounds, body.community #states { display: none; }
+body.community #toolbar, body.community #sounds, body.community #states, body.community #theme { display: none; }
+/* The theme's menu, in the header after the name. */
+#theme { width: auto; margin-left: var(--space-4); }
 
 /* The theme to show, what it is, and «reloaded» when its files change. */
-#toolbar { display: flex; flex-wrap: wrap; align-items: center; padding: var(--space-4) var(--space-4) 0; }
-#toolbar > * { margin: 0 var(--space-4) var(--space-2) 0; }
-#toolbar label { font-weight: var(--weight-medium); }
-#toolbar select { margin-left: var(--space-2); }
-#about { color: var(--color-text-secondary); }
-#reloaded { color: var(--color-success); font-size: var(--text-sm); }
+/* Its title («Tema: Eyes») and its description. */
+#toolbar { padding: var(--space-5) var(--space-4) 0; }
+#toolbar h1 { font-size: var(--text-xl); font-weight: var(--weight-semibold); margin: 0 0 var(--space-1); }
+#about { margin: 0; color: var(--color-text-secondary); }
+#reloaded { color: var(--color-success); font-size: var(--text-sm); font-weight: var(--weight-regular); }
 
 /* Its sounds: a button each to hear it, and whether it is the theme's or the system's. */
 #sounds { display: flex; flex-wrap: wrap; align-items: center; padding: var(--space-2) var(--space-4) 0;
@@ -51,5 +52,6 @@ iframe { width: 800px; height: 1280px; border: 0; transform: scale(0.25); transf
 
 @media (max-width: 560px) {
   .header { flex-wrap: wrap; }
-  .header .end { width: 100%; margin: var(--space-2) 0 0; justify-content: center; }
+  .header .name { display: none; }  /* room for the theme's menu next to the logo */
+  .header .end { margin-left: auto; }  /* on the same line if they fit; below only if not */
 }

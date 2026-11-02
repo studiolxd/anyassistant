@@ -37,7 +37,7 @@ function fill(data) {
   data.themes.forEach(function (theme) {
     var option = document.createElement('option');
     option.value = theme.name;
-    option.textContent = theme.title + ' (' + theme.name + ')';
+    option.textContent = theme.title;
     select.appendChild(option);
   });
   select.value = data.theme.name;
@@ -53,6 +53,7 @@ function show(data) {
   version = data.theme.version;
   var about = data.themes.filter(function (s) { return s.name === data.theme.name; })[0];
   document.getElementById('about').textContent = about ? about.description : '';
+  document.getElementById('theme-name').textContent = about ? about.title : data.theme.name;
   history.replaceState(null, '', '/themes?theme=' + encodeURIComponent(data.theme.name));
   views(data.theme.name);
   sounds(data.theme.name);
