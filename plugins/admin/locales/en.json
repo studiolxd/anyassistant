@@ -119,8 +119,6 @@
     "From the community": "From the community",
     "Turn on the plugin «Community».": "Turn on the plugin «Community».",
     "Nothing to install yet.": "Nothing to install yet.",
-    "Reload the catalog": "Reload the catalog",
-    "Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions.": "Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions.",
     "Update «%s»?": "Update «%s»?",
     "Install «%s»?": "Install «%s»?",
     "A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it.": "A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it.",

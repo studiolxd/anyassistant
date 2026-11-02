@@ -198,10 +198,8 @@
 
 /* The community catalog: themes and plugins other people share (Settings → Plugins; the Themes window) */
 "From the community" = "From the community";
-"Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions." = "Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions.";
 "Turn on the plugin «Community»." = "Turn on the plugin «Community».";
 "Nothing to install yet." = "Nothing to install yet.";
-"Reload the catalog" = "Reload the catalog";
 "update available" = "Update available";
 "installed" = "installed";
 "by" = "by";

@@ -884,8 +884,6 @@ function community(main, toCommunity) {
       var mine = (data.packages || []).filter(function (p) { return p.kind === 'plugin'; });
       if (!mine.length && !data.error) card.appendChild(el('p', { class: 'muted', text: T('Nothing to install yet.') }));
       mine.forEach(function (p) { card.appendChild(packageRow(p, load)); });
-      card.appendChild(el('p', {}, [el('a', { href: '#plugins', text: T('Reload the catalog'), onclick: function (e) { e.preventDefault(); load(true); } })]));
-      box.appendChild(el('p', { class: 'muted', text: T('Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions.') }));
     }).catch(function () {});
   }
   load(false);

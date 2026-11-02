@@ -710,14 +710,8 @@ struct PluginsView: View {
                     ForEach(shared) { item in
                         CommunityRow(item: item, admin: admin) { asking = item }
                     }
-                    if admin.communityOn {
-                        Button(T("Reload the catalog")) { Task { await admin.loadCommunity(refresh: true) } }
-                            .buttonStyle(.link)
-                    }
                 } header: {
                     Text(T("From the community"))
-                } footer: {
-                    Text(T("Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions."))
                 }
                 .id("community")
             }
