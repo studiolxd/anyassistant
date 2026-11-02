@@ -212,13 +212,16 @@ class Assistant(Transcriber):
         return self.speaker.speaking or time.time() - self.speaker.last_sound < self.guard
 
     def _is_echo(self, text: str, timings: dict) -> bool:
-        """A short piece of what it just said: its own voice leaking into the microphone."""
+        """A short piece of what it just said (or is saying): its own voice leaking into the microphone."""
         # When the sentence started: now, minus the STT time and its duration.
         started = time.time() - timings.get("stt_ms", 0) / 1000 - timings.get("audio_s", 0)
         if started - self.speaker.last_sound > ECHO_WINDOW:
             return False
         heard = words(text)
-        return 0 < len(heard) <= ECHO_MAX_WORDS and f" {' '.join(heard)} " in f" {' '.join(self.said)} "
+        if not 0 < len(heard) <= ECHO_MAX_WORDS:
+            return False
+        piece = f" {' '.join(heard)} "
+        return piece in f" {' '.join(self.said)} " or piece in f" {' '.join(self.saying)} "
 
     def on_connect(self):
         super().on_connect()
@@ -325,6 +328,11 @@ class Assistant(Transcriber):
         if self._is_echo(text, timings):
             log.info("echo dropped: «%s»", settings.private(text))
             return
+        if timings.get("over") and (self.speaker.speaking or self.turn.locked()):
+            # Said over it while it spoke (listen_while_speaking), and not its echo: as «Jarvis,
+            # stop» without the name; what was said is answered.
+            log.info("interrupted by voice (without its name)")
+            self.stop()
         voices = kernel.module("voices")  # learning a voice, or only known voices count
         if voices and voices.screen(self, text, timings, getattr(self.ear, "last_audio", None), self._handle):
             return

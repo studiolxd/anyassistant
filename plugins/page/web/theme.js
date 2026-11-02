@@ -12,7 +12,7 @@
 var Theme = (function () {
   var LOOKS_LIKE = {
     connected: 'awake', listening: 'awake', recording: 'hearing',
-    repeating: 'speaking', transcribing: 'thinking', connecting: 'awake'
+    repeating: 'speaking', transcribing: 'thinking', connecting: 'awake', paused: 'asleep'
   };
   var screen = document.getElementById('screen');
   var stylesheet = document.getElementById('theme-css');

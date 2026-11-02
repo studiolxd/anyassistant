@@ -102,6 +102,13 @@ OPTIONS = [
            "voice", "float", live=True),
     Option("echo_guard", 1.2, "seconds without listening after speaking (its own echo)", "voice", "float"),
     Option("voice_interrupt", True, "«Jarvis, stop» while it speaks", "voice", "bool", live=True),
+    # In /config too («screen»): the apps read it, the Mac's stops its microphone by it.
+    Option("pause_when_microphone_busy", True, "it stops listening while another app uses the device's microphone "
+           "(a call, a meeting); back when it ends", "voice", "bool", live=True, screen=True),
+    Option("listen_while_speaking", False, "it keeps listening while it speaks and stops if someone talks over it, "
+           "telling its own echo by loudness (experimental)", "voice", "bool", live=True),
+    Option("echo_match", 0.8, "how alike the loudness of what it hears must be to what it sends to count as its "
+           "own echo (0–1, with listen_while_speaking)", "voice", "float", live=True, hidden=True),
     Option("tap_to_stop", True, "tapping the screen stops it talking", "voice", "bool", live=True),
     Option("fillers", True, "«One moment, let me check» when a tool is slow", "voice", "bool", live=True),
     # Skills

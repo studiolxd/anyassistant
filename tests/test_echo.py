@@ -15,7 +15,7 @@ class Speaker:
 
 def assistant(said, ago=0.5):
     a = object.__new__(Assistant)  # skips __init__: no STT, LLM or voice
-    a.said, a.speaker = said.split(), Speaker(ago)
+    a.said, a.saying, a.speaker = said.split(), [], Speaker(ago)
     return a
 
 

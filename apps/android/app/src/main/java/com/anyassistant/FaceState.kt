@@ -43,12 +43,15 @@ class FaceState {
     var cameraShown by mutableStateOf(false)
     var voice by mutableFloatStateOf(0f)  // your voice, 0…1
     var speech by mutableFloatStateOf(0f)  // its own
+    var pausedWhy by mutableStateOf("")  // paused: why (microphone, call, interrupted) and by which app, if known
+    var pausedApp by mutableStateOf("")
 
     private val main = Handler(Looper.getMainLooper())
 
     companion object {
         private val looksLike = mapOf("connected" to "awake", "listening" to "awake", "recording" to "hearing",
-            "repeating" to "speaking", "transcribing" to "thinking", "connecting" to "awake")
+            "repeating" to "speaking", "transcribing" to "thinking", "connecting" to "awake", "paused" to "asleep")
+        private val pauses = listOf("microphone", "call", "interrupted")
     }
 
     /** The state as the themes draw it (several states look the same). */
@@ -69,6 +72,10 @@ class FaceState {
         problem?.let { return it }
         return when (state) {
             "alarm" -> text("alarm", mapOf("label" to alarmLabel))
+            "paused" -> {  // «En pausa: Zoom usa el micrófono»
+                val why = if (pausedWhy in pauses) pausedWhy else "microphone"
+                text(if (pausedApp.isEmpty()) "paused_$why" else "paused_app", mapOf("app" to pausedApp))
+            }
             "asleep" -> if (shows("show_hint")) text("asleep", mapOf("wake" to wake.ifEmpty { name })) else ""
             else -> if (shows("show_status") || state == "error") text(state) else ""
         }
@@ -99,6 +106,8 @@ class FaceState {
             "state" -> {
                 state = message.optString("state", state)
                 message.optString("wake_phrase").takeIf { it.isNotEmpty() }?.let { wake = it }
+                pausedWhy = message.optString("why")
+                pausedApp = message.optString("app")
                 if (look != "looking" && look != "thinking") photoDone()
                 if (look == "asleep") cameraShown = false
             }

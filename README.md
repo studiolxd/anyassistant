@@ -210,6 +210,9 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `follow_up` | `20` | seconds it keeps listening without its name after it last spoke or heard you |
 | `echo_guard` | `1.2` | seconds without listening after speaking (its own echo) *(restarts)* |
 | `voice_interrupt` | `true` | «Jarvis, stop» while it speaks |
+| `pause_when_microphone_busy` | `true` | it stops listening while another app uses the device's microphone (a call, a meeting); back when it ends |
+| `listen_while_speaking` | `false` | it keeps listening while it speaks and stops if someone talks over it, telling its own echo by loudness (experimental) |
+| `echo_match` | `0.8` | how alike the loudness of what it hears must be to what it sends to count as its own echo (0–1, with listen_while_speaking) |
 | `tap_to_stop` | `true` | tapping the screen stops it talking |
 | `fillers` | `true` | «One moment, let me check» when a tool is slow |
 | `noise_adapt` | `true` | speech detection follows each room's noise, as the device hears it (and its calibration, if measured); off: fixed thresholds |

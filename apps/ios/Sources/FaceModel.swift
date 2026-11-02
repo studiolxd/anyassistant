@@ -38,9 +38,13 @@ final class FaceModel: ObservableObject {
     @Published var scanning = false
     @Published var photoFading = false
     @Published var cameraShown = false
+    @Published var pausedWhy = ""  // paused: why (microphone, call, interrupted) and by which app, if known
+    @Published var pausedApp = ""
 
     private static let looksLike = ["connected": "awake", "listening": "awake", "recording": "hearing",
-                                    "repeating": "speaking", "transcribing": "thinking", "connecting": "awake"]
+                                    "repeating": "speaking", "transcribing": "thinking", "connecting": "awake",
+                                    "paused": "asleep"]
+    private static let pauses = ["microphone", "call", "interrupted"]
 
     /// The state as the themes draw it (several states look the same).
     var look: String { problem != nil ? "error" : FaceModel.looksLike[state] ?? state }
@@ -63,6 +67,9 @@ final class FaceModel: ObservableObject {
         if let problem { return problem }
         switch state {
         case "alarm": return text("alarm", ["label": alarmLabel])
+        case "paused":  // «En pausa: Zoom usa el micrófono»
+            let why = FaceModel.pauses.contains(pausedWhy) ? pausedWhy : "microphone"
+            return text(pausedApp.isEmpty ? "paused_" + why : "paused_app", ["app": pausedApp])
         case "asleep": return shows("show_hint") ? text("asleep", ["wake": wake.isEmpty ? name : wake]) : ""
         default: return shows("show_status") || state == "error" ? text(state) : ""
         }
@@ -92,6 +99,8 @@ final class FaceModel: ObservableObject {
         case "state":
             state = message["state"] as? String ?? state
             if let phrase = message["wake_phrase"] as? String, !phrase.isEmpty { wake = phrase }
+            pausedWhy = message["why"] as? String ?? ""
+            pausedApp = message["app"] as? String ?? ""
             if look != "looking" && look != "thinking" { photoDone() }
             if look == "asleep" { cameraShown = false }
         case "text":
