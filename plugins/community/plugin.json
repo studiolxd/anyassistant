@@ -1,0 +1,8 @@
+{
+  "name": "Community",
+  "description": "Themes and plugins made by other people, from a public catalog: browse, install, update and remove them from the app. A plugin is code that runs on the server: it asks before installing one, and it starts off.",
+  "kind": "feature",
+  "requires": [
+    "page"
+  ]
+}

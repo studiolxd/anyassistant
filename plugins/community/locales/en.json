@@ -1,0 +1,49 @@
+{
+  "options_title": {
+    "community_catalog": "Community catalog"
+  },
+  "options": {
+    "community_catalog": "The address of the index listing the themes and plugins other people share."
+  },
+  "community": {
+    "catalog_address": "The catalog's address must be https://.",
+    "catalog_unreachable": "The catalog couldn't be read ({why}): {url}",
+    "catalog_invalid": "The catalog isn't valid: {why}",
+    "not_in_catalog": "«{id}» isn't in the catalog.",
+    "same_as_system_theme": "«{id}» is a system theme: it can't be replaced.",
+    "same_as_system_plugin": "«{id}» is a system plugin: it can't be replaced.",
+    "yours_theme": "You already have a theme of your own called «{id}»: rename it first.",
+    "yours_plugin": "You already have a plugin of your own called «{id}»: rename it first.",
+    "needs_version": "It needs AnyAssistant {version} or later: update it first.",
+    "confirm_plugin": "A plugin runs code on this server with your permissions: installing one needs your confirmation.",
+    "missing": "Nothing was installed: {path} couldn't be downloaded ({why}).",
+    "mismatch": "Nothing was installed: {path} isn't what the catalog says it is (its SHA-256 differs).",
+    "too_big": "Nothing was installed: {path} is too big.",
+    "bad_theme": "Nothing was installed: the theme has problems ({why}).",
+    "bad_plugin": "Nothing was installed: the plugin has problems ({why}).",
+    "not_installed": "«{id}» didn't come from the catalog: it can only be removed by hand.",
+    "theme_in_use": "It is the theme in use: choose another one first."
+  },
+  "admin_page": {
+    "Community": "Community",
+    "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.",
+    "Reload the catalog": "Reload the catalog",
+    "Nothing to install yet.": "Nothing to install yet.",
+    "Turn on the plugin «Community».": "Turn on the plugin «Community».",
+    "Themes": "Themes",
+    "From the community": "From the community",
+    "Install": "Install",
+    "Update": "Update",
+    "Installing…": "Installing…",
+    "installed": "installed",
+    "update available": "update available",
+    "by": "by",
+    "version": "version",
+    "A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it.": "A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it.",
+    "Install «%s»?": "Install «%s»?",
+    "Remove «%s»?": "Remove «%s»?",
+    "Installed. It is off: turn it on in Plugins after restarting.": "Installed. It is off: turn it on in Plugins after restarting.",
+    "Updated. It applies after restarting.": "Updated. It applies after restarting.",
+    "Removed. It applies after restarting.": "Removed. It applies after restarting."
+  }
+}

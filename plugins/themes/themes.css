@@ -13,6 +13,22 @@ iframe { width: 800px; height: 1280px; border: 0; transform: scale(0.25); transf
 .frame { position: relative; cursor: zoom-in; }
 .cover { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
 
+/* From the community: the catalog's themes, to install. */
+#community { padding: 12px 16px 28px; border-top: 1px solid #333; max-width: 760px; }
+#community h2 { font-size: 16px; margin: 8px 0 4px; color: #eee; }
+#community .lead, #community .muted { color: #888; font-size: 13px; }
+#community .error { color: #ff6b6b; font-size: 13px; }
+#community .error:empty { display: none; }
+.pkg { display: flex; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid #222; }
+.pkg img { flex: 0 0 auto; width: 60px; height: 96px; object-fit: cover; border-radius: 4px; background: #000; border: 1px solid #333; }
+.pkg .about { flex: 1; min-width: 0; color: #ddd; }
+.pkg b { font-weight: 600; }
+.pkg .pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; background: #2a2a2a; color: #3ddc97; margin-left: 8px; }
+.pkg .pill.warn { color: #ffb347; }
+#community button { font: inherit; font-size: 14px; border: 0; border-radius: 7px; padding: 6px 14px; background: #3ddc97; color: #111; cursor: pointer; }
+#community button.quiet { background: #2a2a2a; color: #ccc; margin-top: 12px; }
+#community button.danger { background: none; color: #ff6b6b; border: 1px solid #333; }
+
 /* One state full screen: the whole page, with a small bar to go back or through the states. */
 #full { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: #000; z-index: 10; }
 #full[hidden] { display: none; }

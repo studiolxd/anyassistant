@@ -140,7 +140,6 @@
 "Connected to %@" = "Connected to %@";
 "It has to be paired again." = "It has to be paired again.";
 "Looking for the server…" = "Looking for the server…";
-"Looking for the server…" = "Looking for the server…";
 "The microphone is off" = "The microphone is off";
 "Turn the microphone on" = "Turn the microphone on";
 "Another Mac's server" = "Connect to Another Server";
@@ -204,3 +203,24 @@
 "Options" = "Options";
 "Applies after restarting." = "Applies after restarting.";
 "Open Themes in the Browser" = "Open Themes in the Browser";
+
+/* The community catalog: themes and plugins other people share (Settings → Plugins; the Themes window) */
+"From the community" = "From the community";
+"Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions." = "Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions.";
+"Turn on the plugin «Community»." = "Turn on the plugin «Community».";
+"Nothing to install yet." = "Nothing to install yet.";
+"Reload the catalog" = "Reload the catalog";
+"update available" = "update available";
+"installed" = "installed";
+"by" = "by";
+"version" = "version";
+"Update" = "Update";
+"Install «%s»?" = "Install «%s»?";
+"Update «%s»?" = "Update «%s»?";
+"Remove «%s»?" = "Remove «%s»?";
+"A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it." = "A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it.";
+"Installed." = "Installed.";
+"Installed. It is off: turn it on in Plugins after restarting." = "Installed. It is off: turn it on in Plugins after restarting.";
+"Updated. It applies after restarting." = "Updated. It applies after restarting.";
+"Removed." = "Removed.";
+"Removed. It applies after restarting." = "Removed. It applies after restarting.";

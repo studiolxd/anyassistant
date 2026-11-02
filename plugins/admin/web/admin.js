@@ -98,10 +98,11 @@ function showLogin() {
 // --- The sections ---
 
 // Settings: the core's by topic; Plugins: each one's page (#plugin/<id>) with its options and, for
-// the mail and the voices, their accounts and known voices.
+// the mail and the voices, their accounts and known voices; Community: themes and plugins other
+// people share, to install.
 var SECTIONS = [
   ['pair', 'Pair a device'], ['devices', 'Devices'], ['settings', 'Settings'], ['plugins', 'Plugins'],
-  ['admins', 'Admins']
+  ['community', 'Community'], ['admins', 'Admins']
 ];
 var current = 'pair';
 var timer = null;
@@ -116,7 +117,7 @@ function show(id) {
   var main = $('main');
   main.innerHTML = '';
   if (section !== id) pluginPage(main, id.slice(7));
-  else ({ pair: pair, devices: devices, settings: settingsPage, plugins: plugins, admins: adminsPage })[id](main);
+  else ({ pair: pair, devices: devices, settings: settingsPage, plugins: plugins, community: community, admins: adminsPage })[id](main);
   history.replaceState(null, '', '#' + id);
 }
 
@@ -570,6 +571,80 @@ function mail(main, inPage) {
         draw(r);
       });
   } }, [address, secret, label, imap, smtp, el('button', { text: T('Add') }), note])]));
+}
+
+// The community (the plugin «community»): themes and plugins other people share, from a public
+// catalog: what is installed and whether an update exists; install (a plugin asks first, and
+// starts off), update, remove. Themes show their screenshot (fetched by the server).
+function community(main) {
+  main.appendChild(el('h1', { text: T('Community') }));
+  main.appendChild(el('p', { class: 'lead', text: T('Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.') }));
+  var box = el('div');
+  main.appendChild(box);
+  function load(refresh) {
+    api('GET', '/admin/community' + (refresh ? '?refresh=1' : '')).then(function (data) {
+      box.innerHTML = '';
+      if (data._status === 404) {
+        box.appendChild(el('div', { class: 'card' }, [el('p', { class: 'muted', text: T('Turn on the plugin «Community».') })]));
+        return;
+      }
+      if (data.error) box.appendChild(el('div', { class: 'card' }, [el('p', { class: 'error', text: data.error })]));
+      ['theme', 'plugin'].forEach(function (kind) {
+        var mine = (data.packages || []).filter(function (p) { return p.kind === kind; });
+        box.appendChild(el('h2', { text: kind === 'theme' ? T('Themes') : T('Plugins') }));
+        var card = el('div', { class: 'card' });
+        box.appendChild(card);
+        if (!mine.length) card.appendChild(el('p', { class: 'muted', text: T('Nothing to install yet.') }));
+        mine.forEach(function (p) { card.appendChild(packageRow(p, load)); });
+      });
+      box.appendChild(el('p', {}, [el('button', { class: 'quiet', text: T('Reload the catalog'), onclick: function () { load(true); } })]));
+    });
+  }
+  load(false);
+}
+
+// A package of the catalog: what it is, what is installed, and what can be done with it.
+function packageRow(p, reload) {
+  var busy = el('span', { class: 'muted' });
+  function install() {
+    if (p.kind === 'plugin' && !confirm(T('Install «%s»?').replace('%s', p.name) + '\n\n' +
+        T('A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it.'))) return;
+    busy.textContent = T('Installing…');
+    api('POST', '/admin/community', { install: { kind: p.kind, id: p.id }, confirm: p.kind === 'plugin' }).then(function (r) {
+      busy.textContent = '';
+      if (r.error) { alert(r.error); return; }
+      if (r.restart) needsRestart(r.updated ? T('Updated. It applies after restarting.') : T('Installed. It is off: turn it on in Plugins after restarting.'));
+      reload(false);
+    });
+  }
+  function remove() {
+    if (!confirm(T('Remove «%s»?').replace('%s', p.name))) return;
+    api('POST', '/admin/community', { remove: { kind: p.kind, id: p.id } }).then(function (r) {
+      if (r.error) { alert(r.error); return; }
+      if (r.restart) needsRestart(T('Removed. It applies after restarting.'));
+      reload(false);
+    });
+  }
+  var buttons = [];
+  if (p.installed) {
+    if (p.update && p.can) buttons.push(el('button', { text: T('Update'), onclick: install }));
+    buttons.push(el('button', { class: 'danger', text: T('Remove'), onclick: remove }));
+  } else if (p.can) {
+    buttons.push(el('button', { text: T('Install'), onclick: install }));
+  }
+  var state = p.installed
+    ? el('span', { class: 'pill' + (p.update ? ' warn' : ' ok'), text: p.update ? T('update available') : T('installed') + ' ' + p.installed })
+    : null;
+  return el('div', { class: 'row' }, [
+    p.kind === 'theme' && p.screenshot
+      ? el('img', { class: 'shot', src: '/admin/community/image?kind=theme&id=' + encodeURIComponent(p.id), alt: '' })
+      : null,
+    el('div', { class: 'what' }, [el('b', { text: p.name }), state,
+      el('div', { class: 'muted', text: [p.author ? T('by') + ' ' + p.author : '', T('version') + ' ' + p.version].filter(Boolean).join(' · ') }),
+      el('div', { class: 'muted', text: p.description }),
+      p.can ? null : el('div', { class: 'muted', style: 'color:var(--warn)', text: p.why })]),
+    busy
+  ].concat(buttons));
 }
 
 function adminsPage(main) {
