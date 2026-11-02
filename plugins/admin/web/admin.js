@@ -51,6 +51,12 @@ function toggle(checked, disabled, onchange) {
   input.addEventListener('change', function () { onchange(input.checked, input); });
   return el('label', { class: 'switch' }, [input, el('span')]);
 }
+
+// A row's control: a field fills its column (the same width in every row); a switch stays a switch,
+// beside its text even on a phone.
+function control(field) {
+  return el('div', { class: 'control' + (field && /\bswitch\b/.test(field.className) ? ' compact' : '') }, [field]);
+}
 function flash(field, ok) {
   field.classList.remove('saved', 'bad');
   field.classList.add(ok ? 'saved' : 'bad');
@@ -325,7 +331,7 @@ function devicePage(main, id) {
     });
     function row(title, help, field) {
       return el('div', { class: 'row' }, [el('div', { class: 'what' }, [el('b', { text: title }),
-        help ? el('div', { class: 'muted', text: help }) : null]), el('div', { class: 'control' }, [field])]);
+        help ? el('div', { class: 'muted', text: help }) : null]), control(field)]);
     }
     fields.appendChild(row(T('Name'), '', name));
     fields.appendChild(row(T('Room'), T('The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».'), room));
@@ -481,7 +487,7 @@ function option(o) {
   row = el('div', { class: 'row' }, [
     el('div', { class: 'what', title: o.name }, [el('b', { text: o.title || o.help }),
       note ? el('div', { class: 'muted', text: note }) : null]),
-    el('div', { class: 'control' }, [field])
+    control(field)
   ]);
   return row;
 }
@@ -673,7 +679,7 @@ function guide(learn, drawPeople) {
   var note = el('p', { class: 'error' });
   var start = el('button', { text: T('Start learning'), disabled: 'disabled' });
   function row(title, field) {
-    return el('div', { class: 'row' }, [el('div', { class: 'what', text: title }), el('div', { class: 'control' }, [field])]);
+    return el('div', { class: 'row' }, [el('div', { class: 'what', text: title }), control(field)]);
   }
   box.appendChild(el('h2', { class: 'tight', text: T('Learn a voice') }));
   box.appendChild(el('p', { class: 'muted', text: T('Stand in front of the device you talk to most: its microphone is the one that will hear you. Then read the phrases this window shows, one at a time.') }));
@@ -850,7 +856,7 @@ function mailPage(main) {
     var busy = el('span', { class: 'muted' });
     var add = el('button', { text: T('Try and add'), disabled: 'disabled' });
     function row(title, field) {
-      return el('div', { class: 'row' }, [el('div', { class: 'what', text: title }), el('div', { class: 'control' }, [field])]);
+      return el('div', { class: 'row' }, [el('div', { class: 'what', text: title }), control(field)]);
     }
     function ready() { add.disabled = address.value.indexOf('@') < 0 || !secret.value; }
     [address, secret].forEach(function (f) { f.addEventListener('input', ready); });

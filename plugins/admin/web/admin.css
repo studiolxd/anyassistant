@@ -38,10 +38,10 @@ p.lead, .muted { color: var(--color-text-secondary); }
 .row .what { flex: 1; min-width: 0; }
 .row .what b { font-weight: var(--weight-semibold); }
 .row .what .muted { font-size: var(--text-sm); overflow-wrap: anywhere; }
-.row .control { flex: 0 0 auto; max-width: 50%; }
+.row .control { flex: 0 0 380px; max-width: 50%; display: flex; justify-content: flex-end; }
+.row .control > input, .row .control > select, .row .control > textarea { width: 100%; }
 .ui textarea { width: 100%; min-height: 90px; }
-.row .control textarea { width: 380px; max-width: 100%; }
-.row .control .stack { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.row .control .stack { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
 .ui input.saved, .ui select.saved, .ui textarea.saved { border-color: var(--color-success); }
 .ui input.bad, .ui textarea.bad { border-color: var(--color-danger); }
 button.back { margin-bottom: var(--space-3); }
@@ -125,8 +125,8 @@ body.window-devices main { max-width: none; }
   nav .group { display: none; }
   main { padding: var(--space-4); }
   .row { flex-wrap: wrap; }
-  .row .control { max-width: 100%; width: 100%; }
-  .row .control textarea { width: 100%; }
+  .row .control { flex: 1 0 100%; max-width: 100%; margin-top: var(--space-2); }
+  .row .control.compact { flex: 0 0 auto; margin-top: 0; }
 }
 
 /* Small layout helpers (instead of inline styles in admin.js). */
