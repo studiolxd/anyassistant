@@ -165,17 +165,32 @@ function keepAwake() {
       video.muted = true;
       video.setAttribute('muted', '');
       video.setAttribute('playsinline', '');
-      // In the page and barely visible: a video out of sight may not keep the screen on.
-      video.style.cssText = 'position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:0.01;pointer-events:none';
+      // In the page and barely visible: a video out of sight, or too small, may not keep the
+      // screen on (Chrome takes its wake lock only for a video it counts as seen).
+      video.style.cssText = 'position:fixed;left:0;bottom:0;width:64px;height:64px;opacity:0.01;pointer-events:none';
       document.body.appendChild(video);
     }
     var playing = video.play();
-    if (playing && playing.catch) playing.catch(function () {});
+    if (playing && playing.then) {
+      playing.then(function () { note('keeping the screen on: the video plays'); },
+                   function (e) { note('keeping the screen on: the video does not play (' + e + ')'); });
+    }
   };
   var request = function () {
     if (!('wakeLock' in navigator)) return fallback();
-    navigator.wakeLock.request('screen').catch(fallback);
+    navigator.wakeLock.request('screen').then(function () { note('keeping the screen on: wake lock'); },
+      function (e) { note('keeping the screen on: no wake lock (' + e + '), the video'); fallback(); });
   };
+  // Told to the server's log once connected (the data channel opens later than this).
+  var notes = [];
+  var note = function (text) { notes.push(text); flush(); };
+  var flush = function () {
+    if (!(channel && channel.readyState === 'open')) return setTimeout(flush, 2000);
+    while (notes.length) tell({ type: 'log', text: notes.shift() });
+  };
+  setInterval(function () {  // and whether it still plays, every minute (a paused video lets it sleep)
+    if (video) note('keeping the screen on: the video ' + (video.paused ? 'is paused' : 'plays') + ' at ' + video.currentTime.toFixed(1));
+  }, 60000);
   request();
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible') request();

@@ -103,6 +103,8 @@ class Transcriber:
                 self.ear.pause(str(data.get("why") or "microphone"), str(data.get("app") or "")[:80])
         elif data.get("type") == "listening":
             self.ear.resume("device")
+        elif data.get("type") == "log":  # what happens inside the page (keeping the screen on…), to see it here
+            log.info("page: %s", str(data.get("text", ""))[:300])
 
     def _beep(self, kind: str):
         """Wake or sleep: the plugin «sounds» (the theme's, or its own); silence without it."""
