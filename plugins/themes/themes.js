@@ -222,7 +222,17 @@ function community() {
       list.appendChild(card);
     }
     document.getElementById('pager').hidden = pages < 2;
-    document.getElementById('pager-where').textContent = (page + 1) + ' / ' + pages;
+    // The pages around this one: two before and two after, those there are; this one marked.
+    var numbers = document.getElementById('pager-pages');
+    numbers.innerHTML = '';
+    for (var n = Math.max(0, page - 2); n <= Math.min(pages - 1, page + 2); n++) {
+      var b = document.createElement('button');
+      b.className = n === page ? 'button' : 'button secondary';
+      b.textContent = n + 1;
+      if (n === page) b.setAttribute('aria-current', 'page');
+      b.onclick = (function (to) { return function () { page = to; draw(); }; })(n);
+      numbers.appendChild(b);
+    }
     document.getElementById('pager-previous').disabled = page === 0;
     document.getElementById('pager-next').disabled = page >= pages - 1;
   }
