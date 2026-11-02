@@ -211,7 +211,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `echo_guard` | `1.2` | seconds without listening after speaking (its own echo) *(restarts)* |
 | `voice_interrupt` | `true` | «Jarvis, stop» while it speaks |
 | `pause_when_microphone_busy` | `true` | it stops listening while another app uses the device's microphone (a call, a meeting); back when it ends |
-| `listen_while_speaking` | `false` | it keeps listening while it speaks and stops if someone talks over it, telling its own echo by loudness (experimental) |
+| `listen_while_speaking` | `true` | it keeps listening while it speaks and stops if someone talks over it, telling its own echo by loudness (experimental) |
 | `echo_match` | `0.8` | how alike the loudness of what it hears must be to what it sends to count as its own echo (0–1, with listen_while_speaking) |
 | `tap_to_stop` | `true` | tapping the screen stops it talking |
 | `fillers` | `true` | «One moment, let me check» when a tool is slow |
@@ -1069,8 +1069,8 @@ and come back through the microphone). And if what it hears in the following
 seconds is still a short piece of what it just said («Anything else?» after «Do you
 need anything else?»), it drops it.
 
-**Interrupting it without its name** (`listen_while_speaking`, off until measured on real
-devices): it keeps listening while it speaks. The server knows exactly what it sends to each
+**Interrupting it without its name** (`listen_while_speaking`, on; off, it only stops when
+called by its name): it keeps listening while it speaks. The server knows exactly what it sends to each
 device and when, so it keeps the loudness envelope of its last 12 seconds of output per device
 (`server/echo.py`: log-RMS every 20 ms) and, when a sentence ends while it was talking, compares
 the sentence's envelope with that output, searching the playback delay (up to a second): its own
