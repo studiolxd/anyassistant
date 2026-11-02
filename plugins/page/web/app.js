@@ -135,10 +135,20 @@ function askForCode() {
 document.getElementById('start').onclick = function () {
   this.hidden = true;
   document.getElementById('screen').hidden = false;
-  keepAwake();
   begin();  // full screen once it may use the microphone and camera: in full screen, Safari
             // on the iPad doesn't show the permission prompt, and it stays «connecting»
+  try {  // still in the tap (its video may play); whatever it does, it never stops the page
+    keepAwake();
+  } catch (e) {
+    tellLater('keeping the screen on: it failed (' + e + ')');
+  }
 };
+
+// A line for the server's log once the data channel is open (it opens after the tap).
+function tellLater(text) {
+  if (channel && channel.readyState === 'open') return tell({ type: 'log', text: text });
+  setTimeout(function () { tellLater(text); }, 2000);
+}
 
 // Tapping the face: goes back to full screen and, if it is speaking, stops it. A drag
 // (scrolling the captions) isn't a tap.
@@ -161,12 +171,7 @@ function keepAwake() {
   if (typeof NoSleep === 'undefined') return;
   var noSleep = new NoSleep();
   var video = noSleep.noSleepVideo || null;
-  var notes = [];
-  var flush = function () {  // the data channel opens later than this
-    if (!(channel && channel.readyState === 'open')) return setTimeout(flush, 2000);
-    while (notes.length) tell({ type: 'log', text: notes.shift() });
-  };
-  var note = function (text) { notes.push('keeping the screen on: ' + text); flush(); };
+  var note = function (text) { tellLater('keeping the screen on: ' + text); };
   var enable = function () {
     noSleep.enable().then(function () { note(video ? 'the video plays' : 'wake lock'); },
                           function (e) { note('it can\'t (' + e + ')'); });
