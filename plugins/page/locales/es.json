@@ -35,7 +35,13 @@
     "demo_answer": "Un arroz salteado queda muy bien con eso. Pica la cebolla y póchala en un poco de aceite durante tres minutos. Añade el arroz, frío si es del día anterior, y remueve hasta que esté caliente. Aparta el arroz a un lado, cuaja los huevos en el hueco y mézclalo todo. Echa las espinacas al final para que se ablanden, y sazona con soja o sal. Tarda unos quince minutos.",
     "tap_to_start": "Pulsa para empezar",
     "pair_title": "Conectar este dispositivo",
-    "pair_label": "Código de emparejamiento"
+    "pair_label": "Código de emparejamiento",
+    "settings_title": "Ajustes",
+    "keep_awake": "Mantener la pantalla encendida",
+    "interface_language": "Idioma de la interfaz",
+    "system_language": "Idioma del sistema",
+    "settings_note": "El idioma de esta pantalla. El asistente habla el del servidor. Mantén pulsada la pantalla para volver aquí.",
+    "settings_done": "Listo"
   },
   "plugins": {
     "page": [

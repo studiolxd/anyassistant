@@ -72,8 +72,9 @@ def test_the_logo_is_on_every_page():
 def test_the_pages_use_tokens_not_their_own_colours():
     """Only the face's black (behind a view of it, a screenshot) and the QR's and the switch's white."""
     system = (WEB / "system.css").read_text()
-    pairing = system[system.index("#pair {"):system.index("/* Settings show_time")]
-    for css in [p.read_text() for p in STYLESHEETS] + [pairing]:
+    pairing = system[system.index("#pair, #settings {"):system.index("/* Settings show_time")]
+    own = system[system.index("/* Its settings (a browser's)"):]
+    for css in [p.read_text() for p in STYLESHEETS] + [pairing, own]:
         colours = set(re.findall(r"#[0-9a-fA-F]{3,8}\b|rgba?\(", without_comments(css)))
         assert colours <= {"#000", "#fff"}, colours
 

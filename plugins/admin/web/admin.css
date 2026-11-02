@@ -47,19 +47,6 @@ p.lead, .muted { color: var(--color-text-secondary); }
 button.back { margin-bottom: var(--space-3); }
 .badge { margin-left: var(--space-2); }
 
-/* A switch, as Apple's: the knob is white in both appearances. */
-.switch { position: relative; display: inline-block; width: 42px; height: 24px; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.switch span { position: absolute; top: 0; right: 0; bottom: 0; left: 0; cursor: pointer;
-               background: var(--color-surface-raised); border-radius: var(--radius-full);
-               box-shadow: inset 0 0 0 1px var(--color-border);
-               transition: background-color var(--duration) var(--easing); }
-.switch span::before { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
-                       background: #fff; border-radius: 50%; box-shadow: var(--shadow-raised);
-                       transition: transform var(--duration) var(--easing); }
-.switch input:checked + span { background: var(--color-primary); box-shadow: none; }
-.switch input:checked + span::before { transform: translateX(18px); }
-.switch input:focus-visible + span { box-shadow: 0 0 0 3px var(--color-focus); }
 .switch input:disabled + span { opacity: 0.4; cursor: default; }
 
 /* Pairing: the QR (on white, to be read) beside the code. */

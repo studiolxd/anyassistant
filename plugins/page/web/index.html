@@ -8,8 +8,8 @@
   <title>AnyAssistant</title>
   <link rel="icon" href="/web/favicon.png">
   <link rel="apple-touch-icon" href="/web/icon.png">
-  <link rel="stylesheet" href="/web/tokens.css?v=19">
-  <link rel="stylesheet" href="/web/system.css?v=43">
+  <link rel="stylesheet" href="/web/tokens.css?v=20">
+  <link rel="stylesheet" href="/web/system.css?v=44">
   <!-- The theme's (themes/<name>/theme.css), set by theme.js. -->
   <link rel="stylesheet" id="theme-css">
 </head>
@@ -27,11 +27,25 @@
       </form>
     </div>
   </div>
+  <!-- Its settings, in a browser (an app has its own): holding the face opens them. -->
+  <div id="settings" class="ui centered" hidden>
+    <div class="panel">
+      <h1 id="settings-title"></h1>
+      <div class="card">
+        <label class="row" for="settings-awake"><span class="what" id="settings-awake-label"></span>
+          <span class="switch"><input type="checkbox" id="settings-awake"><span></span></span></label>
+        <div class="row"><label class="what" for="settings-language" id="settings-language-label"></label>
+          <select id="settings-language"></select></div>
+      </div>
+      <p class="muted" id="settings-note"></p>
+      <button class="button" id="settings-done"></button>
+    </div>
+  </div>
   <!-- The theme's theme.html goes here. -->
   <div id="screen" hidden></div>
   <audio id="speaker" autoplay></audio>
   <script src="/web/nosleep.js?v=1"></script>
   <script src="/web/theme.js?v=37"></script>
-  <script src="/web/app.js?v=47"></script>
+  <script src="/web/app.js?v=48"></script>
 </body>
 </html>

@@ -193,6 +193,7 @@ async def _config(request):
         "lang": texts.code, "ui": texts.data["ui"],
         # This device's own choice («auto», «es», «en»): its app keeps its setting in step.
         "ui_language": (devices.ui_language(request.query.get("device")) if devices else "") or "auto",
+        "ui_languages": {code: i18n.native_name(code) for code in i18n.interface_languages()},
         "name": settings.get("name"), "video": settings.get("video"),
         "theme": themes.for_page(chosen if chosen in themes.available() else settings.get("theme"), texts.code),
         "themes": [{"name": name, "title": themes.manifest(name).get("name", name),

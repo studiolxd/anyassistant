@@ -192,10 +192,10 @@ document.getElementById('screen').onclick = function () {
   tell({ type: 'tap' });
 };
 
-// In an app: holding the face opens its settings (as on its own Eyes), not a tap.
+// Holding the face opens the settings (as on the apps' own Eyes), not a tap: an app's, or in a
+// browser, this page's own (openSettings).
 var held = false;
 (function () {
-  if (!APP) return;
   var timer = null;
   var from = null;
   var page = document.getElementById('screen');
@@ -204,7 +204,7 @@ var held = false;
     held = false;
     from = { x: x, y: y };
     cancel();
-    timer = setTimeout(function () { timer = null; held = true; toApp({ type: 'settings' }); }, 800);
+    timer = setTimeout(function () { timer = null; held = true; if (APP) toApp({ type: 'settings' }); else openSettings(); }, 800);
   };
   var move = function (x, y) { if (from && Math.abs(x - from.x) + Math.abs(y - from.y) > 10) cancel(); };  // a drag
   page.addEventListener('touchstart', function (ev) { down(ev.touches[0].clientX, ev.touches[0].clientY); }, { passive: true });
@@ -251,26 +251,71 @@ function fullScreen() {
 
 // The screen stays on: NoSleep.js (nosleep.js, MIT): the Wake Lock API, or, where there is
 // none (Chrome before 84, as on Android 4.4), a short silent video playing in a loop, the one it
-// carries (tested on many old devices). Started by a tap (the start button). What it uses, and
+// carries (tested on many old devices). Started by a tap (the start button), unless «Keep the
+// screen on» is off in its settings (this browser's: localStorage «awake»). What it uses, and
 // whether its video plays, goes to the server's log.
+var noSleep = null;
+var awakeWanted = function () { try { return localStorage.getItem('awake') !== '0'; } catch (e) { return true; } };
 function keepAwake() {
   if (typeof NoSleep === 'undefined') return;
-  var noSleep = new NoSleep();
-  var video = noSleep.noSleepVideo || null;
+  if (!noSleep) {
+    noSleep = new NoSleep();
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && awakeWanted() && noSleep.noSleepVideo && noSleep.noSleepVideo.paused) enable();
+    });
+    setInterval(function () {  // whether its video still plays, every minute; paused, again
+      var video = noSleep.noSleepVideo;
+      if (!video || !awakeWanted()) return;
+      note('the video ' + (video.paused ? 'is paused' : 'plays') + ' at ' + video.currentTime.toFixed(1));
+      if (video.paused) enable();
+    }, 60000);
+  }
   var note = function (text) { tellLater('keeping the screen on: ' + text); };
   var enable = function () {
-    noSleep.enable().then(function () { note(video ? 'the video plays' : 'wake lock'); },
+    noSleep.enable().then(function () { note(noSleep.noSleepVideo ? 'the video plays' : 'wake lock'); },
                           function (e) { note('it can\'t (' + e + ')'); });
   };
+  if (!awakeWanted()) {
+    if (noSleep.isEnabled) noSleep.disable();
+    return note('off (its settings)');
+  }
   enable();
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible' && video && video.paused) enable();
+}
+
+// A browser's settings (an app has its own): «Keep the screen on» and the interface's language
+// (this device's, kept on the server: chosen in Devices too), over the face. Holding it opens them.
+function openSettings() {
+  var panel = document.getElementById('settings');
+  var awake = document.getElementById('settings-awake');
+  var language = document.getElementById('settings-language');
+  document.getElementById('settings-title').textContent = text('settings_title');
+  document.getElementById('settings-awake-label').textContent = text('keep_awake');
+  document.getElementById('settings-language-label').textContent = text('interface_language');
+  document.getElementById('settings-note').textContent = text('settings_note');
+  document.getElementById('settings-done').textContent = text('settings_done');
+  awake.checked = awakeWanted();
+  language.innerHTML = '';
+  var options = [['auto', text('system_language')]];
+  var names = settings.ui_languages || {};
+  for (var code in names) options.push([code, names[code]]);
+  options.forEach(function (o) {
+    var option = document.createElement('option');
+    option.value = o[0];
+    option.textContent = o[1];
+    language.appendChild(option);
   });
-  setInterval(function () {  // whether its video still plays, every minute; paused, again
-    if (!video) return;
-    note('the video ' + (video.paused ? 'is paused' : 'plays') + ' at ' + video.currentTime.toFixed(1));
-    if (video.paused) enable();
-  }, 60000);
+  language.value = settings.ui_language || 'auto';
+  awake.onchange = function () {
+    try { localStorage.setItem('awake', awake.checked ? '1' : '0'); } catch (e) {}
+    try { keepAwake(); } catch (e) {}  // in the tap: its video may play
+  };
+  language.onchange = function () {
+    fetch('/devices/ui_language', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ device: deviceId(), ui_language: language.value }) })
+      .then(function () { return loadTexts(); }).then(openSettings);  // its texts in the new language
+  };
+  document.getElementById('settings-done').onclick = function () { panel.hidden = true; };
+  panel.hidden = false;
 }
 
 // Camera constraints for each quality.

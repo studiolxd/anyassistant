@@ -35,7 +35,13 @@
     "demo_answer": "A quick fried rice works well with that. Chop the onion and soften it in a little oil for three minutes. Add the rice, cold if it's from yesterday, and stir until it's hot. Push it to one side, scramble the eggs in the gap, then mix everything together. Add the spinach at the end so it just wilts, and season with soy sauce or salt. It takes about fifteen minutes.",
     "tap_to_start": "Tap to start",
     "pair_title": "Connect this device",
-    "pair_label": "Pairing code"
+    "pair_label": "Pairing code",
+    "settings_title": "Settings",
+    "keep_awake": "Keep the screen on",
+    "interface_language": "Interface language",
+    "system_language": "System language",
+    "settings_note": "The language of this screen. The assistant speaks the server's. Hold the screen to come back here.",
+    "settings_done": "Done"
   },
   "options_title": {
     "theme": "Theme",
