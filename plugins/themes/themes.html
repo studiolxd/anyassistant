@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="/themes/themes.css">
 </head>
 <body>
+  <!-- Installed / From the community: only for the owner (who may install), else just the first. -->
+  <nav id="tabs" hidden>
+    <button id="tab-installed" class="on"></button>
+    <button id="tab-community"></button>
+  </nav>
   <header>
     <label>Theme <select id="theme"></select></label>
     <span id="about"></span>
@@ -15,7 +20,6 @@
   <div id="sounds"></div>
   <main id="states"></main>
   <section id="community" hidden>
-    <h2></h2>
     <p class="lead"></p>
     <div id="packages"></div>
     <p class="error"></p>

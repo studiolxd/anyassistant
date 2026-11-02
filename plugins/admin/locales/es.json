@@ -125,7 +125,7 @@
     "Turn on the plugin «Community».": "Activa el plugin «Comunidad».",
     "Nothing to install yet.": "Todavía no hay nada que instalar.",
     "Reload the catalog": "Volver a cargar el catálogo",
-    "Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions.": "Plugins que comparte otra gente, de un catálogo público. Cada paquete se revisa antes de publicarlo. Un plugin se ejecuta en este servidor con tus permisos.",
+    "Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions.": "Plugins compartidos por otras personas, de un catálogo público. Cada paquete se revisa antes de publicarlo. Un plugin se ejecuta en este servidor con tus permisos.",
     "Update «%s»?": "¿Actualizar «%s»?",
     "Install «%s»?": "¿Instalar «%s»?",
     "A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it.": "Un plugin es código que se ejecuta en este servidor con tus permisos. Instálalo solo si confías en su autor. Empieza desactivado: actívalo en Plugins cuando quieras usarlo.",
@@ -175,6 +175,7 @@
     "Alarm": "Alarma",
     "the theme's": "del tema",
     "the system's": "del sistema",
-    "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Temas y plugins que comparte otra gente, de un catálogo público. Cada paquete se revisa antes de publicarlo."
+    "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Temas y plugins compartidos por otras personas, de un catálogo público. Cada paquete se revisa antes de publicarlo.",
+    "Installed themes": "Instalados"
   }
 }

@@ -1,6 +1,6 @@
 # Temas y plugins de la comunidad
 
-AnyAssistant puede instalar, desde la propia app, temas y plugins que comparte otra gente.
+AnyAssistant puede instalar, desde la propia app, temas y plugins compartidos por otras personas.
 Todos salen de un **catálogo público**: un repositorio de GitHub
 (`studiolxd/anyassistant-community`) con un índice JSON y los archivos de cada paquete.
 Esta guía explica el formato del índice y cómo publicar un paquete.

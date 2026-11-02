@@ -9,7 +9,7 @@
     "community_catalog": "Catálogo de la comunidad"
   },
   "options": {
-    "community_catalog": "La dirección del índice con los temas y plugins que comparte otra gente."
+    "community_catalog": "La dirección del índice con los temas y plugins compartidos por otras personas."
   },
   "community": {
     "catalog_address": "La dirección del catálogo debe ser https://.",
@@ -32,7 +32,7 @@
   },
   "admin_page": {
     "Community": "Comunidad",
-    "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Temas y plugins que comparte otra gente, de un catálogo público. Cada paquete se revisa antes de publicarlo.",
+    "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Temas y plugins compartidos por otras personas, de un catálogo público. Cada paquete se revisa antes de publicarlo.",
     "Reload the catalog": "Volver a cargar el catálogo",
     "Nothing to install yet.": "Todavía no hay nada que instalar.",
     "Turn on the plugin «Community».": "Activa el plugin «Comunidad».",

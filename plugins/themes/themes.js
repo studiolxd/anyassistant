@@ -134,13 +134,29 @@ document.addEventListener('keydown', function (ev) {
 var texts = {};
 function T(english) { return texts[english] || english; }
 
+// «Instalados» (the theme, its sounds and states) and «De la comunidad» (the catalog).
+function tabs() {
+  var installed = document.getElementById('tab-installed');
+  var catalog = document.getElementById('tab-community');
+  installed.textContent = T('Installed themes');
+  catalog.textContent = T('From the community');
+  installed.onclick = function () { showTab(false); };
+  catalog.onclick = function () { showTab(true); };
+}
+function showTab(community) {
+  document.body.classList.toggle('community', community);
+  document.getElementById('community').hidden = !community;
+  document.getElementById('tab-installed').classList.toggle('on', !community);
+  document.getElementById('tab-community').classList.toggle('on', community);
+}
+
 function community() {
   var section = document.getElementById('community');
   fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (me) {
     if (!me.owner) return;
     texts = me.texts || {};
     sounds(select.value);  // in its language
-    section.querySelector('h2').textContent = T('From the community');
+    tabs();
     section.querySelector('.lead').textContent = T('Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.');
     load(false);
   }).catch(function () {});
@@ -155,7 +171,7 @@ function community() {
   function load(refresh) {
     call('GET', '/admin/community' + (refresh ? '?refresh=1' : '')).then(function (data) {
       if (data._status !== 200) return;  // the plugin is off, or not the owner
-      section.hidden = false;
+      document.getElementById('tabs').hidden = false;
       section.querySelector('.error').textContent = data.error || '';
       var list = document.getElementById('packages');
       list.innerHTML = '';
@@ -214,7 +230,7 @@ function community() {
       call('POST', '/admin/community', { install: { kind: 'theme', id: p.id } }).then(function (r) {
         note.textContent = '';
         if (r.error) { alert(r.error); return; }
-        config(p.id).then(function (data) { fill(data); show(data); });  // the new one, on screen
+        config(p.id).then(function (data) { fill(data); show(data); showTab(false); });  // the new one, on screen
         load(false);
       });
     }

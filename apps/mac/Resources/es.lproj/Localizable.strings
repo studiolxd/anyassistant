@@ -197,7 +197,7 @@
 
 /* The community catalog: themes and plugins other people share (Settings → Plugins; the Themes window) */
 "From the community" = "De la comunidad";
-"Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions." = "Plugins que comparte otra gente, de un catálogo público. Cada paquete se revisa antes de publicarlo. Un plugin se ejecuta en este servidor con tus permisos.";
+"Plugins other people share, from a public catalog. Every package is reviewed before it is listed. A plugin runs on this server with your permissions." = "Plugins compartidos por otras personas, de un catálogo público. Cada paquete se revisa antes de publicarlo. Un plugin se ejecuta en este servidor con tus permisos.";
 "Turn on the plugin «Community»." = "Activa el plugin «Comunidad».";
 "Nothing to install yet." = "Todavía no hay nada que instalar.";
 "Reload the catalog" = "Volver a cargar el catálogo";
