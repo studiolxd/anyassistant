@@ -149,7 +149,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 |---|---|---|
 | `plugins` | — | which plugins are on or off, if not as they come: {"memory": true, "tap-to-wake": false} |
 
-**The assistant**
+**Assistant**
 
 | Option | Default | |
 |---|---|---|
@@ -162,6 +162,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `detail` | `"neutral"` | how much it says: concise, neutral, detailed or one of detail_levels |
 | `detail_levels` | — | more levels, or other texts for these: {"name": "instruction for the prompt"} |
 | `ignore_others` | `true` | the LLM stays quiet when what it hears is clearly not for it |
+| `skills` | `true` | time, date, timers, alarms, reminders, sums, units and volume, without the LLM |
 | `conversations` | `2` | how many devices can be in a conversation at once (each its own LLM: with Claude, two processes each); 1: one at a time, the others fall asleep |
 | `quiet_hours` | `"23:00-08:00"` | hours when it doesn't give notices (e.g. 23:00-08:00; empty: any time); alarms ring anyway |
 | `notices_where` | `"everywhere"` | where notices are said: on every device, or on the last one you talked to |
@@ -184,7 +185,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `memory_conversations` | `10` | conversation summaries kept |
 | `memory_days` | `30` | days a conversation summary is kept |
 
-**Listening and speaking**
+**Voice**
 
 | Option | Default | |
 |---|---|---|
@@ -209,7 +210,6 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 
 | Option | Default | |
 |---|---|---|
-| `skills` | `true` | time, date, timers, alarms, reminders, sums, units and volume, without the LLM |
 | `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name |
 | `morning_after_alarm` | `true` | the morning summary when you stop the first alarm of the day (before 12) |
 | `unread_query` | `"is:unread in:inbox"` | which emails the summary counts (a Gmail search) |
@@ -218,7 +218,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `alarm_rings` | `"everywhere"` | where timers, alarms and reminders ring: everywhere (every device) or where_set (the device they were set on) |
 | `location` | — | your city, for the weather (e.g. Valencia) |
 
-**The screen**
+**Screen**
 
 | Option | Default | |
 |---|---|---|
@@ -248,7 +248,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `voice_adapt` | `true` | keep learning each voice from what that person says (only voice prints, never the audio; off: what it learnt that way is deleted) |
 | `voice_match` | `0.5` | how alike a voice must be to a known one (0–1; higher: stricter) |
 
-**The server**
+**Server**
 
 | Option | Default | |
 |---|---|---|

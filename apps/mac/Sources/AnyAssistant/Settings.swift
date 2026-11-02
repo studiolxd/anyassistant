@@ -12,6 +12,7 @@ struct Pair: Identifiable, Equatable {
 final class OptionItem: ObservableObject, Identifiable {
     let name: String
     let group: String
+    let plugin: String?  // the plugin that brings it (nil: the core's)
     let kind: String  // text, longtext, bool, int, float, choice, json, dict
     let help: String
     let live: Bool
@@ -24,12 +25,15 @@ final class OptionItem: ObservableObject, Identifiable {
     @Published var pairs: [Pair]  // dict (and voice set per language)
 
     var id: String { name }
+    /// Where it lives: its plugin's page, or a General section.
+    var place: String { plugin.map { "plugin:" + $0 } ?? group }
     /// Edited as name → value pairs: a dict kind, or a json one that holds a dict (one voice per language).
     var isDict: Bool { kind == "dict" || (kind == "json" && !pairs.isEmpty) }
 
     init(_ raw: [String: Any]) {
         name = raw["name"] as? String ?? "?"
         group = raw["group"] as? String ?? ""
+        plugin = raw["plugin"] as? String
         kind = raw["kind"] as? String ?? "text"
         help = raw["help"] as? String ?? ""
         live = raw["live"] as? Bool ?? false
@@ -101,6 +105,15 @@ final class Admin: ObservableObject {
     @Published var restartNeeded = false
 
     let server = Server.shared
+
+    /// A place's name, for the search: a General section's, or a plugin's.
+    func title(of place: String) -> String {
+        if place.hasPrefix("plugin:") {
+            let id = String(place.dropFirst(7))
+            return plugins.first { $0.id == id }?.name ?? id
+        }
+        return groups.first { $0.id == place }?.title ?? place
+    }
 
     private func call(_ path: String, _ body: [String: Any]? = nil) async -> [String: Any]? {
         var request = URLRequest(url: URL(string: "http://127.0.0.1:\(server.port)/admin/\(path)")!)
@@ -175,21 +188,25 @@ final class Admin: ObservableObject {
     }
 }
 
+/// Settings: «General», the core's by topic; «Plugins», each one's page (on or off, what it does and
+/// its options, its accounts or voices). Every option lives in one place; the search finds it.
 struct SettingsView: View {
     @StateObject private var admin = Admin()
-    @State private var section: String? = "plugins"
+    @State private var section: String? = "assistant"
+    @State private var search = ""
+    @State private var path = NavigationPath()
 
     var body: some View {
         // The sections always visible: no button to fold the sidebar (there are only a few).
         NavigationSplitView(columnVisibility: .constant(.all)) {
             List(selection: $section) {
-                Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
-                Label(T("Mail accounts"), systemImage: "envelope").tag("mail")
-                Label(T("Voices"), systemImage: "person.wave.2").tag("voices")
-                Section(T("Settings")) {
+                Section(T("General")) {
                     ForEach(admin.groups, id: \.id) { group in
-                        Text(group.title).tag(group.id)
+                        Label(group.title, systemImage: symbol(group.id)).tag(group.id)
                     }
+                }
+                Section {
+                    Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
                 }
             }
             .navigationSplitViewColumnWidth(200)
@@ -207,20 +224,29 @@ struct SettingsView: View {
                 if let error = admin.error {
                     Text(error).foregroundStyle(.red).padding(8)
                 }
-                if section == "plugins" {
-                    PluginsView(admin: admin)
-                } else if section == "mail" {
-                    MailView()
-                } else if section == "voices" {
-                    VoicesView()
-                } else if let section {
-                    OptionsView(admin: admin, group: section)
+                NavigationStack(path: $path) {
+                    Group {
+                        if !search.trimmingCharacters(in: .whitespaces).isEmpty {
+                            SearchResults(admin: admin, search: search)
+                        } else if section == "plugins" {
+                            PluginsView(admin: admin)
+                        } else if let section {
+                            OptionsView(admin: admin, group: section)
+                        }
+                    }
+                    .navigationDestination(for: String.self) { id in
+                        if let plugin = admin.plugins.first(where: { $0.id == id }) {
+                            PluginPage(admin: admin, plugin: plugin)
+                        }
+                    }
                 }
                 if let note = admin.note {
                     Text(note).font(.caption).foregroundStyle(.secondary).padding(6)
                 }
             }
         }
+        .searchable(text: $search, placement: .sidebar, prompt: T("Search"))
+        .onChange(of: section) { _, _ in path = NavigationPath(); search = "" }
         .task { await admin.load() }
         // Kept up to date: the plugins every few seconds (they change by voice too); the
         // options when you come back to the window (not while you type in one).
@@ -231,6 +257,52 @@ struct SettingsView: View {
             Task { await admin.load() }
         }
     }
+
+    func symbol(_ group: String) -> String {
+        switch group {
+        case "assistant": "person.wave.2"
+        case "voice": "waveform"
+        case "security": "hand.raised"
+        case "server": "server.rack"
+        default: "gearshape"
+        }
+    }
+}
+
+/// A search: the options whose text or name has it (wherever they live) and the plugins.
+struct SearchResults: View {
+    @ObservedObject var admin: Admin
+    let search: String
+
+    var body: some View {
+        let words = search.lowercased()
+        let options = admin.options.filter {
+            $0.group != "plugins" && ($0.help.lowercased().contains(words) || $0.name.lowercased().contains(words))
+        }
+        let plugins = admin.plugins.filter {
+            $0.name.lowercased().contains(words) || $0.description.lowercased().contains(words)
+        }
+        Form {
+            if options.isEmpty && plugins.isEmpty {
+                Text(T("No results")).foregroundStyle(.secondary)
+            }
+            if !plugins.isEmpty {
+                Section(T("Plugins")) {
+                    ForEach(plugins) { plugin in
+                        NavigationLink(value: plugin.id) { Text(plugin.name) }
+                    }
+                }
+            }
+            ForEach(Array(Set(options.map(\.place))).sorted(), id: \.self) { place in
+                Section(admin.title(of: place)) {
+                    ForEach(options.filter { $0.place == place }) { option in
+                        OptionRow(option: option, admin: admin)
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
 }
 
 struct OptionsView: View {
@@ -239,7 +311,7 @@ struct OptionsView: View {
 
     var body: some View {
         Form {
-            ForEach(admin.options.filter { $0.group == group }) { option in
+            ForEach(admin.options.filter { $0.group == group && $0.plugin == nil }) { option in
                 OptionRow(option: option, admin: admin)
             }
         }
@@ -398,48 +470,38 @@ struct DictEditor: View {
 
 struct PluginsView: View {
     @ObservedObject var admin: Admin
-    @State private var asking: PluginItem?
 
     let kinds = ["feature", "skill", "library", "brain", "llm", "stt", "tts", "wake", "vad"]
 
     var body: some View {
         Form {
             ForEach(kinds, id: \.self) { kind in
-                let found = admin.plugins.filter { $0.kind == kind }
+                // The ones that are on first, then the rest; each opens its page.
+                let found = admin.plugins.filter { $0.kind == kind }.sorted { $0.on && !$1.on }
                 if !found.isEmpty {
                     Section(title(kind)) {
-                        ForEach(found) { plugin in row(plugin) }
+                        ForEach(found) { plugin in
+                            NavigationLink(value: plugin.id) { row(plugin) }
+                        }
                     }
                 }
             }
         }
         .formStyle(.grouped)
-        .alert(T("Turn it off?"), isPresented: Binding(get: { asking != nil }, set: { if !$0 { asking = nil } }),
-               presenting: asking) { plugin in
-            Button(T("Turn it off"), role: .destructive) { Task { await admin.turn(plugin, on: false) } }
-            Button(T("Cancel"), role: .cancel) {}
-        } message: { plugin in
-            Text(plugin.security
-                 ? T("It is a security plugin: without it, that protection is gone.")
-                 : T("AnyAssistant needs it to work as usual."))
-        }
     }
 
     func row(_ plugin: PluginItem) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Toggle(isOn: Binding(get: { plugin.on }, set: { on in
-                if !on && plugin.locked { asking = plugin } else { Task { await admin.turn(plugin, on: on) } }
-            })) {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(plugin.name)
                     if plugin.security { Image(systemName: "lock.shield").foregroundStyle(.secondary) }
                     if plugin.yours { Text(T("yours")).font(.caption).foregroundStyle(.secondary) }
                 }
+                Text(plugin.description).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
-            Text(plugin.description).font(.caption).foregroundStyle(.secondary)
-            ForEach(plugin.unfit + plugin.missing.map { T("command not found:") + " " + $0 }, id: \.self) {
-                Text($0).font(.caption).foregroundStyle(.orange)
-            }
+            Spacer()
+            Text(plugin.on ? T("On") : T("Off")).foregroundStyle(.secondary)
         }
     }
 
@@ -455,6 +517,62 @@ struct PluginsView: View {
         case "vad": T("Voice detection")
         case "library": T("Libraries")
         default: kind
+        }
+    }
+}
+
+/// A plugin's page: on or off, what it does, what it lacks, its options and, for the mail and the
+/// voices, their accounts and the known voices.
+struct PluginPage: View {
+    @ObservedObject var admin: Admin
+    let plugin: PluginItem
+    @State private var asking = false
+
+    var current: PluginItem { admin.plugins.first { $0.id == plugin.id } ?? plugin }
+
+    var body: some View {
+        let options = admin.options.filter { $0.plugin == plugin.id }
+        Form {
+            Section {
+                Toggle(isOn: Binding(get: { current.on }, set: { on in
+                    if !on && current.locked { asking = true } else { Task { await admin.turn(current, on: on) } }
+                })) {
+                    HStack(spacing: 6) {
+                        Text(current.name).font(.headline)
+                        if current.security { Image(systemName: "lock.shield").foregroundStyle(.secondary) }
+                    }
+                }
+            } footer: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(current.description)
+                    ForEach(current.unfit + current.missing.map { T("command not found:") + " " + $0 }, id: \.self) {
+                        Text($0).foregroundStyle(.orange)
+                    }
+                }
+                .font(.footnote).foregroundStyle(.secondary)
+            }
+            if plugin.id == "mail" {
+                Section { NavigationLink(T("Mail accounts")) { MailView() } }
+            }
+            if plugin.id == "voices" {
+                Section { NavigationLink(T("Known voices")) { VoicesView() } }
+            }
+            if !options.isEmpty {
+                Section(T("Options")) {
+                    ForEach(options) { option in OptionRow(option: option, admin: admin) }
+                }
+                .disabled(!current.on)
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle(current.name)
+        .alert(T("Turn it off?"), isPresented: $asking) {
+            Button(T("Turn it off"), role: .destructive) { Task { await admin.turn(current, on: false) } }
+            Button(T("Cancel"), role: .cancel) {}
+        } message: {
+            Text(current.security
+                 ? T("It is a security plugin: without it, that protection is gone.")
+                 : T("AnyAssistant needs it to work as usual."))
         }
     }
 }

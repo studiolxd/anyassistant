@@ -86,13 +86,13 @@
   "language_native": "English",
   "groups": {
     "plugins": "Plugins",
-    "assistant": "The assistant",
+    "assistant": "Assistant",
     "memory": "Memory",
-    "voice": "Listening and speaking",
+    "voice": "Voice",
     "skills": "Skills",
-    "screen": "The screen",
+    "screen": "Screen",
     "security": "Privacy and security",
-    "server": "The server"
+    "server": "Server"
   },
   "options": {
     "plugins": "which plugins are on or off, if not as they come: {\"memory\": true, \"tap-to-wake\": false}",

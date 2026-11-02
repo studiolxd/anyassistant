@@ -103,7 +103,7 @@ OPTIONS = [
     Option("fillers", True, "«One moment, let me check» when a tool is slow", "voice", "bool", live=True),
     # Skills
     Option("skills", True, "time, date, timers, alarms, reminders, sums, units and volume, without the LLM",
-           "skills", "bool", live=True),
+           "assistant", "bool", live=True),
     # The screen
     # Privacy and security
     Option("log_transcripts", False, "write what it hears and says to the log (to debug); otherwise only lengths",
@@ -134,8 +134,8 @@ def add(option: Option):
 BY_NAME = {o.name: o for o in OPTIONS}
 LIVE = {o.name for o in OPTIONS if o.live}
 SCREEN = {o.name for o in OPTIONS if o.screen}
-GROUPS = {"plugins": "Plugins", "assistant": "The assistant", "memory": "Memory", "voice": "Listening and speaking", "skills": "Skills",
-          "screen": "The screen", "security": "Privacy and security", "server": "The server"}
+GROUPS = {"plugins": "Plugins", "assistant": "Assistant", "memory": "Memory", "voice": "Voice", "skills": "Skills",
+          "screen": "Screen", "security": "Privacy and security", "server": "Server"}
 
 
 def parser() -> argparse.ArgumentParser:

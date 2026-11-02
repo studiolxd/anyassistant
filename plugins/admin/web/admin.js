@@ -97,9 +97,11 @@ function showLogin() {
 
 // --- The sections ---
 
+// Settings: the core's by topic; Plugins: each one's page (#plugin/<id>) with its options and, for
+// the mail and the voices, their accounts and known voices.
 var SECTIONS = [
   ['pair', 'Pair a device'], ['devices', 'Devices'], ['settings', 'Settings'], ['plugins', 'Plugins'],
-  ['voices', 'Voices'], ['mail', 'Mail'], ['admins', 'Admins']
+  ['admins', 'Admins']
 ];
 var current = 'pair';
 var timer = null;
@@ -107,12 +109,14 @@ var timer = null;
 function show(id) {
   current = id;
   if (timer) { clearInterval(timer); timer = null; }
+  var section = id.indexOf('plugin/') === 0 ? 'plugins' : id;
   Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (b) {
-    b.classList.toggle('on', b.dataset.id === id);
+    b.classList.toggle('on', b.dataset.id === section);
   });
   var main = $('main');
   main.innerHTML = '';
-  ({ pair: pair, devices: devices, settings: settingsPage, plugins: plugins, voices: voices, mail: mail, admins: adminsPage })[id](main);
+  if (section !== id) pluginPage(main, id.slice(7));
+  else ({ pair: pair, devices: devices, settings: settingsPage, plugins: plugins, admins: adminsPage })[id](main);
   history.replaceState(null, '', '#' + id);
 }
 
@@ -193,9 +197,9 @@ function devices(main) {
         var name = el('input', { value: d.name, placeholder: T('Name') });
         var room = el('input', { value: d.room, placeholder: T('Room') });
         // Its own LLM, or the general one: from its next question.
-        var llm = el('select', { title: T('Its LLM') }, [el('option', { value: '', text: T('The general one') + ' (' + (LLM_NAMES[data.general] || data.general) + ')' })]
+        var llm = el('select', { title: T('Its LLM') }, [el('option', { value: '', text: T('The general one') + ' (' + T(LLM_NAMES[data.general] || data.general) + ')' })]
           .concat((data.llms || []).map(function (l) {  // fixed, whatever the default becomes
-            return el('option', { value: l, text: LLM_NAMES[l] || l });
+            return el('option', { value: l, text: T(LLM_NAMES[l] || l) });
           })));
         llm.value = d.llm || '';
         llm.addEventListener('focus', function () { editing = true; });
@@ -230,16 +234,50 @@ function devices(main) {
 
 function settingsPage(main) {
   main.appendChild(el('h1', { text: T('Settings') }));
-  main.appendChild(el('p', { class: 'lead', text: T('They are saved as you change them (in settings.json). Empty: what comes.') }));
-  api('GET', '/admin/settings').then(function (data) {
-    data.groups.forEach(function (group) {
-      var mine = data.options.filter(function (o) { return o.group === group.id; });
-      if (!mine.length) return;
-      main.appendChild(el('h2', { text: group.title }));
-      var box = el('div', { class: 'card' });
-      main.appendChild(box);
-      mine.forEach(function (o) { box.appendChild(option(o)); });
-    });
+  main.appendChild(el('p', { class: 'lead', text: T('They are saved as you change them. A plugin\'s are on its page (Plugins).') }));
+  var search = el('input', { type: 'search', placeholder: T('Search'), class: 'search' });
+  main.appendChild(search);
+  var list = el('div');
+  main.appendChild(list);
+  Promise.all([api('GET', '/admin/settings'), api('GET', '/admin/plugins')]).then(function (found) {
+    var data = found[0], all = found[1].plugins;
+    var names = {};
+    all.forEach(function (p) { names[p.id] = p.name; });
+    function draw() {
+      list.innerHTML = '';
+      var words = search.value.trim().toLowerCase();
+      if (!words) {  // the core's, by topic
+        data.groups.forEach(function (group) {
+          var mine = data.options.filter(function (o) { return o.group === group.id && !o.plugin; });
+          if (!mine.length) return;
+          list.appendChild(el('h2', { text: group.title }));
+          var box = el('div', { class: 'card' });
+          list.appendChild(box);
+          mine.forEach(function (o) { box.appendChild(option(o)); });
+        });
+        return;
+      }
+      // A search: every option that has it, wherever it lives, and the plugins.
+      var hits = all.filter(function (p) { return (p.name + ' ' + p.description).toLowerCase().indexOf(words) >= 0; });
+      if (hits.length) {
+        list.appendChild(el('h2', { text: T('Plugins') }));
+        var pbox = el('div', { class: 'card' });
+        list.appendChild(pbox);
+        hits.forEach(function (p) { pbox.appendChild(pluginRow(p)); });
+      }
+      var places = {};
+      data.options.filter(function (o) { return o.group !== 'plugins' && (o.help + ' ' + o.name).toLowerCase().indexOf(words) >= 0; })
+        .forEach(function (o) { var at = o.plugin ? names[o.plugin] || o.plugin : (data.groups.filter(function (g) { return g.id === o.group; })[0] || {}).title || o.group; (places[at] = places[at] || []).push(o); });
+      Object.keys(places).sort().forEach(function (at) {
+        list.appendChild(el('h2', { text: at }));
+        var box = el('div', { class: 'card' });
+        list.appendChild(box);
+        places[at].forEach(function (o) { box.appendChild(option(o)); });
+      });
+      if (!hits.length && !Object.keys(places).length) list.appendChild(el('p', { class: 'muted', text: T('No results') }));
+    }
+    search.addEventListener('input', draw);
+    draw();
   });
 }
 
@@ -314,7 +352,7 @@ function option(o) {
 }
 
 // An LLM's name as its maker writes it.
-var LLM_NAMES = { claude: 'Claude', codex: 'Codex', gemini: 'Gemini', opencode: 'OpenCode', openai: 'OpenAI',
+var LLM_NAMES = { claude: 'Claude', codex: 'Codex', gemini: 'Gemini', opencode: 'OpenCode', openai: 'OpenAI-compatible',
                   ollama: 'Ollama', hermes: 'Hermes', apple: 'Apple' };
 
 var KINDS = { brain: 'How it works', stt: 'Speech recognition', wake: 'Wake word', llm: 'LLM', tts: 'Voice',
@@ -322,43 +360,73 @@ var KINDS = { brain: 'How it works', stt: 'Speech recognition', wake: 'Wake word
 
 function plugins(main) {
   main.appendChild(el('h1', { text: T('Plugins') }));
-  main.appendChild(el('p', { class: 'lead', text: T('What it can do. The engines (speech, voice, LLM) are chosen in Settings.') }));
+  main.appendChild(el('p', { class: 'lead', text: T('What it can do. Each one\'s page has its options.') }));
   api('GET', '/admin/plugins').then(function (data) {
     Object.keys(KINDS).forEach(function (kind) {
-      var mine = data.plugins.filter(function (p) { return p.kind === kind; });
+      // The ones that are on first; each opens its page.
+      var mine = data.plugins.filter(function (p) { return p.kind === kind; })
+        .sort(function (a, b) { return (b.wanted ? 1 : 0) - (a.wanted ? 1 : 0); });
       if (!mine.length) return;
       main.appendChild(el('h2', { text: T(KINDS[kind]) }));
       var box = el('div', { class: 'card' });
       main.appendChild(box);
-      mine.forEach(function (p) {
-        var notes = (p.unfit || []).concat((p.commands_missing || []).map(function (c) { return T('command not found:') + ' ' + c; }));
-        var elsewhere = (p.unfit || []).some(function (w) { return w.indexOf('only on') === 0; });
-        box.appendChild(el('div', { class: 'row' }, [
-          el('div', { class: 'what' }, [el('b', { text: p.name }),
-            p.security ? el('span', { class: 'pill warn', text: T('security') }) : null,
-            p.yours ? el('span', { class: 'pill', text: T('yours') }) : null,
-            el('div', { class: 'muted', text: p.description }),
-            notes.length ? el('div', { class: 'muted', style: 'color:var(--warn)', text: notes.join('; ') }) : null]),
-          toggle(p.wanted, elsewhere, function (on, input) {
-            if (!on && p.locked && !confirm(T('It is a security plugin, or one it needs to work. Turn it off anyway?'))) {
-              input.checked = true;
-              return;
-            }
-            var change = {};
-            change[p.id] = on;
-            api('POST', '/admin/plugins', change).then(function (r) {
-              if (r.packages) needsRestart(T('It needs its packages: bin/anyassistant setup packages, then restart.'));
-              else if (r.restart) needsRestart();
-            });
-          })
-        ]));
-      });
+      mine.forEach(function (p) { box.appendChild(pluginRow(p)); });
     });
   });
 }
 
-function voices(main) {
-  main.appendChild(el('h1', { text: T('Voices') }));
+// A plugin in a list: its name, what it does, on or off; a click opens its page.
+function pluginRow(p) {
+  return el('div', { class: 'row link', onclick: function () { show('plugin/' + p.id); } }, [
+    el('div', { class: 'what' }, [el('b', { text: p.name }),
+      p.security ? el('span', { class: 'pill warn', text: T('security') }) : null,
+      p.yours ? el('span', { class: 'pill', text: T('yours') }) : null,
+      el('div', { class: 'muted', text: p.description })]),
+    el('span', { class: 'pill' + (p.wanted ? ' ok' : ''), text: p.wanted ? T('On') : T('Off') })
+  ]);
+}
+
+// A plugin's page: on or off, what it does, what it lacks, its options; the mail's accounts, the voices.
+function pluginPage(main, id) {
+  Promise.all([api('GET', '/admin/plugins'), api('GET', '/admin/settings')]).then(function (found) {
+    var p = found[0].plugins.filter(function (x) { return x.id === id; })[0];
+    if (!p) { main.appendChild(el('p', { class: 'muted', text: T('No results') })); return; }
+    main.appendChild(el('button', { class: 'quiet', text: '‹ ' + T('Plugins'), onclick: function () { show('plugins'); } }));
+    main.appendChild(el('h1', { text: p.name }));
+    main.appendChild(el('p', { class: 'lead', text: p.description }));
+    var notes = (p.unfit || []).concat((p.commands_missing || []).map(function (c) { return T('command not found:') + ' ' + c; }));
+    var elsewhere = (p.unfit || []).some(function (w) { return w.indexOf('only on') === 0; });
+    var head = el('div', { class: 'card' }, [el('div', { class: 'row' }, [
+      el('div', { class: 'what' }, [el('b', { text: T('On') }),
+        notes.length ? el('div', { class: 'muted', style: 'color:var(--warn)', text: notes.join('; ') }) : null]),
+      toggle(p.wanted, elsewhere, function (on, input) {
+        if (!on && p.locked && !confirm(T('It is a security plugin, or one it needs to work. Turn it off anyway?'))) {
+          input.checked = true;
+          return;
+        }
+        var change = {};
+        change[p.id] = on;
+        api('POST', '/admin/plugins', change).then(function (r) {
+          if (r.packages) needsRestart(T('It needs its packages: bin/anyassistant setup packages, then restart.'));
+          else if (r.restart) needsRestart();
+        });
+      })
+    ])]);
+    main.appendChild(head);
+    var mine = found[1].options.filter(function (o) { return o.plugin === id; });
+    if (mine.length) {
+      main.appendChild(el('h2', { text: T('Options') }));
+      var box = el('div', { class: 'card' });
+      main.appendChild(box);
+      mine.forEach(function (o) { box.appendChild(option(o)); });
+    }
+    if (id === 'mail') mail(main, true);
+    if (id === 'voices') voices(main, true);
+  });
+}
+
+function voices(main, inPage) {
+  main.appendChild(el(inPage ? 'h2' : 'h1', { text: inPage ? T('Known voices') : T('Voices') }));
   main.appendChild(el('p', { class: 'lead', text: T('Who is speaking. While nobody is known, it listens to everyone; on a device you can also say «aprende mi voz».') }));
   var box = el('div', { class: 'card' });
   main.appendChild(box);
@@ -450,8 +518,8 @@ function voices(main) {
   }
 }
 
-function mail(main) {
-  main.appendChild(el('h1', { text: T('Mail') }));
+function mail(main, inPage) {
+  main.appendChild(el(inPage ? 'h2' : 'h1', { text: inPage ? T('Mail accounts') : T('Mail') }));
   main.appendChild(el('p', { class: 'lead', text: T('Accounts besides Gmail (IMAP and SMTP): new email notices, the morning count, and for the LLM to read and send (with your «yes»). The password goes to the system\'s keychain.') }));
   var box = el('div', { class: 'card' });
   main.appendChild(box);
@@ -561,5 +629,5 @@ fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.
     nav.appendChild(el('button', { text: T(section[1]), 'data-id': section[0], onclick: function () { show(section[0]); } }));
   });
   var wanted = location.hash.slice(1);
-  show(SECTIONS.some(function (s) { return s[0] === wanted; }) ? wanted : 'pair');
+  show(SECTIONS.some(function (s) { return s[0] === wanted; }) || wanted.indexOf('plugin/') === 0 ? wanted : 'pair');
 });

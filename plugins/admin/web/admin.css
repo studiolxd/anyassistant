@@ -37,7 +37,7 @@ p.lead, .muted { color: var(--muted); }
 .row .what b { font-weight: 600; }
 .row .what .muted { font-size: 13px; overflow-wrap: anywhere; }
 .row .field { flex: 0 0 auto; max-width: 50%; }
-input[type=text], input[type=number], input[type=password], input:not([type]), select, textarea {
+input[type=text], input[type=number], input[type=password], input[type=search], input:not([type]), select, textarea {
   font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; }
 textarea { width: 100%; min-height: 90px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
 .row .field textarea { width: 380px; max-width: 100%; }
@@ -78,3 +78,7 @@ form.inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; pad
   .row .field { max-width: 100%; width: 100%; }
   .row .field textarea { width: 100%; }
 }
+
+.row.link { cursor: pointer; }
+.row.link:hover { background: rgba(127,127,127,.08); }
+input.search { width: 100%; max-width: 420px; margin: 4px 0 8px; }

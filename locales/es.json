@@ -55,13 +55,13 @@
   },
   "groups": {
     "plugins": "Plugins",
-    "assistant": "El asistente",
+    "assistant": "Asistente",
     "memory": "Memoria",
-    "voice": "Escuchar y hablar",
+    "voice": "Voz",
     "skills": "Habilidades",
-    "screen": "La pantalla",
+    "screen": "Pantalla",
     "security": "Privacidad y seguridad",
-    "server": "El servidor"
+    "server": "Servidor"
   },
   "options": {
     "plugins": "qué plugins están encendidos o apagados, si no como vienen",

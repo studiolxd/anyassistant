@@ -107,6 +107,16 @@
     "Its LLM": "Its LLM",
     "The general one": "Default",
     "Saved in the keychain": "Saved in the keychain",
-    "Not set": "Not set"
+    "Not set": "Not set",
+    "They are saved as you change them. A plugin's are on its page (Plugins).": "They are saved as you change them. A plugin's are on its page (Plugins).",
+    "Search": "Search",
+    "No results": "No results",
+    "On": "On",
+    "Off": "Off",
+    "Options": "Options",
+    "Known voices": "Known voices",
+    "Mail accounts": "Mail accounts",
+    "What it can do. Each one's page has its options.": "What it can do. Each one's page has its options.",
+    "OpenAI-compatible": "OpenAI-compatible"
   }
 }

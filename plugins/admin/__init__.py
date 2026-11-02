@@ -110,9 +110,10 @@ def _labels(option) -> dict | None:
 @web.route("GET", "/admin/settings")
 @_local
 async def _settings(request):
+    core = {o.group for o in options.OPTIONS if not o.plugin}  # the core's, by topic; a plugin's: on its page
     groups = [{"id": g, "title": i18n.L.text(f"groups.{g}", title)} for g, title in options.GROUPS.items()
-              if g != "plugins"]
-    found = [{"name": o.name, "group": o.group, "kind": o.kind, "live": o.live,
+              if g != "plugins" and g in core]
+    found = [{"name": o.name, "group": o.group, "plugin": o.plugin, "kind": o.kind, "live": o.live,
               "help": _named(i18n.L.text(f"options.{o.name}", o.help)), "default": _value_default(o),
               "value": _value(o), "current": None if o.kind == "secret" else _current(o), "set": _is_set(o), "choices": _choices(o), "labels": _labels(o),
               "empty": i18n.L.text(f"options_empty.{o.name}", o.empty) if o.empty else ""}

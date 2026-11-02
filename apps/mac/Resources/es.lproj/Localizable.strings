@@ -195,3 +195,9 @@
 "Saved in the keychain" = "Guardada en el Llavero";
 "Not set" = "Sin indicar";
 "OpenAI-compatible" = "Compatible con OpenAI";
+"General" = "General";
+"Search" = "Buscar";
+"No results" = "Sin resultados";
+"On" = "Activado";
+"Off" = "Desactivado";
+"Options" = "Opciones";

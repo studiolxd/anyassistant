@@ -113,6 +113,16 @@
     "Its LLM": "Su LLM",
     "The general one": "Por defecto",
     "Saved in the keychain": "Guardada en el Llavero",
-    "Not set": "Sin indicar"
+    "Not set": "Sin indicar",
+    "They are saved as you change them. A plugin's are on its page (Plugins).": "Se guardan al cambiarlos. Los de cada plugin están en su página (Plugins).",
+    "Search": "Buscar",
+    "No results": "Sin resultados",
+    "On": "Activado",
+    "Off": "Desactivado",
+    "Options": "Opciones",
+    "Known voices": "Voces conocidas",
+    "Mail accounts": "Cuentas de correo",
+    "What it can do. Each one's page has its options.": "Lo que puede hacer. La página de cada uno tiene sus opciones.",
+    "OpenAI-compatible": "Compatible con OpenAI"
   }
 }
