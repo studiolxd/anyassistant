@@ -9,8 +9,21 @@ var T = {};  // texts of the active language (locale «ui», and the theme's own
 var settings = {};  // name, theme, video, screen…
 var lastState = 'connecting';
 
-// A message to the Mac, on the call's control channel.
+// ?app: the theme in the iPhone, iPad, Mac and Android apps (every theme but Eyes, which they draw
+// themselves). The app keeps the microphone, the audio, the camera and the connection: it gives this
+// page what the server says, the voices' levels and its own problems (AnyAssistant.receive), and
+// this page gives it the taps (toApp). No WebRTC here, no microphone, no pairing form.
+var APP = new URLSearchParams(location.search).has('app');
+function toApp(m) {
+  try {
+    if (window.webkit && webkit.messageHandlers && webkit.messageHandlers.anyassistant) webkit.messageHandlers.anyassistant.postMessage(m);
+    else if (window.AnyAssistantApp) window.AnyAssistantApp.post(JSON.stringify(m));
+  } catch (e) {}
+}
+
+// A message to the Mac, on the call's control channel (in an app, to the app: a tap).
 function tell(m) {
+  if (APP) return toApp(m);
   if (channel && channel.readyState === 'open') channel.send(JSON.stringify(m));
 }
 
@@ -49,7 +62,7 @@ function deviceTheme(name) {
 }
 (function () {
   var params = new URLSearchParams(location.search);
-  if (params.get('theme') && !params.has('demo')) deviceTheme(params.get('theme'));  // the themes page's views don't
+  if (params.get('theme') && !params.has('demo') && !APP) deviceTheme(params.get('theme'));  // the themes page's views don't
 })();
 
 function text(key, values) {
@@ -84,7 +97,7 @@ function redraw() {
 
 // The server plays the theme's sounds: it needs to know which one this device has.
 function tellTheme() {
-  if (settings.theme) tell({ type: 'theme', name: settings.theme.name });
+  if (settings.theme && !APP) tell({ type: 'theme', name: settings.theme.name });
 }
 
 // What the screen shows (settings show_time, show_date, show_stats, clock…).
@@ -98,6 +111,7 @@ function showScreen(s) {
 
 // Loads the texts and then shows the start button (or the demo, or the pairing form).
 loadTexts().then(function () {
+  if (APP) return appMode();
   if (settings.paired === false) return askForCode();  // the pairing plugin's
   var start = document.getElementById('start');
   start.textContent = text('start');
@@ -153,10 +167,62 @@ function tellLater(text) {
 // Tapping the face: goes back to full screen and, if it is speaking, stops it. A drag
 // (scrolling the captions) isn't a tap.
 document.getElementById('screen').onclick = function () {
-  if (Words.dragged()) return;
-  if (!document.fullscreenElement) fullScreen();
+  if (Words.dragged() || held) { held = false; return; }
+  if (!document.fullscreenElement && !APP) fullScreen();
   tell({ type: 'tap' });
 };
+
+// In an app: holding the face opens its settings (as on its own Eyes), not a tap.
+var held = false;
+(function () {
+  if (!APP) return;
+  var timer = null;
+  var from = null;
+  var page = document.getElementById('screen');
+  var cancel = function () { clearTimeout(timer); timer = null; };
+  var down = function (x, y) {
+    held = false;
+    from = { x: x, y: y };
+    cancel();
+    timer = setTimeout(function () { timer = null; held = true; toApp({ type: 'settings' }); }, 800);
+  };
+  var move = function (x, y) { if (from && Math.abs(x - from.x) + Math.abs(y - from.y) > 10) cancel(); };  // a drag
+  page.addEventListener('touchstart', function (ev) { down(ev.touches[0].clientX, ev.touches[0].clientY); }, { passive: true });
+  page.addEventListener('mousedown', function (ev) { down(ev.clientX, ev.clientY); });
+  page.addEventListener('touchmove', function (ev) { move(ev.touches[0].clientX, ev.touches[0].clientY); }, { passive: true });
+  page.addEventListener('mousemove', function (ev) { move(ev.clientX, ev.clientY); });
+  page.addEventListener('touchend', cancel);
+  page.addEventListener('mouseup', cancel);
+  page.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
+})();
+
+// The app's page: the screen at once; what the app says comes through AnyAssistant.receive, once
+// it knows this page is ready (it then gives it what is on its face already).
+function appMode() {
+  document.body.classList.add('app');
+  document.getElementById('screen').hidden = false;
+  toApp({ type: 'ready' });
+}
+var AnyAssistant = {
+  receive: function (m) {
+    if (m.type === 'levels') {
+      Theme.voice(m.voice || 0);
+      Theme.speech(m.speech || 0);
+    } else if (m.type === 'problem') {
+      problem(m.text);
+    } else {
+      message(m);
+    }
+  }
+};
+
+// The app's own trouble (the server isn't answering, it has to be paired again, no microphone):
+// the face in error, saying it, until it clears; then the state as it was.
+var problemText = '';
+function problem(value) {
+  problemText = value || '';
+  showState(lastState, lastWake, lastDetails);
+}
 
 function fullScreen() {
   var el = document.documentElement;
@@ -322,11 +388,16 @@ function ping() {
 }
 
 var lastWake;
+var lastDetails;
 var PAUSED = ['microphone', 'call', 'interrupted'];  // why it is paused (the server's reasons)
 function showState(state, wakePhrase, details) {
   lastState = state;
   lastWake = wakePhrase || lastWake;
-  if (state === 'alarm') {
+  lastDetails = details;
+  if (problemText) {
+    status(problemText);
+    state = 'error';
+  } else if (state === 'alarm') {
     status(text('alarm', { label: alarmLabel }));
   } else if (state === 'paused') {  // another app uses the microphone (a call): «En pausa: Zoom usa el micrófono»
     var why = details && PAUSED.indexOf(details.why) >= 0 ? details.why : 'microphone';
@@ -368,10 +439,13 @@ function holdMicrophone(hold) {
 // «Turn on the camera»: what this device's camera sees, live, like a mirror (the same
 // stream it already sends, so no extra load); «turn off the camera» hides it.
 // Also hidden when it goes to sleep.
+// In an app, the window is only its place: the app shows its own camera there (cameraPlaced).
 function showCamera(on) {
   var box = Theme.block('camera');
   var video = box.querySelector('video');
-  if (on && media && media.getVideoTracks().length) {
+  if (on && APP) {
+    box.hidden = false;
+  } else if (on && media && media.getVideoTracks().length) {
     video.srcObject = media;
     box.hidden = false;
   } else {
@@ -383,7 +457,21 @@ function showCamera(on) {
   if (!box.hidden) {
     placeCamera();
     cameraPlacing = setInterval(placeCamera, 500);  // what it says grows and shrinks; the window too
+  } else {
+    cameraPlaced(null);
   }
+}
+
+// Where the camera's window is, for the app (only when it changes).
+var cameraWhere = '';
+function cameraPlaced(box) {
+  if (!APP) return;
+  var r = box && box.getBoundingClientRect();
+  var m = r ? { type: 'camera', on: true, x: r.left, y: r.top, width: r.width, height: r.height } : { type: 'camera', on: false };
+  var key = JSON.stringify(m);
+  if (key === cameraWhere) return;
+  cameraWhere = key;
+  toApp(m);
 }
 
 // The camera below the face and its words (wherever the theme puts them), centred, 4:3, in the
@@ -405,6 +493,7 @@ function placeCamera() {
   box.style.top = top + 'px';
   box.style.height = height + 'px';
   box.style.width = height * 4 / 3 + 'px';
+  cameraPlaced(box);
 }
 
 // «Read this»: a photo at the camera's full resolution (the video may be 320×240).
