@@ -80,5 +80,6 @@ form.inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; pad
 }
 
 .row.link { cursor: pointer; }
+.row img.shot { flex: 0 0 auto; width: 64px; height: 102px; object-fit: cover; border-radius: 6px; background: #000; }
 .row.link:hover { background: rgba(127,127,127,.08); }
 input.search { width: 100%; max-width: 420px; margin: 4px 0 8px; }
