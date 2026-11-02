@@ -169,6 +169,9 @@ class Ear:
 
     def _wake_up(self, why: str | None = None):
         log.info("awake (%s): conversation mode", why or self.wake.phrase)
+        prepare = getattr(self.stt, "prepare", None)
+        if prepare:  # the speech model, if it left memory, starts coming back before the sentence ends
+            prepare()
         self._reset()
         self.awake = True
         self.last_activity = time.time()

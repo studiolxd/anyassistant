@@ -1,9 +1,11 @@
 """Whisper on the Apple Silicon GPU with MLX."""
 
+import gc
 import sys
 
 import numpy as np
 
+import models
 from stt import GPU, Transcriber, register
 
 _models = {}
@@ -33,13 +35,23 @@ def transcribe_mlx(audio: np.ndarray, model: str, language: str, prompt: str | N
     with GPU:
         result = mlx_whisper.transcribe(
             audio,
-            path_or_hf_repo=model,
+            path_or_hf_repo=models.pinned(model),
             language=language,
             # Standalone sentences: without previous context it makes up less.
             condition_on_previous_text=False,
             initial_prompt=prompt,
         )
     return result["text"].strip()
+
+
+def unload_mlx(model: str):
+    """Drops a model loaded by transcribe_mlx (the next transcription loads it again) and gives
+    the GPU's memory back; the other models (the wake word's) stay."""
+    import mlx.core as mx
+
+    _models.pop(models.pinned(model), None)
+    gc.collect()
+    mx.clear_cache()
 
 
 @register("mlx-whisper")
@@ -49,3 +61,7 @@ class MlxWhisper(Transcriber):
 
     def transcribe(self, audio: np.ndarray) -> str:
         return transcribe_mlx(audio, self.model, self.language)
+
+    def unload(self) -> bool:
+        unload_mlx(self.model)  # load(): the next transcription (warm_up) brings it back
+        return True

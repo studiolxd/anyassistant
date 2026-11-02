@@ -1,5 +1,6 @@
 """Kokoro on Windows and Linux: Kokoro-82M in ONNX (kokoro-onnx, Apache 2.0), a natural voice on
-the CPU. Its model (int8, 88 MB) and voices (27 MB) download once into the cache folder.
+the CPU. Its model (int8, 88 MB) and voices (27 MB) download once into the cache folder's «models»
+(pinned to a release and checked: server/models.py).
 
 Voices by language (--voice, or settings «voice»: {"es": "em_alex"}): Spanish ef_dora (the
 default), em_alex, em_santa; English af_heart (the default), af_bella, am_michael, bf_emma,
@@ -9,18 +10,16 @@ Kokoro's (the Mac's «Mónica») gets the language's default.
 
 import logging
 import threading
-import urllib.request
 
 import numpy as np
 from scipy.signal import resample_poly
 
 import i18n
-import paths
+import models
 from tts import RATE, Voice, register
 
 log = logging.getLogger("tts")
-RELEASE = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/"
-FILES = ("kokoro-v1.0.int8.onnx", "voices-v1.0.bin")
+FILES = ("kokoro-v1.0.int8.onnx", "voices-v1.0.bin")  # the model and its voices, in models.MODELS["kokoro"]
 # Its language codes, and the default voice of each.
 LANGUAGES = {"es": ("es", "ef_dora"), "en": ("en-us", "af_heart"), "fr": ("fr-fr", "ff_siwis"),
              "it": ("it", "if_sara"), "pt": ("pt-br", "pf_dora"), "hi": ("hi", "hf_alpha"),
@@ -29,26 +28,14 @@ _model = None
 _loading = threading.Lock()
 
 
-def folder():
-    return paths.CACHE / "models" / "kokoro"
-
-
 def model():
-    """Kokoro, loaded once (downloaded the first time)."""
+    """Kokoro, loaded once (downloaded and checked the first time)."""
     global _model
     with _loading:
         if _model is None:
             from kokoro_onnx import Kokoro
 
-            place = folder()
-            place.mkdir(parents=True, exist_ok=True)
-            for name in FILES:
-                target = place / name
-                if not target.exists():
-                    log.info("kokoro: downloading %s…", name)
-                    partial = target.with_suffix(".part")
-                    urllib.request.urlretrieve(RELEASE + name, partial)
-                    partial.rename(target)
+            place = models.fetch("kokoro")
             _model = Kokoro(str(place / FILES[0]), str(place / FILES[1]))
         return _model
 

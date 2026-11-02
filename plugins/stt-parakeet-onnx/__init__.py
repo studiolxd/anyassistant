@@ -12,8 +12,9 @@ import logging
 import numpy as np
 
 import i18n
+import models
 import settings
-from plugins.stt_faster_whisper import transcribe_fw
+from plugins.stt_faster_whisper import transcribe_fw, unload
 from plugins.stt_parakeet import wrong_language
 from stt import RATE, Transcriber, register
 from text import words
@@ -27,9 +28,19 @@ MODEL = "nemo-parakeet-tdt-0.6b-v3"
 class ParakeetOnnx(Transcriber):
     def __init__(self, language="en", model=None):
         super().__init__(language, model or MODEL)
+        self._model = None
+        self.load()
+
+    def load(self):
         import onnx_asr
 
-        self._model = onnx_asr.load_model(self.model, quantization="int8")
+        if self._model is None:
+            self._model = onnx_asr.load_model(self.model, path=models.folder(self.model), quantization="int8")
+
+    def unload(self) -> bool:
+        self._model = None
+        unload(FALLBACK)  # its Whisper too; warm_up() brings both back
+        return True
 
     def warm_up(self):
         super().warm_up()
