@@ -24,11 +24,6 @@
 - [ ] **Probar la app de Android en un Android 8 real** (el micrófono y la cancelación de eco, Bonjour,
   la alarma con la pantalla bloqueada, la cámara).
 - [ ] **Probar la app del Mac como cliente de otro servidor.**
-- [ ] **El Apple Watch**: recibir los avisos en la muñeca (alarmas, agenda, «la cocina dice…», con
-  vibración). Primero, comprobar si las alarmas de AlarmKit del iPhone ya avisan en el reloj.
-- [ ] **La cuenta atrás de los temporizadores en el iPhone**: en la pantalla bloqueada y en la Dynamic
-  Island, como los del Reloj de Apple (un widget de Live Activity; los temporizadores, con cuenta
-  atrás en AlarmKit y no como alarmas a una hora fija).
 - [ ] **El Apple Watch**: usarlo fuera de casa (el servidor accesible desde fuera: Tailscale…; afecta a
   todos los dispositivos).
 
@@ -98,6 +93,11 @@ LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
 - [x] **El Apple Watch emparejado como el iPhone** (2 nov): el iPhone le pasa la IP del servidor, el
   certificado y el emparejamiento (el reloj no tiene Bonjour ni resuelve `.local`); sin teclado ni
   ajustes de servidor. Habla con el servidor directamente y sigue encendido mientras contesta.
+- [x] **Los avisos en la muñeca** (2 nov): los avisos (agenda, correo…) se guardan para los
+  dispositivos que no estaban conectados y les llegan al conectarse; el reloj los pide (al abrirse, en
+  segundo plano y con cada respuesta) y los muestra con vibración; «dile al reloj…» le espera. Sin push.
+- [x] **La cuenta atrás de los temporizadores en el iPhone** (2 nov): en la pantalla bloqueada y en la
+  Dynamic Island (temporizadores de AlarmKit con su Live Activity).
 - [x] **La complicación del Apple Watch** (2 nov): lo próximo (un temporizador con su cuenta atrás,
   una alarma o un recordatorio) en la esfera, en sus cuatro formas; los ojos si no hay nada.
 - [x] **El doble toque del Apple Watch** (2 nov), como tocar la cara: se calla, olvida la pregunta,
