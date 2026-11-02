@@ -1,6 +1,6 @@
 {
   "name": "Microphone in use",
-  "description": "On Windows and Linux, the device of this computer's own app is paused while another program uses the microphone (a call, a meeting): Windows' microphone consent store, PipeWire or PulseAudio. The Mac, iPhone and Android apps find it out by themselves.",
+  "description": "On Windows and Linux, the device of this computer's own app is paused while another program uses the microphone (a call, a meeting): Windows' microphone consent store, PipeWire or PulseAudio. The Mac, iPhone and Android apps find it out by themselves, and so does the Windows and Linux app when it uses another server.",
   "kind": "feature",
   "needs": {"system": ["win32", "linux"]}
 }

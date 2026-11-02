@@ -13,6 +13,7 @@ const os = require('os');
 const path = require('path');
 const { Server } = require('./server');
 const setup = require('./setup');
+const microphone = require('./microphone');
 
 // Its texts: the key is the English in the code (the Mac app's); locales/<language>.json says it
 // in the system's language (app.getLocale: known once the app is ready).
@@ -246,6 +247,63 @@ function clientStatus() {
   return state.listening ? T('Looking for the server…') : T('The microphone is off');
 }
 
+// --- Another app using the microphone, as a client (the Mac's MicrophoneWatch) ---
+//
+// With its own server, the server looks (the plugin «microphone-busy») and pauses this computer's
+// page. As a client of another server nobody looks at this computer: the app does (microphone.js:
+// the same checks), and its page tells the server it talks to, as the Mac app does: «paused» (why
+// «microphone», the app's name) and «listening» again. Only if that server wants it (its
+// «pause_when_microphone_busy», from /config) and while the face runs (listening, or shown).
+
+const micWatch = new microphone.Watch();
+let pauseWanted = true;  // the other server's «pause_when_microphone_busy»
+let configAsked = 0;
+
+async function followPauseOption() {
+  if (!isClient() || !linked || Date.now() - configAsked < 30000) return;
+  configAsked = Date.now();
+  try {
+    const r = await session.defaultSession.fetch(base() + '/config', { signal: AbortSignal.timeout(3000) });
+    const found = (await r.json()).screen || {};
+    pauseWanted = found.pause_when_microphone_busy !== false;
+  } catch (e) { /* not now: as it was */ }
+}
+
+const faceRuns = () => Boolean(windows.face && !windows.face.isDestroyed() && windows.face.webContents.getURL().startsWith('http'));
+
+// What the page does (its own functions: tell, holdMicrophone): once per connection (a page that
+// connects again, or loads again, is told again), the microphone's track sending silence meanwhile.
+const PAGE_PAUSED = (program) => `(function (app) {
+  if (typeof tell !== 'function' || !channel || channel.readyState !== 'open') return;
+  if (window.anyassistantPaused === channel) return;
+  window.anyassistantPaused = channel;
+  tell({ type: 'paused', why: 'microphone', app: app });
+  holdMicrophone(true);
+})(${JSON.stringify(program)})`;
+const PAGE_LISTENING = `(function () {
+  if (!window.anyassistantPaused) return;
+  window.anyassistantPaused = null;
+  tell({ type: 'listening' });
+  holdMicrophone(false);
+})()`;
+
+function toPage(code) {
+  if (faceRuns()) windows.face.webContents.executeJavaScript(code).catch(() => {});
+}
+
+let looking = false;
+async function lookAtMicrophone() {
+  if (looking) return;
+  looking = true;
+  try {
+    const on = isClient() && pauseWanted && faceRuns() && (process.platform === 'win32' || process.platform === 'linux');
+    const change = on ? micWatch.tick(await microphone.busy(), Date.now() / 1000) : micWatch.reset();
+    if (change === 'free') toPage(PAGE_LISTENING);
+    if (micWatch.busy) toPage(PAGE_PAUSED(micWatch.program));  // again each time: a page connected again is told too
+    if (change) menu();
+  } catch (e) { /* it keeps looking */ } finally { looking = false; }
+}
+
 // --- The tray ---
 
 // How it is, at a glance (the Mac draws a symbol by it; here, a plain mark): its state.
@@ -264,10 +322,11 @@ const faceItem = () => (faceShown()
 const listenItem = () => ({ label: T('Listen on this device'), type: 'checkbox', checked: state.listening, click: (item) => listen(item.checked) });
 // «Paused: Zoom is using the microphone»: the server paused this computer's own page while another
 // program records (the plugin «microphone-busy»); /status says so of the device from 127.0.0.1.
+// As a client, the app's own look (lookAtMicrophone).
 const pausedText = () => {
-  const own = connected.find((d) => d.local && d.paused);
+  const own = isClient() ? (micWatch.busy ? { app: micWatch.program } : null) : (connected.find((d) => d.local && d.paused) || {}).paused;
   if (!own) return null;
-  return own.paused.app ? T('Paused: %s is using the microphone', own.paused.app) : T('Paused: another app is using the microphone');
+  return own.app ? T('Paused: %s is using the microphone', own.app) : T('Paused: another app is using the microphone');
 };
 const pausedItems = () => (pausedText() ? [{ label: pausedText(), enabled: false }] : []);
 const privacyItems = () => [
@@ -282,7 +341,7 @@ function clientMenu() {
   return [
     { label: clientStatus(), enabled: false },
     { type: 'separator' },
-    faceItem(), listenItem(), ...privacyItems(),
+    faceItem(), listenItem(), ...pausedItems(), ...privacyItems(),
     { type: 'separator' },
     { label: M('Run the server on this device…'), click: useThisDevice },
     loginItem(),
@@ -329,7 +388,8 @@ function showTray() {
   tray = new Tray(icon);
   tray.on('click', () => ((isClient() || running()) ? showFace() : null));  // Windows: a click shows it
   menu();
-  setInterval(async () => { if (!isClient()) await server.check(); await followDevices(); await followLink(); menu(); }, 5000);  // the server, its devices, permissions: as they are
+  setInterval(async () => { if (!isClient()) await server.check(); await followDevices(); await followLink(); await followPauseOption(); menu(); }, 5000);  // the server, its devices, permissions: as they are
+  setInterval(lookAtMicrophone, microphone.EVERY * 1000);  // as a client: another app using the microphone
 }
 
 async function learnName() {
@@ -360,6 +420,7 @@ server.on('change', async () => {
 function useAnother(client) {
   if (server.ours) server.stop();
   remember({ client });
+  configAsked = 0;  // its own «pause_when_microphone_busy», at once
   for (const id of Object.keys(windows)) if (windows[id] && !windows[id].isDestroyed()) windows[id].destroy();
   showTray();
   menu();
