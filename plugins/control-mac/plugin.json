@@ -1,0 +1,13 @@
+{
+  "name": "Control the Mac",
+  "description": "«Abre Safari», «ejecuta el atajo Buenas noches», «abre la carpeta Descargas», «ve a la ventana de Mail», «teclea hola»: the Mac the server runs on, by voice and without the LLM (an app's name understood as it sounds: «crom»); and as tools for the LLM. Typing asks for your «yes»; the windows and typing need the Accessibility permission.",
+  "kind": "skill",
+  "requires": [
+    "control-language"
+  ],
+  "needs": {
+    "system": [
+      "darwin"
+    ]
+  }
+}

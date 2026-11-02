@@ -1,0 +1,158 @@
+{
+  "plugins": {
+    "control-language": [
+      "Lenguaje de control",
+      "Las palabras para controlar el ordenador por voz (abrir una aplicación, ejecutar un atajo, abrir un archivo o una carpeta, ir a una ventana, escribir) y cómo un nombre dicho se corresponde con los que hay, aunque se diga como suena («crom» por Chrome). Una librería que necesitan los plugins de control (control-mac)."
+    ]
+  },
+  "speech": {
+    "control_help": "En el servidor puedo abrir aplicaciones («abre Safari»), ejecutar atajos («ejecuta el atajo Buenas noches»), abrir archivos y carpetas («abre la carpeta Descargas»), ir a una ventana («ve a la ventana de Mail») y escribir donde esté el cursor («teclea hola»).",
+    "control_opening": "Abro {name}.",
+    "control_opening_in": "Abro {name}, en {where}.",
+    "control_home": "tu carpeta personal",
+    "control_no_file": "No encuentro nada llamado {name}.",
+    "control_shortcut": "Ejecuto el atajo {name}.",
+    "control_no_shortcut": "No tienes ningún atajo llamado {name}.",
+    "control_window": "Voy a {name}.",
+    "control_no_window": "No encuentro ninguna ventana de {name}.",
+    "control_type_ask": "¿Escribo «{text}»?",
+    "control_typed": "Escrito.",
+    "control_type_cancelled": "Vale, no lo escribo."
+  },
+  "control": {
+    "help": [
+      "que puedo decir",
+      "que puedo decirte",
+      "que te puedo decir",
+      "que comandos entiendes",
+      "que comandos tienes",
+      "que ordenes entiendes",
+      "que ordenes tienes"
+    ],
+    "open": [
+      "abre",
+      "abreme",
+      "abrir",
+      "lanza",
+      "lanzar",
+      "arranca",
+      "inicia",
+      "ejecuta"
+    ],
+    "run": [
+      "ejecuta",
+      "ejecutar",
+      "lanza",
+      "lanzar",
+      "activa",
+      "activar",
+      "corre",
+      "inicia",
+      "abre",
+      "pon",
+      "ponme"
+    ],
+    "go": [
+      "ve",
+      "vete",
+      "cambia",
+      "cambiate",
+      "pasa",
+      "pasate",
+      "vuelve",
+      "llevame",
+      "enfoca",
+      "trae",
+      "traeme"
+    ],
+    "type": [
+      "teclea",
+      "tecleame",
+      "escribe esto",
+      "escribe el texto",
+      "escribe aqui"
+    ],
+    "shortcut": [
+      "atajo"
+    ],
+    "file": [
+      "archivo",
+      "fichero",
+      "documento"
+    ],
+    "folder": [
+      "carpeta",
+      "directorio"
+    ],
+    "window": [
+      "ventana"
+    ],
+    "app_words": [
+      "aplicacion",
+      "app",
+      "programa"
+    ],
+    "fillers": [
+      "el",
+      "la",
+      "los",
+      "las",
+      "un",
+      "una",
+      "de",
+      "del",
+      "a",
+      "al",
+      "en",
+      "me",
+      "por",
+      "favor",
+      "porfa",
+      "oye",
+      "venga"
+    ],
+    "not_a_name": [
+      "nueva",
+      "nuevo",
+      "otra",
+      "otro",
+      "superior",
+      "anterior",
+      "siguiente",
+      "actual",
+      "ultima",
+      "ultimo",
+      "privada",
+      "incognito",
+      "izquierda",
+      "derecha",
+      "arriba",
+      "abajo",
+      "pantalla",
+      "esta",
+      "este",
+      "ese",
+      "esa",
+      "eso",
+      "esto",
+      "dormir",
+      "casa"
+    ],
+    "names": {
+      "folders": {
+        "escritorio": "Desktop",
+        "descargas": "Downloads",
+        "documentos": "Documents",
+        "imagenes": "Pictures",
+        "fotos": "Pictures",
+        "musica": "Music",
+        "peliculas": "Movies",
+        "videos": "Movies",
+        "aplicaciones": "/Applications",
+        "papelera": "/.Trash",
+        "inicio": "~",
+        "personal": "~"
+      }
+    }
+  }
+}

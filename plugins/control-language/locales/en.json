@@ -1,0 +1,121 @@
+{
+  "speech": {
+    "control_help": "On the server I can open apps («open Safari»), run shortcuts («run the shortcut Good night»), open files and folders («open the folder Downloads»), go to a window («go to the Mail window») and type where the cursor is («type hello»).",
+    "control_opening": "Opening {name}.",
+    "control_opening_in": "Opening {name}, in {where}.",
+    "control_home": "your home folder",
+    "control_no_file": "I can't find anything called {name}.",
+    "control_shortcut": "Running the shortcut {name}.",
+    "control_no_shortcut": "You have no shortcut called {name}.",
+    "control_window": "Going to {name}.",
+    "control_no_window": "I can't find a window of {name}.",
+    "control_type_ask": "Shall I type «{text}»?",
+    "control_typed": "Done.",
+    "control_type_cancelled": "Okay, I won't type it."
+  },
+  "control": {
+    "help": [
+      "what can i say",
+      "what can i say to you",
+      "what commands do you understand",
+      "what commands do you know",
+      "which commands do you understand",
+      "what orders do you understand"
+    ],
+    "open": [
+      "open",
+      "launch",
+      "start",
+      "run"
+    ],
+    "run": [
+      "run",
+      "launch",
+      "start",
+      "open",
+      "execute",
+      "trigger"
+    ],
+    "go": [
+      "go",
+      "switch",
+      "bring",
+      "focus",
+      "take"
+    ],
+    "type": [
+      "type",
+      "type this",
+      "type in",
+      "type the text",
+      "write this"
+    ],
+    "shortcut": [
+      "shortcut"
+    ],
+    "file": [
+      "file",
+      "document"
+    ],
+    "folder": [
+      "folder",
+      "directory"
+    ],
+    "window": [
+      "window"
+    ],
+    "app_words": [
+      "app",
+      "application",
+      "program"
+    ],
+    "fillers": [
+      "the",
+      "a",
+      "an",
+      "to",
+      "of",
+      "my",
+      "me",
+      "up",
+      "in",
+      "into",
+      "please",
+      "hey"
+    ],
+    "not_a_name": [
+      "new",
+      "other",
+      "another",
+      "next",
+      "previous",
+      "last",
+      "current",
+      "private",
+      "incognito",
+      "left",
+      "right",
+      "this",
+      "that",
+      "it",
+      "sleep",
+      "home",
+      "bed"
+    ],
+    "names": {
+      "folders": {
+        "desktop": "Desktop",
+        "downloads": "Downloads",
+        "documents": "Documents",
+        "pictures": "Pictures",
+        "photos": "Pictures",
+        "music": "Music",
+        "movies": "Movies",
+        "videos": "Movies",
+        "applications": "/Applications",
+        "trash": "/.Trash",
+        "home": "~"
+      }
+    }
+  }
+}
