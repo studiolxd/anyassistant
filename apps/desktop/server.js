@@ -60,6 +60,15 @@ class Server extends EventEmitter {
         `# Where this copy keeps your data (the AnyAssistant app wrote it).\nANYASSISTANT_HOME="${this.data}"\nANYASSISTANT_CACHE="${this.cache}"\n`);
     }
     this.unit = path.join(home, '.config', 'systemd', 'user', 'anyassistant.service');
+    this.venv = path.join(this.program, '.venv', WINDOWS ? 'Scripts' : 'bin', WINDOWS ? 'python.exe' : 'python');
+  }
+
+  // Installed (as the Mac app sees it): its Python is made and the installer's steps were gone
+  // through (install.env, which the app writes with where your data is; developing from the
+  // project, uv sync made the environment: no steps to go through). Not yet: the app shows the
+  // installer's window instead of the menu.
+  get installed() {
+    return exists(this.venv) && (exists(path.join(this.program, 'install.env')) || !process.env.ANYASSISTANT_PROGRAM);
   }
 
   get port() {
@@ -106,15 +115,74 @@ class Server extends EventEmitter {
     return this.start();
   }
 
+  // Every few seconds (as the Mac app polls it): one adopted (systemd's, another start) that stops
+  // answering is «stopped»; one that answers again (restarted by hand) is running.
+  async check() {
+    if (this.child || this.state === 'starting') return;
+    const up = await this.answers();
+    if (this.state === 'running' && !up) this.set('stopped');
+    else if (this.state !== 'running' && up && !this.stopping) { this.ours = false; this.set('running'); }
+  }
+
+  // uv: the app's own (packaged), or the one installed on this computer.
+  uv() {
+    return [process.env.UV, path.join(home, '.local', 'bin', WINDOWS ? 'uv.exe' : 'uv'),
+            path.join(home, '.cargo', 'bin', WINDOWS ? 'uv.exe' : 'uv')].find((p) => p && exists(p)) || 'uv';
+  }
+
+  // The program's Python, to run a script of the server's: [command, arguments before the script].
   python() {
     // The app's own uv (packaged): its environment kept up to date with the program (uv.lock) each start.
-    if (process.env.UV) return [process.env.UV, ['run', '--frozen', '--project', this.program, 'python', 'server/main.py']];
-    const venv = path.join(this.program, '.venv', WINDOWS ? 'Scripts' : 'bin', WINDOWS ? 'python.exe' : 'python');
-    if (exists(venv) && exists(path.join(this.program, 'install.env'))) return [venv, ['server/main.py']];
+    if (process.env.UV) return [process.env.UV, ['run', '--frozen', '--project', this.program, 'python']];
+    if (exists(this.venv) && exists(path.join(this.program, 'install.env'))) return [this.venv, []];
     // Developing (or not prepared yet): uv makes the environment and runs it.
-    const uv = [process.env.UV, path.join(home, '.local', 'bin', WINDOWS ? 'uv.exe' : 'uv'),
-                path.join(home, '.cargo', 'bin', WINDOWS ? 'uv.exe' : 'uv')].find((p) => p && exists(p)) || 'uv';
-    return [uv, ['run', '--project', this.program, 'python', 'server/main.py']];
+    return [this.uv(), ['run', '--project', this.program, 'python']];
+  }
+
+  environment() {
+    return { ...process.env, ANYASSISTANT_APP: '1', ANYASSISTANT_HOME: this.data, ANYASSISTANT_CACHE: this.cache,
+             PYTHONUNBUFFERED: '1', PYTHONUTF8: '1' };
+  }
+
+  // Runs a program to the end: its output, line by line, to «line»; the exit code (-1: it couldn't run).
+  run(command, args, line) {
+    return new Promise((done) => {
+      let child;
+      try {
+        child = spawn(command, args, { cwd: this.program, env: this.environment(), windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      } catch (e) { return done(-1); }
+      let pending = '';
+      const read = (chunk) => {
+        pending += chunk.toString('utf8');
+        let at;
+        while ((at = pending.indexOf('\n')) >= 0) {
+          if (line) line(pending.slice(0, at).replace(/\r$/, ''));
+          pending = pending.slice(at + 1);
+        }
+      };
+      child.stdout.on('data', read);
+      child.stderr.on('data', read);
+      child.on('error', () => done(-1));
+      child.on('exit', (code) => { if (pending && line) line(pending); done(code === null ? -1 : code); });
+    });
+  }
+
+  // The installer's window (as the Mac's Setup.swift): the program's Python first («Preparing
+  // the installation…»: uv makes the environment), then the installer's steps through their JSON.
+  prepare(line) {
+    fs.mkdirSync(this.cache, { recursive: true });
+    fs.mkdirSync(this.data, { recursive: true });
+    if (!process.env.ANYASSISTANT_PROGRAM && exists(this.venv)) return Promise.resolve(0);  // developing: uv sync did it
+    return this.run(this.uv(), ['sync', '--frozen', '--no-dev', '--project', this.program], line);
+  }
+
+  // bin/anyassistant setup, as the Mac runs it (its own Python: bin/anyassistant is a shell script, not for
+  // Windows): `--list --json` lists the questions; `--json [--defaults|--set k=v…]` runs the steps,
+  // one JSON event per line. The app starts the server and shows how to connect: not the installer.
+  setup(args, line) {
+    const [command, before] = this.python();
+    const script = 'import sys; sys.path.insert(0, "server"); import installer; sys.exit(installer.main(sys.argv[1:]))';
+    return this.run(command, [...before, '-c', script, ...args, '--skip', 'service', '--skip', 'connect'], line);
   }
 
   async start() {
@@ -126,15 +194,13 @@ class Server extends EventEmitter {
     fs.mkdirSync(this.cache, { recursive: true });
     fs.mkdirSync(this.data, { recursive: true });
     const out = fs.openSync(this.log, 'a');
-    const [command, args] = this.python();
+    const [command, before] = this.python();
     this.stopping = false;
     this.ours = true;
     this.set('starting');
     try {
-      this.child = spawn(command, args, {
-        cwd: this.program, stdio: ['ignore', out, out], windowsHide: true,
-        env: { ...process.env, ANYASSISTANT_APP: '1', ANYASSISTANT_HOME: this.data, ANYASSISTANT_CACHE: this.cache,
-               PYTHONUNBUFFERED: '1', PYTHONUTF8: '1' },
+      this.child = spawn(command, [...before, 'server/main.py'], {
+        cwd: this.program, stdio: ['ignore', out, out], windowsHide: true, env: this.environment(),
       });
     } catch (e) {
       return this.set('failed', e.message);
@@ -158,6 +224,7 @@ class Server extends EventEmitter {
   async ended(code) {
     this.child = null;
     if (this.stopping) return this.set('stopped');
+    this.set('failed', 'crashed');  // «It stopped; starting it again…» (as the Mac says), unless it is just restarting
     // «Reinicia» by voice on Windows: the server becomes another process (os.execv). Still there?
     await new Promise((r) => setTimeout(r, 4000));
     if (await this.answers()) { this.ours = false; return this.set('running'); }

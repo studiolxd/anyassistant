@@ -29,6 +29,12 @@
     "files": [
       "main.js",
       "server.js",
+      "setup.js",
+      "bonjour.js",
+      "preload.js",
+      "setup.html",
+      "unavailable.html",
+      "locales/**",
       "icons/**"
     ],
     "extraResources": [

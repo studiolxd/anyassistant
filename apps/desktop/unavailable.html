@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>AnyAssistant</title>
+  <style>
+    :root { --bg: #f6f7f9; --text: #1d2330; --muted: #677085; --line: #e3e6ec; --accent: #2f7cf6; color-scheme: light; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #12151b; --text: #e7eaf0; --muted: #8b93a6; --line: #2a303b; --accent: #4b8ff8; color-scheme: dark; }
+    }
+    html, body { height: 100%; margin: 0; }
+    body { font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text);
+           display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; -webkit-user-select: none; user-select: none; }
+    .symbol { font-size: 44px; color: var(--muted); }
+    h1 { font-size: 20px; margin: 10px 0 4px; }
+    p { margin: 0 0 18px; color: var(--muted); max-width: 360px; }
+    button { font: inherit; border: 0; border-radius: 7px; padding: 8px 16px; background: var(--line); color: var(--text); cursor: pointer; }
+    button.main { background: var(--accent); color: #fff; }
+  </style>
+</head>
+<body>
+  <!-- What a window shows when the server doesn't answer (as the Mac's ServerUnavailable): in the
+       middle, what is wrong and what to do: start it, if it is stopped; else try again. -->
+  <div>
+    <div class="symbol">⚡</div>
+    <h1 id="title"></h1>
+    <p id="detail"></p>
+    <button class="main" id="start" hidden></button>
+    <button id="retry" hidden></button>
+  </div>
+  <script>
+    var texts = {};
+    function T(english) { return texts[english] || english; }
+    var api = window.anyassistant;
+    Promise.all([api.texts(), api.serverState()]).then(function (found) {
+      texts = found[0] || {};
+      var server = found[1];
+      var stopped = !server.client && (server.state === 'stopped' || server.state === 'failed');
+      document.getElementById('title').textContent = T('The server isn\'t responding');
+      document.getElementById('detail').textContent = stopped ? T('AnyAssistant\'s server is stopped.') : T('Make sure AnyAssistant is running.');
+      var start = document.getElementById('start'), retry = document.getElementById('retry');
+      start.textContent = T('Start the Server');
+      retry.textContent = T('Try Again');
+      start.hidden = !stopped;
+      retry.hidden = stopped;
+      start.onclick = function () { api.startServer(); };
+      retry.onclick = function () { api.retry(); };
+    });
+  </script>
+</body>
+</html>
