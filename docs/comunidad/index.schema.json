@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/index.schema.json",
+  "title": "AnyAssistant community catalog",
+  "description": "The index of themes and plugins people share: what AnyAssistant reads to list, install, update and remove them (docs/comunidad.md).",
+  "type": "object",
+  "required": ["format", "packages"],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "description": "The index's format. AnyAssistant reads up to 1: a newer format is refused whole, so a breaking change means a new number (and a new index for older versions).",
+      "type": "integer",
+      "const": 1
+    },
+    "updated": {
+      "description": "When the index was last changed (YYYY-MM-DD). Only for people.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "packages": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/package" }
+    }
+  },
+  "$defs": {
+    "package": {
+      "type": "object",
+      "required": ["kind", "id", "name", "version", "files"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "description": "A theme (HTML and CSS for the screen) or a plugin (Python code the server runs).",
+          "enum": ["theme", "plugin"]
+        },
+        "id": {
+          "description": "Its folder's name once installed: lowercase letters, numbers, - and _. Unique per kind; never a system theme's or plugin's (eyes, orb, minimal, bedside; memory, pairing…: AnyAssistant refuses those).",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,30}$"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "author": { "type": "string" },
+        "version": {
+          "description": "A version people can read (1.0.0, 2.1…). An update exists when the catalog's is greater than the installed one (PEP 440 order; if not comparable, when it differs).",
+          "type": "string",
+          "minLength": 1
+        },
+        "description": { "type": "string" },
+        "homepage": {
+          "description": "Where to read more (the package's folder in the repository, or its own page).",
+          "type": "string",
+          "format": "uri"
+        },
+        "screenshot": {
+          "description": "Themes: an https:// address of a PNG or JPEG (3 MB at most). The server fetches it and shows it; the pages load nothing from outside.",
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "min_version": {
+          "description": "The oldest AnyAssistant it works with: the number in its VERSION («280-9e919ad» → 280; Settings shows it). A version in development (no VERSION file) fits anything.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "files": {
+          "description": "Every file of the package: a theme needs theme.json, theme.html and theme.css (and only files of the kinds a theme may have); a plugin needs plugin.json and __init__.py. Each is downloaded, checked against its SHA-256 and only then written; one missing or different and nothing is installed.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["path", "url", "sha256"],
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "description": "Where it goes inside the package's folder: plain relative paths (locales/es.json), no «..».",
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_][A-Za-z0-9._-]*(/[A-Za-z0-9_][A-Za-z0-9._-]*)*$"
+              },
+              "url": {
+                "description": "Where to download it from, https:// (raw.githubusercontent.com for a file in the repository). 10 MB at most per file, 50 MB per package.",
+                "type": "string",
+                "pattern": "^https://"
+              },
+              "sha256": {
+                "description": "Its SHA-256, in hexadecimal (shasum -a 256 <file>, or bin/anyassistant community entry).",
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

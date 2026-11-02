@@ -12,6 +12,7 @@
 #   bin/anyassistant admin-code               a code for a browser to administer it (/admin)
 #   bin/anyassistant llm-key openai           an LLM's API key, into the system's keychain
 #   bin/anyassistant theme list|new <name> [--from orb]   the screen's themes
+#   bin/anyassistant community entry <folder> <base-url>   a theme's or plugin's entry for the community catalog
 #   bin/anyassistant plugins [requirements [--all]]   which are on, what they lack; their Python packages
 #   bin/anyassistant mail add|list|test|remove   mail accounts besides Gmail (IMAP and SMTP)
 #   bin/anyassistant setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)
@@ -223,12 +224,16 @@ else:
     shift
     PYTHONPATH="$ROOT/server" exec "$ROOT/.venv/bin/python" "$ROOT/plugins/page/themes.py" "$@"
     ;;
+  community)
+    shift
+    exec "$ROOT/.venv/bin/python" "$ROOT/plugins/community/cli.py" "$@"
+    ;;
   unpair)
     if ! alive; then echo "AnyAssistant isn't running."; exit 1; fi
     curl -s -m 3 -X POST "http://127.0.0.1:$PORT/pairing?forget=1" > /dev/null && echo "Every device forgotten: they'll need a new code."
     ;;
   *)
-    sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
     exit 2
     ;;
 esac

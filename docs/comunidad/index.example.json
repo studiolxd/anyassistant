@@ -1,0 +1,76 @@
+{
+  "format": 1,
+  "updated": "2026-11-02",
+  "packages": [
+    {
+      "kind": "theme",
+      "id": "aurora",
+      "name": "Aurora",
+      "author": "Ana García",
+      "version": "1.0.0",
+      "description": "Luces del norte que respiran con tu voz; en reposo, solo la hora.",
+      "homepage": "https://github.com/studiolxd/anyassistant-community/tree/main/themes/aurora",
+      "screenshot": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/themes/aurora/preview.png",
+      "min_version": 280,
+      "files": [
+        {
+          "path": "theme.json",
+          "url": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/themes/aurora/theme.json",
+          "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+        },
+        {
+          "path": "theme.html",
+          "url": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/themes/aurora/theme.html",
+          "sha256": "60303ae22b998861bce3b28f33eec1be758a213c86c93c076dbe9f558c11c752"
+        },
+        {
+          "path": "theme.css",
+          "url": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/themes/aurora/theme.css",
+          "sha256": "fd61a03af4f77d870fc21e05e7e80678095c92d808cfb3b5c279ee04c74aca13"
+        },
+        {
+          "path": "locales/es.json",
+          "url": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/themes/aurora/locales/es.json",
+          "sha256": "a4e624d686e03ed2767c0abd85c14426b0b1157d2ce81d27bb4fe4f6f01d688a"
+        },
+        {
+          "path": "sounds/wake.wav",
+          "url": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/themes/aurora/sounds/wake.wav",
+          "sha256": "b3a8e0e1f9ab1bfe3a36f231f676f78bb30a519d2b21e6c530c0eee8ebb4a5d0"
+        }
+      ]
+    },
+    {
+      "kind": "plugin",
+      "id": "skill-jokes",
+      "name": "Jokes",
+      "author": "Bo Lee",
+      "version": "0.3.1",
+      "description": "«Cuéntame un chiste»: one of its own, without the LLM.",
+      "homepage": "https://github.com/studiolxd/anyassistant-community/tree/main/plugins/skill-jokes",
+      "min_version": 280,
+      "files": [
+        {
+          "path": "plugin.json",
+          "url": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/plugins/skill-jokes/plugin.json",
+          "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+        },
+        {
+          "path": "__init__.py",
+          "url": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/plugins/skill-jokes/__init__.py",
+          "sha256": "3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7"
+        },
+        {
+          "path": "locales/en.json",
+          "url": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/plugins/skill-jokes/locales/en.json",
+          "sha256": "18ac3e7343f016890c510e93f935261169d9e3f565436429830faf0934f4f8e4"
+        },
+        {
+          "path": "locales/es.json",
+          "url": "https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/plugins/skill-jokes/locales/es.json",
+          "sha256": "3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea"
+        }
+      ]
+    }
+  ]
+}

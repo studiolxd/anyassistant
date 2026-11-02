@@ -256,6 +256,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `port` | `8080` | the port (bin/anyassistant reads it too) *(restarts)* |
 | `mode` | `"assistant"` | assistant, transcribe (only shows what it hears) or parrot (repeats it) *(restarts)* |
 | `record` | `false` | saves everything that arrives to a WAV, in the cache's «recordings» (to debug) *(restarts)* |
+| `community_catalog` | `"https://raw.githubusercontent.com/studiolxd/anyassistant-community/main/index.json"` | the community catalog: the address of its index (themes and plugins to install) |
 | `https_port` | `443` | the HTTPS port (the page with a certificate devices trust) *(restarts)* |
 | `https_redirect_port` | `80` | the HTTP port that sends to the HTTPS page (0: none) *(restarts)* |
 
@@ -665,6 +666,13 @@ can be copied, never changed or deleted; it writes `theme.json`, `theme.html`,
 anything from outside: the page has the microphone and the camera. Its HTML is
 cleaned when served and the page forbids the rest (Content-Security-Policy).
 
+**From the community** (the plugin `community`): themes other people share, from a public catalog
+(one JSON index in a GitHub repository, `community_catalog`), at the end of the Themes window
+(`/themes`) and in `/admin` → Community: each with its screenshot; install, update, remove. Every
+file is downloaded and checked against the catalog's SHA-256 before anything is written (whole,
+into your themes folder); never over a system theme or one of yours. What was installed, and its
+version, is kept in `community.json`. How to publish one: `docs/comunidad.md`.
+
 The camera's quality: `video` in `settings.json`, or
 `?video=normal|low|off` on one device.
 
@@ -730,6 +738,14 @@ packages of those that are on.
 `skill` or `feature`. Plugins import each other as `plugins.<id with underscores>`
 (`from plugins.stt_mlx_whisper import transcribe_mlx`). Loading must be cheap:
 heavy libraries only inside its classes.
+
+**From the community** (the plugin `community`): plugins other people share, from the same public
+catalog as the themes (`community_catalog`; `docs/comunidad.md`, reviewed before they are listed),
+in the Mac's Settings → Plugins → «From the community» and in `/admin` → Community. A plugin is
+code that runs here with your permissions: the app warns and asks before installing one (the
+server requires that confirmation too), it goes whole into your plugins folder only when every
+file matches its SHA-256, it never replaces a system plugin, and it starts off: turn it on in
+Plugins after restarting. Updates and removal from the same place.
 
 ## Skills without an LLM
 
@@ -1013,7 +1029,8 @@ so they need no account or network; they run on a free port, next to a running J
 - `server/kernel.py`, `server/registry.py` — the core: plugins found, loaded, on or off; engines' registry.
 - `plugins/` — every plugin: engines (`stt-*`, `wake-*`, `llm-*`, `tts-*`, `vad-*`), skills (`skill-*`),
   `tools-system`, `plugin-manager`, and features: `pairing`, `confirmation` (the «yes»), `memory`, `eyes`,
-  `sounds`, `tap-to-wake`, `monitor` (`/monitor`), `themes` (`/themes`: every state of a theme), `mcp-server` (`/mcp`)…
+  `sounds`, `tap-to-wake`, `monitor` (`/monitor`), `themes` (`/themes`: every state of a theme), `mcp-server` (`/mcp`),
+  `community` (the public catalog of themes and plugins: `docs/comunidad.md`)…
   `server/stt/`, `wake/`, `llm/`, `tts/`, `vad/` keep only what each kind is.
 - `server/text.py`, text utilities;
   `server/swift.py`, builds the plugins' Swift bridges.

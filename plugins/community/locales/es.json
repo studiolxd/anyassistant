@@ -1,0 +1,55 @@
+{
+  "plugins": {
+    "community": [
+      "Comunidad",
+      "Temas y plugins de otras personas, de un catálogo público: verlos, instalarlos, actualizarlos y quitarlos desde la app. Un plugin es código que se ejecuta en el servidor: pide confirmación antes de instalarlo, y empieza desactivado."
+    ]
+  },
+  "options_title": {
+    "community_catalog": "Catálogo de la comunidad"
+  },
+  "options": {
+    "community_catalog": "La dirección del índice con los temas y plugins que comparte otra gente."
+  },
+  "community": {
+    "catalog_address": "La dirección del catálogo debe ser https://.",
+    "catalog_unreachable": "No se ha podido leer el catálogo ({why}): {url}",
+    "catalog_invalid": "El catálogo no es válido: {why}",
+    "not_in_catalog": "«{id}» no está en el catálogo.",
+    "same_as_system_theme": "«{id}» es un tema del sistema: no se puede sustituir.",
+    "same_as_system_plugin": "«{id}» es un plugin del sistema: no se puede sustituir.",
+    "yours_theme": "Ya tienes un tema propio llamado «{id}»: cámbiale el nombre primero.",
+    "yours_plugin": "Ya tienes un plugin propio llamado «{id}»: cámbiale el nombre primero.",
+    "needs_version": "Necesita AnyAssistant {version} o posterior: actualízalo primero.",
+    "confirm_plugin": "Un plugin ejecuta código en este servidor con tus permisos: instalarlo requiere tu confirmación.",
+    "missing": "No se ha instalado nada: no se ha podido descargar {path} ({why}).",
+    "mismatch": "No se ha instalado nada: {path} no es lo que dice el catálogo (su SHA-256 no coincide).",
+    "too_big": "No se ha instalado nada: {path} es demasiado grande.",
+    "bad_theme": "No se ha instalado nada: el tema tiene problemas ({why}).",
+    "bad_plugin": "No se ha instalado nada: el plugin tiene problemas ({why}).",
+    "not_installed": "«{id}» no viene del catálogo: solo se puede quitar a mano.",
+    "theme_in_use": "Es el tema en uso: elige otro primero."
+  },
+  "admin_page": {
+    "Community": "Comunidad",
+    "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Temas y plugins que comparte otra gente, de un catálogo público. Cada paquete se revisa antes de publicarlo.",
+    "Reload the catalog": "Volver a cargar el catálogo",
+    "Nothing to install yet.": "Todavía no hay nada que instalar.",
+    "Turn on the plugin «Community».": "Activa el plugin «Comunidad».",
+    "Themes": "Temas",
+    "From the community": "De la comunidad",
+    "Install": "Instalar",
+    "Update": "Actualizar",
+    "Installing…": "Instalando…",
+    "installed": "instalado",
+    "update available": "hay una actualización",
+    "by": "de",
+    "version": "versión",
+    "A plugin is code that runs on this server with your permissions. Install it only if you trust its author. It starts off: turn it on in Plugins when you want to use it.": "Un plugin es código que se ejecuta en este servidor con tus permisos. Instálalo solo si confías en su autor. Empieza desactivado: actívalo en Plugins cuando quieras usarlo.",
+    "Install «%s»?": "¿Instalar «%s»?",
+    "Remove «%s»?": "¿Quitar «%s»?",
+    "Installed. It is off: turn it on in Plugins after restarting.": "Instalado. Está desactivado: actívalo en Plugins después de reiniciar.",
+    "Updated. It applies after restarting.": "Actualizado. Se aplica al reiniciar.",
+    "Removed. It applies after restarting.": "Quitado. Se aplica al reiniciar."
+  }
+}
