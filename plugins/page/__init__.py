@@ -124,7 +124,7 @@ def _connect_page(request, code: str, problem: bool):
             parts.append(f'<p class="muted">{e(t("no_code"))}</p>')
         if https:
             parts.append(f'<h2>{e(t("certificate"))}</h2><p>{e(t("certificate_how"))}</p>'
-                         f'<a class="button quiet" href="/https/ca.crt">{e(t("certificate_get"))}</a>'
+                         f'<a class="button secondary" href="/https/ca.crt">{e(t("certificate_get"))}</a>'
                          f'<p class="muted">{e(t("certificate_android"))}</p><h2>{e(t("then"))}</h2>')
         parts.append(f'<a class="button" href="{e(page)}">{e(t("open"))}</a>')
     body = (WEB / "connect.html").read_text().replace("{lang}", i18n.L.code).replace("{title}", e(t("title")))

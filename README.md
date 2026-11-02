@@ -859,6 +859,20 @@ Linux app show a notification once per new version («Hay una actualización de 
 comunidad (2)…» in their menu. Both open where to install them: the Themes window's «De la
 comunidad» tab for themes, Settings → Plugins → «De la comunidad» for plugins.
 
+**A page of its own** (as `/themes`, `/admin`, `/connect`) uses the design system,
+`plugins/page/web/tokens.css` (served at `/web/tokens.css`): link it first, versioned
+(`<link rel="stylesheet" href="/web/tokens.css?v=1">`), then your stylesheet, and put `class="ui"`
+on `<body>`. It brings the tokens, dark by default and light with the system's appearance
+(`--color-primary`, `--color-background`, `--color-surface`, `--color-text`, `--color-text-secondary`,
+`--color-success`/`warning`/`danger`, `--font-family`, `--text-xs`…`--text-code`, `--space-1`…`--space-8`,
+`--radius-sm`/`md`/`lg`/`full`, `--shadow`, `--duration`, `--easing`, `--content-width`) and, inside
+`.ui`, a few components: `.button` (or a plain `<button>`; `.secondary`, `.danger`, `.link`), `.field`
+(or a plain input, select, textarea), `.card` with `.row`s (grouped lists, as the Mac's Settings),
+`.segmented` (with `.on` on the chosen button), `.badge` (`.success`, `.warning`) and `.header`
+(`.logo`, `.name`, `.page`, `.end`; the logo is `/web/favicon.png`, and `.logo.large` is the 64 px
+one, centred). Use only these: no colours, sizes or radii of your own. Not for a theme: the face
+keeps its own colours. It works in Chrome 81 (no `inset`, no flex `gap`).
+
 ## Skills without an LLM
 
 Time and date, timers, alarms, reminders, sums, unit conversions and volume are
@@ -1241,7 +1255,8 @@ the cache (hashes checked; the audio isn't in git), `corpus run` measures and co
 - `server/paths.py`, `server/options.py` — where things live, every option.
 - `bin/anyassistant-confirm` — hook that asks for your «yes» before any action that writes.
 - `plugins/page/` — the device's page: `web/` (plain JS, old Chrome: `app.js`, connection and blocks;
-  `theme.js`, applies a theme, its states and live variables; `system.css`), its texts (`locales/`, «ui»),
+  `theme.js`, applies a theme, its states and live variables; `system.css`; `tokens.css`, the design
+  system of the pages around the face), its texts (`locales/`, «ui»),
   `themes/` (the system's) and `themes.py` (finds, cleans and checks them).
 - `tests/` — pytest; `test_e2e.py` drives the real server; `corpus/`, the audio corpus (`docs/corpus.md`).
 

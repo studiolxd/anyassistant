@@ -125,7 +125,7 @@ function unavailable() {
     el('div', { class: 'symbol', text: '⚡' }),
     el('h1', { text: T('The server isn\'t responding') }),
     el('p', { class: 'muted', text: T('Make sure AnyAssistant is running.') }),
-    el('button', { class: 'quiet', text: T('Try Again'), onclick: function () { show(current); } })
+    el('button', { class: 'secondary', text: T('Try Again'), onclick: function () { show(current); } })
   ]));
 }
 
@@ -198,7 +198,7 @@ window.addEventListener('hashchange', function () {
 
 /// Over a page: the way back to where it hangs from (as the Mac's back button over a page).
 function back(main, id, title) {
-  main.appendChild(el('button', { class: 'quiet back', text: '‹ ' + title, onclick: function () { show(id); } }));
+  main.appendChild(el('button', { class: 'secondary back', text: '‹ ' + title, onclick: function () { show(id); } }));
 }
 
 // Connecting a device, as the Mac app's window: one QR for everything (the server itself by its
@@ -315,7 +315,7 @@ function devicePage(main, id) {
     });
     function row(title, help, field) {
       return el('div', { class: 'row' }, [el('div', { class: 'what' }, [el('b', { text: title }),
-        help ? el('div', { class: 'muted', text: help }) : null]), el('div', { class: 'field' }, [field])]);
+        help ? el('div', { class: 'muted', text: help }) : null]), el('div', { class: 'control' }, [field])]);
     }
     fields.appendChild(row(T('Name'), '', name));
     fields.appendChild(row(T('Room'), T('The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».'), room));
@@ -330,7 +330,7 @@ function devicePage(main, id) {
                   : !noise.noise ? T('Not measured')
                   : T(levels[noise.noise] || noise.noise) + (noise.db !== undefined ? ' (' + Math.round(noise.db) + ' dB)' : '');
     var noiseCard = el('div', { class: 'card' });
-    var calibrate = d.connected && !d.press ? el('button', { class: 'quiet', text: T('Calibrate'),
+    var calibrate = d.connected && !d.press ? el('button', { class: 'secondary', text: T('Calibrate'),
       disabled: noise.step === 'asking' || noise.step === 'measuring' ? 'disabled' : null,
       onclick: function (e) {
         e.target.disabled = true;
@@ -463,7 +463,7 @@ function option(o) {
   row = el('div', { class: 'row' }, [
     el('div', { class: 'what', title: o.name }, [el('b', { text: o.title || o.help }),
       note ? el('div', { class: 'muted', text: note }) : null]),
-    el('div', { class: 'field' }, [field])
+    el('div', { class: 'control' }, [field])
   ]);
   return row;
 }
@@ -520,7 +520,7 @@ function pluginRow(p) {
   return el('div', { class: 'row link', onclick: function () { show('plugin/' + p.id); } }, [
     el('div', { class: 'what' }, [el('b', { text: p.name }),
       p.security ? el('span', { class: 'lock', title: T('security') }, [svg(LOCK, 14)]) : null,
-      p.yours ? el('span', { class: 'pill', text: T('yours') }) : null,
+      p.yours ? el('span', { class: 'badge', text: T('yours') }) : null,
       el('div', { class: 'muted', text: p.description })]),
     el('span', { class: 'muted', text: p.wanted ? T('On') : T('Off') }),
     el('span', { class: 'chevron', text: '›' })
@@ -597,8 +597,8 @@ function voicesPage(main) {
         box.appendChild(el('div', { class: 'row' }, [
           el('div', { class: 'what' }, [el('b', { text: T('Also erase what it remembers about %s?').replace('%s', p.name) }),
             el('div', { class: 'muted', text: T('If you keep it and its voice is learnt again under the same name, it remembers it again.') })]),
-          el('button', { class: 'quiet', text: T('Cancel'), onclick: function () { asking = null; api('GET', '/admin/voices').then(draw); } }),
-          el('button', { class: 'quiet', text: T('Keep'), onclick: function () { forget(p.name, 'keep'); } }),
+          el('button', { class: 'secondary', text: T('Cancel'), onclick: function () { asking = null; api('GET', '/admin/voices').then(draw); } }),
+          el('button', { class: 'secondary', text: T('Keep'), onclick: function () { forget(p.name, 'keep'); } }),
           el('button', { class: 'danger', text: T('Erase'), onclick: function () { forget(p.name, 'delete'); } })
         ]));
         return;
@@ -614,7 +614,7 @@ function voicesPage(main) {
         field.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') save(); if (ev.key === 'Escape') { renaming = null; api('GET', '/admin/voices').then(draw); } });
         box.appendChild(el('div', { class: 'row' }, [
           el('div', { class: 'what' }, [field, el('div', { class: 'muted', text: T('What it remembers about them keeps the new name too.') })]),
-          el('button', { class: 'quiet', text: T('Cancel'), onclick: function () { renaming = null; api('GET', '/admin/voices').then(draw); } }),
+          el('button', { class: 'secondary', text: T('Cancel'), onclick: function () { renaming = null; api('GET', '/admin/voices').then(draw); } }),
           el('button', { text: T('Rename'), onclick: save })
         ]));
         setTimeout(function () { field.focus(); field.select(); }, 0);
@@ -622,7 +622,7 @@ function voicesPage(main) {
       }
       box.appendChild(el('div', { class: 'row' }, [
         el('div', { class: 'what' }, [el('b', { text: p.name })].concat(warnings)),
-        el('button', { class: 'quiet', text: T('Rename…'), onclick: function () { renaming = p.name; api('GET', '/admin/voices').then(draw); } }),
+        el('button', { class: 'secondary', text: T('Rename…'), onclick: function () { renaming = p.name; api('GET', '/admin/voices').then(draw); } }),
         el('button', { class: 'danger', text: T('Forget'), onclick: function () {
           if (p.facts) { asking = p.name; api('GET', '/admin/voices').then(draw); } else forget(p.name);
         } })
@@ -638,7 +638,7 @@ function voicesPage(main) {
     main.appendChild(learn);
     learn.appendChild(el('div', { class: 'row' }, [
       el('div', { class: 'what muted', text: T('A guide shows each phrase to read, one at a time.') }),
-      el('button', { class: 'quiet', text: T('Learn a voice…'), onclick: function () { guide(learn, draw); } })
+      el('button', { class: 'secondary', text: T('Learn a voice…'), onclick: function () { guide(learn, draw); } })
     ]));
     timer = setInterval(function () { api('GET', '/admin/voices').then(draw).catch(function () {}); }, 3000);  // a voice learnt on a device shows up here
   }).catch(function () {});
@@ -655,7 +655,7 @@ function guide(learn, drawPeople) {
   var note = el('p', { class: 'error' });
   var start = el('button', { text: T('Start learning'), disabled: 'disabled' });
   function row(title, field) {
-    return el('div', { class: 'row' }, [el('div', { class: 'what', text: title }), el('div', { class: 'field' }, [field])]);
+    return el('div', { class: 'row' }, [el('div', { class: 'what', text: title }), el('div', { class: 'control' }, [field])]);
   }
   box.appendChild(el('h2', { style: 'margin-top:4px', text: T('Learn a voice') }));
   box.appendChild(el('p', { class: 'muted', text: T('Stand in front of the device you talk to most: its microphone is the one that will hear you. Then read the phrases this window shows, one at a time.') }));
@@ -691,7 +691,7 @@ function guide(learn, drawPeople) {
   function follow(id) {
     clearInterval(timer);
     box.innerHTML = '';
-    var cancel = el('button', { class: 'quiet', text: T('Cancel'), onclick: function () { api('POST', '/admin/voices', { cancel: id }); } });
+    var cancel = el('button', { class: 'secondary', text: T('Cancel'), onclick: function () { api('POST', '/admin/voices', { cancel: id }); } });
     timer = setInterval(function () {
       api('GET', '/admin/voices').then(function (r) {
         var now = (r.learning || {})[id];
@@ -714,7 +714,7 @@ function guide(learn, drawPeople) {
           box.appendChild(el('h2', { text: now.step === 'done' ? T('Done, %s: it knows your voice.').replace('%s', now.name)
                                                                : T('Cancelled: nothing was learnt.') }));
           box.appendChild(el('p', {}, [
-            el('button', { class: 'quiet', text: T('Learn another'), onclick: function () { guide(learn, drawPeople); } }), ' ',
+            el('button', { class: 'secondary', text: T('Learn another'), onclick: function () { guide(learn, drawPeople); } }), ' ',
             el('button', { text: T('Close'), onclick: function () { show('voices'); } })
           ]));
           api('GET', '/admin/voices').then(drawPeople).catch(function () {});
@@ -802,7 +802,7 @@ function mailPage(main) {
           .concat((problems[a.address] || []).map(function (p) { return el('div', { class: 'problem', text: p }); }))),
         !a.password ? el('span', { class: 'error', text: T('No password') }) : fine[a.address] ? el('span', { class: 'ok', text: '✓' }) : null,
         busy,
-        el('button', { class: 'quiet', text: T('Try'), onclick: function (e) {
+        el('button', { class: 'secondary', text: T('Try'), onclick: function (e) {
           busy.textContent = '…';
           api('POST', '/admin/mail', { test: a.address }).then(function (r) {
             var found = r.problems || [];
@@ -832,7 +832,7 @@ function mailPage(main) {
     var busy = el('span', { class: 'muted' });
     var add = el('button', { text: T('Try and add'), disabled: 'disabled' });
     function row(title, field) {
-      return el('div', { class: 'row' }, [el('div', { class: 'what', text: title }), el('div', { class: 'field' }, [field])]);
+      return el('div', { class: 'row' }, [el('div', { class: 'what', text: title }), el('div', { class: 'control' }, [field])]);
     }
     function ready() { add.disabled = address.value.indexOf('@') < 0 || !secret.value; }
     [address, secret].forEach(function (f) { f.addEventListener('input', ready); });
@@ -922,7 +922,7 @@ function packageRow(p, reload) {
     buttons.push(el('button', { text: T('Install'), onclick: install }));
   }
   var state = p.installed
-    ? el('span', { class: 'pill' + (p.update ? ' warn' : ''), text: p.update ? T('update available') : T('installed') + ' ' + p.installed })
+    ? el('span', { class: 'badge ' + (p.update ? 'warning' : 'success'), text: p.update ? T('update available') : T('installed') + ' ' + p.installed })
     : null;
   [el('b', { text: p.name }), state,
    el('div', { class: 'muted', text: [p.author ? T('by') + ' ' + p.author : '', T('version') + ' ' + p.version].filter(Boolean).join(' · ') }),
@@ -941,7 +941,7 @@ function adminsPage(main) {
     if (!data.admins.length) box.appendChild(el('p', { class: 'muted', text: T('Only this computer.') }));
     data.admins.forEach(function (a) {
       box.appendChild(el('div', { class: 'row' }, [
-        el('div', { class: 'what' }, [el('b', { text: a.name.slice(0, 90) }), a.you ? el('span', { class: 'pill ok', text: T('this browser') }) : null,
+        el('div', { class: 'what' }, [el('b', { text: a.name.slice(0, 90) }), a.you ? el('span', { class: 'badge success', text: T('this browser') }) : null,
           el('div', { class: 'muted', text: T('since') + ' ' + ago(a.since) })]),
         el('button', { class: 'danger', text: a.you ? T('Log out') : T('Revoke'), onclick: function () {
           api('POST', '/admin/admins', a.you ? { logout: true } : { forget: a.id }).then(function (r) {

@@ -8,13 +8,15 @@
   <title>AnyAssistant</title>
   <link rel="icon" href="/web/favicon.png">
   <link rel="apple-touch-icon" href="/web/icon.png">
-  <link rel="stylesheet" href="/web/system.css?v=40">
+  <link rel="stylesheet" href="/web/tokens.css?v=1">
+  <link rel="stylesheet" href="/web/system.css?v=41">
   <!-- The theme's (themes/<name>/theme.css), set by theme.js. -->
   <link rel="stylesheet" id="theme-css">
 </head>
 <body>
   <button id="start" hidden></button>
-  <form id="pair" hidden>
+  <form id="pair" class="ui" hidden>
+    <img class="logo large" src="/web/favicon.png" alt="">
     <p id="pair-prompt"></p>
     <input id="pair-code" inputmode="numeric" autocomplete="off" maxlength="6">
     <button id="pair-button"></button>

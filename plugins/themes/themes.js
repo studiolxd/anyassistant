@@ -74,13 +74,14 @@ function sounds(name) {
   SOUNDS.forEach(function (sound) {
     var url = '/sounds/' + sound + '.wav?theme=' + encodeURIComponent(name) + '&v=' + version;
     var button = document.createElement('button');
+    button.className = 'secondary';
     button.textContent = '▶ ' + soundName(sound);
     button.onclick = function () { player.pause(); player.src = url; player.play().catch(function () {}); };
     row.appendChild(button);
     fetch(url).then(function (r) {
       if (!r.ok) { button.hidden = true; return; }
       var own = r.headers.get('X-Theme-Sound') === '1';
-      if (own) button.className = 'own';
+      if (own) button.className = 'secondary own';
       var whose = document.createElement('small');
       whose.textContent = own ? T('the theme\'s') : T('the system\'s');
       button.appendChild(whose);
@@ -167,6 +168,7 @@ function community() {
     sounds(select.value);  // in its language
     document.getElementById('theme-label').textContent = T('Theme');
     document.title = 'AnyAssistant · ' + T('Themes');
+    document.getElementById('page-name').textContent = T('Themes');
     tabs();
     section.querySelector('.lead').textContent = T('Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.');
     load(false);
@@ -189,9 +191,14 @@ function community() {
       list.innerHTML = '';
       var themes = (data.packages || []).filter(function (p) { return p.kind === 'theme'; });
       if (!themes.length && !data.error) list.textContent = T('Nothing to install yet.');
-      themes.forEach(function (p) { list.appendChild(row(p)); });
+      if (themes.length) {
+        var card = document.createElement('div');
+        card.className = 'card';
+        themes.forEach(function (p) { card.appendChild(row(p)); });
+        list.appendChild(card);
+      }
       var again = document.createElement('button');
-      again.className = 'quiet';
+      again.className = 'secondary';
       again.textContent = T('Reload the catalog');
       again.onclick = function () { load(true); };
       list.appendChild(again);
@@ -200,7 +207,7 @@ function community() {
 
   function row(p) {
     var made = document.createElement('div');
-    made.className = 'pkg';
+    made.className = 'row pkg';
     if (p.screenshot) {
       var img = document.createElement('img');
       img.src = '/admin/community/image?kind=theme&id=' + encodeURIComponent(p.id);
@@ -214,7 +221,7 @@ function community() {
     about.appendChild(title);
     if (p.installed) {
       var state = document.createElement('span');
-      state.className = 'pill' + (p.update ? ' warn' : '');
+      state.className = 'badge ' + (p.update ? 'warning' : 'success');
       state.textContent = p.update ? T('update available') : T('installed') + ' ' + p.installed;
       about.appendChild(state);
     }

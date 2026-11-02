@@ -4,25 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AnyAssistant</title>
-  <link rel="stylesheet" href="/admin/web/admin.css?v=5">
+  <link rel="stylesheet" href="/web/tokens.css?v=1">
+  <link rel="stylesheet" href="/admin/web/admin.css?v=6">
   <link rel="icon" href="/web/favicon.png">
 </head>
-<body>
-  <header>
-    <div class="brand"><span class="dot"></span><span id="title">AnyAssistant</span><small id="subtitle"></small></div>
-    <button id="restart" class="quiet" hidden></button>
-  </header>
+<body class="ui">
   <div id="banner" hidden></div>
   <div id="login" hidden>
+    <img class="logo large" src="/web/favicon.png" alt="">
     <h1></h1>
     <p></p>
     <form><input inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"><button></button></form>
     <p class="error"></p>
   </div>
   <div id="app" hidden>
-    <nav></nav>
+    <!-- The sidebar: the logo and the assistant's name on top, the sections, and Restart. -->
+    <aside>
+      <header class="header">
+        <img class="logo" src="/web/favicon.png" alt="">
+        <div class="brand"><span class="name" id="title">AnyAssistant</span><small id="subtitle"></small></div>
+      </header>
+      <nav></nav>
+      <div class="foot"><button id="restart" class="secondary" hidden></button></div>
+    </aside>
     <main></main>
   </div>
-  <script src="/admin/web/admin.js?v=12"></script>
+  <script src="/admin/web/admin.js?v=13"></script>
 </body>
 </html>

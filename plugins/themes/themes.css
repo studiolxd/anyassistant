@@ -1,61 +1,62 @@
-body { margin: 0; background: #111; color: #ccc; font-family: sans-serif; }
-/* The two tabs, as a segmented control: what is installed, and the catalog. */
-#tabs { display: flex; justify-content: center; padding: 12px 16px 0; }
-#tabs[hidden] { display: none; }
-#tabs button { font: inherit; font-size: 14px; border: 1px solid #333; background: #1c1c1c; color: #ccc; padding: 5px 18px; cursor: pointer; }
-#tabs button:first-child { border-radius: 7px 0 0 7px; }
-#tabs button:last-child { border-radius: 0 7px 7px 0; border-left: 0; }
-#tabs button.on { background: #3a3a3a; color: #fff; }
-body.community header, body.community #sounds, body.community #states { display: none; }
-header { padding: 12px 16px; display: flex; align-items: center; border-bottom: 1px solid #333; }
-header > * { margin-right: 16px; }
-select { font-size: 15px; padding: 4px; }
-#about { color: #888; }
-#reloaded { color: #3ddc97; }
+/* The themes page: the design system's (/web/tokens.css, linked before this). The views are the
+   face (each theme's own colours); everything around them, the tokens. */
+body { margin: 0; background: var(--color-background); }
+
+.header { position: sticky; top: 0; z-index: 2; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+body.community #toolbar, body.community #sounds, body.community #states { display: none; }
+
+/* The theme to show, what it is, and «reloaded» when its files change. */
+#toolbar { display: flex; flex-wrap: wrap; align-items: center; padding: var(--space-4) var(--space-4) 0; }
+#toolbar > * { margin: 0 var(--space-4) var(--space-2) 0; }
+#toolbar label { font-weight: var(--weight-medium); }
+#toolbar select { margin-left: var(--space-2); }
+#about { color: var(--color-text-secondary); }
+#reloaded { color: var(--color-success); font-size: var(--text-sm); }
+
 /* Its sounds: a button each to hear it, and whether it is the theme's or the system's. */
-#sounds { padding: 10px 16px 0; display: flex; flex-wrap: wrap; align-items: center; color: #888; font-size: 14px; }
-#sounds > * { margin: 0 12px 6px 0; }
-#sounds button { font: inherit; border: 1px solid #333; border-radius: 7px; padding: 5px 12px; background: #1c1c1c; color: #ddd; cursor: pointer; }
-#sounds button.own { border-color: #3ddc97; }
-#sounds small { color: #666; margin-left: 4px; }
-main { display: flex; flex-wrap: wrap; padding: 8px; }
-figure { margin: 8px; }
-figcaption { text-align: center; font-family: monospace; color: #888; margin-top: 4px; }
-/* A tablet in portrait (800×1280) at a quarter of its size. */
-.frame { width: 200px; height: 320px; overflow: hidden; border: 1px solid #333; border-radius: 6px; }
+#sounds { display: flex; flex-wrap: wrap; align-items: center; padding: var(--space-2) var(--space-4) 0;
+          color: var(--color-text-secondary); font-size: var(--text-sm); }
+#sounds > * { margin: 0 var(--space-3) var(--space-2) 0; }
+#sounds button { font-size: var(--text-sm); }
+#sounds button.own { box-shadow: inset 0 0 0 1px var(--color-success); }
+#sounds small { margin-left: var(--space-1); color: var(--color-text-secondary); font-weight: var(--weight-regular); }
+
+/* Every state: a tablet in portrait (800×1280) at a quarter of its size. */
+main { display: flex; flex-wrap: wrap; padding: var(--space-2); }
+figure { margin: var(--space-2); }
+figcaption { margin-top: var(--space-1); text-align: center; font-family: var(--font-mono);
+             font-size: var(--text-xs); color: var(--color-text-secondary); }
+.frame { position: relative; width: 200px; height: 320px; overflow: hidden; cursor: zoom-in;
+         border: 1px solid var(--color-border); border-radius: var(--radius-md); }
 iframe { width: 800px; height: 1280px; border: 0; transform: scale(0.25); transform-origin: 0 0; }
-.frame { position: relative; cursor: zoom-in; }
 .cover { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
 
 /* From the community: the catalog's themes, to install. */
-#community { padding: 12px 16px 28px; max-width: 760px; margin: 0 auto; }
-#community h2 { font-size: 16px; margin: 8px 0 4px; color: #eee; }
-#community .lead, #community .muted { color: #888; font-size: 13px; }
-#community .error { color: #ff6b6b; font-size: 13px; }
+#community { max-width: var(--content-width); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+#community .lead { margin: 0 0 var(--space-4); color: var(--color-text-secondary); }
+#community .muted { color: var(--color-text-secondary); font-size: var(--text-sm); }
+#community .error { color: var(--color-danger); font-size: var(--text-sm); }
 #community .error:empty { display: none; }
-.pkg { display: flex; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid #222; }
-.pkg img { flex: 0 0 auto; width: 60px; height: 96px; object-fit: cover; border-radius: 4px; background: #000; border: 1px solid #333; }
-.pkg .about { flex: 1; min-width: 0; color: #ddd; }
-.pkg b { font-weight: 600; }
-.pkg .pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; background: #2a2a2a; color: #3ddc97; margin-left: 8px; }
-.pkg .pill.warn { color: #ffb347; }
-#community button { font: inherit; font-size: 14px; border: 0; border-radius: 7px; padding: 6px 14px; background: #3ddc97; color: #111; cursor: pointer; }
-#community button.quiet { display: block; background: #2a2a2a; color: #ccc; margin-top: 12px; }
-#community button.danger { background: none; color: #ff6b6b; border: 1px solid #333; }
+.pkg img { flex: 0 0 auto; width: 60px; height: 96px; object-fit: cover; border-radius: var(--radius-sm); background: #000;
+           border: 1px solid var(--color-border); }
+.pkg .about { flex: 1; min-width: 0; }
+.pkg b { font-weight: var(--weight-semibold); }
+.pkg .badge { margin-left: var(--space-2); }
+#community button.secondary { margin-top: var(--space-2); }
 
-/* One state full screen: the whole page, with a small bar to go back or through the states. */
-#full { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: #000; z-index: 10; }
+/* One state full screen: the whole page, with a small floating bar to go back or through the states. */
+#full { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 10; background: #000; }
 #full[hidden] { display: none; }
 #full iframe { width: 100%; height: 100%; border: 0; transform: none; }
-#full .bar {
-  position: absolute; top: 12px; right: 12px;
-  display: flex; align-items: center;
-  background: rgba(30, 30, 30, 0.75); border-radius: 22px; padding: 4px;
-}
+#full .bar { position: absolute; top: var(--space-3); right: var(--space-3); display: flex; align-items: center;
+             padding: var(--space-1); background: var(--color-surface); border-radius: var(--radius-full); box-shadow: var(--shadow); }
 #full .bar > * { margin: 0 2px; }
-#full .bar span { font-family: monospace; color: #bbb; padding: 0 8px; }
-#full button {
-  width: 36px; height: 36px; border: 0; border-radius: 18px;
-  background: transparent; color: #eee; font-size: 20px; cursor: pointer;
+#full .bar span { padding: 0 var(--space-2); font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-secondary); }
+#full button { width: 36px; min-height: 36px; height: 36px; padding: 0; font-size: var(--text-xl); line-height: 1;
+               color: var(--color-text); background: transparent; border: 0; border-radius: var(--radius-full); }
+#full button:hover { opacity: 1; background: var(--color-surface-raised); }
+
+@media (max-width: 560px) {
+  .header { flex-wrap: wrap; }
+  .header .end { width: 100%; margin: var(--space-2) 0 0; justify-content: center; }
 }
-#full button:hover { background: rgba(255, 255, 255, 0.12); }
