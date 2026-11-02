@@ -262,7 +262,7 @@
 "Not now" = "Ahora no";
 
 /* Memory (Memory.swift), and forgetting a voice that it remembers things about (Voices.swift) */
-"Memory" = "Memoria";
+"What it remembers" = "Lo que recuerda";
 "Shared" = "Compartido";
 "Move to…" = "Mover a…";
 "Delete" = "Eliminar";

@@ -174,7 +174,6 @@
     "Installed themes": "Installed themes",
     "Theme": "Theme",
     "Themes": "Themes",
-    "Memory": "Memory",
     "Shared": "Shared",
     "Move to…": "Move to…",
     "Delete": "Delete",
@@ -184,6 +183,7 @@
     "Also erase what it remembers about %s?": "Also erase what it remembers about %s?",
     "If you keep it and its voice is learnt again under the same name, it remembers it again.": "If you keep it and its voice is learnt again under the same name, it remembers it again.",
     "Keep": "Keep",
-    "Erase": "Erase"
+    "Erase": "Erase",
+    "What it remembers": "What it remembers"
   }
 }

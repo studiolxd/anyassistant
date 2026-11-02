@@ -275,12 +275,12 @@ final class Admin: ObservableObject {
 }
 
 /// Settings: «General», the core's by topic; «Plugins», each one's page (on or off, what it does and
-/// its options, its accounts or voices); «Memory», what it remembers (Memory.swift). Every option lives in one place; the search finds it.
+/// its options, its accounts or voices); the plugin «memory»'s, what it remembers (Memory.swift). Every option lives in one place; the search finds it.
 /// Where the settings window is inside a section: a plugin's page, its mail accounts, its voices.
 /// Kept here (not a NavigationStack: in a window it draws the title bar broken), with a back
 /// button over the page.
 enum SettingsPage: Hashable {
-    case plugin(String), mail, voices
+    case plugin(String), mail, voices, memory
 }
 
 @MainActor
@@ -339,7 +339,6 @@ struct SettingsView: View {
                     }
                     Section {
                         Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
-                        Label(T("Memory"), systemImage: "brain").tag("memory")
                     }
                 }
                 .listStyle(.sidebar)
@@ -372,8 +371,6 @@ struct SettingsView: View {
                     SearchResults(admin: admin, search: search)
                 } else if section == "plugins" {
                     PluginsView(admin: admin)
-                } else if section == "memory" {
-                    MemoryView()
                 } else if let section {
                     OptionsView(admin: admin, group: section)
                 }
@@ -406,6 +403,7 @@ struct SettingsView: View {
             if let plugin = admin.plugins.first(where: { $0.id == id }) { PluginPage(admin: admin, plugin: plugin) }
         case .mail: MailView()
         case .voices: VoicesView()
+        case .memory: MemoryView()
         }
     }
 
@@ -414,6 +412,7 @@ struct SettingsView: View {
         case .plugin(let id): admin.plugins.first { $0.id == id }?.name ?? id
         case .mail: T("Mail accounts")
         case .voices: T("Known voices")
+        case .memory: T("What it remembers")
         }
     }
 
@@ -805,6 +804,9 @@ struct PluginPage: View {
             }
             if plugin.id == "voices" {
                 Section { PageLink(page: .voices) { Text(T("Known voices")) } }
+            }
+            if plugin.id == "memory" {
+                Section { PageLink(page: .memory) { Text(T("What it remembers")) } }
             }
             if !options.isEmpty {
                 Section(T("Options")) {

@@ -261,7 +261,7 @@
 "Measuring… %d" = "Measuring… %d";
 
 /* Memory (Memory.swift), and forgetting a voice that it remembers things about (Voices.swift) */
-"Memory" = "Memory";
+"What it remembers" = "What it remembers";
 "Shared" = "Shared";
 "Move to…" = "Move to…";
 "Delete" = "Delete";

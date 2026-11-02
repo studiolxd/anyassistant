@@ -180,7 +180,6 @@
     "Installed themes": "Instalados",
     "Theme": "Tema",
     "Themes": "Temas",
-    "Memory": "Memoria",
     "Shared": "Compartido",
     "Move to…": "Mover a…",
     "Delete": "Eliminar",
@@ -190,6 +189,7 @@
     "Also erase what it remembers about %s?": "¿Borrar también lo que recuerda de %s?",
     "If you keep it and its voice is learnt again under the same name, it remembers it again.": "Si lo conservas y vuelve a aprender su voz con el mismo nombre, lo recordará de nuevo.",
     "Keep": "Conservar",
-    "Erase": "Borrar"
+    "Erase": "Borrar",
+    "What it remembers": "Lo que recuerda"
   }
 }

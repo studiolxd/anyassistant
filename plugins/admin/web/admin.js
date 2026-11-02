@@ -554,6 +554,7 @@ function pluginPage(main, id) {
     main.appendChild(head);
     if (id === 'mail') main.appendChild(el('div', { class: 'card' }, [el('div', { class: 'row link', onclick: function () { show('mail'); } }, [el('div', { class: 'what', text: T('Mail accounts') }), el('span', { class: 'chevron', text: '›' })])]));
     if (id === 'voices') main.appendChild(el('div', { class: 'card' }, [el('div', { class: 'row link', onclick: function () { show('voices'); } }, [el('div', { class: 'what', text: T('Known voices') }), el('span', { class: 'chevron', text: '›' })])]));
+    if (id === 'memory') main.appendChild(el('div', { class: 'card' }, [el('div', { class: 'row link', onclick: function () { show('memory'); } }, [el('div', { class: 'what', text: T('What it remembers') }), el('span', { class: 'chevron', text: '›' })])]));
     var mine = found[1].options.filter(function (o) { return o.plugin === id; });
     if (mine.length) {
       main.appendChild(el('h2', { text: T('Options') }));
@@ -698,11 +699,11 @@ function guide(learn, drawPeople) {
   }
 }
 
-// --- Memory (in the sidebar), what the plugin «memory» remembers: the shared facts and each person's; each one edited in place,
+// --- What it remembers (from the plugin «memory»'s page), what the plugin «memory» remembers: the shared facts and each person's; each one edited in place,
 // deleted or moved to someone else ---
 
 function memoryPage(main) {
-  main.appendChild(el('h1', { text: T('Memory') }));
+  main.appendChild(el('h1', { text: T('What it remembers') }));
   var box = el('div');
   main.appendChild(box);
   function change(who, fact, what) {
@@ -958,7 +959,6 @@ function sidebar() {
     groups.forEach(function (g) { item('group/' + g.id, g.title); });
     nav.appendChild(el('div', { class: 'group' }));
     item('plugins', T('Plugins'));
-    item('memory', T('Memory'));
   }
   if (!WINDOW) { nav.appendChild(el('div', { class: 'group' })); item('admins', T('Admins')); }
 }
