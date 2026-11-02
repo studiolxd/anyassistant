@@ -302,7 +302,7 @@ and the code big next to it. Scanned with the phone's camera, `/connect` (the pl
 offers «Abrir en la app» (`anyassistant://connect?host=…&port=…&code=…`: the iPhone and Android
 apps register that link and pair by themselves) or going on in the browser: it pairs with the code
 and opens the page; with the plugin `https` on, the certificate first (the QR is plain HTTP so it
-works before). The apps also read the same QR themselves («Escanear código»). «Conectar a mano»
+works before). The apps also read the same QR themselves («Escanear código»). «Otras formas de conectar»
 keeps the rest: the app's list of servers and the code; the browser's `http://anyassistant.local:<port>`
 and, for old devices, the address.
 

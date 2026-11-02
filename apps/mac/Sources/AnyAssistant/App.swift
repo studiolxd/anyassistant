@@ -514,7 +514,7 @@ struct SetupView: View {
 
 /// «Conectar otro dispositivo», as the admin page's section: one QR for everything (the server
 /// itself by its address now, /connect with the code: the app pairs by itself, a browser goes on
-/// to the page), the code big, and «Conectar a mano» folded (the app's choice, the browser's
+/// to the page), the code big, and «Otras formas de conectar» folded (the app's choice, the browser's
 /// addresses; the certificate first, for the browser only, with HTTPS). Plain layout, as the
 /// other windows (no navigation: it breaks the title bar).
 struct PairView: View {
@@ -625,7 +625,7 @@ struct PairView: View {
                                  local: "http://anyassistant.local:\(server.port)", certificate: nil, pairing: code != nil)
     }
 
-    /// «App» / «Navegador»: a title and how, under «Conectar a mano».
+    /// «App» / «Navegador»: a title and how, under «Otras formas de conectar».
     func step<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text(title).font(.body.weight(.medium)).frame(width: 90, alignment: .leading)

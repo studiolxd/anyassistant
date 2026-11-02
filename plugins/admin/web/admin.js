@@ -124,7 +124,7 @@ function show(id) {
 
 // Connecting a device, as the Mac app's window: one QR for everything (the server itself by its
 // address now, /connect with the code: the app pairs by itself, a browser goes on to the page), the
-// code big, and «Connect by hand» folded: the app's choice, the browser's addresses (the certificate
+// code big, and «Other ways to connect» folded: the app's choice, the browser's addresses (the certificate
 // first, for the browser only, with HTTPS; the IP for old devices that don't open .local names).
 function pair(main) {
   main.appendChild(el('h1', { text: T('Pair a device') }));

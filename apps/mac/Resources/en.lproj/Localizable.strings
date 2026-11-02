@@ -246,7 +246,7 @@
 "Scan the code with the device's camera. With the app installed, it connects by itself; otherwise, it goes on in the browser." = "Scan the code with the device's camera. With the app installed, it connects by itself; otherwise, it goes on in the browser.";
 "Valid for 5 minutes" = "Valid for 5 minutes";
 "Another code" = "Another code";
-"Connect by hand" = "Connect by hand";
+"Connect by hand" = "Other Ways to Connect";
 "App" = "App";
 "Browser" = "Browser";
 "Choose «%@ on %@»" = "Choose “%@ on %@”";
