@@ -191,9 +191,15 @@ class Watch:
         return "busy" if self.busy else "free"
 
 
+APP = "AnyAssistant Desktop"  # how the Windows and Linux app's page says what it is (its User-Agent)
+
+
 def local_sessions() -> list:
-    """The devices connected from this computer itself (the app's page)."""
-    return [s for s in hub.all() if getattr(s, "remote", "") in web.LOCAL and getattr(s.brain, "ear", None) is not None]
+    """The devices connected from this computer itself through our own app. Not a browser's page on it:
+    the browser is the page, so its own recording looked like another program's and every sentence
+    paused it («otra app está usando el micrófono»); a browser can't be told from another tab of it."""
+    return [s for s in hub.all() if getattr(s, "remote", "") in web.LOCAL and APP in (getattr(s, "agent", "") or "")
+            and getattr(s.brain, "ear", None) is not None]
 
 
 def apply(change: str, program: str):

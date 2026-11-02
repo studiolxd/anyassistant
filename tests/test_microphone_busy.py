@@ -96,8 +96,8 @@ class Ear:
 
 
 class Session:
-    def __init__(self, remote):
-        self.remote, self.sent = remote, []
+    def __init__(self, remote, agent="Mozilla/5.0 Chrome/150 AnyAssistant Desktop"):
+        self.remote, self.sent, self.agent = remote, [], agent
         self.brain = type("Brain", (), {"ear": Ear()})()
         self.id, self.device = remote, remote
 
@@ -113,6 +113,14 @@ def test_only_the_computers_own_devices_are_paused():
     assert not other.brain.ear.calls and not other.sent
     busy.apply("free", "")
     assert own.brain.ear.calls[-1] == ("resume", "server") and own.sent[-1] == {"type": "resume"}
+
+
+def test_a_browser_on_the_same_computer_isnt_paused():
+    """The browser is the page: its recording is ours (it paused at every sentence on a Linux with no app)."""
+    browser = Session("127.0.0.1", "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0")
+    hub.sessions = {"a": browser}
+    busy.apply("busy", "Firefox")
+    assert not browser.brain.ear.calls and not browser.sent
 
 
 def test_it_only_runs_on_windows_and_linux():
