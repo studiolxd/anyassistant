@@ -197,10 +197,10 @@ fun StatusLine(face: FaceState, size: TextUnit, color: Color = grey, weight: Fon
 
 @Composable
 fun TimerLines(face: FaceState, size: TextUnit, color: Color = Color.White, icons: Boolean = true,
-               alignment: Alignment.Horizontal = Alignment.CenterHorizontally, modifier: Modifier = Modifier) {
+               alignment: Alignment.Horizontal = Alignment.CenterHorizontally, spacing: Dp = 4.dp, modifier: Modifier = Modifier) {
     if (!face.shows("show_timers")) return
     val now by produceState(System.currentTimeMillis()) { while (true) { value = System.currentTimeMillis(); delay(1000) } }
-    Column(modifier, horizontalAlignment = alignment) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(spacing), horizontalAlignment = alignment) {
         for (item in face.items.filter { it.at > now / 1000.0 - 1 }) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (icons) {
@@ -245,7 +245,10 @@ fun Windows(face: FaceState, s: Sizes) {
             Box(Modifier.size(width, height).alpha(alpha).shadow(s.dp(4f), RoundedCornerShape(10.dp), ambientColor = green, spotColor = green)
                 .clip(RoundedCornerShape(10.dp)).border(2.dp, green, RoundedCornerShape(10.dp)).background(Color.Black)) {
                 Image(photo.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                    colorFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0.6f) }))
+                    colorFilter = ColorFilter.colorMatrix(ColorMatrix().apply {
+                        setToSaturation(0.6f)
+                        values[4] = -25.5f; values[9] = -25.5f; values[14] = -25.5f  // and a little darker (-0.1)
+                    }))
                 if (face.scanning) {
                     val t = clock()
                     Canvas(Modifier.fillMaxSize()) {
@@ -483,7 +486,7 @@ fun BedsideTheme(face: FaceState, s: Sizes) {
                 size.minDimension / 2 * (1 + face.voice * 0.4f + face.speech * 0.4f))
         }
         StatusLine(face, s.sp(4f), glow, modifier = Modifier.alpha(if (asleep) 0.2f else 0.5f))
-        TimerLines(face, s.sp(5f), glow, icons = false, modifier = Modifier.alpha(0.6f).padding(top = s.dp(3f)))
+        TimerLines(face, s.sp(5f), glow, icons = false, spacing = 0.dp, modifier = Modifier.alpha(0.6f).padding(top = s.dp(3f)))
         if (!asleep && face.shows("show_answer")) {
             Text(face.answer, Modifier.width(s.width * 0.8f).alpha(0.7f).padding(top = 16.dp), color = glow, fontSize = s.sp(5f), textAlign = TextAlign.Center)
         }
@@ -534,7 +537,7 @@ fun MinimalTheme(face: FaceState, s: Sizes) {
                 drawCircle(light, r, c)
             }
             StatusLine(face, s.sp(9f), ink, FontWeight.Bold, TextAlign.Start, Modifier.padding(vertical = s.dp(if (s.landscape) 2f else 4f)))
-            TimerLines(face, s.sp(if (s.landscape) 5.5f else 7f), ink, icons = false, alignment = Alignment.Start,
+            TimerLines(face, s.sp(if (s.landscape) 5.5f else 7f), ink, icons = false, alignment = Alignment.Start, spacing = s.dp(1f),
                 modifier = Modifier.padding(top = s.dp(if (s.landscape) 1f else 3f)))
             if (!asleep) {
                 if (face.shows("show_heard") && face.heard.isNotEmpty()) {

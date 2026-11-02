@@ -36,16 +36,17 @@ class Audio(private val context: Context) {
 
     val isRunning get() = running
 
+    /** Starts listening and playing; false if the microphone couldn't be opened. */
     @SuppressLint("MissingPermission")  // asked for before starting
-    fun start(heard: (ByteArray, Float) -> Unit) {
-        if (running) return
+    fun start(heard: (ByteArray, Float) -> Unit): Boolean {
+        if (running) return true
         val manager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         manager.mode = AudioManager.MODE_IN_COMMUNICATION
         loudspeaker(manager)
         val inSize = maxOf(AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT), piece * 4)
         val record = AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, rate, AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT, inSize)
-        if (record.state != AudioRecord.STATE_INITIALIZED) { record.release(); return }
+        if (record.state != AudioRecord.STATE_INITIALIZED) { record.release(); return false }
         if (AcousticEchoCanceler.isAvailable()) AcousticEchoCanceler.create(record.audioSessionId)?.enabled = true
         if (NoiseSuppressor.isAvailable()) NoiseSuppressor.create(record.audioSessionId)?.enabled = true
         val outSize = maxOf(AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT), piece * 8)
@@ -95,6 +96,7 @@ class Audio(private val context: Context) {
             }
         }
         threads = listOf(listen, speak).onEach { it.isDaemon = true; it.start() }
+        return true
     }
 
     /** The loudspeaker, not the earpiece (communication mode would choose the earpiece). */

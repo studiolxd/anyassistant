@@ -14,7 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import org.json.JSONObject
-import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -152,12 +151,8 @@ class FaceState {
 
     fun time(date: Date): String {
         val clock = screen["clock"] as? String ?: "auto"
-        val format = when (clock) {
-            "12" -> SimpleDateFormat("h:mm", locale)
-            "24" -> SimpleDateFormat("H:mm", locale)
-            else -> DateFormat.getTimeInstance(DateFormat.SHORT, locale)
-        }
-        return format.format(date)
+        val template = when (clock) { "12" -> "hmm"; "24" -> "Hmm"; else -> "jmm" }  // as iOS's and the page's
+        return SimpleDateFormat(android.text.format.DateFormat.getBestDateTimePattern(locale, template), locale).format(date)
     }
 
     fun day(date: Date): String =
