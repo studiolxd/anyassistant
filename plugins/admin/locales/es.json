@@ -179,6 +179,17 @@
     "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Temas y plugins compartidos por otras personas, de un catálogo público. Cada paquete se revisa antes de publicarlo.",
     "Installed themes": "Instalados",
     "Theme": "Tema",
-    "Themes": "Temas"
+    "Themes": "Temas",
+    "Memory": "Memoria",
+    "Shared": "Compartido",
+    "Move to…": "Mover a…",
+    "Delete": "Eliminar",
+    "It doesn't remember anything yet.": "Aún no recuerda nada.",
+    "Turn on the plugin «Memory» so it remembers you from one conversation to the next.": "Activa el plugin «Memoria» para que te recuerde de una conversación a otra.",
+    "What is shared goes into every conversation; what is about someone, only when it recognises their voice.": "Lo compartido se tiene en cuenta en todas las conversaciones; lo de cada persona, solo cuando reconoce su voz.",
+    "Also erase what it remembers about %s?": "¿Borrar también lo que recuerda de %s?",
+    "If you keep it and its voice is learnt again under the same name, it remembers it again.": "Si lo conservas y vuelve a aprender su voz con el mismo nombre, lo recordará de nuevo.",
+    "Keep": "Conservar",
+    "Erase": "Borrar"
   }
 }

@@ -33,11 +33,14 @@ import time
 import events
 import hub
 import i18n
+import kernel
 import llm
 import installer
 import options
 import paths
 import settings
+import web
+from aiohttp import web as http
 from options import Option
 from tools import ToolError, tool
 
@@ -411,6 +414,93 @@ def forget(number: int) -> str:
     del facts_of(data, who)[index]
     save(data)
     return "Forgotten."
+
+
+# --- In Settings (the Mac app's «Memory» page, the admin page's): what it remembers, by whose ---
+
+def person(data: dict, name: str) -> str | None:
+    """How a person is written in memory.json (the voices plugin matches names in any case), or None."""
+    return next((k for k in data["people"] if k.lower() == name.lower()), None)
+
+
+def forget_person(name: str) -> int:
+    """Forgetting a voice, and what it remembers of them: their facts and their conversation summaries.
+    How many facts went."""
+    data = load()
+    found = person(data, name)
+    facts = data["people"].pop(found, []) if found else []
+    data["conversations"] = [c for c in data["conversations"] if (c.get("who") or "").lower() != name.lower()]
+    save(data)
+    if facts:
+        log.info("memory: %d facts about %s deleted", len(facts), found)
+    return len(facts)
+
+
+def count(name: str) -> int:
+    """How many facts it remembers about a person."""
+    data = load()
+    found = person(data, name)
+    return len(data["people"][found]) if found else 0
+
+
+def _names(data: dict) -> list[str]:
+    """Whose a fact can be: the people with facts and the known voices."""
+    voices = kernel.module("voices")
+    known = [p["name"] for p in voices.people()] if voices else []
+    names = list(data["people"])
+    names += [n for n in known if person(data, n) is None]
+    return sorted(names, key=str.lower)
+
+
+def listing() -> dict:
+    data = load()
+    return {"shared": data["facts"], "people": [{"name": n, "facts": data["people"].get(n, [])} for n in _names(data)],
+            "mode": mode()}
+
+
+@web.route("GET", "/admin/memory")
+async def _list(request):
+    if not web.owner(request):  # this computer, or an admin's browser
+        return http.json_response({}, status=403)
+    return http.json_response(listing())
+
+
+@web.route("POST", "/admin/memory")
+async def _change(request):
+    """A fact, by whose («who»: a name, or null for the shared ones) and its text («fact»):
+    {"edit": new text}, {"delete": true} or {"move": a name, or null for shared}."""
+    if not web.owner(request):
+        return http.json_response({}, status=403)
+    body = await request.json()
+    data = load()
+    who = body.get("who")
+    who = person(data, str(who)) if who is not None else None
+    if body.get("who") is not None and who is None:
+        return http.json_response({"error": i18n.L("memory.admin.gone"), **listing()}, status=404)
+    facts = facts_of(data, who)
+    fact = str(body.get("fact", ""))
+    if fact not in facts:  # changed meanwhile (by voice, a review)
+        return http.json_response({"error": i18n.L("memory.admin.gone"), **listing()}, status=404)
+    index = facts.index(fact)
+    if "edit" in body:
+        new = str(body["edit"] or "").strip()
+        if not new:
+            return http.json_response({"error": i18n.L("memory.admin.empty"), **listing()}, status=400)
+        facts[index] = new
+    elif "move" in body:
+        to = body["move"]
+        to = None if to is None else (person(data, str(to)) or str(to).strip())
+        if to == "":
+            return http.json_response({"error": i18n.L("memory.admin.gone"), **listing()}, status=400)
+        if to != who:
+            del facts[index]
+            there = facts_of(data, to)
+            if fact not in there:
+                there.append(fact)
+    elif body.get("delete"):
+        del facts[index]
+    save(data)
+    return http.json_response(listing())
 
 
 # --- In the installer ---

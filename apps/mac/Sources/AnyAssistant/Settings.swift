@@ -275,7 +275,7 @@ final class Admin: ObservableObject {
 }
 
 /// Settings: «General», the core's by topic; «Plugins», each one's page (on or off, what it does and
-/// its options, its accounts or voices). Every option lives in one place; the search finds it.
+/// its options, its accounts or voices); «Memory», what it remembers (Memory.swift). Every option lives in one place; the search finds it.
 /// Where the settings window is inside a section: a plugin's page, its mail accounts, its voices.
 /// Kept here (not a NavigationStack: in a window it draws the title bar broken), with a back
 /// button over the page.
@@ -339,6 +339,7 @@ struct SettingsView: View {
                     }
                     Section {
                         Label(T("Plugins"), systemImage: "puzzlepiece.extension").tag("plugins")
+                        Label(T("Memory"), systemImage: "brain").tag("memory")
                     }
                 }
                 .listStyle(.sidebar)
@@ -371,6 +372,8 @@ struct SettingsView: View {
                     SearchResults(admin: admin, search: search)
                 } else if section == "plugins" {
                     PluginsView(admin: admin)
+                } else if section == "memory" {
+                    MemoryView()
                 } else if let section {
                     OptionsView(admin: admin, group: section)
                 }

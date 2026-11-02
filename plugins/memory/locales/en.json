@@ -41,5 +41,11 @@
     "memory_facts": "How many facts it keeps before summarizing them.",
     "memory_conversations": "How many summaries it keeps.",
     "memory_days": ""
+  },
+  "memory": {
+    "admin": {
+      "gone": "That isn't there any more: it may have changed meanwhile.",
+      "empty": "Write what it should remember."
+    }
   }
 }

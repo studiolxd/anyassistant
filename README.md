@@ -547,9 +547,16 @@ shared ones; with a voice it doesn't know, only on the shared ones. Summaries ar
 kept per person too (the last 10 of each). If two people speak in one
 conversation, each one's review only takes facts from what they said. From the
 server itself (Claude through `/mcp` with no device), `get_memory` shows everyone's,
-grouped by whose they are. Forgetting a voice keeps its facts under its name:
-learning it again under the same name brings them back; to delete them, edit
-`memory.json`.
+grouped by whose they are.
+
+**In Settings → Memory** (the Mac app, and the admin page of the Windows and Linux
+app) you see what it remembers: «Shared» and each person's (`/admin/memory`, only
+for the owner). Each fact can be edited in place, deleted, or moved to someone else
+(any known voice) or to shared. **Forgetting a voice** (Settings → Voices → Known
+voices) that it remembers things about asks «Also erase what it remembers about
+Suvi?»: «Keep» leaves their facts under their name (learning the voice again under
+the same name brings them back); «Erase» deletes them too, with their conversation
+summaries. Saying «olvida mi voz» on a device keeps them.
 
 Any spoken sentence in a locale can be a list of variants (`speech.wait`: «One
 moment, let me check.», «Let me look.»…): one is picked at random each time, never

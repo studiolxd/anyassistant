@@ -276,3 +276,83 @@ def test_from_the_server_itself_it_sees_whose_each_one_is(mem):
     assert "About Suvi:\n3. Has a dog." in seen and "- Music. (Ana)" in seen
     memory.forget(2)
     assert "Ana" not in memory.load()["people"]
+
+
+# --- In Settings: the «Memory» page (/admin/memory) and forgetting a voice ---
+
+def admin(handler, body=None, remote="127.0.0.1"):
+    from aiohttp.test_utils import make_mocked_request
+    request = make_mocked_request("POST" if body is not None else "GET", "/admin/memory", transport=type("T", (), {
+        "get_extra_info": lambda self, k, d=None: (remote, 1) if k == "peername" else d})())
+    request.json = lambda: asyncio.sleep(0, body)
+    answer = asyncio.run(handler(request))
+    return answer.status, json.loads(answer.body)
+
+
+@pytest.fixture
+def stored(mem, monkeypatch):
+    monkeypatch.setattr(kernel, "module", lambda plugin: None)  # no voices plugin: only memory.json's people
+    mem.write_text(json.dumps({"facts": ["The wifi is called Casa."],
+                               "people": {"Suvi": ["Invoices with Holded.", "Has a dog called Toby."], "Ana": ["Likes jazz."]},
+                               "conversations": []}))
+    return mem
+
+
+def test_the_page_lists_the_shared_facts_and_each_persons(stored):
+    status, answer = admin(memory._list)
+    assert status == 200 and answer["shared"] == ["The wifi is called Casa."]
+    assert answer["people"] == [{"name": "Ana", "facts": ["Likes jazz."]},
+                                {"name": "Suvi", "facts": ["Invoices with Holded.", "Has a dog called Toby."]}]
+
+
+def test_a_known_voice_with_nothing_remembered_is_listed_too(stored, monkeypatch):
+    voices = type("Voices", (), {"people": staticmethod(lambda: [{"name": "suvi"}, {"name": "Leo"}])})
+    monkeypatch.setattr(kernel, "module", lambda plugin: voices if plugin == "voices" else None)
+    names = [p["name"] for p in admin(memory._list)[1]["people"]]
+    assert names == ["Ana", "Leo", "Suvi"]  # «suvi» is Suvi's voice: not twice
+
+
+def test_only_the_owner_sees_or_changes_it(stored):
+    assert admin(memory._list, remote="192.168.1.5")[0] == 403
+    assert admin(memory._change, {"who": None, "fact": "The wifi is called Casa.", "delete": True},
+                 remote="192.168.1.5")[0] == 403
+    assert memory.load()["facts"] == ["The wifi is called Casa."]
+
+
+def test_editing_a_fact(stored):
+    status, answer = admin(memory._change, {"who": "Suvi", "fact": "Has a dog called Toby.", "edit": " Has a dog called Rex. "})
+    assert status == 200 and memory.load()["people"]["Suvi"] == ["Invoices with Holded.", "Has a dog called Rex."]
+    assert admin(memory._change, {"who": "Suvi", "fact": "Has a dog called Rex.", "edit": "  "})[0] == 400
+
+
+def test_deleting_a_fact(stored):
+    admin(memory._change, {"who": None, "fact": "The wifi is called Casa.", "delete": True})
+    admin(memory._change, {"who": "Ana", "fact": "Likes jazz.", "delete": True})
+    data = memory.load()
+    assert data["facts"] == [] and "Ana" not in data["people"]
+
+
+def test_moving_a_fact_to_someone_or_to_shared(stored):
+    admin(memory._change, {"who": "Suvi", "fact": "Invoices with Holded.", "move": None})
+    admin(memory._change, {"who": None, "fact": "The wifi is called Casa.", "move": "Leo"})  # a voice with no facts yet
+    data = memory.load()
+    assert data["facts"] == ["Invoices with Holded."]
+    assert data["people"]["Suvi"] == ["Has a dog called Toby."] and data["people"]["Leo"] == ["The wifi is called Casa."]
+
+
+def test_a_fact_changed_meanwhile_is_not_touched(stored):
+    status, answer = admin(memory._change, {"who": "Suvi", "fact": "Has a cat.", "delete": True})
+    assert status == 404 and answer["error"] and answer["people"]  # and what there is now, to show it
+    assert admin(memory._change, {"who": "Nobody", "fact": "Likes jazz.", "delete": True})[0] == 404
+
+
+def test_forgetting_a_person_deletes_their_facts_and_summaries(stored):
+    data = memory.load()
+    data["conversations"] = [{"at": time.time(), "summary": "Holded.", "who": "Suvi"}, {"at": time.time(), "summary": "Wifi."}]
+    memory.save(data)
+    assert memory.count("suvi") == 2
+    assert memory.forget_person("suvi") == 2
+    data = memory.load()
+    assert "Suvi" not in data["people"] and data["people"]["Ana"] == ["Likes jazz."]
+    assert [c["summary"] for c in data["conversations"]] == ["Wifi."]
+    assert data["facts"] == ["The wifi is called Casa."]

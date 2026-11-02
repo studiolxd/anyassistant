@@ -53,5 +53,11 @@
     "memory_facts": "Datos antes de resumir",
     "memory_conversations": "Conversaciones resumidas",
     "memory_days": "Días que guarda cada resumen"
+  },
+  "memory": {
+    "admin": {
+      "gone": "Eso ya no está: puede que haya cambiado mientras tanto.",
+      "empty": "Escribe lo que debe recordar."
+    }
   }
 }

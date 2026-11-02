@@ -39,6 +39,7 @@ import numpy as np
 import hub
 import i18n
 import installer
+import kernel
 import models
 import options
 import paths
@@ -607,8 +608,10 @@ def _listing():
     now = time.time()
     for device in [d for d, p in progress.items() if p["step"] in ("done", "cancelled") and now - p["at"] > 60]:
         progress.pop(device)  # an ended one stays a minute, for the guide to say so
+    memory = kernel.module("memory")
     return {"people": [{"name": p["name"], "samples": p.get("samples", 0), "since": p.get("since"),
-                        "devices": len(prints_of(p)), "relearn": relearn(p)} for p in people()],
+                        "devices": len(prints_of(p)), "relearn": relearn(p),
+                        "facts": memory.count(p["name"]) if memory else 0} for p in people()],
             "check": checking(), "learning": progress}
 
 
@@ -622,7 +625,8 @@ async def _list(request):
 @web.route("POST", "/admin/voices")
 async def _change(request):
     """{"learn": device id, "name"?: «Ana»} starts it on that device; {"cancel": device id};
-    {"forget": «Ana»}. Where each learning is: «learning» in the answer (GET too)."""
+    {"forget": «Ana», "memory"?: "delete"} (delete: what the plugin «memory» remembers of them too; else it
+    stays under their name). Where each learning is: «learning» in the answer (GET too)."""
     if not web.owner(request):  # this computer, or an admin's browser
         return http.json_response({}, status=403)
     data = await request.json()
@@ -639,4 +643,7 @@ async def _change(request):
         cancel(str(data["cancel"]))
     elif "forget" in data:
         forget(str(data["forget"]))
+        memory = kernel.module("memory")
+        if data.get("memory") == "delete" and memory:
+            memory.forget_person(str(data["forget"]))
     return http.json_response(_listing())
