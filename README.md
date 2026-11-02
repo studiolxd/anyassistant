@@ -1092,9 +1092,9 @@ need anything else?»), it drops it.
 called by its name): it keeps listening while it speaks. The server knows exactly what it sends to each
 device and when, so it keeps the loudness envelope of its last 12 seconds of output per device
 (`server/echo.py`: log-RMS every 20 ms) and, when a sentence ends while it was talking, compares
-the sentence's envelope with that output, searching the playback delay (up to a second): its own
+the sentence's envelope with that output, searching the playback delay (up to a second and a half): its own
 echo, however quiet after the device's echo cancellation, matches (above `echo_match`, 0.8) and is
-dropped; a person talking over it doesn't match, so it stops and answers them. The other devices'
+dropped; a person talking over it doesn't match: clearly unlike its output (below 0.5), it stops at once, before transcribing; in between, what was said decides (its own words are its echo), and it stops and answers them. The other devices'
 output counts too (two in one room), and a sound of its own starting (a chime) can't start a
 sentence. With synthesized voices the echo scores 0.91 or more and a person over it 0.56 or less
 (`tests/test_own_voice.py`).

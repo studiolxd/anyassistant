@@ -282,6 +282,32 @@ def test_talked_over_it_stops_before_transcribing(monkeypatch):
     asyncio.run(go())
 
 
+def test_in_between_its_words_decide(monkeypatch):
+    """Not clearly a person (some likeness to its output): no stop before transcribing."""
+    settings.active["listen_while_speaking"] = True
+    ear, _ = make_ear(monkeypatch, deaf=True)
+    overs, sent = [], []
+    ear.on_over = lambda: overs.append(True)
+    monkeypatch.setattr(ear, "_transcribe", lambda audio, over=False: sent.append(over) or _done())
+    ear.echo = FakeJudge(echo=False)
+    ear.echo.clearly_a_person = lambda: False
+
+    async def go():
+        speak(ear, 20, 0.9)
+        speak(ear, 25, 0.0)
+        assert not overs and sent == [True]  # transcribed: _heard decides by its words
+    asyncio.run(go())
+
+
+def test_the_judge_tells_a_clear_person():
+    judge = echo.Judge(lambda: [])
+    assert judge.clearly_a_person()  # nothing judged
+    judge.last = (0.3, 0.2)
+    assert judge.clearly_a_person()
+    judge.last = (0.65, 0.2)
+    assert not judge.clearly_a_person()
+
+
 async def _done():
     pass
 

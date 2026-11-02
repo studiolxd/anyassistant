@@ -180,8 +180,8 @@ class Ear:
         # says whether to stop (False: it was its own voice saying its name).
         self.deaf = deaf or (lambda: False)
         self.on_interrupt = on_interrupt
-        # Someone talked over it (listen_while_speaking) and it wasn't its echo: on_over(), as soon
-        # as the sentence ends, before transcribing it (what was said may not transcribe well).
+        # Someone talked over it (listen_while_speaking) and it clearly wasn't its echo: on_over(),
+        # as soon as the sentence ends, before transcribing it (what was said may not transcribe).
         self.on_over = on_over
         # Whether it may wake up (why None: its name, how loud it heard it in `level`): with
         # several devices, only one answers (hub.claim).
@@ -458,7 +458,10 @@ class Ear:
                 log.info("dropped: its own voice (%.2f s)", duration)  # by its loudness: not transcribed
                 self.on_state(self.idle_state)
                 return
-            if over and self.on_over:
+            # Clearly a person (nothing like its output): it stops at once, before transcribing
+            # (what was said may not transcribe). In between, what it says decides (_heard: its
+            # own words are its echo).
+            if over and self.on_over and getattr(self.echo, "clearly_a_person", lambda: True)():
                 self.on_over()
             asyncio.ensure_future(self._transcribe(audio, over))
 
