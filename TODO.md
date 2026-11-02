@@ -2,7 +2,6 @@
 
 # Para publicar
 
-- [ ] **Subir la app de iPhone y iPad a TestFlight.**
 - [ ] **Probar la app en el iPhone 7** (iOS 15), desde TestFlight.
 - [ ] **Hacer un modo demo para la revisión de la App Store** (el revisor no tiene tu servidor), solo si
   se publica fuera de TestFlight.
@@ -30,18 +29,6 @@
 - [ ] **El Apple Watch**: usarlo fuera de casa (el servidor accesible desde fuera: Tailscale…).
 - [ ] **El Apple Watch**: una complicación para la esfera.
 - [ ] **El Apple Watch**: el botón Acción.
-
-## Diseño de las páginas web
-
-Hoy son funcionales pero sobrias; que sigan el estilo y el vocabulario de las apps.
-
-- [ ] **Diseñar la página de temas** (`plugins/themes`: la ventana Temas de la app del Mac, un
-  WKWebView, y el navegador).
-- [ ] **Diseñar la administración web** (`plugins/admin/web`: la de Windows y Linux y cualquier
-  navegador).
-- [ ] **Diseñar la pantalla de emparejar con el código** en la página del dispositivo (`#pair` en
-  `plugins/page/web/index.html` y `system.css`).
-- [ ] **Diseñar la página del QR** (`/connect`, `plugins/page/web/connect.html`).
 
 ## Windows y Linux
 
@@ -102,6 +89,14 @@ LLM con MCP (Claude, Gemini, OpenCode), no el de Apple ni Hermes.
 - [ ] **Pasar la app del Mac a Swift 6** (hoy compila en modo de lenguaje Swift 5).
 
 # Hecho
+
+- [x] **El Apple Watch con la cara de Eyes** (2 nov): solo los ojos y la boca; escucha mientras lo
+  miras (encuentra cada frase él mismo), piensa, contesta en voz alta y vuelve a escuchar; con la
+  muñeca bajada, duerme. El dibujo de Eyes es uno para el iPhone, el iPad, el Mac y el reloj
+  (`apps/shared/Eyes.swift`).
+- [x] **La app de iPhone y iPad en TestFlight**, con la del reloj dentro (`apps/apple/testflight.sh`).
+- [x] **El diseño de las páginas web**, con el estilo y el vocabulario de las apps: la página de
+  temas, la administración web, la pantalla de emparejar con el código y la página del QR.
 
 - [x] **La memoria de cada persona** (2 nov): lo aprendido con una voz reconocida es suyo; sin
   voz reconocida, compartido.
