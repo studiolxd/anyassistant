@@ -111,14 +111,16 @@ def _connect_page(request, code: str, problem: bool):
         link = _android_app_link(link, str(request.url))
     e = html.escape
     parts = [f"<h1>{e(t('title'))}</h1>"]
+    if not paired:  # what to do here: the app or the code on a phone; the code on a computer
+        parts.append(f'<p class="description">{e(t("about_phone") if _mobile(agent) else t("about_computer"))}</p>')
     if _mobile(agent):
-        parts.append(f'<a class="button" href="{e(link)}">{e(t("app"))}</a>'
-                     f'<p class="muted">{e(t("app_note"))}</p>')
+        parts.append(f'<a class="button" href="{e(link)}">{e(t("app"))}</a>')
     if not paired:
-        parts.append(f'<form method="post" action="/connect"><p>{e(t("browser"))}</p>'
-                     f'<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{e(code)}">'
+        parts.append(f'<form method="post" action="/connect"><label for="code">{e(t("code"))}</label>'
+                     f'<input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{e(code)}">'
                      + (f'<p class="error">{e(t("wrong"))}</p>' if problem else "")
-                     + f'<button type="submit">{e(t("continue") if _mobile(agent) else t("connect"))}</button></form>')
+                     + f'<button type="submit" class="{"button secondary" if _mobile(agent) else "button"}">'
+                     + f'{e(t("continue") if _mobile(agent) else t("connect"))}</button></form>')
     else:
         if pairing is None:
             parts.append(f'<p class="muted">{e(t("no_code"))}</p>')

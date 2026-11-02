@@ -80,8 +80,6 @@
   "connect": {
     "title": "Conectar este dispositivo",
     "app": "Abrir en la app",
-    "app_note": "Con la app de AnyAssistant instalada, se conecta sola.",
-    "browser": "O sigue en el navegador: el código de emparejamiento",
     "continue": "Continuar en el navegador",
     "connect": "Conectar",
     "wrong": "Código incorrecto o caducado: pide otro en el servidor.",
@@ -91,6 +89,9 @@
     "certificate_get": "Descargar el certificado",
     "certificate_android": "Si no se instala solo, en Android: Ajustes → Seguridad → Instalar desde el almacenamiento → AnyAssistant.crt (como «VPN y aplicaciones»).",
     "then": "Después",
-    "open": "Abrir la página"
+    "open": "Abrir la página",
+    "about_phone": "Con la app de AnyAssistant instalada, se conecta sola. Si no, sigue en el navegador con el código.",
+    "about_computer": "Escribe el código que muestra el servidor en «Conectar otro dispositivo».",
+    "code": "Código de emparejamiento"
   }
 }
