@@ -259,3 +259,16 @@
 "On old devices: %@" = "On old devices: %@";
 "Getting ready: keep silent near the device…" = "Getting ready: keep silent near the device…";
 "Measuring… %d" = "Measuring… %d";
+
+/* Memory (Memory.swift), and forgetting a voice that it remembers things about (Voices.swift) */
+"Memory" = "Memory";
+"Shared" = "Shared";
+"Move to…" = "Move to…";
+"Delete" = "Delete";
+"It doesn't remember anything yet." = "It doesn't remember anything yet.";
+"Turn on the plugin «Memory» so it remembers you from one conversation to the next." = "Turn on the plugin «Memory» so it remembers you from one conversation to the next.";
+"What is shared goes into every conversation; what is about someone, only when it recognises their voice." = "What is shared goes into every conversation; what is about someone, only when it recognises their voice.";
+"Also erase what it remembers about %@?" = "Also erase what it remembers about %@?";
+"If you keep it and its voice is learnt again under the same name, it remembers it again." = "If you keep it and its voice is learnt again under the same name, it remembers it again.";
+"Keep" = "Keep";
+"Erase" = "Erase";

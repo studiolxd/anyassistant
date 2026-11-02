@@ -173,6 +173,17 @@
     "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.",
     "Installed themes": "Installed themes",
     "Theme": "Theme",
-    "Themes": "Themes"
+    "Themes": "Themes",
+    "Memory": "Memory",
+    "Shared": "Shared",
+    "Move to…": "Move to…",
+    "Delete": "Delete",
+    "It doesn't remember anything yet.": "It doesn't remember anything yet.",
+    "Turn on the plugin «Memory» so it remembers you from one conversation to the next.": "Turn on the plugin «Memory» so it remembers you from one conversation to the next.",
+    "What is shared goes into every conversation; what is about someone, only when it recognises their voice.": "What is shared goes into every conversation; what is about someone, only when it recognises their voice.",
+    "Also erase what it remembers about %s?": "Also erase what it remembers about %s?",
+    "If you keep it and its voice is learnt again under the same name, it remembers it again.": "If you keep it and its voice is learnt again under the same name, it remembers it again.",
+    "Keep": "Keep",
+    "Erase": "Erase"
   }
 }

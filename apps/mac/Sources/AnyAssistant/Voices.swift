@@ -7,7 +7,7 @@ import SwiftUI
 
 @MainActor
 final class VoicesModel: ObservableObject {
-    @Published var people: [(name: String, samples: Int, relearn: [String])] = []  // relearn: the devices where their voice should be learnt again
+    @Published var people: [(name: String, samples: Int, relearn: [String], facts: Int)] = []  // relearn: the devices where their voice should be learnt again; facts: how many the plugin «memory» remembers about them
     @Published var check = "off"
     @Published var off = false
     @Published var note: String?
@@ -33,19 +33,25 @@ final class VoicesModel: ObservableObject {
         guard let answer else { return }
         people = (answer["people"] as? [[String: Any]] ?? []).map {
             (name: $0["name"] as? String ?? "", samples: $0["samples"] as? Int ?? 0,
-             relearn: $0["relearn"] as? [String] ?? [])
+             relearn: $0["relearn"] as? [String] ?? [], facts: $0["facts"] as? Int ?? 0)
         }
         check = answer["check"] as? String ?? "off"
     }
 
     func load() async { show(await call()) }
 
-    func forget(_ name: String) async { show(await call(["forget": name])) }
+    /// memory: "keep" or "delete" what the plugin «memory» remembers about them (nil: it remembers nothing).
+    func forget(_ name: String, memory: String? = nil) async {
+        var body: [String: Any] = ["forget": name]
+        if let memory { body["memory"] = memory }
+        show(await call(body))
+    }
 }
 
 struct VoicesView: View {
     @StateObject private var model = VoicesModel()
     @Environment(\.openWindow) private var openWindow
+    @State private var asking: String?  // whose voice is being forgotten, while it asks about what it remembers of them
 
     var body: some View {
         Form {
@@ -62,8 +68,10 @@ struct VoicesView: View {
                                 Image(systemName: "person.wave.2")
                                 Text(person.name)
                                 Spacer()
-                                Button(T("Forget")) { Task { await model.forget(person.name) } }
-                                    .foregroundStyle(.red)
+                                Button(T("Forget")) {
+                                    if person.facts > 0 { asking = person.name } else { Task { await model.forget(person.name) } }
+                                }
+                                .foregroundStyle(.red)
                             }
                             // Their score there has dropped lately: the microphone moved, a cold… (the server
                             // said so once, as a notice).
@@ -95,6 +103,14 @@ struct VoicesView: View {
             }
         }
         .formStyle(.grouped)
+        .alert(String(format: T("Also erase what it remembers about %@?"), asking ?? ""),
+               isPresented: Binding(get: { asking != nil }, set: { if !$0 { asking = nil } }), presenting: asking) { name in
+            Button(T("Keep")) { Task { await model.forget(name, memory: "keep") } }
+            Button(T("Erase"), role: .destructive) { Task { await model.forget(name, memory: "delete") } }
+            Button(T("Cancel"), role: .cancel) {}
+        } message: { _ in
+            Text(T("If you keep it and its voice is learnt again under the same name, it remembers it again."))
+        }
         .task { await model.load() }
         .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
             Task { await model.load() }  // a voice learnt on a device shows up here

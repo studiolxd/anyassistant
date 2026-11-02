@@ -1,6 +1,6 @@
 // AnyAssistant's admin page (/admin): what the Mac app shows, for Windows, Linux and a Linux with
 // no screen, with the same structure and words. Over the same routes (/admin/settings,
-// /admin/plugins, /devices, /pairing, /admin/voices, /admin/mail). Texts: English as the key, the
+// /admin/plugins, /devices, /pairing, /admin/voices, /admin/memory, /admin/mail). Texts: English as the key, the
 // server's language from /admin/me. The Windows and Linux app opens it in a window per part
 // (?window=settings|devices|pair, as the Mac's windows): only that part, no header nor other sections.
 
@@ -155,7 +155,7 @@ function showLogin() {
 
 // As the Mac's windows: «Connect another device», «Devices», and Settings («General», the core's
 // by topic: group/<id>; «Plugins», each one's page: plugin/<id>, with the mail's accounts and the
-// known voices as pages of their own), plus «Admins» (the browsers that may administer: only
+// known voices as pages of their own; «Memory», what it remembers), plus «Admins» (the browsers that may administer: only
 // here). A search (the field over the sidebar) finds options and plugins wherever they live.
 var WINDOW = new URLSearchParams(location.search).get('window');  // the app's window: only that part
 var groups = [];  // the General sections, from /admin/settings
@@ -186,6 +186,7 @@ function show(id) {
   else if (id.indexOf('device/') === 0) devicePage(main, id.slice(7));
   else if (id === 'mail') mailPage(main);
   else if (id === 'voices') voicesPage(main);
+  else if (id === 'memory') memoryPage(main);
   else ({ pair: pair, devices: devices, plugins: plugins, admins: adminsPage })[id](main);
   if (id !== 'search') history.replaceState(null, '', '#' + id);
 }
@@ -570,6 +571,11 @@ function voicesPage(main) {
   main.appendChild(el('h1', { text: T('Known voices') }));
   var box = el('div', { class: 'card' });
   main.appendChild(box);
+  var asking = null;  // whose voice is being forgotten, while it asks about what it remembers of them
+  function forget(name, memory) {
+    asking = null;
+    api('POST', '/admin/voices', memory ? { forget: name, memory: memory } : { forget: name }).then(draw);
+  }
   function draw(data) {
     box.innerHTML = '';
     if (data._status === 404) { box.appendChild(el('p', { class: 'muted', text: T('Turn on the plugin «Voices» to teach it who you are.') })); return; }
@@ -579,9 +585,21 @@ function voicesPage(main) {
       var warnings = (p.relearn || []).map(function (device) {
         return el('div', { class: 'muted warn', text: T('It would be good to learn their voice again on %s.').replace('%s', device) });
       });
+      if (asking === p.name) {  // it remembers things about them: delete those too, or keep them under the name
+        box.appendChild(el('div', { class: 'row' }, [
+          el('div', { class: 'what' }, [el('b', { text: T('Also erase what it remembers about %s?').replace('%s', p.name) }),
+            el('div', { class: 'muted', text: T('If you keep it and its voice is learnt again under the same name, it remembers it again.') })]),
+          el('button', { class: 'quiet', text: T('Cancel'), onclick: function () { asking = null; api('GET', '/admin/voices').then(draw); } }),
+          el('button', { class: 'quiet', text: T('Keep'), onclick: function () { forget(p.name, 'keep'); } }),
+          el('button', { class: 'danger', text: T('Erase'), onclick: function () { forget(p.name, 'delete'); } })
+        ]));
+        return;
+      }
       box.appendChild(el('div', { class: 'row' }, [
         el('div', { class: 'what' }, [el('b', { text: p.name })].concat(warnings)),
-        el('button', { class: 'danger', text: T('Forget'), onclick: function () { api('POST', '/admin/voices', { forget: p.name }).then(draw); } })
+        el('button', { class: 'danger', text: T('Forget'), onclick: function () {
+          if (p.facts) { asking = p.name; api('GET', '/admin/voices').then(draw); } else forget(p.name);
+        } })
       ]));
     });
   }
@@ -678,6 +696,62 @@ function guide(learn, drawPeople) {
       }).catch(function () {});
     }, 700);
   }
+}
+
+// --- Memory (in the sidebar), what the plugin «memory» remembers: the shared facts and each person's; each one edited in place,
+// deleted or moved to someone else ---
+
+function memoryPage(main) {
+  main.appendChild(el('h1', { text: T('Memory') }));
+  var box = el('div');
+  main.appendChild(box);
+  function change(who, fact, what) {
+    var body = { who: who, fact: fact };
+    Object.keys(what).forEach(function (k) { body[k] = what[k]; });
+    return api('POST', '/admin/memory', body).then(function (r) { draw(r); if (r.error) problem(box, r.error); });
+  }
+  function row(who, fact, names) {
+    var text = el('input', { type: 'text', value: fact, style: 'width:100%' });
+    text.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') text.blur();
+      if (e.key === 'Escape') { text.value = fact; text.blur(); }
+    });
+    text.addEventListener('change', function () {
+      if (text.value.trim() === fact) return;
+      if (!text.value.trim()) { text.value = fact; return; }
+      change(who, fact, { edit: text.value });
+    });
+    var move = el('select', {}, [el('option', { value: '', text: T('Move to…') })]);
+    if (who !== null) move.appendChild(el('option', { value: '\u0000', text: T('Shared') }));
+    names.filter(function (n) { return n !== who; }).forEach(function (n) { move.appendChild(el('option', { value: n, text: n })); });
+    move.addEventListener('change', function () {
+      if (move.value) change(who, fact, { move: move.value === '\u0000' ? null : move.value });
+    });
+    return el('div', { class: 'row' }, [
+      el('div', { class: 'what' }, [text]),
+      move,
+      el('button', { class: 'danger', text: T('Delete'), onclick: function () { change(who, fact, { delete: true }); } })
+    ]);
+  }
+  function group(title, who, facts, names) {
+    box.appendChild(el('h2', { text: title }));
+    var card = el('div', { class: 'card' });
+    facts.forEach(function (f) { card.appendChild(row(who, f, names)); });
+    box.appendChild(card);
+  }
+  function draw(data) {
+    box.innerHTML = '';
+    if (data._status === 404 && !data.people) { box.appendChild(el('div', { class: 'card' }, [el('p', { class: 'muted', text: T('Turn on the plugin «Memory» so it remembers you from one conversation to the next.') })])); return; }
+    var names = data.people.map(function (p) { return p.name; });
+    var people = data.people.filter(function (p) { return p.facts.length; });
+    if (!data.shared.length && !people.length) {
+      box.appendChild(el('div', { class: 'card' }, [el('p', { class: 'muted', text: T('It doesn\'t remember anything yet.') })]));
+    }
+    if (data.shared.length) group(T('Shared'), null, data.shared, names);
+    people.forEach(function (p) { group(p.name, p.name, p.facts, names); });
+    box.appendChild(el('p', { class: 'muted', text: T('What is shared goes into every conversation; what is about someone, only when it recognises their voice.') }));
+  }
+  api('GET', '/admin/memory').then(draw).catch(function () {});
 }
 
 // --- Mail accounts besides Gmail (the plugin «mail»): add one (tried before saving), try, remove ---
@@ -884,6 +958,7 @@ function sidebar() {
     groups.forEach(function (g) { item('group/' + g.id, g.title); });
     nav.appendChild(el('div', { class: 'group' }));
     item('plugins', T('Plugins'));
+    item('memory', T('Memory'));
   }
   if (!WINDOW) { nav.appendChild(el('div', { class: 'group' })); item('admins', T('Admins')); }
 }
@@ -910,7 +985,7 @@ fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.
   }).catch(function () {}).then(function () {
     sidebar();
     var wanted = location.hash.slice(1);
-    var known = ['pair', 'devices', 'settings', 'plugins', 'admins', 'mail', 'voices'];
+    var known = ['pair', 'devices', 'settings', 'plugins', 'admins', 'mail', 'voices', 'memory'];
     var allowed = WINDOW === 'devices' ? function (id) { return section(id) === 'devices'; }
                 : WINDOW === 'pair' ? function (id) { return id === 'pair'; }
                 : WINDOW === 'settings' ? function (id) { return ['pair', 'devices', 'admins'].indexOf(section(id)) < 0; }

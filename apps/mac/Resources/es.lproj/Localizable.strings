@@ -260,3 +260,16 @@
 "Getting ready: keep silent near the device…" = "Preparando: guarda silencio cerca del dispositivo…";
 "Measuring… %d" = "Midiendo… %d";
 "Not now" = "Ahora no";
+
+/* Memory (Memory.swift), and forgetting a voice that it remembers things about (Voices.swift) */
+"Memory" = "Memoria";
+"Shared" = "Compartido";
+"Move to…" = "Mover a…";
+"Delete" = "Eliminar";
+"It doesn't remember anything yet." = "Aún no recuerda nada.";
+"Turn on the plugin «Memory» so it remembers you from one conversation to the next." = "Activa el plugin «Memoria» para que te recuerde de una conversación a otra.";
+"What is shared goes into every conversation; what is about someone, only when it recognises their voice." = "Lo compartido se tiene en cuenta en todas las conversaciones; lo de cada persona, solo cuando reconoce su voz.";
+"Also erase what it remembers about %@?" = "¿Borrar también lo que recuerda de %@?";
+"If you keep it and its voice is learnt again under the same name, it remembers it again." = "Si lo conservas y vuelve a aprender su voz con el mismo nombre, lo recordará de nuevo.";
+"Keep" = "Conservar";
+"Erase" = "Borrar";
