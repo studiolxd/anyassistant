@@ -24,8 +24,9 @@ struct Upcoming: Equatable {
         return label.prefix(1).uppercased() + label.dropFirst()
     }
 
-    /// The server's items, kept; the complication is told if they changed.
-    static func keep(_ items: [[String: Any]]) {
+    /// The server's items, kept; the complication is told if they changed (true then).
+    @discardableResult
+    static func keep(_ items: [[String: Any]]) -> Bool {
         let clean: [[String: Any]] = items.compactMap { item in
             guard let at = (item["at"] as? NSNumber)?.doubleValue else { return nil }
             var found: [String: Any] = ["kind": item["kind"] as? String ?? "timer", "at": at,
@@ -34,9 +35,10 @@ struct Upcoming: Equatable {
             return found
         }
         let before = store?.array(forKey: "timers") as NSArray?
-        guard before == nil || !before!.isEqual(to: clean) else { return }
+        guard before == nil || !before!.isEqual(to: clean) else { return false }
         store?.set(clean, forKey: "timers")
         WidgetCenter.shared.reloadAllTimelines()
+        return true
     }
 
     /// Those to come, soonest first.

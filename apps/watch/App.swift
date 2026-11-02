@@ -34,7 +34,7 @@ struct AnyAssistantApp: App {
     /// What is next, from the server (paired only); and again in a while, in the background.
     @MainActor static func refresh() async {
         let mac = Mac(agent: "AnyAssistant Watch")
-        if mac.paired, let timers = await mac.timers() { Upcoming.keep(timers) }
+        if mac.paired, let timers = await mac.timers(), Upcoming.keep(timers) { Companion.shared.pass(timers) }
         WKApplication.shared().scheduleBackgroundRefresh(withPreferredDate: Date().addingTimeInterval(15 * 60),
                                                          userInfo: "timers" as NSString) { _ in }
     }

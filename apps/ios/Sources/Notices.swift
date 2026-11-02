@@ -20,8 +20,11 @@ final class Notices: NSObject, UNUserNotificationCenterDelegate {
         center.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
     }
 
-    /// The theme's alarm, as a sound the phone can ring with (in Library/Sounds): its name, once fetched.
-    private(set) var alarmSound: String?
+    /// The theme's alarm, as a sound the phone can ring with (in Library/Sounds): its name, once fetched
+    /// (kept: the app woken by the watch, without a connection yet, rings with it too).
+    private(set) var alarmSound: String? = UserDefaults.standard.string(forKey: "alarmSound") {
+        didSet { UserDefaults.standard.set(alarmSound, forKey: "alarmSound") }
+    }
 
     /// Fetches the theme's alarm from the Mac (/alarm.wav: as it rings there, under 30 s) into
     /// Library/Sounds, where notifications and alarms find it by name. Again when the theme changes.

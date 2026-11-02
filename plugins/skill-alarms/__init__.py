@@ -1,7 +1,9 @@
 """Timers, alarms and reminders: «pon un temporizador de 10 minutos», «despiértame
 mañana a las 7», «recuérdame en 20 minutos que saque la ropa», «¿cuánto queda?»,
 «¿qué alarmas tengo?», «cancela las alarmas». Kept in timers.py; they ring on the
-device (plugins/brain-assistant) or on the Mac.
+devices (plugins/brain-assistant), never on the server's computer: with none connected, the
+phones ring them as their own alarms (the iPhone's AlarmKit, Android's), which they set as the
+list changes, and the watch passes on those set on it.
 
 With several devices: on every one (option «alarm_rings»: everywhere), or where it was set
 (where_set); «… en todos», «… en la cocina» for one of them (a room or a device's name,
@@ -11,8 +13,6 @@ it stops on all.
 
 import asyncio
 import logging
-import shutil
-import sys
 import time
 from pathlib import Path
 
@@ -193,33 +193,6 @@ def ring_sentence(item: dict) -> str:
     return i18n.L("speech.reminder_ring", text=item.get("label", ""))
 
 
-def _player() -> list[str] | None:
-    """What plays a WAV on this computer's speakers (Windows: winsound, in ring_here)."""
-    if sys.platform == "darwin":
-        return ["afplay"]
-    for name in ("pw-play", "paplay", "aplay"):  # PipeWire, PulseAudio, ALSA
-        if shutil.which(name):
-            return [name]
-    return None
-
-
-async def ring_here(item: dict):
-    """No device connected: it rings on the server's own computer (and, on the Mac, says a reminder's text)."""
-    log.info("ringing here: %s", item["kind"])
-    for _ in range(3):
-        if sys.platform == "win32":
-            import winsound
-
-            await asyncio.to_thread(winsound.PlaySound, str(ALARM), winsound.SND_FILENAME)
-        elif player := _player():
-            await (await asyncio.create_subprocess_exec(*player, str(ALARM), stderr=asyncio.subprocess.DEVNULL)).wait()
-        else:
-            log.warning("nothing here plays sounds (pw-play, paplay or aplay)")
-            return
-    if sys.platform == "darwin" and item["kind"] == "reminder":  # a reminder's text; a timer or alarm, just its sound
-        await (await asyncio.create_subprocess_exec("say", "-v", i18n.L.tts_voice, ring_sentence(item))).wait()
-
-
 def label(toks: list[Token], span, when, skip: set[int] = frozenset()) -> str:
     """What to remind: the words that aren't the command, the time, the day or where it rings."""
     used = set(day_tokens(toks)) | set(skip)
@@ -337,7 +310,8 @@ def cancel_timers(kind: str = "all") -> str:
 
 @web.startup
 async def ring_when_due(app):
-    """Timers, alarms and reminders: on the devices (targets), or on the Mac if none is connected."""
+    """Timers, alarms and reminders: on the connected devices (targets); none connected, only the phones'
+    own alarms ring them (the server's computer never does)."""
     async def loop():
         while True:
             try:
@@ -347,8 +321,6 @@ async def ring_when_due(app):
                         log.info("ringing %s on %d device(s)", item["kind"], len(found))
                         for session in found:  # the same item: stopped on one, it stops on all
                             asyncio.ensure_future(session.brain.ring(item))
-                        if not found:
-                            asyncio.ensure_future(ring_here(item))
             except Exception as e:
                 log.warning("timers: %r", e)
             await asyncio.sleep(0.5)

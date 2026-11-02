@@ -5,8 +5,8 @@
 
 «device» is the one it was set on (the page's own id); «where», where it was asked to ring
 («… everywhere», «… in the kitchen»: a room or a device's name). The server checks them
-every half second and rings the due ones (plugins/skill-alarms: where), or on the Mac if no
-device is connected.
+every half second and rings the due ones on the connected devices (plugins/skill-alarms: where);
+with none, only the phones' own alarms ring.
 """
 
 import json

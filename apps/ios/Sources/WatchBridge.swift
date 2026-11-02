@@ -4,7 +4,8 @@
 // open. Sent again when it changes (paired or not, the server's IP: Mac.handoffChanged), and
 // given when the watch asks (iOS wakes this app for it). The watch then talks to the server
 // itself, as its own device; nothing it says goes through here. The timers, alarms and reminders
-// the server sends here go to the watch too, for its complication (at once when it is on the face).
+// the server sends here go to the watch too, for its complication (at once when it is on the face);
+// and those the watch learns (it set one) come here, to ring as the phone's own alarms.
 
 #if os(iOS)
 import WatchConnectivity
@@ -53,6 +54,22 @@ final class WatchBridge: NSObject, WCSessionDelegate {
     /// The watch asks (its app opened, not paired yet).
     func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
         replyHandler(Mac.handoff())
+    }
+
+    /// What the watch learnt from the server: the phone's alarms, as if the server had said it here.
+    func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+        ring(message)
+    }
+
+    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
+        ring(userInfo)
+    }
+
+    private func ring(_ message: [String: Any]) {
+        guard let timers = message["timers"] as? [[String: Any]] else { return }
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated { Notices.shared.handle(["type": "timers", "items": timers]) }
+        }
     }
 
     func sessionDidBecomeInactive(_ session: WCSession) {}
