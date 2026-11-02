@@ -76,10 +76,6 @@ form.inline { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp
 .error { color: var(--color-danger); }
 
 /* Logging in with an admin code. */
-#login { max-width: 400px; margin: 12vh auto; padding: 0 var(--space-4); text-align: center; }
-#login p { color: var(--color-text-secondary); }
-#login form { display: flex; justify-content: center; gap: var(--space-2); margin-top: var(--space-5); }
-.ui #login input { width: 170px; font-family: var(--font-mono); font-size: var(--text-xl); text-align: center; letter-spacing: 0.15em; }
 
 .row.link { cursor: pointer; }
 .row .chevron { color: var(--color-text-secondary); opacity: 0.6; font-size: var(--text-lg); }

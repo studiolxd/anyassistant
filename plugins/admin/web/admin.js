@@ -137,7 +137,8 @@ function showLogin() {
   var box = $('#login');
   box.hidden = false;
   $('h1', box).textContent = T('Administer AnyAssistant');
-  $('p', box).textContent = T('Type the admin code. On the computer with the server: this page, Admins → «A code for another browser»; or in its terminal: bin/anyassistant admin-code.');
+  $('.description', box).textContent = T('Type the admin code the server shows in Admins → «A code for another browser», or in its terminal with bin/anyassistant admin-code.');
+  $('label', box).textContent = T('Admin code');
   $('button', box).textContent = T('Enter');
   $('form', box).onsubmit = function (e) {
     e.preventDefault();
@@ -145,7 +146,7 @@ function showLogin() {
                             body: JSON.stringify({ code: $('input', box).value }) })
       .then(function (r) {
         if (r.ok) location.reload();
-        else $('.error', box).textContent = T('That code isn\'t right (or it\'s too old): ask for another.');
+        else $('.error', box).textContent = T('The code isn\'t valid or has expired. Use the one the server shows now.');
       });
   };
   $('input', box).focus();

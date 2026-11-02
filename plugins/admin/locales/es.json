@@ -15,9 +15,7 @@
     "Make sure AnyAssistant is running.": "Comprueba que el servidor de AnyAssistant esté activo.",
     "Try Again": "Reintentar",
     "Administer AnyAssistant": "Administrar AnyAssistant",
-    "Type the admin code. On the computer with the server: this page, Admins → «A code for another browser»; or in its terminal: bin/anyassistant admin-code.": "Escribe el código de administración. En el equipo con el servidor: esta página, Administradores → «Un código para otro navegador»; o en su terminal: bin/anyassistant admin-code.",
     "Enter": "Entrar",
-    "That code isn't right (or it's too old): ask for another.": "El código no es correcto o ha caducado.",
     "Pair a device": "Conectar otro dispositivo",
     "Scan the code with the device's camera. With the app installed, it connects by itself; otherwise, it goes on in the browser.": "Escanea el código con la cámara del dispositivo. Con la app instalada, se conecta sola; si no, sigue en el navegador.",
     "Pairing code": "Código de emparejamiento",
@@ -193,6 +191,9 @@
     "What it remembers about them keeps the new name too.": "Sus recuerdos pasan al nombre nuevo. Si ya hay una voz con ese nombre, se juntan en una.",
     "Community themes": "Temas de la comunidad",
     "Uninstall": "Desinstalar",
-    "Uninstall «%s»?": "¿Desinstalar «%s»?"
+    "Uninstall «%s»?": "¿Desinstalar «%s»?",
+    "Type the admin code the server shows in Admins → «A code for another browser», or in its terminal with bin/anyassistant admin-code.": "Escribe el código de administración que muestra el servidor en Administradores → «Un código para otro navegador», o en su terminal con bin/anyassistant admin-code.",
+    "Admin code": "Código de administración",
+    "The code isn't valid or has expired. Use the one the server shows now.": "El código no es válido o ha caducado. Usa el que muestra ahora el servidor."
   }
 }

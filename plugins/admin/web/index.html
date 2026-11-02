@@ -4,18 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AnyAssistant</title>
-  <link rel="stylesheet" href="/web/tokens.css?v=17">
-  <link rel="stylesheet" href="/admin/web/admin.css?v=9">
+  <link rel="stylesheet" href="/web/tokens.css?v=18">
+  <link rel="stylesheet" href="/admin/web/admin.css?v=10">
   <link rel="icon" href="/web/favicon.png">
 </head>
 <body class="ui">
   <div id="banner" hidden></div>
-  <div id="login" hidden>
-    <img class="logo large" src="/web/logo.png" alt="">
-    <h1></h1>
-    <p></p>
-    <form><input inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"><button></button></form>
-    <p class="error"></p>
+  <div id="login" class="ui centered fill" hidden>
+    <div class="panel">
+      <img class="logo large" src="/web/logo.png" alt="">
+      <h1></h1>
+      <p class="description"></p>
+      <form>
+        <label for="login-code"></label>
+        <input id="login-code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        <p class="error"></p>
+        <button class="button"></button>
+      </form>
+    </div>
   </div>
   <div id="app" hidden>
     <!-- The sidebar: the logo and the assistant's name on top, the sections, and Restart. -->
@@ -29,6 +35,6 @@
     </aside>
     <main></main>
   </div>
-  <script src="/admin/web/admin.js?v=14"></script>
+  <script src="/admin/web/admin.js?v=15"></script>
 </body>
 </html>

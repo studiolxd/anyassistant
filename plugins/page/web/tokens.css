@@ -275,6 +275,7 @@ body.ui { color-scheme: dark; }
 /* A page that is only a panel: the screen's visible height (dvh: without the browser's bars; vh for
    old browsers). */
 body.ui.centered { margin: 0; min-height: 100vh; min-height: 100dvh; background: var(--color-background); }
+.ui.centered.fill { min-height: 100vh; min-height: 100dvh; }  /* a panel filling a page that has more (hidden meanwhile) */
 /* margin: auto centres it when it fits; when it doesn't, it starts at the top and scrolls (never
    pushed down or cut). */
 .ui .panel { width: 100%; max-width: 400px; margin: auto; text-align: left; }
