@@ -1,0 +1,54 @@
+{
+  "plugins": {
+    "control-mac": [
+      "Controlar el Mac",
+      "«Abre Safari», «ejecuta el atajo Buenas noches», «abre la carpeta Descargas», «ve a la ventana de Mail», «teclea hola»: el Mac donde corre el servidor, por voz y sin el modelo de lenguaje (el nombre de una aplicación se entiende como suena: «crom»); y como herramientas para el modelo. Escribir pide tu «sí»; las ventanas y escribir necesitan el permiso de accesibilidad."
+    ]
+  },
+  "speech": {
+    "control_need_accessibility": "Para eso necesito el permiso de accesibilidad en el servidor: en Ajustes del Sistema, Privacidad y seguridad, Accesibilidad, activa el programa del servidor."
+  },
+  "options_title": {
+    "app_names": "Nombres de aplicaciones"
+  },
+  "options": {
+    "app_names": "Cómo llamas a cada aplicación, si no te entiende: {\"crome\": \"Google Chrome\"}."
+  },
+  "control_mac": {
+    "names": {
+      "correo": "Mail",
+      "mail": "Mail",
+      "ajustes": "System Settings",
+      "ajustes del sistema": "System Settings",
+      "preferencias": "System Settings",
+      "preferencias del sistema": "System Settings",
+      "notas": "Notes",
+      "recordatorios": "Reminders",
+      "calendario": "Calendar",
+      "fotos": "Photos",
+      "musica": "Music",
+      "mensajes": "Messages",
+      "mapas": "Maps",
+      "contactos": "Contacts",
+      "calculadora": "Calculator",
+      "vista previa": "Preview",
+      "atajos": "Shortcuts",
+      "tienda": "App Store",
+      "libros": "Books",
+      "bolsa": "Stocks",
+      "tiempo": "Weather",
+      "reloj": "Clock",
+      "notas de voz": "Voice Memos",
+      "editor de texto": "TextEdit",
+      "monitor de actividad": "Activity Monitor",
+      "guasap": "WhatsApp",
+      "uasap": "WhatsApp",
+      "wasap": "WhatsApp",
+      "consola": "Console",
+      "utilidad de discos": "Disk Utility",
+      "captura de pantalla": "Screenshot",
+      "visor de fuentes": "Font Book",
+      "libreta de direcciones": "Contacts"
+    }
+  }
+}

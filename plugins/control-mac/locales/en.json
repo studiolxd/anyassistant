@@ -1,0 +1,25 @@
+{
+  "speech": {
+    "control_need_accessibility": "For that I need the Accessibility permission on the server: in System Settings, Privacy & Security, Accessibility, turn on the server's program."
+  },
+  "options_title": {
+    "app_names": "App names"
+  },
+  "options": {
+    "app_names": "What you call an app, if it doesn't understand you: {\"crome\": \"Google Chrome\"}."
+  },
+  "control_mac": {
+    "names": {
+      "settings": "System Settings",
+      "preferences": "System Settings",
+      "system settings": "System Settings",
+      "mail": "Mail",
+      "email": "Mail",
+      "app store": "App Store",
+      "store": "App Store",
+      "text editor": "TextEdit",
+      "activity monitor": "Activity Monitor",
+      "voice memos": "Voice Memos"
+    }
+  }
+}

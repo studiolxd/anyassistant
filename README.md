@@ -210,6 +210,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 
 | Option | Default | |
 |---|---|---|
+| `app_names` | — | what you call an app, if it doesn't understand you: {"crome": "Google Chrome"} |
 | `interpreter` | `"auto"` | an LLM for skills said in unusual ways: auto (a local one if there is: Apple's on a Mac with it) or an LLM's name |
 | `morning_after_alarm` | `true` | the morning summary when you stop the first alarm of the day (before 12) |
 | `unread_query` | `"is:unread in:inbox"` | which emails the summary counts (a Gmail search) |
@@ -778,6 +779,36 @@ there is one, Apple's on a Mac with it; elsewhere nothing), `off`, or any LLM's
 name (`apple`, `claude`…). And the
 LLM has them as tools (`set_timer`, `set_alarm`, `set_reminder`, `list_timers`,
 `cancel_timers`, `set_volume`), without asking for your «yes».
+
+**The Mac itself** (the plugin `control-mac`, only on a Mac; the words and the matching are the
+library `control-language`, which the Windows and Linux plugins will share): the computer the server
+runs on, by voice and without the LLM.
+
+- «Abre Safari», «abre la aplicación Notas», «open Chrome»: an installed app, by its name, the name
+  the Finder shows («Ajustes del Sistema»), or how it sounds in your mouth: the recognizer writes
+  English names as it hears them («crom», «cromo», «fotochop», «guasap»), so names are compared by
+  their sounds, not their spelling. «Abre X» is only taken when an app answers to X: «abre la
+  puerta» still goes to the LLM. What it doesn't understand, `app_names` teaches it:
+  `{"crome": "Google Chrome", "el bicho": "Visual Studio Code"}`.
+- «Ejecuta el atajo Buenas noches», «atajo Descansar», «run the shortcut Good night»: an Apple
+  Shortcut by name (`shortcuts run`), started without waiting for it.
+- «Abre el archivo informe septiembre», «abre la carpeta Descargas», «open the folder Dev»: in your
+  home folder, by Spotlight (every word said, in the name; caches and what is inside apps don't
+  count; the one nearer home wins); the standard folders by name, outright. Two with the same
+  name: it says which one («Abro Dev, en Desarrollo»).
+- «Ve a la ventana de Mail», «cambia a Safari», «go to the budget window», «switch to Chrome»: an
+  app comes to the front, or a window by words of its title.
+- «Teclea hola, ¿qué tal?», «escribe esto: nos vemos a las 8», «type hello»: typed where the cursor
+  is on the Mac, as keystrokes, after your «yes» («¿Escribo «hola»?», the plugin `confirmation`:
+  typing changes things). The text as it was said, with its accents and punctuation.
+- «¿Qué puedo decir?», «what can I say?»: it lists all this.
+
+The windows and typing need macOS's **Accessibility** permission for the program that runs the
+server (System Settings → Privacy & Security → Accessibility): the first time it is needed, it says
+so and macOS adds the program to that list. Opening apps, files and shortcuts need nothing. Not
+done: reading the notifications (it would need Full Disk Access). The LLM has all of it as tools
+too (`open_app`, `run_shortcut`, `open_file`, `go_to_window`, `type_text`; `list_apps`,
+`list_shortcuts`): running a shortcut or typing asks for your «yes».
 
 **Adding a skill** is adding a plugin (`plugins.local/skill-weather/`, kind `skill`):
 

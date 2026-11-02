@@ -1,0 +1,6 @@
+{
+  "name": "Control language",
+  "description": "The words to control the computer by voice (open an app, run a shortcut, open a file or a folder, go to a window, type) and how a spoken name is matched with the names there are, even said as it sounds («crom» for Chrome). A library the control plugins need (control-mac).",
+  "kind": "library",
+  "locked": true
+}
