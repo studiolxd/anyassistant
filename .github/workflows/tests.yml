@@ -20,4 +20,4 @@ jobs:
         env:
           PYTHONUTF8: "1"
       - name: The Windows and Linux app (apps/desktop) parses
-        run: node --check apps/desktop/main.js && node --check apps/desktop/server.js && node --check apps/desktop/microphone.js && node --test apps/desktop/test/
+        run: node --check apps/desktop/main.js && node --check apps/desktop/server.js && node --check apps/desktop/microphone.js && node --test "apps/desktop/test/*.test.js"
