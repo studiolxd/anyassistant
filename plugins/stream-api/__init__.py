@@ -41,6 +41,9 @@ RATE = 48000
 FRESH = 5  # seconds a camera frame is still «now»
 
 
+ECHO_ZEROS = 1.5  # seconds after it stops playing to a device in which its zeros don't count yet
+
+
 class Zeros:
     """Exact digital silence from the device: a microphone always has some noise, but an Android
     app silenced by the system (another app, a call, has the microphone) receives exact zeros.
@@ -53,8 +56,13 @@ class Zeros:
         self.zero = 0.0  # seconds of zeros in a row
         self.silenced = False
 
-    def feed(self, pcm: np.ndarray) -> str | None:
+    def feed(self, pcm: np.ndarray, counting: bool = True) -> str | None:
+        """counting False: zeros now don't count (while it speaks the device's echo cancellation
+        may send exact zeros: the iPhone's does)."""
         if not len(pcm):
+            return None
+        if not counting and not self.silenced:
+            self.zero = 0.0
             return None
         if np.any(pcm):
             self.zero = 0.0
@@ -131,8 +139,9 @@ class Streamer:
 
     def hear(self, pcm: np.ndarray):
         """Its microphone; SECONDS of exact zeros pause it (the system gave the microphone to
-        another app), the first real sample resumes it."""
-        change = self.zeros.feed(pcm)
+        another app), the first real sample resumes it. Not while it speaks to it, nor just after
+        (ECHO_ZEROS): its echo cancellation may send exact zeros then."""
+        change = self.zeros.feed(pcm, counting=time.time() > self.speaker.until + ECHO_ZEROS)
         ear = getattr(self.brain, "ear", None)
         if change and ear is not None:
             if change == "silenced":

@@ -157,6 +157,15 @@ def test_exact_zeros_pause_and_a_sample_resumes():
     assert zeros.feed(np.zeros(0, np.int16)) is None
 
 
+def test_zeros_while_it_speaks_dont_count():
+    """The iPhone's echo cancellation sends exact zeros while it plays: not another app."""
+    zeros = stream.Zeros(seconds=0.1)
+    silence = np.zeros(960, np.int16)
+    assert [zeros.feed(silence, counting=False) for _ in range(20)] == [None] * 20
+    assert [zeros.feed(silence) for _ in range(4)] == [None] * 4  # counted afresh after it
+    assert zeros.feed(silence) == "silenced"
+
+
 def test_quiet_but_real_audio_is_not_silence():
     zeros = stream.Zeros(seconds=0.1)
     for _ in range(20):
