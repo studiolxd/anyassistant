@@ -1069,6 +1069,27 @@ and come back through the microphone). And if what it hears in the following
 seconds is still a short piece of what it just said («Anything else?» after «Do you
 need anything else?»), it drops it.
 
+**Interrupting it without its name** (`listen_while_speaking`, off until measured on real
+devices): it keeps listening while it speaks. The server knows exactly what it sends to each
+device and when, so it keeps the loudness envelope of its last 12 seconds of output per device
+(`server/echo.py`: log-RMS every 20 ms) and, when a sentence ends while it was talking, compares
+the sentence's envelope with that output, searching the playback delay (up to a second): its own
+echo, however quiet after the device's echo cancellation, matches (above `echo_match`, 0.8) and is
+dropped; a person talking over it doesn't match, so it stops and answers them. The other devices'
+output counts too (two in one room), and a sound of its own starting (a chime) can't start a
+sentence. With synthesized voices the echo scores 0.91 or more and a person over it 0.56 or less
+(`tests/test_own_voice.py`).
+
+**Paused while another app uses the microphone** (`pause_when_microphone_busy`, on): a call or a
+meeting on the device isn't transcribed. The iPhone and iPad app is interrupted by iOS and says
+so (a call, by CallKit; else «another app»); the Android app is silenced by the system (Android 10
+or later) and says so (and, failing that, the server notices the exact zeros it receives); the Mac
+app asks CoreAudio which other app records (Apple's own daemons don't count) and names it; on
+Windows and Linux the server looks for the app of this computer (the plugin `microphone-busy`:
+Windows' microphone consent store, PipeWire or PulseAudio). The face shows «En pausa: Zoom usa el
+micrófono» (drawn as asleep), its name doesn't wake it, the follow-up clock stops, and it listens
+again when the other app lets go. A page in a browser can't know this by itself.
+
 Two plugins with macOS voices (the language's voice by default: Samantha in
 English, Mónica in Spanish; `say -v '?'` lists them):
 
