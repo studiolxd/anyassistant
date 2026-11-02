@@ -1,7 +1,8 @@
 // What the face shows, as the page has it: the state (asleep, hearing, thinking, speaking…),
 // the texts in the Mac's language, the theme and its colours, the screen settings, what was
 // said, the timers, the photo it looks at. The Mac's messages change it (receive), and its
-// /config (configure): the same as the page's, so the app follows the Mac's settings.
+// /config (configure): the same as the page's, so the app follows the Mac's settings. Eyes draws
+// it natively; a theme in a web view gets the same from it (WebFace: what is on it already).
 
 import SwiftUI
 
@@ -14,10 +15,11 @@ final class FaceModel: ObservableObject {
         var answer: String? = nil  // an answer's id (the server's), for «speaking»
     }
 
-    /// The sentence being said: the answer's id and where it starts in its text (UTF-16).
+    /// The sentence being said: the answer's id and where it starts and ends in its text (UTF-16).
     struct Said: Equatable {
         let id: String
         let start: Int
+        var end: Int? = nil
     }
 
     struct Item: Identifiable, Equatable {
@@ -37,10 +39,6 @@ final class FaceModel: ObservableObject {
     @Published var options: [String: String] = [:]
     @Published var screen: [String: Any] = [:]
     @Published var captions: [Caption] = []
-    @Published var heard = ""
-    @Published var heardCount = 0  // each new thing you said (it shows from its end)
-    @Published var answer = ""
-    @Published var answerId = ""
     @Published var said: Said?
     @Published var items: [Item] = []
     @Published var alarmLabel = ""
@@ -117,7 +115,7 @@ final class FaceModel: ObservableObject {
             caption(message)
         case "speaking":  // the voice starts saying a sentence of an answer: its words follow it
             if let id = message["id"].map({ "\($0)" }), let start = (message["start"] as? NSNumber)?.intValue {
-                said = Said(id: id, start: start)
+                said = Said(id: id, start: start, end: (message["end"] as? NSNumber)?.intValue)
             }
         case "timers":
             items = (message["items"] as? [[String: Any]] ?? []).compactMap { item in
@@ -139,7 +137,6 @@ final class FaceModel: ObservableObject {
         let assistant = message["author"] as? String == "assistant"
         guard shows(assistant ? "show_answer" : "show_heard") else { return }
         let id = (message["id"]).map { "\($0)" }
-        if assistant { answer = text; answerId = id ?? "" } else { heard = text; heardCount += 1 }
         if let id, let index = captions.firstIndex(where: { $0.id == "a-\(id)" }) {
             captions[index].text = text
             return

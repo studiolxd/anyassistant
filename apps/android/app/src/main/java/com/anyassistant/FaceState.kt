@@ -1,6 +1,7 @@
 // What the face shows, as the page has it: the state, the texts in the Mac's language, the theme
 // and its colours, the screen settings, what was said, the timers, the photo it looks at. The
 // Mac's messages change it (receive), and its /config (configure). The same as iOS's FaceModel.
+// Eyes draws it natively; a theme in a web view gets the same from it (WebFace: what is on it already).
 
 package com.anyassistant
 
@@ -21,8 +22,8 @@ import java.util.UUID
 
 class FaceState {
     data class Caption(val id: String, val text: String, val assistant: Boolean, val answer: String? = null)  // answer: its id, for «speaking»
-    /** The sentence being said: the answer's id and where it starts in its text (UTF-16). */
-    data class Said(val id: String, val start: Int)
+    /** The sentence being said: the answer's id and where it starts and ends in its text (UTF-16). */
+    data class Said(val id: String, val start: Int, val end: Int? = null)
     data class Item(val kind: String, val at: Double, val label: String)
 
     var state by mutableStateOf("connecting")
@@ -35,10 +36,6 @@ class FaceState {
     var options by mutableStateOf<Map<String, String>>(emptyMap())
     var screen by mutableStateOf<Map<String, Any>>(emptyMap())
     val captions = mutableStateListOf<Caption>()
-    var heard by mutableStateOf("")
-    var heardCount by mutableStateOf(0)  // each new thing you said (it shows from its end)
-    var answer by mutableStateOf("")
-    var answerId by mutableStateOf("")
     var said by mutableStateOf<Said?>(null)
     var items by mutableStateOf<List<Item>>(emptyList())
     var alarmLabel by mutableStateOf("")
@@ -118,7 +115,7 @@ class FaceState {
             }
             "text" -> caption(message)
             "speaking" -> if (message.has("id") && message.has("start")) {  // the voice starts a sentence: its words follow it
-                said = Said(message.get("id").toString(), message.optInt("start"))
+                said = Said(message.get("id").toString(), message.optInt("start"), if (message.has("end")) message.optInt("end") else null)
             }
             "timers" -> {
                 val list = message.optJSONArray("items")
@@ -138,7 +135,6 @@ class FaceState {
         val assistant = message.optString("author") == "assistant"
         if (!shows(if (assistant) "show_answer" else "show_heard")) return
         val raw = if (message.has("id")) message.get("id").toString() else null
-        if (assistant) { answer = text; answerId = raw ?: "" } else { heard = text; heardCount++ }
         val id = raw?.let { "a-$it" }
         val index = if (id != null) captions.indexOfFirst { it.id == id } else -1
         if (index >= 0) {

@@ -75,6 +75,19 @@ class Mac(private val context: Context) {
         get() = prefs.getString("authority", null)?.let { Base64.decode(it, Base64.DEFAULT) }
         set(value) = prefs.edit().putString("authority", value?.let { Base64.encodeToString(it, Base64.NO_WRAP) }).apply()
 
+    /** Whether a server's certificate is signed by its own authority (learnt when pairing): for the
+     *  web view of a theme (WebTheme.kt), as the connection's own trust (any name or IP it has). */
+    fun trusts(certificate: android.net.http.SslCertificate): Boolean = runCatching {
+        val factory = CertificateFactory.getInstance("X.509")
+        val ca = factory.generateCertificate(ByteArrayInputStream(authority ?: return false)) as X509Certificate
+        val leaf = if (Build.VERSION.SDK_INT >= 29) certificate.x509Certificate
+            else android.net.http.SslCertificate.saveState(certificate).getByteArray("x509-certificate")
+                ?.let { factory.generateCertificate(ByteArrayInputStream(it)) as X509Certificate }
+        leaf!!.checkValidity()
+        leaf.verify(ca.publicKey)
+        true
+    }.getOrDefault(false)
+
     /** The pairing's cookie («jarvis_device=…»), sent with everything. */
     var cookie: String?
         get() = prefs.getString("cookie", null)

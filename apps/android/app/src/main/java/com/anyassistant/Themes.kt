@@ -1,6 +1,7 @@
-// The four themes, drawn natively: Eyes, Orb, Bedside and Minimal (plugins/page/themes: the same
-// looks; sizes in «v» = 1% of the screen's shorter side, as the CSS's vmin). A theme the app
-// doesn't have yet is drawn as Eyes. The same as iOS's Themes.swift.
+// The face: the theme Eyes, drawn natively (plugins/page/themes/eyes: the same look; sizes in «v» =
+// 1% of the screen's shorter side, as the CSS's vmin); every other theme, the server's page in a
+// web view (WebTheme.kt), fed by the app. Eyes too while the server's page can't be had. The same
+// as iOS's Themes.swift.
 
 package com.anyassistant
 
@@ -11,7 +12,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.key
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -96,11 +100,20 @@ import kotlin.random.Random
 
 val grey = Color(0xff888888)
 
+/** The face. A tap: it stops talking or wakes up; held: the settings (whatever the theme). */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-fun ThemeView(face: FaceState, camera: Camera) {
+fun ThemeView(face: FaceState, camera: Camera, web: WebFace, tap: () -> Unit, settings: () -> Unit) {
     // The background to the screen's edges; the face, its words, the clock and the camera inside
     // the safe area (not under the camera's cutout, nor the system bars when they show).
-    Box(Modifier.fillMaxSize().background(face.background)) { ThemeContent(face, camera) }
+    Box(Modifier.fillMaxSize().background(face.background)) {
+        if (web.shows(face.theme)) {
+            key(face.theme) { WebTheme(web, camera, face.theme, tap, settings) }  // another theme: another page
+        } else {
+            Box(Modifier.fillMaxSize().combinedClickable(remember { MutableInteractionSource() }, null,
+                onLongClick = settings, onClick = tap)) { ThemeContent(face, camera) }
+        }
+    }
 }
 
 @Composable
@@ -112,12 +125,7 @@ private fun ThemeContent(face: FaceState, camera: Camera) {
         var origin by remember { mutableStateOf(0f) }
         Box(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot().y }) {
             CompositionLocalProvider(LocalFaceEnd provides { y -> end.value = y - origin }) {
-                when (face.theme) {
-                    "orb" -> OrbTheme(face, scope)
-                    "bedside" -> BedsideTheme(face, scope)
-                    "minimal" -> MinimalTheme(face, scope)
-                    else -> EyesTheme(face, scope)
-                }
+                EyesTheme(face, scope)
             }
         }
         // «Muestra la cámara»: centred below what the face says, in the space left; the face doesn't move.
@@ -132,7 +140,7 @@ private fun ThemeContent(face: FaceState, camera: Camera) {
     }
 }
 
-/** Where a theme's face and words end: each theme puts FaceEndMark() last in its column. */
+/** Where the face and its words end: Eyes puts FaceEndMark() last in its column. */
 val LocalFaceEnd = staticCompositionLocalOf<(Float) -> Unit> { {} }
 
 @Composable
@@ -202,39 +210,35 @@ fun beat(t: Double, period: Double, delay: Double = 0.0): Float = (0.5 - 0.5 * c
 // --- Shared pieces ---
 
 @Composable
-fun StatusLine(face: FaceState, size: TextUnit, color: Color = grey, weight: FontWeight = FontWeight.Normal,
-               align: TextAlign = TextAlign.Center, modifier: Modifier = Modifier) {
-    Text(face.status, modifier, color = color, fontSize = size, fontWeight = weight, textAlign = align)
+fun StatusLine(face: FaceState, size: TextUnit, modifier: Modifier = Modifier) {
+    Text(face.status, modifier, color = grey, fontSize = size, textAlign = TextAlign.Center)
 }
 
 @Composable
-fun TimerLines(face: FaceState, size: TextUnit, color: Color = Color.White, icons: Boolean = true,
-               alignment: Alignment.Horizontal = Alignment.CenterHorizontally, spacing: Dp = 4.dp, modifier: Modifier = Modifier) {
+fun TimerLines(face: FaceState, size: TextUnit, modifier: Modifier = Modifier) {
     if (!face.shows("show_timers")) return
     val now by produceState(System.currentTimeMillis()) { while (true) { value = System.currentTimeMillis(); delay(1000) } }
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(spacing), horizontalAlignment = alignment) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         for (item in face.items.filter { it.at > now / 1000.0 - 1 }) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (icons) {
-                    val icon = when (item.kind) { "alarm" -> Icons.Outlined.Alarm; "reminder" -> Icons.Outlined.Notifications; else -> Icons.Outlined.Timer }
-                    Icon(icon, null, tint = color, modifier = Modifier.size(with(LocalDensity.current) { size.toDp() }))
-                    Spacer(Modifier.width(with(LocalDensity.current) { (size * 0.35f).toDp() }))
-                }
-                Text(face.line(item, now), color = color, fontSize = size)
+                val icon = when (item.kind) { "alarm" -> Icons.Outlined.Alarm; "reminder" -> Icons.Outlined.Notifications; else -> Icons.Outlined.Timer }
+                Icon(icon, null, tint = Color.White, modifier = Modifier.size(with(LocalDensity.current) { size.toDp() }))
+                Spacer(Modifier.width(with(LocalDensity.current) { (size * 0.35f).toDp() }))
+                Text(face.line(item, now), color = Color.White, fontSize = size)
             }
         }
     }
 }
 
 @Composable
-fun CaptionLines(face: FaceState, accent: Color, older: Color = Color.White, olderAlpha: Float = 0.6f, modifier: Modifier = Modifier) {
+fun CaptionLines(face: FaceState, accent: Color, modifier: Modifier = Modifier) {
     val lastOne = face.captions.lastOrNull()
     WordsArea(lastOne?.let { face.aim(it.id, it.answer, it.text) } ?: Aim("", 0f), lastOne?.id ?: "", modifier,
         Alignment.CenterHorizontally, Arrangement.spacedBy(5.dp)) {
         for (caption in face.captions) {
             val last = caption.id == lastOne?.id
-            Text(caption.text, Modifier.word(caption.id).alpha(if (last) 1f else olderAlpha),
-                color = if (caption.assistant) accent else if (last) Color.White else older,
+            Text(caption.text, Modifier.word(caption.id).alpha(if (last) 1f else 0.6f),
+                color = if (caption.assistant) accent else Color.White,
                 fontSize = with(LocalDensity.current) { (if (last) 24f else 17.6f).dp.toSp() }, textAlign = TextAlign.Center)
         }
     }
@@ -292,7 +296,7 @@ fun WordsArea(aim: Aim, fresh: Any, modifier: Modifier = Modifier, alignment: Al
     }
 }
 
-/** The time and the date (each theme lays them out). */
+/** The time and the date (the theme lays them out). */
 @Composable
 fun Clock(face: FaceState, content: @Composable (time: String?, day: String?) -> Unit) {
     val now by produceState(Date()) { while (true) { value = Date(); delay(5000) } }
@@ -459,171 +463,6 @@ private fun DrawScope.drawEye(center: Offset, w: Float, h: Float, tilt: Float, c
                 val lidCenter = Offset(center.x, center.y - 0.62f * h)
                 rotate(lid, lidCenter) { drawRect(background, Offset(lidCenter.x - 0.9f * w, lidCenter.y - h / 2), Size(1.8f * w, h)) }
             }
-        }
-    }
-}
-
-// --- Orb ---
-
-/** A flat sphere that breathes, beats with your voice and sends out waves when it speaks. */
-@Composable
-fun OrbTheme(face: FaceState, s: Sizes) {
-    val look = face.look
-    val tone = when (look) {
-        "asleep" -> grey
-        "hearing" -> hex("#7ff0c2")!!
-        "thinking" -> hex("#e0b54a")!!
-        "looking" -> hex("#cfd8dc")!!
-        "speaking" -> hex("#5bc6e8")!!
-        "question" -> hex("#a98cf0")!!
-        "alarm" -> hex("#ff7a45")!!
-        "error" -> hex("#e05555")!!
-        else -> face.color("accent", hex("#3ddc97")!!)
-    }
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        if (look == "asleep") {
-            Clock(face) { time, day ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    time?.let { Text(it, color = Color(0xff666666), fontSize = s.sp(24f), fontWeight = FontWeight.ExtraLight) }
-                    day?.let { Text(it, Modifier.padding(top = s.dp(1f), bottom = s.dp(4f)), color = Color(0xff666666), fontSize = s.sp(5f)) }
-                }
-            }
-        }
-        val side = s.dp(if (s.landscape) 28f else 40f)
-        val t = clock()
-        Canvas(Modifier.padding(s.dp(if (s.landscape) 2f else 3f)).size(side)) {
-            val unit = s.v.dp.toPx()
-            val r = size.minDimension / 2
-            val pulse = when (look) {
-                "speaking" -> 1 + face.speech * 0.2f
-                "hearing", "awake" -> 1 + face.voice * 0.18f
-                "asleep" -> 0.55f
-                else -> 1f
-            }
-            scale(pulse) {
-                if (look == "speaking") for (i in 0 until 2) {
-                    val p = ((t + i * 0.8) % 1.6 / 1.6).toFloat()
-                    drawCircle(tone.copy(alpha = 0.7f * (1 - p)), r * (0.9f + 0.8f * (1 - (1 - p) * (1 - p))), style = Stroke(0.6f * unit))
-                }
-                if (look == "thinking" || look == "looking") {
-                    val ring = r + 3.4f * unit
-                    drawArc(tone, (-135 + 360 * (t % 1.1 / 1.1)).toFloat(), 180f, false,
-                        Offset(center.x - ring, center.y - ring), Size(2 * ring, 2 * ring), style = Stroke(0.8f * unit))
-                }
-                val alpha = when (look) { "asleep" -> 0.35f + 0.45f * beat(t, 5.0); "alarm" -> 1 - 0.4f * beat(t, 0.6); else -> 1f }
-                drawCircle(tone.copy(alpha = alpha), r * (if (look == "alarm") 1 - 0.15f * beat(t, 0.6) else 1f))
-            }
-        }
-        StatusLine(face, 22.sp, modifier = Modifier.padding(top = 27.dp))
-        TimerLines(face, s.sp(if (s.landscape) 4.5f else 5f), Color(0xffbbbbbb), icons = false,
-            modifier = Modifier.padding(top = s.dp(if (s.landscape) 1.5f else 3f)))
-        if (look != "asleep") {
-            // A fixed height (the column is centred: so the sphere doesn't move); longer, it scrolls.
-            CaptionLines(face, tone, Color(0xff666666), 1f, Modifier.padding(top = 10.dp).width(s.width * (if (s.landscape) 0.7f else 0.9f))
-                .height(if (s.landscape) s.height * 0.2f else maxOf(112.dp, s.height * 0.2f)))
-        }
-        FaceEndMark()
-    }
-}
-
-// --- Bedside ---
-
-/** For the bedside table: only a dim time while asleep; awake, a grey ember and its answer. */
-@Composable
-fun BedsideTheme(face: FaceState, s: Sizes) {
-    val look = face.look
-    val asleep = look == "asleep"
-    val glow = face.color("glow", hex("#9ca3af")!!)
-    val t = clock()
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Clock(face) { time, day ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                time?.let { Text(it, Modifier.alpha(if (asleep) 0.35f else 0.3f), color = glow, fontSize = s.sp(if (asleep) 26f else 8f), fontWeight = FontWeight.ExtraLight) }
-                if (asleep) day?.let { Text(it, Modifier.alpha(0.25f), color = glow, fontSize = s.sp(4f)) }
-            }
-        }
-        val alpha = when {
-            asleep -> 0f
-            look == "thinking" -> 0.6f - 0.35f * beat(t, 1.4)
-            look == "alarm" -> 1f - 0.75f * beat(t, 0.7)
-            else -> 0.6f
-        }
-        Canvas(Modifier.padding(top = s.dp(6f), bottom = s.dp(3f)).size(s.dp(10f))) {
-            drawCircle((if (look == "error") hex("#7f1d1d")!! else glow).copy(alpha = alpha),
-                size.minDimension / 2 * (1 + face.voice * 0.4f + face.speech * 0.4f))
-        }
-        StatusLine(face, s.sp(4f), glow, modifier = Modifier.alpha(if (asleep) 0.2f else 0.5f))
-        TimerLines(face, s.sp(5f), glow, icons = false, spacing = 0.dp, modifier = Modifier.alpha(0.6f).padding(top = s.dp(3f)))
-        if (!asleep && face.shows("show_answer")) {  // four lines, always (the column is centred: so the ember doesn't move)
-            WordsArea(face.aim("answer", face.answerId, face.answer), face.answerId,
-                Modifier.padding(top = 16.dp).width(s.width * 0.8f).height(s.dp(25f)), Alignment.CenterHorizontally) {
-                Text(face.answer, Modifier.word("answer").fillMaxWidth().alpha(0.7f), color = glow, fontSize = s.sp(5f), textAlign = TextAlign.Center)
-            }
-        }
-        FaceEndMark()
-    }
-}
-
-// --- Minimal ---
-
-/** High contrast and large text: a light that changes with each state, and words. */
-@Composable
-fun MinimalTheme(face: FaceState, s: Sizes) {
-    val look = face.look
-    val asleep = look == "asleep"
-    val ink = face.color("text", Color.White)
-    val light = when (look) {
-        "asleep" -> Color(0xff444444)
-        "hearing" -> hex("#00e676")!!
-        "thinking", "looking" -> hex("#ffd600")!!
-        "speaking" -> hex("#40c4ff")!!
-        "question" -> hex("#e040fb")!!
-        "alarm" -> hex("#ff6d00")!!
-        "error" -> hex("#ff1744")!!
-        else -> Color.White
-    }
-    val top = s.height * (if (s.landscape) 0.34f else 0.40f)
-    val t = clock()
-    Box(Modifier.fillMaxSize()) {
-        if (asleep) {
-            Box(Modifier.fillMaxWidth().height(top - s.dp(if (s.landscape) 2f else 4f)).padding(horizontal = s.dp(6f)),
-                contentAlignment = Alignment.BottomStart) {
-                Clock(face) { time, day ->
-                    Column(verticalArrangement = Arrangement.spacedBy(s.dp(2f))) {
-                        time?.let { Text(it, color = ink, fontSize = s.sp(if (s.landscape) 15f else 22f), fontWeight = FontWeight.Bold) }
-                        day?.let { Text(it, color = ink, fontSize = s.sp(if (s.landscape) 5f else 6f)) }
-                    }
-                }
-            }
-        }
-        Column(Modifier.fillMaxSize().padding(top = top).padding(horizontal = s.dp(6f))) {
-            Canvas(Modifier.height(s.dp(14f)).width(s.dp(12f))) {
-                val r = s.dp(6f).toPx() * (0.8f + face.voice * 0.5f + face.speech * 0.5f)
-                val c = Offset(size.width / 2, s.dp(6f).toPx())
-                if (look !in listOf("asleep", "awake", "error")) {
-                    val p = ((t % 1.6) / 1.6).toFloat()
-                    drawCircle(light.copy(alpha = 0.6f * (1 - p)), r * (1 + p), c)
-                }
-                drawCircle(light, r, c)
-            }
-            StatusLine(face, s.sp(9f), ink, FontWeight.Bold, TextAlign.Start, Modifier.padding(vertical = s.dp(if (s.landscape) 2f else 4f)))
-            TimerLines(face, s.sp(if (s.landscape) 5.5f else 7f), ink, icons = false, alignment = Alignment.Start, spacing = s.dp(1f),
-                modifier = Modifier.padding(top = s.dp(if (s.landscape) 1f else 3f)))
-            if (!asleep) {
-                // What you said: two lines at most (its end); the answer, the space down to the bottom.
-                if (face.shows("show_heard") && face.heard.isNotEmpty()) {
-                    WordsArea(Aim("heard", 1f), face.heardCount, Modifier.padding(bottom = s.dp(2f)).heightIn(max = s.dp(15f))) {
-                        Text(face.heard, Modifier.word("heard").fillMaxWidth().alpha(0.75f), color = ink, fontSize = s.sp(6f))
-                    }
-                }
-                if (face.shows("show_answer") && face.answer.isNotEmpty()) {
-                    WordsArea(face.aim("answer", face.answerId, face.answer), face.answerId,
-                        Modifier.padding(bottom = s.dp(4f)).weight(1f, fill = false)) {
-                        Text(face.answer, Modifier.word("answer").fillMaxWidth(), color = ink, fontSize = s.sp(7f))
-                    }
-                }
-            }
-            FaceEndMark()
         }
     }
 }

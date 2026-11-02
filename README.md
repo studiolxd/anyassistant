@@ -340,17 +340,17 @@ is («here» means there);
 
 **The Mac app** (`apps/mac`, in the menu bar): it installs and runs the server, connects devices
 (the QR), and has the settings; and the assistant is on the Mac too: «Show Eva» opens its face in a
-window (the iPhone app's own files, `Sources/AnyAssistant/Client`, linked to `apps/ios/Sources`),
-with the Mac's microphone and speaker (macOS's echo cancellation) and, while the window is open,
+window (the iPhone app's own files, `Sources/AnyAssistant/Client`, linked to `apps/ios/Sources`:
+Eyes drawn natively, any other theme the server's page in a web view, as on the iPhone), with the Mac's microphone and speaker (macOS's echo cancellation) and, while the window is open,
 its camera; «Listen on this Mac» turns the microphone off. It talks to its own server (no code).
 On a Mac without the server, it is only that: a client of another Mac's («The server is on
 another Mac» when installing: its address and the code). `apps/mac/install-dev.sh --build` while
 developing.
 
 **The iPhone and iPad app** (`apps/ios`, iOS 15 or later, and the plugin `stream-api`): native.
-Its face is drawn as the page's themes (Eyes, Orb, Bedside, Minimal: `apps/ios/Sources/Themes.swift`,
-the same looks; a new theme has to be drawn there too, else it shows as Eyes), following the Mac's
-state, texts and screen settings (its `/config`). The microphone and the speaker go over a
+Its face is its theme: Eyes drawn natively (`apps/ios/Sources/Themes.swift`), any other the
+server's page in a web view (`WebTheme.swift`, see «Themes»), following the Mac's state, texts
+and screen settings (its `/config`). The microphone and the speaker go over a
 WebSocket (`GET /stream?device=…`: 16-bit mono PCM at 48 kHz both ways, and the page's JSON
 messages), with iOS's echo cancellation; so it keeps listening with the screen off (Settings in
 the app: the gear). With the plugin `eyes`, its camera: a frame a second while awake («¿qué ves?»),
@@ -364,7 +364,8 @@ código»: VisionKit where it exists, else AVFoundation), by the QR page's «Abr
 choosing the server and typing the 6-digit code; HTTPS trusting only your Mac's authority.
 
 **The Android app** (`apps/android`, Android 8 or later, Kotlin and Compose; the plugin
-`stream-api`): the same as the iPhone's. Its face, the four themes (`Themes.kt`); its microphone
+`stream-api`): the same as the iPhone's. Its face, Eyes natively (`Themes.kt`) and any other theme
+in a web view (`WebTheme.kt`); its microphone
 and speaker over the WebSocket, in «communication» mode with Android's echo canceller; it finds
 the Mac by Bonjour (`_anyassistant._tcp`: many Androids don't resolve anyassistant.local), pairs
 with the 6-digit code (or scanning the QR: CameraX and ZXing, no Play Services; or opened by the QR
@@ -690,6 +691,17 @@ JavaScript**. Four come with Jarvis (`plugins/page/themes/`):
 Chosen with `theme` for every device, `?theme=bedside` on one (remembered by it;
 `?theme=default` forgets it), or by voice («ponte el tema de mesilla», «only on
 this one»).
+
+**In the apps.** The iPhone, iPad, Mac and Android apps draw **Eyes natively**; **every other
+theme** (a system one or one installed from the community) is the server's own page in a web
+view, so it looks as in a browser: `/?app&theme=<name>`. In that mode the page opens no WebRTC
+and asks for no microphone: the app keeps the microphone, the audio, the camera, alarms and
+notifications, and feeds the page through a bridge (`AnyAssistant.receive(…)`: the server's
+messages as they come, the voices' levels, the app's own problems such as «looking for the
+server»); the page tells the app «ready» (it then gets what is on the face already), the taps
+(holding: the app's settings) and where the camera's window is (the app shows its own camera
+there). The pairing's cookie goes with it, and over HTTPS only your server's authority is
+trusted. If the page can't be had, the app shows Eyes.
 
 **Making one.** `bin/anyassistant theme new mine --from orb` copies a theme into your
 folder (`themes_dir`, `themes.local/` by default: where an installed Jarvis keeps

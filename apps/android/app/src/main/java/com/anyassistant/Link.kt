@@ -37,6 +37,8 @@ class Link(private val context: Context) {
     val audio = Audio(context)
     val camera = Camera(context)
     val face = FaceState()
+    /** Every theme but Eyes: the server's page, fed from here (WebTheme.kt). */
+    val web = WebFace(face, mac)
     var state by mutableStateOf(State.CONNECTING)
         private set
 
@@ -203,7 +205,9 @@ class Link(private val context: Context) {
                     .use { if (it.code == 200) JSONObject(it.body.string()) else null }
             }.getOrNull()
         } ?: return
+        web.configured(base, mac.cookie)
         face.configure(config)
+        web.forward(JSONObject().put("type", "config"))  // the page reads its texts and settings again
         send(JSONObject().put("type", "theme").put("name", face.theme))  // its theme's sounds are played from the Mac
         fetchAlarmSound(base, face.theme)
     }
@@ -248,7 +252,7 @@ class Link(private val context: Context) {
             "hello" -> eyes = message.optBoolean("eyes")
             "pong" -> {}
             "photo" -> takePhoto(message.optInt("id"))
-            "look" -> scope.launch { showPhoto() }
+            "look" -> if (web.shows(face.theme)) web.forward(message) else scope.launch { showPhoto() }  // the page shows it itself; Eyes, here
             "config" -> scope.launch { configure() }
             "theme" -> {
                 val name = message.optString("name")
@@ -259,6 +263,7 @@ class Link(private val context: Context) {
             }
             else -> {
                 face.receive(message)
+                web.forward(message)
                 Notices.handle(context, message, face.name)
                 if (type == "state" || type == "camera") look()
             }
