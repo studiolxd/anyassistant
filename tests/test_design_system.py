@@ -65,7 +65,7 @@ def test_every_page_links_the_tokens_first():
 def test_the_logo_is_on_every_page():
     for name, page in PAGES.items():
         html = page.read_text()
-        assert re.search(r'<img class="logo( large)?" src="/web/favicon.png"', html), name
+        assert re.search(r'<img class="logo( large)?" src="/web/logo.png"', html), name
     assert 'class="ui"' in PAGES["device"].read_text()  # the pairing form, not the theme's screen
 
 
