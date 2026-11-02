@@ -10,24 +10,16 @@ releases: el instalador .exe, el AppImage y el .deb), y la app de Android en un 
 
 ## Las apps
 
-- [ ] **iPhone y iPad**: instalar la última versión en el iPhone 16 Pro (el arreglo de los
-  textos); subir a TestFlight para el iPhone 7 (iOS 15) y el iPad (iOS 17) y probarlas allí;
-  el sonido de las alarmas, el del tema (hoy el del sistema); los recordatorios, ¿alarma
-  (AlarmKit, como ahora) o notificación normal?; un modo demo para la revisión de la App Store
-  (el revisor no tiene tu Mac), solo si se publica fuera de TestFlight.
+- [ ] **iPhone y iPad**: subir a TestFlight para el iPhone 7 (iOS 15) y probarla allí (el iPad
+  con iOS 17 ya funciona, instalada por cable); un modo demo para la revisión de la App Store (el
+  revisor no tiene tu Mac), solo si se publica fuera de TestFlight.
 - [ ] **Android**: probarla en un Android 8 real (el micrófono y la cancelación de eco,
   encontrar el Mac por Bonjour, la alarma con la pantalla bloqueada, la cámara); publicarla
   (Google Play, o el APK firmado para instalar a mano).
-- [ ] **El Mac** (servidor y cliente): hablarle de verdad desde «Mostrar a Eva»; su diseño e
-  icono; encontrar el servidor de otro Mac con Bonjour (hoy, su dirección a mano); campos de
-  ajustes como es debido para las opciones que son listas o JSON (hoy, un campo de texto).
+- [ ] **El Mac**: hablarle de verdad desde «Mostrar a Eva» y probarlo como cliente de otro servidor.
 - [ ] **El Apple Watch**: los avisos en la muñeca (alarmas, agenda, «la cocina dice…», con
   vibración: notificaciones push); fuera de casa (el Mac accesible desde fuera: Tailscale…);
   una complicación para la esfera y el botón Acción.
-- [ ] **La tablet con Android 4.4** (la página web): comprobar sin cable que NoSleep.js
-  (`web/nosleep.js`) mantiene la pantalla encendida. Su vídeo ya avanza (la política de la
-  página bloqueaba los vídeos `data:`); el log del servidor lo dice cada minuto («keeping the
-  screen on: …»). Si aun así se apaga: la opción de Android «Pantalla activa».
 - [ ] **Tele**: no por ahora (sin micrófono que puedan usar las apps); si acaso, Android TV
   como pantalla y altavoz, con la app de Android.
 - [ ] **Diseño de las páginas web**: darles un diseño cuidado a la página de temas
@@ -90,7 +82,9 @@ Java no tiene cancelación de eco).
 - [ ] **2b. Lo que queda de los motores**: probarlo todo en tu Windows y tu Linux (en
   curso); Claude Code allí (las preguntas abiertas); `tts-piper` (más ligero, para una
   Raspberry); `set_voice` con las voces de Kokoro (hoy, solo las del Mac); en Windows,
-  reiniciar por voz con la app de bandeja (hoy `os.execv`, que cambia de proceso).
+  reiniciar por voz con la app de bandeja (hoy `os.execv`, que cambia de proceso); el control
+  sin LLM (aplazado); qué dice la app cuando es cliente de otro servidor y otra app usa el
+  micrófono.
 - [x] **3. Linux sin pantalla** (1 nov): `install.sh` y el servicio de systemd; la
   administración web en `/admin` (emparejar con QR, dispositivos, ajustes, plugins, voces,
   correo, administradores), en el idioma del servidor. Desde el propio equipo, o desde un
@@ -150,12 +144,14 @@ Java no tiene cancelación de eco).
 
 ## Calidad de la conversación
 
-- [ ] **Interrumpirle sin decir su nombre**: mientras habla no escucha (eco), así que
-  solo funcionan «Jarvis, para» o un toque. Necesita una cancelación de eco mejor que
-  la de la tablet; lo que más haría que pareciera una conversación, y lo más difícil.
-  Ahora es más alcanzable: las apps nativas (iPhone, Mac, Android) usan la cancelación de
-  eco del sistema, mucho mejor que la del navegador: probar a escuchar mientras habla solo
-  en ellas.
+- [ ] **Afinar el eco al interrumpirle** (`listen_while_speaking`, activado): con más uso real en
+  cada dispositivo (el log da la puntuación de cada frase, «its own echo» / «not its echo»).
+- [ ] **Los fallos del corpus**: Parakeet se pasa al inglés con frases cortas («Yeah.»,
+  «Thank you.»), las primeras palabras se pierden con ruido (0,3 s de preroll) y Whisper se
+  inventa «Gracias.» (docs/corpus.md).
+- [ ] **Juntar una pregunta partida por una pausa** («la caída del imperio» … «romano de
+  Occidente»): si el segundo trozo llega mientras piensa la respuesta al primero, una sola
+  respuesta a los dos.
 - [ ] **Palabra de activación**: seguir vigilando falsos positivos y negativos (31 oct:
   28 activaciones, una falsa, corregida; no se encontraron fallos). Un nombre en el
   idioma del usuario llega con el nuevo nombre de la app (`name`).
@@ -170,6 +166,17 @@ Java no tiene cancelación de eco).
   35 s con la voz sintética (test_memory_with_claude); pasó al repetirlo.
 
 ## Hecho
+
+- [x] **Alarmas con el sonido del tema y recordatorios como notificación** (2 nov): en el
+  iPhone, el iPad y Android las alarmas y los temporizadores suenan con la alarma del tema
+  (`/alarm.wav`); los recordatorios son notificaciones normales. La página de temas deja
+  escuchar los sonidos de cada tema.
+- [x] **La tablet con Android 4.4** (2 nov): la pantalla se mantiene encendida con NoSleep.js
+  (la política de la página bloqueaba su vídeo `data:`).
+- [x] **Interrumpirle sin decir su nombre** (2 nov): activado por defecto
+  (`listen_while_speaking`); su eco se reconoce por el volumen y por sus palabras.
+- [x] **El Mac**: su icono y su asistente de instalación; encontrar otro servidor por Bonjour;
+  las opciones de tipo diccionario con su editor (y plugins, correo y voces en sus páginas).
 
 - [x] **Licencia del repositorio**: MIT (`LICENSE`).
 
