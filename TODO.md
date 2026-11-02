@@ -8,7 +8,8 @@
 - [ ] **Firmar el instalador de Windows** cuando lo instale más gente (Azure Artifact
   Signing a nombre de Studio LXD, ~10 $/mes; confirmar que admite empresas de España).
 - [ ] **Que las apps se actualicen solas**: hecho (Sparkle en el Mac; electron-updater en Windows y
-  Linux), falta probar una actualización real de la 0.2.0 a la siguiente en cada sistema.
+  Linux). Probado en el Mac (2 nov, de la 477 a la 0.2.0); falta una actualización real en Windows y
+  Linux, de la 0.2.0 a la siguiente.
 - [ ] **Versión para Windows en ARM.**
 - [ ] **Versión para Raspberry Pi** (Linux en ARM).
 
