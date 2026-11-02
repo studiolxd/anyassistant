@@ -126,18 +126,115 @@ struct CaptionLines: View {
     let accent: Color
     var older: Color = .white
     var olderOpacity = 0.6
+    var height: CGFloat? = nil  // as WordsArea's
+    var bottom: CGFloat? = nil
+    var minHeight: CGFloat = 0
 
     var body: some View {
-        VStack(spacing: 5) {
-            ForEach(face.captions) { caption in
-                let last = caption.id == face.captions.last?.id
-                Text(caption.text)
-                    .font(.system(size: last ? 24 : 17.6))
-                    .foregroundColor(caption.assistant ? accent : last ? .white : older)
-                    .opacity(last ? 1 : olderOpacity)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+        let last = face.captions.last
+        WordsArea(aim: last.map { face.aim($0.id, answer: $0.answer, text: $0.text) } ?? Aim(key: "", y: 0),
+                  fresh: last?.id ?? "", height: height, bottom: bottom, minHeight: minHeight) {
+            VStack(spacing: 5) {
+                ForEach(face.captions) { caption in
+                    let isLast = caption.id == last?.id
+                    Text(caption.text)
+                        .font(.system(size: isLast ? 24 : 17.6))
+                        .foregroundColor(caption.assistant ? accent : isLast ? .white : older)
+                        .opacity(isLast ? 1 : olderOpacity)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .id(caption.id)
+                }
             }
+            .frame(maxWidth: .infinity)
+        }
+    }
+}
+
+/// A WordsArea's words, measured in its scroll: width, their top (0, or less when scrolled); height, theirs.
+struct WordsMetrics: PreferenceKey {
+    static var defaultValue = CGSize.zero
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) { value = nextValue() }
+}
+
+/// The words (the captions, what you said, the answer) in their own area, as the page's: it scrolls
+/// without a bar (a finger, the trackpad, the wheel) and follows `aim` (FaceModel.aim: the end of
+/// what you said, the sentence the voice is saying); scrolled by hand, it stops following until
+/// back at the end or new words arrive (`fresh` changes). A fade at the edge where there is more.
+/// Its height: `height`, fixed (a centred column: so the face doesn't move); else as tall as the
+/// words, from `minHeight` up to `most` and to `bottom` (in ThemeView's space: down to there).
+struct WordsArea<Content: View>: View {
+    let aim: Aim
+    let fresh: String
+    var height: CGFloat? = nil
+    var most: CGFloat? = nil
+    var bottom: CGFloat? = nil
+    var minHeight: CGFloat = 0
+    @ViewBuilder let content: () -> Content
+
+    @State private var space = UUID().uuidString  // its scroll's own coordinate space
+    @State private var top: CGFloat = 0  // where the area starts, in ThemeView's space
+    @State private var offset: CGFloat = 0  // the words' top in the area: 0, or less when scrolled
+    @State private var words: CGFloat = 0  // the words' height
+    @State private var following = true
+    @State private var auto = Date.distantPast  // until when the scrolling is its own
+
+    private var view: CGFloat {
+        if let height { return height }
+        var most = self.most ?? .infinity
+        if let bottom { most = min(most, bottom - top) }
+        return max(minHeight, min(words, max(most, minHeight)))
+    }
+
+    var body: some View {
+        let view = self.view
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: false) {
+                content()
+                    .background(GeometryReader { g in
+                        Color.clear.preference(key: WordsMetrics.self,
+                                               value: CGSize(width: g.frame(in: .named(space)).minY, height: g.size.height))
+                    })
+            }
+            .coordinateSpace(name: space)
+            .frame(height: view)
+            .onPreferenceChange(WordsMetrics.self) { m in
+                let moved = abs(m.width - offset) > 1
+                offset = m.width
+                let grew = m.height != words
+                words = m.height
+                if moved && Date() > auto { following = false }  // by hand
+                if !following && -offset >= words - view - 2 {  // back at the end: following again
+                    following = true
+                    go(proxy)
+                } else if grew {
+                    go(proxy)
+                }
+            }
+            .onChange(of: aim) { _ in go(proxy) }
+            .onChange(of: fresh) { _ in following = true; go(proxy) }
+            .onAppear { go(proxy) }
+        }
+        .frame(height: view)
+        .mask(VStack(spacing: 0) {
+            LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                .frame(height: offset < -1 ? 28 : 0)
+            Color.black
+            LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                .frame(height: words + offset > view + 1 ? 28 : 0)
+        })
+        .background(GeometryReader { g in
+            Color.clear
+                .onAppear { top = g.frame(in: .named("theme")).minY }
+                .onChange(of: g.frame(in: .named("theme")).minY) { top = $0 }
+        })
+    }
+
+    private func go(_ proxy: ScrollViewProxy) {
+        guard following, !aim.key.isEmpty else { return }
+        auto = Date().addingTimeInterval(0.7)
+        withAnimation(.easeInOut(duration: 0.45)) {
+            proxy.scrollTo(aim.key, anchor: UnitPoint(x: 0.5, y: aim.y))
         }
     }
 }
@@ -281,9 +378,9 @@ struct EyesTheme: View {
                 TimerLines(face: face, size: (landscape ? 4.5 : 5) * v)
                     .padding(.top, (landscape ? 1.5 : 3) * v)
                 if look != "asleep" {
-                    CaptionLines(face: face, accent: accent)
+                    // From 112 up to the space left down to the bottom: the eyes above don't move.
+                    CaptionLines(face: face, accent: accent, bottom: size.height - 2 * v, minHeight: landscape ? 0 : 112)
                         .frame(width: size.width * (landscape ? 0.7 : 0.9))
-                        .frame(minHeight: landscape ? 0 : 112, alignment: .top)
                         .padding(.top, 10)
                 }
             }
@@ -470,9 +567,10 @@ struct OrbTheme: View {
             TimerLines(face: face, size: (landscape ? 4.5 : 5) * v, color: Color(white: 0.73), icons: false)
                 .padding(.top, (landscape ? 1.5 : 3) * v)
             if look != "asleep" {
-                CaptionLines(face: face, accent: tone, older: Color(white: 0.4), olderOpacity: 1)
+                // A fixed height (the column is centred: so the sphere doesn't move); longer, it scrolls.
+                CaptionLines(face: face, accent: tone, older: Color(white: 0.4), olderOpacity: 1,
+                             height: landscape ? size.height * 0.2 : max(112, size.height * 0.2))
                     .frame(width: size.width * (landscape ? 0.7 : 0.9))
-                    .frame(minHeight: landscape ? 0 : 112, alignment: .top)
                     .padding(.top, 10)
             }
         }
@@ -548,8 +646,14 @@ struct BedsideTheme: View {
             StatusLine(face: face, size: 4 * v, color: glow).opacity(asleep ? 0.2 : 0.5)
             TimerLines(face: face, size: 5 * v, color: glow, icons: false, spacing: 0).opacity(0.6).padding(.top, 3 * v)
             if !asleep, face.shows("show_answer") {
-                Text(face.answer).font(.system(size: 5 * v)).foregroundColor(glow).opacity(0.7)
-                    .multilineTextAlignment(.center).frame(width: size.width * 0.8).padding(.top, 16)
+                // Four lines, always (the column is centred: so the ember doesn't move); longer, it scrolls.
+                WordsArea(aim: face.aim("answer", answer: face.answerId, text: face.answer), fresh: face.answerId,
+                          height: 25 * v) {
+                    Text(face.answer).font(.system(size: 5 * v)).foregroundColor(glow).opacity(0.7)
+                        .multilineTextAlignment(.center).frame(maxWidth: .infinity)
+                        .fixedSize(horizontal: false, vertical: true).id("answer")
+                }
+                .frame(width: size.width * 0.8).padding(.top, 16)
             }
         }
         .endsTheFace()
@@ -617,11 +721,22 @@ struct MinimalTheme: View {
                 TimerLines(face: face, size: (landscape ? 5.5 : 7) * v, color: ink, icons: false, alignment: .leading, spacing: v)
                     .padding(.top, (landscape ? 1 : 3) * v)
                 if !asleep {
+                    // What you said: two lines at most (its end); the answer, the space down to the bottom.
                     if face.shows("show_heard"), !face.heard.isEmpty {
-                        Text(face.heard).font(.system(size: 6 * v)).opacity(0.75).padding(.bottom, 2 * v)
+                        WordsArea(aim: Aim(key: "heard", y: 1), fresh: "\(face.heardCount)", most: 15 * v) {
+                            Text(face.heard).font(.system(size: 6 * v)).opacity(0.75)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .fixedSize(horizontal: false, vertical: true).id("heard")
+                        }
+                        .padding(.bottom, 2 * v)
                     }
                     if face.shows("show_answer"), !face.answer.isEmpty {
-                        Text(face.answer).font(.system(size: 7 * v))
+                        WordsArea(aim: face.aim("answer", answer: face.answerId, text: face.answer), fresh: face.answerId,
+                                  bottom: size.height - 4 * v) {
+                            Text(face.answer).font(.system(size: 7 * v))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .fixedSize(horizontal: false, vertical: true).id("answer")
+                        }
                     }
                 }
             }

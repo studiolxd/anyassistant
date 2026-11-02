@@ -11,6 +11,13 @@ final class FaceModel: ObservableObject {
         let id: String
         var text: String
         let assistant: Bool
+        var answer: String? = nil  // an answer's id (the server's), for «speaking»
+    }
+
+    /// The sentence being said: the answer's id and where it starts in its text (UTF-16).
+    struct Said: Equatable {
+        let id: String
+        let start: Int
     }
 
     struct Item: Identifiable, Equatable {
@@ -31,7 +38,10 @@ final class FaceModel: ObservableObject {
     @Published var screen: [String: Any] = [:]
     @Published var captions: [Caption] = []
     @Published var heard = ""
+    @Published var heardCount = 0  // each new thing you said (it shows from its end)
     @Published var answer = ""
+    @Published var answerId = ""
+    @Published var said: Said?
     @Published var items: [Item] = []
     @Published var alarmLabel = ""
     @Published var photo: PlatformImage?
@@ -105,6 +115,10 @@ final class FaceModel: ObservableObject {
             if look == "asleep" { cameraShown = false }
         case "text":
             caption(message)
+        case "speaking":  // the voice starts saying a sentence of an answer: its words follow it
+            if let id = message["id"].map({ "\($0)" }), let start = (message["start"] as? NSNumber)?.intValue {
+                said = Said(id: id, start: start)
+            }
         case "timers":
             items = (message["items"] as? [[String: Any]] ?? []).compactMap { item in
                 guard let at = (item["at"] as? NSNumber)?.doubleValue else { return nil }
@@ -124,14 +138,25 @@ final class FaceModel: ObservableObject {
         guard let text = message["text"] as? String else { return }
         let assistant = message["author"] as? String == "assistant"
         guard shows(assistant ? "show_answer" : "show_heard") else { return }
-        if assistant { answer = text } else { heard = text }
         let id = (message["id"]).map { "\($0)" }
+        if assistant { answer = text; answerId = id ?? "" } else { heard = text; heardCount += 1 }
         if let id, let index = captions.firstIndex(where: { $0.id == "a-\(id)" }) {
             captions[index].text = text
             return
         }
-        captions.append(Caption(id: id.map { "a-\($0)" } ?? UUID().uuidString, text: text, assistant: assistant))
+        captions.append(Caption(id: id.map { "a-\($0)" } ?? UUID().uuidString, text: text, assistant: assistant,
+                                answer: assistant ? id : nil))
         if captions.count > history + 1 { captions.removeFirst(captions.count - history - 1) }
+    }
+
+    /// Where an area of words should be while it follows (WordsArea): what you said, its end; an
+    /// answer, its start until the voice says it, then the sentence being said (its place in the
+    /// text, as a fraction: the area's same fraction shows it).
+    func aim(_ key: String, answer id: String?, text: String) -> Aim {
+        guard let id else { return Aim(key: key, y: 1) }
+        let length = text.utf16.count
+        guard let said, said.id == id, length > 0 else { return Aim(key: key, y: 0) }
+        return Aim(key: key, y: min(1, CGFloat(said.start) / CGFloat(length)))
     }
 
     /// «¿Qué ves?»: the photo it looks at, with a scanning sweep until it answers.
@@ -182,6 +207,12 @@ final class FaceModel: ObservableObject {
         }
         return when + (item.label.isEmpty ? "" : " · " + item.label)
     }
+}
+
+/// Where a WordsArea scrolls to: the view with that id, at that fraction of it (0 its top, 1 its end).
+struct Aim: Equatable {
+    let key: String
+    let y: CGFloat
 }
 
 /// Your voice and its own (0…1), apart: they change many times a second.

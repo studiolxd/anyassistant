@@ -8,7 +8,8 @@ arrives. While it speaks it doesn't listen; tapping the screen stops it.
 
 The screen follows the voice: when a sentence starts playing on the device (its speaker's
 play() says when: after what was already queued), {"type": "speaking", "id", "start", "end"}
-tells it which characters of the answer's text it is saying, so the captions scroll to them.
+tells it which characters of the answer's text it is saying (in UTF-16 code units, as JavaScript,
+Kotlin and Swift's utf16 count them), so the captions scroll to them.
 """
 
 import asyncio
@@ -135,6 +136,11 @@ def ring_for(seconds) -> float:
     return RING_MAX if seconds <= 0 else min(seconds, RING_MAX)
 
 
+def utf16(text: str) -> int:
+    """Its length as the screens count it (JavaScript, Kotlin): an emoji is two."""
+    return len(text.encode("utf-16-le")) // 2
+
+
 def split(text: str) -> tuple[list[str], str]:
     """Complete sentences and the unfinished rest: «Hi. How a» → (["Hi."], "How a")."""
     pieces = END_OF_SENTENCE.split(text)
@@ -184,7 +190,7 @@ class Assistant(Transcriber):
         self.number = int(time.time() * 1000)
         self.cut = 0  # number of the answer that was told to stop
         # (number, sentence[, where]); sentence None = end of answer; where: the sentence's first
-        # character in the answer's text, for the screen («speaking»)
+        # character in the answer's text (UTF-16), for the screen («speaking»)
         self.sentences = asyncio.Queue()
         if tts:
             asyncio.ensure_future(self._mouth())
@@ -516,7 +522,7 @@ class Assistant(Transcriber):
         if at < 0:
             self.sentences.put_nowait((number, sentence))
             return after
-        self.sentences.put_nowait((number, sentence, at))
+        self.sentences.put_nowait((number, sentence, utf16(answer[:at])))  # as the screens count
         return at + len(sentence)
 
     def _speaking(self, number: int, sentence: str, at, starts):
@@ -524,7 +530,7 @@ class Assistant(Transcriber):
         what its speaker's play() said; now if it can't tell), which characters of the answer it is."""
         if at is None:
             return
-        message = {"type": "speaking", "id": number, "start": at, "end": at + len(sentence)}
+        message = {"type": "speaking", "id": number, "start": at, "end": at + utf16(sentence)}
 
         def tell():
             if number != self.cut:  # stopped meanwhile: it won't be said

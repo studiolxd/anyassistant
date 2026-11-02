@@ -83,6 +83,15 @@ def test_each_sentence_with_its_place_in_the_answer(monkeypatch, tmp_path, en):
         assert answer[at:at + len(sentence)] == sentence
 
 
+def test_counted_as_the_screens_count_an_emoji_is_two(monkeypatch, tmp_path, en):
+    a = assistant(monkeypatch, tmp_path, FakeLLM("Sunny 🌞 today. And warm."))
+    asyncio.run(a._answer("Weather?"))
+    answer = [m for m in a.sent if m.get("type") == "text"][-1]["text"]
+    a.sentences.get_nowait()
+    _, sentence, at = a.sentences.get_nowait()
+    assert sentence == "And warm." and at == len(answer.encode("utf-16-le")) // 2 - len("And warm.")
+
+
 def test_a_fixed_sentence_is_the_whole_text(monkeypatch, tmp_path, en):
     a = assistant(monkeypatch, tmp_path)
     a._say("Restarting.")
