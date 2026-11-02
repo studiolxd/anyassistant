@@ -283,7 +283,6 @@ struct DeviceDetail: View {
         guard !item.noise.isEmpty else { return T("Not measured") }
         var text = ["quiet": T("Quiet"), "some": T("Some noise"), "noisy": T("Noisy")][item.noise] ?? item.noise
         if let db = item.noiseDb { text += " (\(Int(db.rounded())) dB)" }
-        if let at = item.calibratedAt { text += " · " + at.formatted(.relative(presentation: .named)) }
         return text
     }
 

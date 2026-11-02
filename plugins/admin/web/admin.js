@@ -238,8 +238,7 @@ function devicePage(main, id) {
                   : noise.step === 'measuring' ? T('Measuring… %d').replace('%d', Math.max(1, Math.ceil(noise.left || 0)))
                   : noise.step === 'talking' ? T('It heard talking: try again in silence.')
                   : !noise.noise ? T('Not measured')
-                  : T(levels[noise.noise] || noise.noise) + (noise.db !== undefined ? ' (' + Math.round(noise.db) + ' dB)' : '')
-                    + (noise.at ? ' · ' + ago(noise.at) : '');
+                  : T(levels[noise.noise] || noise.noise) + (noise.db !== undefined ? ' (' + Math.round(noise.db) + ' dB)' : '');
     var calibrate = d.connected && !d.press ? el('button', { class: 'quiet', text: T('Calibrate'),
       disabled: noise.step === 'asking' || noise.step === 'measuring' ? 'disabled' : null,
       onclick: function (e) {
