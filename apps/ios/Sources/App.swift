@@ -23,12 +23,23 @@ struct AnyAssistantApp: App {
 
     var body: some Scene {
         WindowGroup {
+            #if DEBUG
+            if let theme = ProcessInfo.processInfo.environment["AA_DEMO"] {
+                DemoView(theme: theme)  // to see a theme without a server (the simulator)
+            } else if mac.paired {
+                MainView(mac: mac)
+            } else {
+                PairView(mac: mac)
+                    .onOpenURL(perform: open)
+            }
+            #else
             if mac.paired {
                 MainView(mac: mac)
             } else {
                 PairView(mac: mac)
                     .onOpenURL(perform: open)
             }
+            #endif
         }
     }
 
@@ -235,3 +246,26 @@ struct Orientation: View {
     }
 }
 
+
+#if DEBUG
+/// A theme with a long conversation, as the page's ?demo: AA_DEMO=eyes in the environment
+/// (simctl launch with SIMCTL_CHILD_AA_DEMO=eyes). Only in debug builds.
+struct DemoView: View {
+    let theme: String
+    @StateObject private var face = FaceModel()
+    @StateObject private var levels = Levels()
+    private let camera = Camera()
+
+    var body: some View {
+        ThemeView(face: face, levels: levels, camera: camera)
+            .statusBarHidden(true)
+            .onAppear {
+                face.theme = theme
+                face.receive(["type": "state", "state": "speaking"])
+                face.receive(["type": "text", "text": "¿Qué sabes de los griegos?"])
+                face.receive(["type": "text", "author": "assistant", "id": "demo", "text":
+                    String(repeating: "Los antiguos griegos fueron una civilización del Mediterráneo oriental que floreció entre los siglos VIII y IV antes de Cristo. ", count: 6)])
+            }
+    }
+}
+#endif

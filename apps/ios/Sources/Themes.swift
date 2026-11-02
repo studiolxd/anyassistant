@@ -154,7 +154,10 @@ struct CaptionLines: View {
 /// A WordsArea's words, measured in its scroll: width, their top (0, or less when scrolled); height, theirs.
 struct WordsMetrics: PreferenceKey {
     static var defaultValue = CGSize.zero
-    static func reduce(value: inout CGSize, nextValue: () -> CGSize) { value = nextValue() }
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
+        let next = nextValue()  // views that don't measure give the default: they don't count
+        if next != .zero { value = next }
+    }
 }
 
 /// The words (the captions, what you said, the answer) in their own area, as the page's: it scrolls
@@ -387,6 +390,7 @@ struct EyesTheme: View {
                     CaptionLines(face: face, accent: accent, fills: true, minHeight: landscape ? 0 : 112)
                         .frame(width: size.width * (landscape ? 0.7 : 0.9))
                         .padding(.top, 10)
+                        .layoutPriority(1)  // the space left goes to the words, not shared
                 }
             }
             .padding(.top, size.height * (landscape ? 0.10 : 0.28))
@@ -743,6 +747,7 @@ struct MinimalTheme: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .fixedSize(horizontal: false, vertical: true).id("answer")
                         }
+                        .layoutPriority(1)  // the space left goes to the answer, not shared
                     }
                 }
             }
