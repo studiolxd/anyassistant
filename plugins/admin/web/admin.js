@@ -122,62 +122,47 @@ function show(id) {
   history.replaceState(null, '', '#' + id);
 }
 
-// Pairing a device: the page's address as a QR (with the code: it pairs by itself), the
-// certificate first if HTTPS is on, the address for old devices that don't open .local names.
+// Connecting a device, as the Mac app's window: one QR for everything (the server itself by its
+// address now, /connect with the code: the app pairs by itself, a browser goes on to the page), the
+// code big, and «Connect by hand» folded: the app's choice, the browser's addresses (the certificate
+// first, for the browser only, with HTTPS; the IP for old devices that don't open .local names).
 function pair(main) {
   main.appendChild(el('h1', { text: T('Pair a device') }));
-  main.appendChild(el('p', { class: 'lead', text: T('A tablet or phone: scan the code with its camera, or open the address. The iPhone, Android and Apple Watch apps ask for the 6 digits.') }));
   var box = el('div', { class: 'card' });
   main.appendChild(box);
   Promise.all([api('GET', '/admin/status'), api('POST', '/pairing')]).then(function (found) {
-    var status = found[0], pairing = found[1];
-    var code = pairing.code;
-    var old = false, step = 0;
-    function draw() {
-      box.innerHTML = '';
-      var host = old ? (status.addresses[0] || location.hostname) : 'anyassistant.local';
-      var page = status.https_port ? 'https://' + host + (status.https_port === 443 ? '' : ':' + status.https_port)
-                                  : 'http://' + host + ':' + status.port;
-      var certificate = 'http://' + host + ':' + status.port + '/https/ca.crt';
-      var showing = status.https_port && step === 0 ? certificate : (code ? page + '/?code=' + code : page);
-      if (status.https_port) {
-        var tabs = el('div', { class: 'tabs' }, [
-          el('button', { text: T('1. The certificate'), class: step === 0 ? 'on' : null, onclick: function () { step = 0; draw(); } }),
-          el('button', { text: T('2. The page'), class: step === 1 ? 'on' : null, onclick: function () { step = 1; draw(); } })
-        ]);
-        box.appendChild(el('div', { style: 'padding-top:14px' }, [tabs]));
-      }
-      var words = [];
-      if (status.https_port && step === 0) {
-        words = [el('h2', { text: T('Install the certificate') }),
-                 el('p', { text: T('Once per device: scan it, or open this address, to download it.') }),
-                 el('p', { class: 'mono', text: certificate }),
-                 el('p', { class: 'muted', text: T('If it doesn\'t install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»).') }),
-                 el('button', { text: T('Done: the page'), onclick: function () { step = 1; draw(); } })];
-      } else {
-        words = [el('h2', { text: T('Open the page') }),
-                 el('p', { text: T('Scan it with the tablet or phone: it pairs by itself. Or open') }),
-                 el('p', { class: 'mono', text: page })];
-        if (code) {
-          words.push(el('p', { text: T('and type the code') }), el('div', { class: 'code', text: code }),
-                     el('p', { class: 'muted', text: T('Valid for 5 minutes, for one device.') }),
-                     el('button', { class: 'quiet', text: T('Another code'), onclick: function () { show('pair'); } }));
-        } else {
-          words.push(el('p', { class: 'muted', text: T('No code needed: pairing is off.') }));
-        }
-      }
-      box.appendChild(el('div', { class: 'pair' }, [
-        el('img', { src: '/admin/qr?text=' + encodeURIComponent(showing), alt: showing }),
-        el('div', { style: 'flex:1;min-width:240px' }, words)
-      ]));
-      var oldBox = el('label', { class: 'muted', style: 'display:block;padding-bottom:14px' }, [
-        el('input', { type: 'checkbox', onchange: function (e) { old = e.target.checked; draw(); } }),
-        ' ' + T('An old device (it doesn\'t open .local names): use the address')
-      ]);
-      $('input', oldBox).checked = old;
-      box.appendChild(oldBox);
+    var status = found[0], code = found[1].code;
+    var address = status.address || location.hostname;
+    var connect = (status.connect || 'http://' + address + ':' + status.port + '/connect') + (code ? '?code=' + code : '');
+    var words = [el('p', { text: T('Scan the code with the device\'s camera. With the app installed, it connects by itself; otherwise, it goes on in the browser.') })];
+    if (code) {
+      words.push(el('h2', { text: T('Pairing code') }), el('div', { class: 'code', text: code }),
+                 el('p', { class: 'muted' }, [T('Valid for 5 minutes') + ' · ',
+                   el('a', { href: '#pair', text: T('Another code'), onclick: function (e) { e.preventDefault(); show('pair'); } })]));
+    } else {
+      words.push(el('p', { class: 'muted', text: T('No code needed: pairing is off.') }));
     }
-    draw();
+    box.appendChild(el('div', { class: 'pair' }, [
+      el('img', { src: '/admin/qr?text=' + encodeURIComponent(connect), alt: connect }),
+      el('div', { style: 'flex:1;min-width:240px' }, words)
+    ]));
+    function step(title, how) {
+      return el('div', { class: 'step' }, [el('b', { text: title }), el('div', {}, how)]);
+    }
+    var browser = [];
+    if (status.certificate) {
+      browser.push(el('p', { text: T('First, install the certificate:') }), el('p', { class: 'mono', text: status.certificate }),
+                   el('p', { class: 'muted', text: T('If it doesn\'t install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»).') }),
+                   el('p', { text: T('Then, open:') }));
+    }
+    browser.push(el('p', { class: 'mono', text: status.local || 'http://anyassistant.local:' + status.port }),
+                 el('p', { class: 'mono muted', text: T('On old devices: %s').replace('%s', 'http://' + address + ':' + status.port) }));
+    box.appendChild(el('details', { class: 'hand' }, [
+      el('summary', { text: T('Connect by hand') }),
+      step(T('App'), [el('p', { text: T('Choose «%s on %s»').replace('%s', status.name).replace('%s', status.computer)
+                                    + (status.pairing ? ' ' + T('and type the code') : '') })]),
+      step(T('Browser'), browser)
+    ]));
   });
 }
 

@@ -51,9 +51,9 @@ struct AnyAssistantApp: App {
         .defaultSize(width: 560, height: 440)
         Window(T("Pair a device"), id: "pair") {
             PairView(server: server)
-                .frame(width: 660, height: 380)
+                .frame(minWidth: 680, minHeight: 440)
         }
-        .windowResizability(.contentSize)
+        .defaultSize(width: 680, height: 500)
     }
 
     /// Installed, or using another server: the menu bar's.
@@ -512,79 +512,124 @@ struct SetupView: View {
 
 // MARK: - Pairing a device
 
-/// The address a device opens: anyassistant.local (Bonjour) or, on old devices that don't
-/// resolve .local names, the Mac's address; over HTTPS if the plugin «https» is on.
+/// «Conectar otro dispositivo», as the admin page's section: one QR for everything (the server
+/// itself by its address now, /connect with the code: the app pairs by itself, a browser goes on
+/// to the page), the code big, and «Conectar a mano» folded (the app's choice, the browser's
+/// addresses; the certificate first, for the browser only, with HTTPS). Plain layout, as the
+/// other windows (no navigation: it breaks the title bar).
 struct PairView: View {
     @ObservedObject var server: Server
+    @Environment(\.dismissWindow) private var dismissWindow
     @State private var code: String?
-    @State private var asked = false
-    @State private var pairingOff = false
+    @State private var info: Server.Connecting?
     @State private var waiting = true  // until the server answers (it may be starting)
-    @State private var httpsPort: Int?  // the plugin «https»: the page with its own certificate
-    @State private var step = 0  // with HTTPS: 0 the certificate, 1 the page
-    @State private var old = false  // an old device: the address instead of anyassistant.local
+    @State private var manual = false
 
-    var host: String { old ? server.address : "anyassistant.local" }
-    var page: String { httpsPort.map { $0 == 443 ? "https://\(host)" : "https://\(host):\($0)" } ?? "http://\(host):\(server.port)" }
-    var certificate: String { "http://\(host):\(server.port)/https/ca.crt" }
-    /// What the QR opens: the page with the code, so it pairs by itself.
-    var pageWithCode: String { code.map { "\(page)/?code=\($0)" } ?? page }
+    /// What the QR says: /connect by the server's address, with the code if one is needed.
+    var qrText: String {
+        guard let info else { return "" }
+        return code.map { "\(info.connect)?code=\($0)" } ?? info.connect
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            if waiting {
-                HStack(spacing: 8) {
-                    ProgressView().controlSize(.small)
-                    Text(T("Waiting for the server…")).foregroundStyle(.secondary)
-                }
-            }
-            if httpsPort != nil {
-                Picker("", selection: $step) {
-                    Text(T("1. The certificate")).tag(0)
-                    Text(T("2. The page")).tag(1)
-                }
-                .pickerStyle(.segmented).labelsHidden().frame(maxWidth: 320)
-            }
-            HStack(alignment: .top, spacing: 24) {
-                qrCode(httpsPort != nil && step == 0 ? certificate : pageWithCode)
-                VStack(alignment: .leading, spacing: 10) {
-                    if httpsPort != nil && step == 0 {
-                        Text(T("Install the certificate")).font(.title3.weight(.semibold))
-                        Text(T("Once per device: scan it, or open this address, to download it."))
-                        address(certificate)
-                        Text(T("If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)."))
-                            .foregroundStyle(.secondary)
-                        Button(T("Done: the page")) { step = 1 }.padding(.top, 4)
-                    } else {
-                        Text(T("Open the page")).font(.title3.weight(.semibold))
-                        Text(T("Scan it with the tablet or phone: it pairs by itself. Or open"))
-                        address(page)
-                        if let code {
-                            Text(T("and type the code")).padding(.top, 4)
-                            Text(code).font(.system(.largeTitle, design: .monospaced).weight(.semibold))
-                                .textSelection(.enabled)
-                            Text(T("Valid for 5 minutes, for one device.")).foregroundStyle(.secondary)
-                            Button(T("Another code")) { Task { await ask() } }
-                        } else if asked && pairingOff {
-                            Text(T("No code needed: pairing is off.")).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text(T("Pair a device")).font(.title2.bold())
+                    if waiting {
+                        HStack(spacing: 8) {
+                            ProgressView().controlSize(.small)
+                            Text(T("Waiting for the server…")).foregroundStyle(.secondary)
                         }
+                    } else if let info {
+                        HStack(alignment: .top, spacing: 24) {
+                            qrCode(qrText, size: 200)
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text(T("Scan the code with the device's camera. With the app installed, it connects by itself; otherwise, it goes on in the browser."))
+                                if info.pairing {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(T("Pairing code")).font(.headline)
+                                        if let code {
+                                            Text(code).font(.system(size: 40, design: .monospaced).weight(.semibold))
+                                                .textSelection(.enabled)
+                                        } else {
+                                            ProgressView().controlSize(.small).padding(.vertical, 12)
+                                        }
+                                        HStack(spacing: 4) {
+                                            Text(T("Valid for 5 minutes") + " ·").foregroundStyle(.secondary)
+                                            Button(T("Another code")) { Task { await ask() } }.buttonStyle(.link)
+                                        }
+                                    }
+                                } else {
+                                    Text(T("No code needed: pairing is off.")).foregroundStyle(.secondary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        DisclosureGroup(isExpanded: $manual) {
+                            VStack(alignment: .leading, spacing: 14) {
+                                step(T("App")) {
+                                    Text(String(format: T("Choose «%@ on %@»"), info.name, info.computer)
+                                         + (info.pairing ? " " + T("and type the code") : ""))
+                                }
+                                step(T("Browser")) {
+                                    if let certificate = info.certificate {
+                                        Text(T("First, install the certificate:"))
+                                        HStack(alignment: .top, spacing: 12) {
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                address(certificate)
+                                                Text(T("If it doesn't install by itself, on Android: Settings → Security → Install from storage → AnyAssistant.crt (as «VPN and apps»)."))
+                                                    .font(.callout).foregroundStyle(.secondary)
+                                            }
+                                            qrCode(certificate, size: 96)
+                                        }
+                                        Text(T("Then, open:")).padding(.top, 4)
+                                    }
+                                    address(info.local)
+                                    Text(String(format: T("On old devices: %@"), "http://\(info.address):\(info.port)"))
+                                        .font(.system(.callout, design: .monospaced)).foregroundStyle(.secondary)
+                                        .textSelection(.enabled)
+                                }
+                            }
+                            .padding(.top, 10)
+                        } label: {
+                            Text(T("Connect by hand")).font(.headline)
+                        }
+                    } else {
+                        Text(T("The server isn't answering: is it running?")).foregroundStyle(.secondary)
                     }
                 }
-                .font(.body)
+                .padding(24)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Spacer(minLength: 0)
-            Toggle(T("An old device (it doesn't open .local names): use the address"), isOn: $old)
-                .toggleStyle(.checkbox).foregroundStyle(.secondary)
+            HStack {
+                Spacer()
+                Button(T("Done")) { dismissWindow(id: "pair") }.keyboardShortcut(.defaultAction)
+            }
+            .padding([.horizontal, .bottom], 20)
         }
-        .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .task {
             waiting = true
             _ = await server.ready()
-            httpsPort = await server.httpsPort()
             await ask()
+            info = await server.connecting() ?? fallback
             waiting = false
+        }
+    }
+
+    /// Without the plugin «admin»: the same from what the app knows.
+    var fallback: Server.Connecting? {
+        guard code != nil || server.state == .running else { return nil }
+        return Server.Connecting(name: "AnyAssistant", computer: Host.current().localizedName ?? "", port: server.port,
+                                 address: server.address, connect: "http://\(server.address):\(server.port)/connect",
+                                 local: "http://anyassistant.local:\(server.port)", certificate: nil, pairing: code != nil)
+    }
+
+    /// «App» / «Navegador»: a title and how, under «Conectar a mano».
+    func step<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(title).font(.body.weight(.medium)).frame(width: 90, alignment: .leading)
+            VStack(alignment: .leading, spacing: 6, content: content)
         }
     }
 
@@ -594,16 +639,14 @@ struct PairView: View {
 
     func ask() async {
         switch await server.pairingCode() {
-        case .code(let found): code = found; pairingOff = false
-        case .off: code = nil; pairingOff = true
-        case .unreachable: code = nil; pairingOff = false
+        case .code(let found): code = found
+        case .off, .unreachable: code = nil
         }
-        asked = true
     }
 
-    @ViewBuilder func qrCode(_ text: String) -> some View {
+    @ViewBuilder func qrCode(_ text: String, size: CGFloat) -> some View {
         if let image = qr(text) {
-            Image(nsImage: image).interpolation(.none).resizable().frame(width: 220, height: 220)
+            Image(nsImage: image).interpolation(.none).resizable().frame(width: size, height: size)
         }
     }
 
