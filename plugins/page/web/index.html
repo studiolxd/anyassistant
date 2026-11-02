@@ -8,24 +8,30 @@
   <title>AnyAssistant</title>
   <link rel="icon" href="/web/favicon.png">
   <link rel="apple-touch-icon" href="/web/icon.png">
-  <link rel="stylesheet" href="/web/tokens.css?v=7">
-  <link rel="stylesheet" href="/web/system.css?v=42">
+  <link rel="stylesheet" href="/web/tokens.css?v=8">
+  <link rel="stylesheet" href="/web/system.css?v=43">
   <!-- The theme's (themes/<name>/theme.css), set by theme.js. -->
   <link rel="stylesheet" id="theme-css">
 </head>
 <body>
-  <form id="pair" class="ui" hidden>
-    <img class="logo large" src="/web/logo.png" alt="">
-    <p id="pair-prompt"></p>
-    <input id="pair-code" inputmode="numeric" autocomplete="off" maxlength="6">
-    <button id="pair-button"></button>
-    <p id="pair-error"></p>
-  </form>
+  <div id="pair" class="ui centered" hidden>
+    <div class="panel">
+      <img class="logo large" src="/web/logo.png" alt="">
+      <h1 id="pair-title"></h1>
+      <p class="description" id="pair-prompt"></p>
+      <form id="pair-form">
+        <label for="pair-code" id="pair-label"></label>
+        <input id="pair-code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        <p class="error" id="pair-error"></p>
+        <button class="button" id="pair-button"></button>
+      </form>
+    </div>
+  </div>
   <!-- The theme's theme.html goes here. -->
   <div id="screen" hidden></div>
   <audio id="speaker" autoplay></audio>
   <script src="/web/nosleep.js?v=1"></script>
   <script src="/web/theme.js?v=37"></script>
-  <script src="/web/app.js?v=46"></script>
+  <script src="/web/app.js?v=47"></script>
 </body>
 </html>

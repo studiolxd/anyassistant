@@ -123,13 +123,16 @@ loadTexts().then(function () {
   document.getElementById('screen').classList.add('waiting');
 });
 
-// Pairing (the plugin «pairing»): the code that «bin/anyassistant pair» shows on the Mac.
+// Pairing (the plugin «pairing»): the code the server shows in «Conectar otro dispositivo», as on the
+// QR's page (/connect).
 function askForCode() {
-  var form = document.getElementById('pair');
+  var form = document.getElementById('pair-form');
   var input = document.getElementById('pair-code');
+  document.getElementById('pair-title').textContent = text('pair_title');
   document.getElementById('pair-prompt').textContent = text('pair_prompt');
+  document.getElementById('pair-label').textContent = text('pair_label');
   document.getElementById('pair-button').textContent = text('pair_button');
-  form.hidden = false;
+  document.getElementById('pair').hidden = false;
   form.onsubmit = function (ev) {
     if (ev) ev.preventDefault();
     fetch('/pair', {

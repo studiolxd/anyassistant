@@ -23,9 +23,9 @@
     "error": "Error",
     "monitor_waiting": "Esperando al móvil…",
     "monitor_connected": "Conectado · {frames} fotogramas recibidos",
-    "pair_prompt": "Escribe el código que muestra «bin/anyassistant pair» en el servidor",
-    "pair_button": "Emparejar",
-    "pair_wrong": "Código incorrecto o caducado",
+    "pair_prompt": "Escribe el código que muestra el servidor en «Conectar otro dispositivo».",
+    "pair_button": "Conectar",
+    "pair_wrong": "Código incorrecto o caducado: pide otro en el servidor.",
     "pair_needed": "Este aparato no está emparejado: recarga la página",
     "looking": "Mirando…",
     "alarm": "{label}",
@@ -33,7 +33,9 @@
     "demo_reminder": "Sacar la ropa",
     "demo_heard": "¿Qué puedo hacer de cena con arroz, dos huevos, unas espinacas y media cebolla?",
     "demo_answer": "Un arroz salteado queda muy bien con eso. Pica la cebolla y póchala en un poco de aceite durante tres minutos. Añade el arroz, frío si es del día anterior, y remueve hasta que esté caliente. Aparta el arroz a un lado, cuaja los huevos en el hueco y mézclalo todo. Echa las espinacas al final para que se ablanden, y sazona con soja o sal. Tarda unos quince minutos.",
-    "tap_to_start": "Pulsa para empezar"
+    "tap_to_start": "Pulsa para empezar",
+    "pair_title": "Conectar este dispositivo",
+    "pair_label": "Código de emparejamiento"
   },
   "plugins": {
     "page": [

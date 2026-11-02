@@ -23,9 +23,9 @@
     "error": "Error",
     "monitor_waiting": "Waiting for the phone…",
     "monitor_connected": "Connected · {frames} frames received",
-    "pair_prompt": "Type the code that «bin/anyassistant pair» shows on the server",
-    "pair_button": "Pair",
-    "pair_wrong": "Wrong or expired code",
+    "pair_prompt": "Type the code the server shows in «Connect another device».",
+    "pair_button": "Connect",
+    "pair_wrong": "Wrong or expired code: ask the server for another.",
     "pair_needed": "This device isn't paired: reload the page",
     "looking": "Looking…",
     "alarm": "{label}",
@@ -33,7 +33,9 @@
     "demo_reminder": "Take out the laundry",
     "demo_heard": "What can I make for dinner tonight with rice, two eggs, some spinach and half an onion?",
     "demo_answer": "A quick fried rice works well with that. Chop the onion and soften it in a little oil for three minutes. Add the rice, cold if it's from yesterday, and stir until it's hot. Push it to one side, scramble the eggs in the gap, then mix everything together. Add the spinach at the end so it just wilts, and season with soy sauce or salt. It takes about fifteen minutes.",
-    "tap_to_start": "Tap to start"
+    "tap_to_start": "Tap to start",
+    "pair_title": "Connect this device",
+    "pair_label": "Pairing code"
   },
   "options_title": {
     "theme": "Theme",

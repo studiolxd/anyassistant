@@ -117,7 +117,7 @@ def _connect_page(request, code: str, problem: bool):
         parts.append(f'<a class="button" href="{e(link)}">{e(t("app"))}</a>')
     if not paired:
         parts.append(f'<form method="post" action="/connect"><label for="code">{e(t("code"))}</label>'
-                     f'<input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{e(code)}">'
+                     f'<input id="code" class="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{e(code)}">'
                      + (f'<p class="error">{e(t("wrong"))}</p>' if problem else "")
                      + f'<button type="submit" class="{"button secondary" if _mobile(agent) else "button"}">'
                      + f'{e(t("continue") if _mobile(agent) else t("connect"))}</button></form>')

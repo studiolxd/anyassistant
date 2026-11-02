@@ -66,15 +66,14 @@ def test_the_logo_is_on_every_page():
     for name, page in PAGES.items():
         html = page.read_text()
         assert re.search(r'<img class="logo( large)?" src="/web/logo.png"', html), name
-    assert 'class="ui"' in PAGES["device"].read_text()  # the pairing form, not the theme's screen
+    assert 'class="ui centered"' in PAGES["device"].read_text()  # the pairing panel, not the theme's screen
 
 
 def test_the_pages_use_tokens_not_their_own_colours():
     """Only the face's black (behind a view of it, a screenshot) and the QR's and the switch's white."""
-    connect = re.search(r"<style>(.*)</style>", PAGES["connect"].read_text(), re.S).group(1)
     system = (WEB / "system.css").read_text()
     pairing = system[system.index("#pair {"):system.index("/* Settings show_time")]
-    for css in [p.read_text() for p in STYLESHEETS] + [connect, pairing]:
+    for css in [p.read_text() for p in STYLESHEETS] + [pairing]:
         colours = set(re.findall(r"#[0-9a-fA-F]{3,8}\b|rgba?\(", without_comments(css)))
         assert colours <= {"#000", "#fff"}, colours
 
@@ -86,3 +85,20 @@ def test_old_chrome_can_read_what_the_device_page_loads():
         assert not re.search(r"(^|[;{\s])inset\s*:", css)
         assert not re.search(r"(^|[;{\s])gap\s*:", css)
         assert "color-mix" not in css
+
+
+
+# The pages and what writes their HTML: no styles of their own inside them; everything from the
+# design system's components (tokens.css) or the page's stylesheet with tokens. Computed geometry
+# set from code (element.style.top = …) is allowed: it can't be CSS.
+WRITERS = list(PAGES.values()) + [ROOT / "plugins/page/__init__.py", ROOT / "plugins/admin/web/admin.js",
+                                  ROOT / "plugins/themes/themes.js", WEB / "app.js"]
+INLINE = [(r"<style[\s>]", "a <style> block"), (r"""\bstyle\s*=\s*["'{]""", "a style attribute"),
+          (r"""\bstyle\s*:\s*['"]""", "a style in el(…)"), (r"\.cssText\b", "style.cssText"),
+          (r"""setAttribute\(\s*['"]style['"]""", "setAttribute('style')")]
+
+
+def test_no_page_writes_styles_of_its_own():
+    found = [f"{path.relative_to(ROOT)}: {what}" for path in WRITERS for pattern, what in INLINE
+             if re.search(pattern, path.read_text())]
+    assert not found, "use the design system's components (tokens.css) instead: " + "; ".join(found)
