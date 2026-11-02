@@ -22,8 +22,12 @@ struct ThemeView: View {
             // inside the safe area (not under the Dynamic Island, the home bar or a window's title).
             face.background.ignoresSafeArea()
             if web.shows(face.theme) {
+                // To the screen's edges, as Safari full screen: the page keeps its content inside the
+                // safe area (env(safe-area-inset-*)), and what a theme draws beyond it (Orb's ring)
+                // isn't cut at the safe area's edge.
                 WebTheme(web: web, camera: camera, theme: face.theme, tap: tap, settings: settings)
                     .id(face.theme)  // another theme: another page
+                    .ignoresSafeArea()
             } else {
                 GeometryReader { geometry in
                     content(geometry.size)

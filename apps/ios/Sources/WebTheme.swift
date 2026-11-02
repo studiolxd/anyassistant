@@ -130,7 +130,7 @@ final class WebFace: NSObject, ObservableObject {
         sentSpeech = -1
         tick()
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 15, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
     }
@@ -152,7 +152,7 @@ final class WebFace: NSObject, ObservableObject {
             return
         }
         let voice = levels.voice, speech = levels.speech
-        if abs(voice - sentVoice) > 0.01 || abs(speech - sentSpeech) > 0.01 {
+        if abs(voice - sentVoice) > 0.02 || abs(speech - sentSpeech) > 0.02 {  // 15 a second at most, and only a real change
             sentVoice = voice
             sentSpeech = speech
             send(["type": "levels", "voice": Double(voice), "speech": Double(speech)])

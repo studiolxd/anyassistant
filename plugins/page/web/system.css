@@ -10,7 +10,13 @@ html, body {
   overflow: hidden;
 }
 [hidden] { display: none !important; }
-#screen { height: 100%; }
+/* Inside the safe area (a notch, the Dynamic Island, the home bar: the apps' web view and Safari
+   full screen go to the edges); what a theme draws beyond its layout still shows there. */
+#screen {
+  height: 100%;
+  box-sizing: border-box;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+}
 /* In an app (?app): holding the face is its settings, not selecting words. */
 body.app { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 

@@ -162,13 +162,13 @@ class WebFace(private val face: FaceState, private val mac: Mac) {
     }
 
     /** The voices' levels (your voice, its own), and the app's problem when it changes (with the
-     *  state: «connecting» is the app's own too); 30 times a second while the page is there. */
+     *  state: «connecting» is the app's own too); 15 times a second while the page is there (enough for CSS transitions, light on old devices). */
     private val ticker = object : Runnable {
         override fun run() {
             if (!ready || view == null) return
             val voice = face.voice
             val speech = face.speech
-            if (kotlin.math.abs(voice - sentVoice) > 0.01f || kotlin.math.abs(speech - sentSpeech) > 0.01f) {
+            if (kotlin.math.abs(voice - sentVoice) > 0.02f || kotlin.math.abs(speech - sentSpeech) > 0.02f) {
                 sentVoice = voice
                 sentSpeech = speech
                 send(JSONObject().put("type", "levels").put("voice", voice.toDouble()).put("speech", speech.toDouble()))
@@ -179,7 +179,7 @@ class WebFace(private val face: FaceState, private val mac: Mac) {
                 sendState()
                 send(JSONObject().put("type", "problem").put("text", face.problem ?: JSONObject.NULL))
             }
-            main.postDelayed(this, 33)
+            main.postDelayed(this, 66)
         }
     }
 
