@@ -17,6 +17,9 @@ know what else uses the microphone, so the server looks, once a second (settings
 
 The condition has to hold a second before pausing and two before resuming (a change of a moment is
 normal). Pure functions parse what each system gives, so tests can feed them samples.
+
+The Windows and Linux app, as a client of another computer's server, does the same by itself
+(apps/desktop/microphone.js, a port of these functions: a change here goes there too).
 """
 
 import asyncio

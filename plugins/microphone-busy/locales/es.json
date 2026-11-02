@@ -2,7 +2,7 @@
   "plugins": {
     "microphone-busy": [
       "Micrófono en uso",
-      "En Windows y Linux, el dispositivo de la propia app de este ordenador se pausa mientras otro programa usa el micrófono (una llamada, una reunión). Las apps del Mac, iPhone y Android lo saben por sí mismas."
+      "En Windows y Linux, el dispositivo de la propia app de este ordenador se pausa mientras otro programa usa el micrófono (una llamada, una reunión). Las apps del Mac, iPhone y Android lo saben por sí mismas, y la de Windows y Linux cuando usa otro servidor."
     ]
   }
 }

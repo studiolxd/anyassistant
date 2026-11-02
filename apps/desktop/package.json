@@ -8,6 +8,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
+    "test": "node --test test/",
     "dist": "node scripts/prepare.js && electron-builder --publish never"
   },
   "devDependencies": {
@@ -31,6 +32,7 @@
       "server.js",
       "setup.js",
       "bonjour.js",
+      "microphone.js",
       "preload.js",
       "setup.html",
       "unavailable.html",

@@ -89,10 +89,23 @@ def main():
     aiohttp_web.run_app(app, host=args.host, port=args.port, shutdown_timeout=3)
     if web.restarting:
         logging.info("restarting…")
-        argv = sys.argv
-        if settings.load().get("language", i18n.L.code) != i18n.L.code:
-            argv = settings.without_option(argv, "--lang")  # changed by voice: settings.json wins
-        os.execv(sys.executable, [sys.executable, *argv])
+        start_again(sys.argv)
+
+
+def start_again(argv: list[str]):
+    """«Restart»: the same program again, in place (os.execv: on macOS and Linux the same process).
+    Started by the Windows and Linux app, which asks for it (ANYASSISTANT_RESTART_EXIT), it ends
+    with that code instead and the app starts it again: on Windows os.execv is another process, and
+    the app would lose the server it watches. Everything was already closed (run_app is over)."""
+    code = os.environ.get("ANYASSISTANT_RESTART_EXIT", "")
+    if code.isdigit():
+        logging.shutdown()
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(int(code))  # not sys.exit: a thread left (a plugin's) would keep it from ending
+    if settings.load().get("language", i18n.L.code) != i18n.L.code:
+        argv = settings.without_option(argv, "--lang")  # changed by voice: settings.json wins
+    os.execv(sys.executable, [sys.executable, *argv])
 
 
 if __name__ == "__main__":

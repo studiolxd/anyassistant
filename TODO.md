@@ -57,12 +57,8 @@ Cómo se hizo: `docs/windows-y-linux.md`.
 - [ ] **Hacer funcionar Claude Code en Linux** (las preguntas abiertas).
 - [ ] **Añadir `tts-piper`**: una voz más ligera, para una Raspberry.
 - [ ] **Elegir voz (`set_voice`) entre las de Kokoro** (hoy, solo las del Mac).
-- [ ] **Poder reiniciar por voz en Windows** con la app de Windows y Linux (hoy `os.execv`, que cambia de
-  proceso).
 - [ ] **Controlar el equipo sin LLM en Windows.**
 - [ ] **Controlar el equipo sin LLM en Linux.**
-- [ ] **Pausar la app de Windows y Linux como cliente** de otro servidor cuando otra app usa el
-  micrófono (detectarlo en la propia app, como la del Mac).
 
 ## Varios dispositivos, lo siguiente
 

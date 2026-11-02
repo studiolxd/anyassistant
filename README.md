@@ -48,7 +48,8 @@ bar, with the same menu and windows. The first time, its installer window (as th
 «Customize…», or «Connect to another server…» to only talk to another computer's server) makes its
 Python and goes through the same steps as `bin/anyassistant setup`. Then it runs the server (or
 adopts the one running: Linux's systemd service): the menu says how it is and which devices are
-connected, starts, restarts and stops it; «Show Eva» opens its face (the page, with Chromium's
+connected, starts, restarts and stops it (a «restart» by voice too: the server ends with the code the
+app asked for and the app starts it again); «Show Eva» opens its face (the page, with Chromium's
 microphone, camera and echo cancellation) and «Listen on this device» keeps it listening while
 hidden; «Themes», «Connect another device», «Devices» and «Settings» are windows (the admin page,
 `/admin`, each part in its own); «Log», «Set it up again», «Open at login». Its packages (unsigned:
@@ -1125,7 +1126,9 @@ so (a call, by CallKit; else «another app»); the Android app is silenced by th
 or later) and says so (and, failing that, the server notices the exact zeros it receives); the Mac
 app asks CoreAudio which other app records (Apple's own daemons don't count) and names it; on
 Windows and Linux the server looks for the app of this computer (the plugin `microphone-busy`:
-Windows' microphone consent store, PipeWire or PulseAudio). The face shows «En pausa: Zoom usa el
+Windows' microphone consent store, PipeWire or PulseAudio), and the Windows and Linux app looks by
+itself when it is a client of another computer's server (the same checks, `apps/desktop/microphone.js`)
+and tells that server, as the Mac app does. The face shows «En pausa: Zoom usa el
 micrófono» (drawn as asleep), its name doesn't wake it, the follow-up clock stops, and it listens
 again when the other app lets go. A page in a browser can't know this by itself.
 
