@@ -29,6 +29,8 @@ echo "Building the app…"
 (cd "$HERE" && swift build -c release --quiet)
 rm -rf "$OUT" && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$HERE/.build/release/AnyAssistant" "$APP/Contents/MacOS/"
+mkdir -p "$APP/Contents/Frameworks"  # Sparkle, its updates (AppUpdates.swift)
+ditto "$HERE/.build/release/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -46,6 +48,9 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
+  <key>SUFeedURL</key><string>https://github.com/studiolxd/anyassistant/releases/latest/download/appcast.xml</string>
+  <key>SUPublicEDKey</key><string>gOiy4GvlnUYAzmQQCNRnHIj/e8liysVYOk/QDZYlylc=</string>
+  <key>SUEnableAutomaticChecks</key><true/>
   <key>NSLocalNetworkUsageDescription</key>
   <string>AnyAssistant talks to your tablet or phone on this network: its microphone, camera and screen.</string>
   <key>NSAppTransportSecurity</key>
@@ -77,6 +82,13 @@ STAMP=""; [ "$IDENTITY" != "-" ] && STAMP="--timestamp"
 for binary in "$APP/Contents/Resources/uv" "$PROGRAM/native/"*; do
   codesign --force --options runtime $STAMP --sign "$IDENTITY" "$binary"
 done
+# Sparkle: its helpers one by one, then the framework (as Sparkle's documentation says).
+SPARKLE="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+codesign --force --options runtime $STAMP --sign "$IDENTITY" "$SPARKLE/XPCServices/Installer.xpc"
+codesign --force --options runtime $STAMP --sign "$IDENTITY" --preserve-metadata=entitlements "$SPARKLE/XPCServices/Downloader.xpc"
+codesign --force --options runtime $STAMP --sign "$IDENTITY" "$SPARKLE/Autoupdate"
+codesign --force --options runtime $STAMP --sign "$IDENTITY" "$SPARKLE/Updater.app"
+codesign --force --options runtime $STAMP --sign "$IDENTITY" "$APP/Contents/Frameworks/Sparkle.framework"
 codesign --force --options runtime $STAMP --entitlements "$HERE/AnyAssistant.entitlements" --sign "$IDENTITY" "$APP"
 codesign --verify --strict "$APP"
 

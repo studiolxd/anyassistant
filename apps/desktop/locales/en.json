@@ -28,5 +28,10 @@
   "The server is on another Mac: use this one only to talk to it": "Connect to another server…",
   "The server isn't responding": "The Server Isn't Responding",
   "You can change everything later. The speech models download once (a few hundred MB).": "The speech models are downloaded during installation (a few hundred MB). You can change any setting later.",
-  "Waiting for the server…": "Waiting for the assistant to start…"
+  "Waiting for the server…": "Waiting for the assistant to start…",
+  "AnyAssistant %s is available": "AnyAssistant %s is available",
+  "Its menu updates it with one click.": "Its menu updates it with one click.",
+  "Update to version %s…": "Update to version %s…",
+  "Downloading version %s…": "Downloading version %s…",
+  "Check for Updates…": "Check for Updates…"
 }

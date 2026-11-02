@@ -292,3 +292,4 @@
 "Learnt on %@" = "Aprendida el %@";
 "Forget %@'s voice on this device?" = "¿Olvidar la voz de %@ en este dispositivo?";
 "Only here: on other devices it is still recognised. If this was the only one, the voice is forgotten." = "Solo aquí: en los demás dispositivos se la sigue reconociendo. Si era el único, se olvida la voz.";
+"Check for Updates…" = "Buscar actualizaciones…";

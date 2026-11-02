@@ -20,3 +20,21 @@ En español, con las palabras de las apps, por lo que cambia para quien la usa (
 - **Linux**: el `.AppImage` o el `.deb`; sin app: `curl -fsSL https://github.com/studiolxd/anyassistant/releases/latest/download/install.sh | sh`.
 - **iPhone, iPad y Apple Watch**: TestFlight.
 ```
+
+## La clave de las actualizaciones del Mac (Sparkle)
+
+Las apps del Mac instaladas solo aceptan una versión nueva si su `.dmg` está firmado con esta
+clave (su parte pública va dentro de la app: `SUPublicEDKey` en `apps/mac/build.sh`). Si se pierde,
+las apps ya instaladas no podrán actualizarse solas: habría que reinstalarlas a mano con una clave
+nueva.
+
+- **Dónde está:** en el llavero de inicio de sesión de este Mac (`login.keychain-db`), como
+  contraseña genérica con el servicio `https://sparkle-project.org` y la cuenta `ed25519`.
+- **Copia de seguridad** (a un archivo, para guardarlo en un gestor de contraseñas, no en el repo):
+  `apps/mac/.build/artifacts/sparkle/Sparkle/bin/generate_keys -x sparkle-private-key.txt`
+- **En un Mac nuevo:** `apps/mac/.build/artifacts/sparkle/Sparkle/bin/generate_keys -f sparkle-private-key.txt`
+  (tras un `swift build` en `apps/mac`, que baja las herramientas de Sparkle).
+
+Junto a ella hacen falta, para publicar desde otro Mac, el certificado «Developer ID Application»
+(con su clave privada: exportado desde Acceso a Llaveros como `.p12`) y el perfil de notarización
+(`xcrun notarytool store-credentials anyassistant`).

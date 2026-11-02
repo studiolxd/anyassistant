@@ -85,6 +85,7 @@ final class Delegate: NSObject, NSApplicationDelegate {
             let client = Client.shared
             defer { client.begin() }
             CommunityUpdates.shared.begin()  // the community's updates (with the server here): a notification, a menu item
+            AppUpdates.shared.begin()  // the app's own (Sparkle): a newer version, with one click
             if client.role == .client { return }  // no server here: another Mac's
             if server.installed {
                 server.launch()
@@ -256,8 +257,13 @@ struct MenuView: View {
     }
 
     var quit: some View {
-        Button(T("Quit AnyAssistant")) { NSApp.terminate(nil) }
-            .keyboardShortcut("q")
+        Group {
+            if AppUpdates.shared.available {
+                Button(M("Check for Updates…")) { AppUpdates.shared.check() }
+            }
+            Button(T("Quit AnyAssistant")) { NSApp.terminate(nil) }
+                .keyboardShortcut("q")
+        }
     }
 
     @ViewBuilder var serverMenu: some View {

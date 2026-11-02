@@ -7,7 +7,9 @@
 #      and Linux app with that version, the program alone and install.sh, and makes the release with
 #      those notes.
 #   3. Meanwhile, the Mac's app: built, signed and notarized here (apps/mac/build.sh --release, with
-#      this version), then added to that release once it exists.
+#      this version), then added to that release once it exists, with its appcast.xml (apps/mac/
+#      appcast.py): what the installed Macs' Sparkle reads to offer it, its .dmg signed with the key
+#      in this Mac's Keychain (made once by Sparkle's generate_keys; keep a copy: docs/versiones).
 #
 # The phone apps go apart: TestFlight (apps/apple/testflight.sh) and Android's APK.
 set -e
@@ -42,6 +44,10 @@ echo "Tagged $TAG: GitHub is building Windows and Linux."
 RELEASE_VERSION="$VERSION" "$ROOT/apps/mac/build.sh" --release
 DMG="$ROOT/apps/mac/build/AnyAssistant-$VERSION-mac.dmg"
 cp "$ROOT/apps/mac/build/AnyAssistant.dmg" "$DMG"
+SIGNED="$("$ROOT/apps/mac/.build/artifacts/sparkle/Sparkle/bin/sign_update" "$DMG")"  # the key in the Keychain
+BUILD="$(plutil -extract CFBundleVersion raw "$ROOT/apps/mac/build/AnyAssistant.app/Contents/Info.plist")"
+APPCAST="$ROOT/apps/mac/build/appcast.xml"
+python3 "$ROOT/apps/mac/appcast.py" "$NOTES" "$TAG" "$VERSION" "$BUILD" "$SIGNED" "$APPCAST"
 
 echo "Waiting for GitHub's release…"
 RUN=""
@@ -52,5 +58,5 @@ for _ in $(seq 1 60); do
 done
 [ -n "$RUN" ] || { echo "GitHub's build didn't start. The .dmg is at $DMG: gh release upload $TAG \"$DMG\""; exit 1; }
 gh run watch "$RUN" --exit-status >/dev/null || { echo "GitHub's build failed: gh run view $RUN --log-failed. The .dmg: $DMG"; exit 1; }
-gh release upload "$TAG" "$DMG"
+gh release upload "$TAG" "$DMG" "$APPCAST"
 echo "Published: $(gh release view "$TAG" --json url -q .url)"

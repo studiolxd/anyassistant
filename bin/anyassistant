@@ -18,7 +18,8 @@
 #   bin/anyassistant setup [--defaults|--json] [--set key=value] [step…]   the installer's steps (again)
 #   bin/anyassistant corpus fetch|status|run|baseline   the audio corpus that measures how it listens (docs/corpus.md)
 #   bin/anyassistant run [server options]     in the foreground (what launchd runs)
-#   bin/anyassistant update             installed: the new version from where it came, then restarts
+#   bin/anyassistant update             installed: the new version from where it came (or the latest
+#                                       release, if that copy isn't there any more), then restarts
 #   bin/anyassistant uninstall [--all|--keep-data]   installed: removes it (your data, if you say so)
 #
 # Options also come from settings.json. The PID, the port and the log go to the cache
@@ -83,8 +84,12 @@ case "$1" in
   update)
     # The program again from where it was installed from, its packages, bridges and models; restarts.
     [ -f "$ROOT/install.env" ] || { echo "Only for an installed copy (in the project: git pull)."; exit 1; }
-    [ -x "$ANYASSISTANT_SOURCE/install.sh" ] || { echo "Where it was installed from isn't there: $ANYASSISTANT_SOURCE"; exit 1; }
-    exec "$ANYASSISTANT_SOURCE/install.sh" --to "$ROOT" --data "$ANYASSISTANT_HOME" --cache "$ANYASSISTANT_CACHE" --update
+    if [ -x "$ANYASSISTANT_SOURCE/install.sh" ]; then
+      exec "$ANYASSISTANT_SOURCE/install.sh" --to "$ROOT" --data "$ANYASSISTANT_HOME" --cache "$ANYASSISTANT_CACHE" --update
+    fi
+    # Installed from a release (curl … | sh: its copy was temporary): the latest release's.
+    RELEASE="${ANYASSISTANT_RELEASE:-https://github.com/studiolxd/anyassistant/releases/latest/download}"
+    curl -fsSL "$RELEASE/install.sh" | sh -s -- --to "$ROOT" --data "$ANYASSISTANT_HOME" --cache "$ANYASSISTANT_CACHE" --update
     ;;
   uninstall)
     # The program, its cache and starting with the Mac; your data only if you say so (or --all).

@@ -15,6 +15,7 @@ const { Server } = require('./server');
 const setup = require('./setup');
 const microphone = require('./microphone');
 const updates = require('./updates');
+const appUpdates = require('./app-updates');
 
 // Its texts: the key is the English in the code (the Mac app's); locales/<language>.json says it
 // in the interface's language: the one chosen in its Settings («Idioma de la interfaz», the admin
@@ -263,6 +264,23 @@ const updatesItems = () => (pendingUpdates.length
   ? [{ label: M('Community updates (%s)…').replace('%s', pendingUpdates.length), click: () => showUpdates(updates.place(pendingUpdates)) }]
   : []);
 
+// --- The app's own updates (app-updates.js): a notification once per version, «Actualizar…» in the menu ---
+
+let ownUpdates = { state: {}, check: () => {}, install: () => {} };  // the packaged app's (begin, once there is a tray)
+function followOwnUpdates() {
+  ownUpdates = appUpdates.begin({ app, log: (m) => console.log(m), changed: menu, notify: (version) => {
+    if (!appUpdates.announce(version, state.appNotice)) return;
+    remember({ appNotice: version });
+    if (!Notification.isSupported()) return;
+    const shown = new Notification({ title: T('AnyAssistant %s is available', version), body: T('Its menu updates it with one click.'),
+                                     icon: path.join(__dirname, 'icons', 'icon.png') });
+    shown.on('click', () => ownUpdates.install());
+    shown.show();
+  } });
+}
+const ownUpdateItems = () => appUpdates.items(ownUpdates.state, T, M, () => ownUpdates.install());
+const checkItem = () => (app.isPackaged ? [{ label: M('Check for Updates…'), click: () => ownUpdates.check() }] : []);
+
 // --- The other server, as a client (the Mac's «Conectarse a otro servidor») ---
 
 let linked = false;  // the other server answers
@@ -439,6 +457,7 @@ function clientMenu() {
     { label: M('Run the server on this device…'), click: useThisDevice },
     loginItem(),
     { type: 'separator' },
+    ...ownUpdateItems(), ...checkItem(),
     quitItem(),
   ];
 }
@@ -465,6 +484,7 @@ function serverMenu() {
     { label: M('Install steps again…'), click: () => setup.open() },
     loginItem(),
     { type: 'separator' },
+    ...ownUpdateItems(), ...checkItem(),  // the app's own: one click (it never installs by itself)
     quitItem(),
   ];
 }
@@ -563,6 +583,7 @@ app.whenReady().then(async () => {
   if (!ready()) return setup.open();  // not installed yet (nor using another server): no menu, the installer
   if (process.env.ANYASSISTANT_SETUP) setup.open();  // developing: the installer's window, to see it
   showTray();
+  followOwnUpdates();
   if (isClient()) { await followLink(); menu(); if (state.listening) face(false); return; }
   await server.begin();
 });

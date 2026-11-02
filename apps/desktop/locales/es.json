@@ -83,5 +83,10 @@
   "Waiting for the server…": "Esperando a que el servidor se inicie…",
   "Community updates (%s)…": "Actualizaciones de la comunidad (%s)…",
   "There's an update of %s (%s)": "Hay una actualización de %s (%s)",
-  "There are updates of %s themes and plugins": "Hay actualizaciones de %s temas y plugins"
+  "There are updates of %s themes and plugins": "Hay actualizaciones de %s temas y plugins",
+  "AnyAssistant %s is available": "AnyAssistant %s ya está disponible",
+  "Its menu updates it with one click.": "Se actualiza con un clic desde su menú.",
+  "Update to version %s…": "Actualizar a la versión %s…",
+  "Downloading version %s…": "Descargando la versión %s…",
+  "Check for Updates…": "Buscar actualizaciones…"
 }

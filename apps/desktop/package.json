@@ -34,6 +34,7 @@
       "bonjour.js",
       "microphone.js",
       "updates.js",
+      "app-updates.js",
       "preload.js",
       "setup.html",
       "unavailable.html",
@@ -92,5 +93,8 @@
   },
   "allowScripts": {
     "electron-winstaller": false
+  },
+  "dependencies": {
+    "electron-updater": "6.8.11"
   }
 }
