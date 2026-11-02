@@ -677,7 +677,7 @@ images/, fonts/  whatever it uses, inside its folder
 |---|---|
 | `face` | its face: the theme draws it inside (and gets the live variables below) |
 | `status` | «Te escucho», «Pensando…», «Di Hey Jarvis» |
-| `heard`, `answer`, `captions` | what you said last, its last answer, or both with `history` |
+| `heard`, `answer`, `captions` | what you said last, its last answer, or both with `history`; each scrolls in its own area (below) |
 | `clock`, `time`, `date` | the clock (both parts, or each on its own) |
 | `timers` | running timers, alarms and reminders |
 | `photo`, `camera` | the photo it looks at, the live camera (if the theme has no place for them, Jarvis adds its own) |
@@ -697,13 +697,20 @@ understands). Starting and pairing aren't blocks: they always work.
   own) and `--bar-1` … `--bar-5` (its own as five moving bars), e.g.
   `transform: scale(calc(1 + var(--voice) * .2))`.
 - Its `options` as variables: `--accent`, changeable with `theme_options`.
+- The words' areas (`heard`, `answer`, `captions`) scroll by themselves and follow the voice;
+  the theme only gives their height: a `max-height` (30% of the screen if it says nothing), a
+  fixed `height` in a centred column (so the face doesn't move when words arrive), or
+  `max-height: none` in a flex column of the screen's height, so they shrink to the space left
+  (Eyes and Orb). While there is more above or below they have the classes `more-above`,
+  `more-below` (a fade; a theme may change it).
 - The timers' lines with their kind as a class (`.timers p.timer`, `.alarm`,
   `.reminder`): Jarvis puts no icon, so a theme that wants one adds it, e.g.
   `.timers p.alarm::before { content: "⏰ "; }` (and `body[data-state=alarm] .status::before`
   while one rings). Android 4.4's font lacks some emoji (⏱).
 
 **Seeing them**: the Mac app's «Themes…» (or `http://<mac>:8080/themes?theme=mine`) shows every state at once, with a
-simulated voice and timer, and reloads when you save.
+simulated voice and timer and a long conversation whose captions follow the voice, and reloads
+when you save.
 
 **By voice**: «crea un tema a partir del orbe y que piense en lila» — Jarvis copies
 it into your folder, reads it and changes what you asked (`create_theme`,
@@ -897,6 +904,18 @@ camera, «speak English»…) implement `hear(text, jarvis)` instead.
 
 What you say goes to the LLM and the answer appears on screen as it is generated.
 Each «Hey Jarvis» starts a new conversation, remembered until it falls asleep.
+
+**Captions follow the voice.** The whole answer usually arrives seconds before the voice has
+read it; what you said, what it answers and the captions each scroll in their own area (no
+scrollbar: a finger, the wheel or the trackpad), with a fade at the edge where there is more.
+What you said shows from its end; an answer, from its start, and then like a teleprompter: when
+a sentence starts playing on a device, the server tells that device which one
+(`{"type": "speaking", "id", "start", "end"}`: the answer's id and the sentence's characters in
+its text, in UTF-16 as JavaScript and Kotlin count them). The server knows when: each speaker's
+`play()` returns when that audio starts, after what it already queued (the page's WebRTC track,
+the apps' WebSocket), and the message is sent at that moment; nothing if it was stopped
+meanwhile. Scrolled by hand, it stops following until you scroll back to the end or new words
+arrive. A tap still stops it (`tap_to_stop`); a drag that scrolls isn't a tap.
 
 There are three plugins:
 
