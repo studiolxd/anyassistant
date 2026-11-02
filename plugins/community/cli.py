@@ -5,7 +5,7 @@ with every file's path, address and SHA-256 (docs/comunidad.md). Plain Python, n
     python plugins/community/cli.py entry themes/aurora https://raw.githubusercontent.com/you/repo/main/themes/aurora
 
 The folder's name is the package's id; theme.json or plugin.json gives its name, author, version
-and description; a theme's preview.png is its screenshot. Hidden files and __pycache__ are left out.
+and description (and locales/<language>.json, the description in other languages); a theme's preview.png is its screenshot. Hidden files and __pycache__ are left out.
 """
 
 import hashlib
@@ -29,6 +29,19 @@ def entry(folder: Path, base_url: str) -> dict:
     made = {"kind": kind, "id": folder.name, "name": manifest.get("name", folder.name),
             "author": manifest.get("author", ""), "version": str(manifest.get("version", "1")),
             "description": manifest.get("description", "")}
+    # Its description in other languages, from its locales (a theme's {"theme": {"description"}},
+    # a plugin's {"plugins": {id: [name, description]}}): the catalog shows it in yours.
+    descriptions = {}
+    for locale in sorted((folder / "locales").glob("*.json")):
+        try:
+            texts = json.loads(locale.read_text())
+            found = (texts["theme"]["description"] if kind == "theme" else texts["plugins"][folder.name][1])
+        except (ValueError, KeyError, IndexError, TypeError):
+            continue
+        if isinstance(found, str) and found and found != made["description"]:
+            descriptions[locale.stem] = found
+    if descriptions:
+        made["descriptions"] = descriptions
     if kind == "theme" and (folder / "preview.png").exists():
         made["screenshot"] = base_url + "preview.png"
     made["files"] = files

@@ -116,6 +116,7 @@ Cada paquete:
 | `author` | opcional | Quién lo hizo. |
 | `version` | obligatorio | Una versión legible (`1.0.0`, `2.1`). Hay actualización cuando la del catálogo es mayor que la instalada (orden PEP 440; si no se pueden comparar, cuando es distinta). |
 | `description` | opcional | Una frase. |
+| `descriptions` | opcional | La frase en otros idiomas: `{"es": "…"}`. Se muestra la del idioma activo; si no está, `description`. `bin/anyassistant community entry` la saca de `locales/<idioma>.json`. |
 | `homepage` | opcional | Dónde leer más (su carpeta en el repositorio o su propia página). |
 | `screenshot` | opcional, temas | Dirección `https://` de un PNG o JPEG (3 MB como mucho). |
 | `min_version` | opcional | La versión más antigua de AnyAssistant con la que funciona: el número de su `VERSION` (`280-9e919ad` → `280`; la app lo muestra bajo el nombre del equipo en Ajustes y en `/admin`). Una copia en desarrollo (sin `VERSION`) acepta cualquiera. |

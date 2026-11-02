@@ -26,7 +26,16 @@ function views(name) {
     figure.appendChild(caption);
     main.appendChild(figure);
   });
+  scale();
 }
+
+// Each view at its column's width: computed geometry (the frame's width over the tablet's 800).
+function scale() {
+  var main = document.getElementById('states');
+  var frame = main.querySelector('.frame');
+  if (frame && frame.clientWidth) main.style.setProperty('--scale', frame.clientWidth / 800);
+}
+window.addEventListener('resize', scale);
 
 function config(name) {
   return fetch('/config?theme=' + encodeURIComponent(name)).then(function (r) { return r.json(); });
@@ -60,15 +69,23 @@ function show(data) {
 }
 
 // Its sounds (when it wakes, falls asleep, an alarm rings): a button each to hear it, as it
-// plays (/sounds/<kind>.wav), marked when it is the theme's own (sounds/<kind>.wav in it).
+// plays (/sounds/<kind>.wav: the theme's own if it has one, else the system's).
 var SOUNDS = ['wake', 'sleep', 'alarm'];
 function soundName(kind) {
   return kind === 'wake' ? T('When it wakes') : kind === 'sleep' ? T('When it falls asleep') : T('Alarm');
 }
 var player = new Audio();
+var playing = null;
+function stopped() {
+  if (playing) { playing.className = 'secondary'; playing.firstChild.textContent = '▶ '; }
+  playing = null;
+}
+player.onended = stopped;
 function sounds(name) {
   var row = document.getElementById('sounds');
   row.innerHTML = '';
+  player.pause();
+  stopped();
   var title = document.createElement('span');
   title.textContent = T('Sounds');
   row.appendChild(title);
@@ -76,16 +93,23 @@ function sounds(name) {
     var url = '/sounds/' + sound + '.wav?theme=' + encodeURIComponent(name) + '&v=' + version;
     var button = document.createElement('button');
     button.className = 'secondary';
-    button.textContent = '▶ ' + soundName(sound);
-    button.onclick = function () { player.pause(); player.src = url; player.play().catch(function () {}); };
+    button.appendChild(document.createTextNode('▶ '));
+    button.appendChild(document.createTextNode(soundName(sound)));
+    // A tap plays it (▶ → ■); again, or another, stops it.
+    button.onclick = function () {
+      var again = playing === button;
+      player.pause();
+      stopped();
+      if (again) return;
+      player.src = url;
+      player.play().catch(stopped);
+      playing = button;
+      button.className = 'secondary playing';
+      button.firstChild.textContent = '■ ';
+    };
     row.appendChild(button);
     fetch(url).then(function (r) {
-      if (!r.ok) { button.hidden = true; return; }
-      var own = r.headers.get('X-Theme-Sound') === '1';
-      if (own) button.className = 'secondary own';
-      var whose = document.createElement('small');
-      whose.textContent = own ? T('the theme\'s') : T('the system\'s');
-      button.appendChild(whose);
+      if (!r.ok) button.hidden = true;
     });
   });
 }

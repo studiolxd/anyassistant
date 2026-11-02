@@ -45,6 +45,11 @@
           "minLength": 1
         },
         "description": { "type": "string" },
+        "descriptions": {
+          "description": "The description in other languages ({\"es\": \"…\"}): the one in the active language is shown, else description. bin/anyassistant community entry takes them from the package's locales.",
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
         "homepage": {
           "description": "Where to read more (the package's folder in the repository, or its own page).",
           "type": "string",

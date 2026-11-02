@@ -67,6 +67,11 @@ body.ui { color-scheme: dark; }
 
 /* --- Components (inside .ui) --- */
 
+/* Links: the primary colour, visited or not (never the browser's purple), underlined on hover. */
+.ui a { color: var(--color-primary); text-decoration: none; }
+.ui a:hover { text-decoration: underline; }
+.ui a.button, .ui a.button:hover { text-decoration: none; }
+
 /* hidden is hidden, whatever display a component gives. */
 .ui [hidden], .ui[hidden] { display: none !important; }
 
@@ -129,7 +134,7 @@ body.ui { color-scheme: dark; }
   font: inherit;
   font-size: var(--text-md);
   color: var(--color-text);
-  background: var(--color-surface);
+  background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   transition: border-color var(--duration) var(--easing), box-shadow var(--duration) var(--easing);
@@ -146,7 +151,7 @@ body.ui { color-scheme: dark; }
 .ui ::placeholder { color: var(--color-text-secondary); opacity: 1; }
 
 /* The chevron: a select's, and a disclosure's (details/summary: pointing right, down when open). */
-.ui select { -webkit-appearance: none; appearance: none; padding-right: 30px; cursor: pointer;
+.ui select, .ui select.field { -webkit-appearance: none; appearance: none; padding-right: 30px; cursor: pointer;
   background-image: var(--chevron); background-repeat: no-repeat; background-position: right 10px center;
   background-size: 12px 12px; }
 .ui summary { list-style: none; cursor: pointer; }

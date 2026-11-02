@@ -455,3 +455,20 @@ def test_the_example_index_is_valid():
     text = (ROOT / "docs" / "comunidad" / "index.example.json").read_text()
     packages, problems = community.parse_index(text)
     assert problems == [] and {p["kind"] for p in packages} == {"theme", "plugin"}
+
+
+def test_the_description_is_shown_in_your_language_from_the_packages_locales(tmp_path, es):
+    """The catalog's entry carries its description in other languages (from locales/), and the list
+    shows the one in the active language, else the catalog's."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("community_cli", ROOT / "plugins/community/cli.py")
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+    folder = tmp_path / "aurora"
+    (folder / "locales").mkdir(parents=True)
+    (folder / "theme.json").write_text(json.dumps({"name": "Aurora", "description": "Northern lights."}))
+    (folder / "locales" / "es.json").write_text(json.dumps({"theme": {"description": "Luces del norte."}}))
+    made = cli.entry(folder, "https://example.com/themes/aurora")
+    assert made["descriptions"] == {"es": "Luces del norte."}
+    assert community._description(made) == "Luces del norte."
+    assert community._description({"description": "Northern lights."}) == "Northern lights."
