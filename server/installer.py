@@ -216,7 +216,10 @@ class Terminal:
         print(f"\r      ✗ {text}")
 
     def finished(self, failed):
-        print("\nDone." if not failed else f"\nDone, with problems in: {', '.join(failed)}.")
+        import i18n
+
+        print("\n" + (i18n.L.text("installer.done", "Done.") if not failed else
+                      i18n.L.text("installer.done_problems", "Done, with problems in: {steps}.").format(steps=", ".join(failed))))
 
 
 class Lines:

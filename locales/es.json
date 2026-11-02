@@ -151,7 +151,19 @@
     "none_needed": "No hace falta ninguno",
     "stt": "Reconocimiento de voz: {name}",
     "wake": "Palabra de activación: {name}",
-    "vad": "Detección de voz"
+    "vad": "Detección de voz",
+    "service_off": "no: arráncalo con {command}",
+    "service_on_mac": "sí: se inicia con el Mac",
+    "service_on": "sí: se inicia con el ordenador, y ya está en marcha",
+    "linger": " (al encender, sin iniciar sesión: sudo loginctl enable-linger $USER)",
+    "no_systemd": "aquí no hay systemd: arráncalo con {command}",
+    "connect_start": "arráncalo ({command}) y abre {url} en el dispositivo",
+    "connect_waiting": "esperando a que arranque…",
+    "connect_open": "abre {url} en el dispositivo",
+    "connect_code": " y escribe el código {code} (vale 5 minutos; {command} para otro)",
+    "connect_once_running": " cuando esté en marcha ({command})",
+    "done": "Listo.",
+    "done_problems": "Listo, con problemas en: {steps}."
   },
   "choices": {
     "bool": {

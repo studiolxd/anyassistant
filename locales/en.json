@@ -182,7 +182,19 @@
     "none_needed": "None needed",
     "stt": "Speech recognition: {name}",
     "wake": "Wake word: {name}",
-    "vad": "Voice detection"
+    "vad": "Voice detection",
+    "service_off": "off: start it with {command}",
+    "service_on_mac": "on: it starts with the Mac",
+    "service_on": "on: it starts with the computer, and it is running now",
+    "linger": " (at boot without logging in: sudo loginctl enable-linger $USER)",
+    "no_systemd": "no systemd here: start it with {command}",
+    "connect_start": "start it ({command}) and open {url} on the device",
+    "connect_waiting": "waiting for it to start…",
+    "connect_open": "open {url} on the device",
+    "connect_code": " and type the code {code} (valid 5 minutes; {command} for another)",
+    "connect_once_running": " once it is running ({command})",
+    "done": "Done.",
+    "done_problems": "Done, with problems in: {steps}."
   },
   "options_empty": {
     "language": "the system's language",

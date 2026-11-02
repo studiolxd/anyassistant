@@ -112,6 +112,8 @@ case "$1" in
       kill -TERM "$(cat "$PID")" 2>/dev/null
     fi
     rm -rf "$ANYASSISTANT_CACHE"
+    LINK="$HOME/.local/bin/anyassistant"  # install.sh's, if it is this copy's
+    [ -L "$LINK" ] && [ "$(readlink "$LINK")" = "$ROOT/bin/anyassistant" ] && rm -f "$LINK"
     [ $DATA_TOO = 1 ] && rm -rf "$ANYASSISTANT_HOME"
     echo "AnyAssistant uninstalled$([ $DATA_TOO = 1 ] || printf '; your data stays in %s' "$ANYASSISTANT_HOME")."
     # Last, the program itself (this script is in it): from a shell that doesn't need it.

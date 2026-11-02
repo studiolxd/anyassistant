@@ -107,7 +107,15 @@ ANYASSISTANT_CACHE="$CACHE"
 ENV
 
 say "Preparing Python…"
-(cd "$TO" && "$UV" sync --frozen --no-dev --quiet)
+# --inexact: the plugins' packages already there stay (its «packages» step sets them as they should be).
+(cd "$TO" && "$UV" sync --frozen --no-dev --inexact --quiet)
+
+# «anyassistant» in a terminal: ~/.local/bin is in the PATH on most systems (uv's installer adds it).
+# Not over a file of someone else's there, only over a link.
+LINK="$HOME/.local/bin/anyassistant"
+if [ ! -e "$LINK" ] || [ -L "$LINK" ]; then
+  mkdir -p "$HOME/.local/bin" && ln -sf "$TO/bin/anyassistant" "$LINK"
+fi
 
 eval "set -- $PASS"
 if [ $SETUP = 0 ]; then

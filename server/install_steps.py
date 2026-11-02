@@ -31,6 +31,18 @@ def _t(key: str, default: str, **values) -> str:
     return i18n.L.text(f"installer.{key}", default).format(**values)
 
 
+def command(*args: str) -> str:
+    """How to run bin/anyassistant from a terminal: «anyassistant start» if this copy is the one in
+    the PATH (install.sh links ~/.local/bin/anyassistant), else its whole path («~/.local/opt/…»)."""
+    ours = os.path.realpath(paths.BIN / "anyassistant")
+    found = shutil.which("anyassistant")
+    if found and os.path.realpath(found) == ours:
+        return " ".join(["anyassistant", *args])
+    home = os.path.expanduser("~")
+    whole = str(paths.BIN / "anyassistant")
+    return " ".join([("~" + whole[len(home):]) if whole.startswith(home + os.sep) else whole, *args])
+
+
 # --- The computer ---
 
 @task("computer", "Device", order=0)
@@ -228,7 +240,7 @@ def service(value):
     if not value:
         if os.path.exists(AGENT):
             os.remove(AGENT)
-        return "off: start it with bin/anyassistant start"
+        return _t("service_off", "off: start it with {command}", command=command("start"))
     paths.CACHE.mkdir(parents=True, exist_ok=True)
     os.makedirs(os.path.dirname(AGENT), exist_ok=True)
     with open(AGENT, "wb") as f:
@@ -245,7 +257,7 @@ def service(value):
     for attempt in range(5):
         done = _launchctl("bootstrap", domain, AGENT, check=False)
         if done.returncode == 0:
-            return "on: it starts with the Mac"
+            return _t("service_on_mac", "on: it starts with the Mac")
         time.sleep(1)
     raise RuntimeError(f"launchd didn't take it: {done.stderr.strip()}")
 
@@ -257,13 +269,13 @@ def _systemctl(*args, check=True):
 def _systemd(value) -> str:
     """Linux: a systemd user unit (back if it fails; not after «stop»)."""
     if not shutil.which("systemctl"):
-        raise Skip("no systemd here: start it with bin/anyassistant start")
+        raise Skip(_t("no_systemd", "no systemd here: start it with {command}", command=command("start")))
     if not value:
         _systemctl("disable", "--now", "anyassistant", check=False)
         if os.path.exists(UNIT):
             os.remove(UNIT)
         _systemctl("daemon-reload", check=False)
-        return "off: start it with bin/anyassistant start"
+        return _t("service_off", "off: start it with {command}", command=command("start"))
     paths.CACHE.mkdir(parents=True, exist_ok=True)
     os.makedirs(os.path.dirname(UNIT), exist_ok=True)
     with open(UNIT, "w") as f:
@@ -289,8 +301,8 @@ WantedBy=default.target
     # Without a session open (a server with no screen): `loginctl enable-linger` lets it start at boot.
     linger = subprocess.run(["loginctl", "show-user", os.environ.get("USER", ""), "-p", "Linger"],
                             capture_output=True, text=True).stdout.strip()
-    note = "" if linger.endswith("yes") else " (at boot without logging in: sudo loginctl enable-linger $USER)"
-    return "on: it starts with the computer" + note
+    note = "" if linger.endswith("yes") else _t("linger", " (at boot without logging in: sudo loginctl enable-linger $USER)")
+    return _t("service_on", "on: it starts with the computer, and it is running now") + note
 
 
 # --- Connecting a device ---
@@ -309,26 +321,28 @@ def connect(progress):
     port = settings.load().get("port", 8080)
     url = f"http://{_address()}:{port}"
     running = False
-    if not (paths.INSTALLED and os.path.exists(AGENT) and ours()):  # whatever answers may be another copy
-        return f"start it (bin/anyassistant start) and open {url} on the device"
+    service = UNIT if sys.platform.startswith("linux") else AGENT  # what starts it (Linux's, not the Mac's)
+    if not (paths.INSTALLED and os.path.exists(service) and ours()):  # whatever answers may be another copy
+        return _t("connect_start", "start it ({command}) and open {url} on the device", command=command("start"), url=url)
     for _ in range(90):
         try:
             urllib.request.urlopen(f"http://127.0.0.1:{port}/status", timeout=1)
             running = True
             break
         except OSError:
-            if not os.path.exists(AGENT):
+            if not os.path.exists(service):
                 break
-            progress(None, "waiting for it to start…")
+            progress(None, _t("connect_waiting", "waiting for it to start…"))
             time.sleep(1)
-    text = f"open {url} on the device"
+    text = _t("connect_open", "open {url} on the device", url=url)
     if running and kernel.enabled("pairing"):
         try:
             request = urllib.request.Request(f"http://127.0.0.1:{port}/pairing", data=b"", method="POST")
             code = __import__("json").load(urllib.request.urlopen(request, timeout=3))["code"]
-            text += f" and type the code {code} (valid 5 minutes; bin/anyassistant pair for another)"
+            text += _t("connect_code", " and type the code {code} (valid 5 minutes; {command} for another)",
+                       code=code, command=command("pair"))
         except OSError:
             pass
     elif not running:
-        text += " once it is running (bin/anyassistant start)"
+        text += _t("connect_once_running", " once it is running ({command})", command=command("start"))
     return text
