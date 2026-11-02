@@ -41,7 +41,7 @@ if [ ! -f "$SOURCE/server/main.py" ]; then
   curl -fsSL -o "$FETCHED/program.tar.gz" "$RELEASE/AnyAssistant-program.tar.gz" \
     || { echo "It couldn't download AnyAssistant ($RELEASE/AnyAssistant-program.tar.gz)."; exit 1; }
   tar -xzf "$FETCHED/program.tar.gz" -C "$FETCHED"
-  exec sh "$FETCHED/program/install.sh" "$@"
+  ANYASSISTANT_FROM_RELEASE=1 exec sh "$FETCHED/program/install.sh" "$@"
 fi
 PASS=""
 UPDATE=0
@@ -101,7 +101,9 @@ rm -rf "$FRESH"
 [ -d "$SOURCE/native" ] && cp -R "$SOURCE/native" "$TO/"  # the Swift bridges, if already built
 cat > "$TO/install.env" <<ENV
 # Where this copy keeps your data and what can be rebuilt (server/paths.py, bin/anyassistant).
-ANYASSISTANT_SOURCE="$SOURCE"
+# ANYASSISTANT_SOURCE: the copy it came from («anyassistant update» installs from there); empty: a
+# release (curl … | sh: its copy was temporary), so it updates from the latest release.
+ANYASSISTANT_SOURCE="$([ -n "$ANYASSISTANT_FROM_RELEASE" ] || printf '%s' "$SOURCE")"
 ANYASSISTANT_HOME="$DATA"
 ANYASSISTANT_CACHE="$CACHE"
 ENV
