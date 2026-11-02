@@ -61,6 +61,14 @@ struct VoicesView: View {
     @State private var renaming: String?  // whose name is being changed
     @State private var newName = ""
 
+    struct Renaming: Identifiable { let name: String; var id: String { name } }
+
+    func rename(_ name: String) {
+        let to = newName.trimmingCharacters(in: .whitespaces)
+        renaming = nil
+        if !to.isEmpty, to != name { Task { await model.rename(name, to: to) } }
+    }
+
     var body: some View {
         Form {
             if model.off {
@@ -120,17 +128,22 @@ struct VoicesView: View {
         } message: { _ in
             Text(T("If you keep it and its voice is learnt again under the same name, it remembers it again."))
         }
-        .alert(T("Rename"), isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } }),
-               presenting: renaming) { name in
-            TextField(T("Name"), text: $newName)
-            Button(T("Rename")) {
-                let to = newName.trimmingCharacters(in: .whitespaces)
-                if !to.isEmpty, to != name { Task { await model.rename(name, to: to) } }
+        .sheet(item: Binding(get: { renaming.map { Renaming(name: $0) } }, set: { renaming = $0?.name })) { item in
+            // Its new name («Subi» → «Suvi»); a name it already knows: one voice.
+            VStack(alignment: .leading, spacing: 12) {
+                Text(T("Rename")).font(.headline)
+                TextField(T("Name"), text: $newName).textFieldStyle(.roundedBorder).frame(width: 280)
+                    .onSubmit { rename(item.name) }
+                Text(T("What it remembers about them keeps the new name too."))
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                HStack {
+                    Spacer()
+                    Button(T("Cancel"), role: .cancel) { renaming = nil }.keyboardShortcut(.cancelAction)
+                    Button(T("Rename")) { rename(item.name) }.keyboardShortcut(.defaultAction)
+                        .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
             }
-            .keyboardShortcut(.defaultAction)
-            Button(T("Cancel"), role: .cancel) {}
-        } message: { _ in
-            Text(T("What it remembers about them keeps the new name too."))
+            .padding(20).frame(width: 320)
         }
         .task { await model.load() }
         .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
