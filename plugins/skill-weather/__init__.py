@@ -125,6 +125,10 @@ def answer(day: int = 0, rain: bool = False, city: str | None = None) -> str:
 @skill
 class Weather(Skill):
     order = 45
+    harmless = True
+
+    def takes(self, text, toks) -> bool:
+        return understood(text) is not None
 
     def hear(self, text, assistant) -> bool:
         asked = understood(text)

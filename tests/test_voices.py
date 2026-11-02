@@ -220,18 +220,171 @@ def test_only_a_known_voice_wakes_it(monkeypatch):
     assert voices.may_wake(SECOND)
 
 
-def test_apagate_needs_only_a_voice_not_clearly_a_strangers(monkeypatch, es):
-    """«Apágate» is short and harmless: as «Ey, Eva», only a voice clearly unlike everyone is refused."""
+def test_harmless_commands_need_only_a_voice_not_clearly_a_strangers(monkeypatch, es):
+    """«Apágate», «para», the time are harmless (and short: their print says less): as «Ey, Eva», only a
+    voice clearly unlike everyone is refused."""
     voices.learn("Suvi", [unit(1, 0)])
     settings.active["voice_check"] = "all"
-    sleep = kernel.load("skill-sleep")
-    monkeypatch.setattr(voices, "kernel_module", lambda name: sleep if name == "skill-sleep" else None)
     long = np.zeros(24000, np.float32)  # 1.5 s: too long for «short, as whoever was talking»
     monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 2))  # Suvi, quickly: ~0.45
     assert not voices.screen(Assistant(), "Apágate.", {}, long, None)  # handled as usual: it sleeps
-    assert voices.screen(Assistant(), "¿Qué hora es?", {}, long, lambda *a: None)  # anything else: checked
+    assert not voices.screen(Assistant(), "¿Qué hora es?", {}, long, None)  # the time: as usual
+    assert not voices.screen(Assistant(), "Para.", {}, long, None)
+    assert voices.screen(Assistant(), "Envía el correo a Ana.", {}, long, lambda *a: None)  # anything else: checked
     monkeypatch.setattr(voices, "voice_print", lambda audio: unit(0, 0, 1))  # a guest
-    assert voices.screen(Assistant(), "Apágate.", {}, long, lambda *a: None)  # checked, and dropped
+    assistant = Assistant()
+    assert voices.screen(assistant, "Apágate.", {}, long, lambda *a: None)  # checked, and dropped
+    assert voices.screen(assistant, "¿Qué hora es?", {}, long, lambda *a: None)
+    assert not assistant.tasks  # dropped at once, nothing asked
+
+
+def test_a_sentence_in_the_unclear_band_asks_before_doing_it(monkeypatch, es, project):
+    """Between the lower bound and voice_match, something that would do something isn't dropped: it asks
+    «¿lo hago?» and does it on a «yes» from a recognised voice."""
+    voices.learn("Suvi", [unit(1, 0)])
+    settings.active["voice_check"] = "all"
+    confirmation = kernel.load("confirmation")
+    assistant = Assistant()
+    handled = []
+    handle = lambda text, timings: handled.append(text)  # noqa: E731
+    long = np.zeros(32000, np.float32)
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 2))  # Suvi, far: ~0.45
+    assert voices.screen(assistant, "Envía el correo a Ana.", {"audio_s": 2}, long, handle)
+    assistant.run()
+    assert handled == [] and assistant.said == ["No he reconocido bien tu voz: ¿lo hago?"]
+    assert assistant.shown == ["Envía el correo a Ana."] and confirmation.waiting()["consume"]
+    assert assistant.unclear["text"] == "Envía el correo a Ana."
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 0.1))  # the «yes», clearly Suvi
+    assert voices.screen(assistant, "Sí, hazlo.", {}, long, handle)
+    assistant.run()
+    assert handled == ["Envía el correo a Ana."] and assistant.voice == "Suvi" and assistant.unclear is None
+    assert confirmation.waiting() is None and assistant.shown[-1] == "Sí, hazlo."
+
+
+def test_anything_but_yes_cancels_it_and_a_stranger_is_still_dropped(monkeypatch, es, project):
+    voices.learn("Suvi", [unit(1, 0)])
+    settings.active["voice_check"] = "all"
+    confirmation = kernel.load("confirmation")
+    assistant = Assistant()
+    handled = []
+    handle = lambda text, timings: handled.append(text)  # noqa: E731
+    long = np.zeros(32000, np.float32)
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(0, 0, 1))  # clearly nobody known: dropped
+    assert voices.screen(assistant, "Envía el correo a Ana.", {}, long, handle)
+    assistant.run()
+    assert not assistant.said and confirmation.waiting() is None
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 2))  # not clear: it asks
+    voices.screen(assistant, "Borra la lista de la compra.", {}, long, handle)
+    assistant.run()
+    assert assistant.said == ["No he reconocido bien tu voz: ¿lo hago?"]
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 0.1))
+    voices.screen(assistant, "No, déjalo.", {}, long, handle)
+    assistant.run()
+    assert handled == [] and confirmation.waiting() is None and assistant.unclear is None
+    voices.screen(assistant, "Envía un mensaje a la cocina.", {}, long, handle)  # nothing waits: as usual
+    assistant.run()
+    assert handled == ["Envía un mensaje a la cocina."]
+
+
+def test_a_short_unclear_yes_doesnt_count_and_a_second_question_isnt_stacked(monkeypatch, es, project):
+    voices.learn("Suvi", [unit(1, 0)])
+    settings.active["voice_check"] = "all"
+    confirmation = kernel.load("confirmation")
+    assistant = Assistant()
+    handled = []
+    handle = lambda text, timings: handled.append(text)  # noqa: E731
+    long = np.zeros(32000, np.float32)
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 2))
+    voices.screen(assistant, "Envía el correo a Ana.", {}, long, handle)
+    assistant.run()
+    voices.screen(assistant, "Llama a mi madre.", {}, long, handle)  # another unclear one: dropped, not asked again
+    assistant.run()
+    assert assistant.said == ["No he reconocido bien tu voz: ¿lo hago?"]
+    voices.screen(assistant, "Sí.", {}, np.zeros(8000, np.float32), handle)  # short and unclear: nobody recognised yet
+    assistant.run()
+    assert handled == [] and confirmation.waiting()  # still waiting
+    assistant.voice = "Suvi"  # once the conversation knows who talks, a short «sí» counts as them
+    voices.screen(assistant, "Sí.", {}, np.zeros(8000, np.float32), handle)
+    assistant.run()
+    assert handled == ["Envía el correo a Ana."]
+
+
+def test_with_a_tool_waiting_for_a_yes_an_unclear_voice_is_dropped(monkeypatch, es, project):
+    voices.learn("Suvi", [unit(1, 0)])
+    settings.active["voice_check"] = "all"
+    confirmation = kernel.load("confirmation")
+    confirmation.store.ask("abc", "anyassistant: send_mail")
+    assistant = Assistant()
+    long = np.zeros(32000, np.float32)
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 2))
+    voices.screen(assistant, "Sí, envíalo.", {}, long, lambda *a: None)
+    assistant.run()
+    assert not assistant.said and confirmation.waiting()["signature"] == "abc"
+
+
+def test_it_warns_once_when_someones_score_drops_on_a_device(monkeypatch, es):
+    """Their usual score per device: when the recent ones stay ~0.15 below, a notice, once."""
+    voices.learn("Suvi", [unit(1, 0)], device="ipad")
+    told = []
+
+    class Notices:
+        async def tell(self, text):
+            told.append(text)
+
+    devices = kernel.load("devices")
+    monkeypatch.setattr(voices, "kernel_module", lambda name: {"notices": Notices(), "devices": devices}[name])
+    monkeypatch.setattr(devices, "describe", lambda device: "iPad (cocina)" if device == "ipad" else "?")
+    assistant = Assistant()
+    for _ in range(12):
+        voices.track(assistant, "Suvi", "ipad", 0.78)
+    assistant.run()
+    assert not told
+    for _ in range(2):  # a couple of bad ones: not yet
+        voices.track(assistant, "Suvi", "ipad", 0.6)
+    assistant.run()
+    assert not told
+    voices.track(assistant, "Suvi", "ipad", 0.6)  # most of the last five: it stays low
+    assistant.run()
+    assert told == ["Suvi: conviene volver a aprender tu voz en iPad (cocina)."]
+    assert voices._listing()["people"][0]["relearn"] == ["iPad (cocina)"]
+    for _ in range(5):  # it goes on: not again
+        voices.track(assistant, "Suvi", "ipad", 0.58)
+    assistant.run()
+    assert len(told) == 1
+    for _ in range(5):  # back to usual: the warning goes, and some day it may warn again
+        voices.track(assistant, "Suvi", "ipad", 0.8)
+    assert voices._listing()["people"][0]["relearn"] == []
+    assert len(voices.people()[0]["usual"]["ipad"]["scores"]) <= voices.USUAL
+
+
+def test_learning_the_voice_again_there_clears_the_warning(monkeypatch):
+    voices.learn("Suvi", [unit(1, 0)], device="ipad")
+    monkeypatch.setattr(voices, "kernel_module", lambda name: None)
+    assistant = Assistant()
+    for _ in range(12):
+        voices.track(assistant, "Suvi", "ipad", 0.78)
+    for _ in range(5):
+        voices.track(assistant, "Suvi", "ipad", 0.55)
+    assert voices.people()[0]["usual"]["ipad"]["warned"] and voices.relearn(voices.people()[0]) == ["ipad"]
+    voices.learn("Suvi", [unit(1, 0.1)], device="mac")  # another device: the iPad's warning stays
+    assert voices.relearn(voices.people()[0]) == ["ipad"]
+    voices.learn("Suvi", [unit(1, 0.1)], device="ipad")
+    assert voices.relearn(voices.people()[0]) == [] and "ipad" not in voices.people()[0]["usual"]
+
+
+def test_only_long_accepted_sentences_count_for_the_usual_score(monkeypatch):
+    voices.learn("Suvi", [unit(1, 0)], device="ipad")
+    monkeypatch.setattr(voices.hub, "of", lambda brain: type("S", (), {"device": "ipad"})())
+    assistant = Assistant()
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 0.3))  # 0.96
+    voices.screen(assistant, "¿Qué tengo en la agenda para mañana?", {}, np.zeros(32000, np.float32), lambda *a: None)
+    assistant.run()
+    assert voices.people()[0]["usual"]["ipad"]["scores"] == [0.958]
+    assistant.voice = "Suvi"
+    monkeypatch.setattr(voices, "voice_print", lambda audio: unit(1, 2))  # a short «sí», as Suvi: says nothing
+    voices.screen(assistant, "Sí.", {}, np.zeros(8000, np.float32), lambda *a: None)
+    assistant.run()
+    assert len(voices.people()[0]["usual"]["ipad"]["scores"]) == 1
 
 
 def test_it_keeps_learning_a_voice_from_what_it_is_sure_of(monkeypatch):

@@ -206,6 +206,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 | `voice_interrupt` | `true` | «Jarvis, stop» while it speaks |
 | `tap_to_stop` | `true` | tapping the screen stops it talking |
 | `fillers` | `true` | «One moment, let me check» when a tool is slow |
+| `noise_adapt` | `true` | speech detection follows each room's noise, as the device hears it (and its calibration, if measured); off: fixed thresholds |
 
 **Skills**
 
@@ -366,6 +367,19 @@ unknown one is refused) or `off`; `voice_match` (0.5) how alike. Short sentences
 say little about who: they count as whoever the conversation recognised, unless they
 clearly sound like someone else. The LLM hears who is talking.
 
+**When the voice isn't clear** (with `all`): a voice clearly nobody known's (below 60 % of
+`voice_match`: 0.30 by default) is dropped; one in between (0.30–0.50: far from the microphone, a
+cold) isn't. If what it said would do something (an action, anything for the LLM) it asks «No he
+reconocido bien tu voz: ¿lo hago?» (the plugin `confirmation`: the face shows the question) and
+does it on a «sí» from a recognised voice (a short «sí» counts as whoever the conversation already
+recognised; otherwise say it longer: «sí, hazlo»); anything else cancels it. Harmless commands
+(the time, a sum, «para», «apágate») go through, as «Ey, Eva» does: only a clear stranger is
+refused. **When a voice print has aged**: it keeps each person's usual score per device (the median
+of the sentences accepted as theirs there); when the recent ones stay about 0.15 below it, for
+five sentences, it says once «Suvi: conviene volver a aprender tu voz en iPad (cocina)» (a
+notice, through `notices`), and the Mac's Voices page and `/admin` → Voices show it, until it
+recovers or the voice is learnt again on that device.
+
 **By voice**: «Use the orb theme», «Change your voice to Mónica», «From now on your
 name is …», with Jarvis's own tools (below). After every answer the server reads
 `settings.json` again (also when you edit it by hand): the theme changes on the
@@ -525,6 +539,17 @@ command is matched by similarity («Apparaté» for «Apágate»).
 
 `--silence` (0.6 s by default) is the silence that ends a sentence: lower answers
 sooner but may cut you off if you pause.
+
+**Each room is different** (the plugin `calibration`): the VAD's thresholds (0.5 to start a
+sentence, 0.35 for silence) aren't only fixed ones. The ear keeps a noise floor per device, as
+its microphone hears the room: how loud the background is and how much the VAD takes that noise
+for speech, up slowly (a fan, the TV) and down fast; a sentence has to score above that noise
+(plus a margin, up to 0.85) and stand above it in loudness. «Calibra el micrófono» on a device,
+or «Calibrate» in the Mac's Devices window or `/admin` → Devices, measures it explicitly: it asks
+for silence, listens for three seconds, says what it found («la sala está en silencio», «hay algo
+de ruido de fondo»…) and keeps it in `calibration.json` by device, as the starting point whenever
+that device connects; if it heard talking, it says so and keeps nothing. `noise_adapt` off: the
+fixed thresholds. The wake word keeps its own detection.
 
 **Not everything it hears is for it.** Once awake it listens without its name only
 for `follow_up` seconds (20) since it last spoke or heard you («and tomorrow?»);

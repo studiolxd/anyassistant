@@ -246,6 +246,25 @@ function devicePage(main, id) {
       row(T('Room'), T('The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».'), room),
       row(T('Language model'), T('The one that answers on this device.'), llm)
     ]));
+    // Its room's noise (the plugin «calibration»): measured, or a calibration going on there.
+    var noise = d.noise || {};
+    var levels = { quiet: 'Quiet', some: 'Some noise', noisy: 'Noisy' };
+    var noiseText = noise.step === 'asking' || noise.step === 'measuring' ? T('Measuring: keep silent near the device…')
+                  : noise.step === 'talking' ? T('It heard talking: try again in silence.')
+                  : !noise.noise ? T('Not measured')
+                  : T(levels[noise.noise] || noise.noise) + (noise.db !== undefined ? ' (' + Math.round(noise.db) + ' dB)' : '')
+                    + (noise.at ? ' · ' + ago(noise.at) : '');
+    var calibrate = d.connected && !d.press ? el('button', { class: 'quiet', text: T('Calibrate'),
+      disabled: noise.step === 'asking' || noise.step === 'measuring' ? 'disabled' : null,
+      onclick: function (e) {
+        e.target.disabled = true;
+        api('POST', '/admin/calibration', { calibrate: d.id }).then(function (r) {
+          if (r.error) { alert(r.error); e.target.disabled = false; }
+          else setTimeout(function () { show('device/' + d.id); }, 5000);  // its result, once measured
+        });
+      } }) : el('span');
+    main.appendChild(el('div', { class: 'card' }, [row(T('Room noise') + ': ' + noiseText,
+      T('A few seconds of silence measured on the device: how it tells your voice from the room\'s noise.'), calibrate)]));
     main.appendChild(el('div', { class: 'card' }, [row(T('Forget This Device'), T('It is forgotten here; if it connects again it is a new device.'),
       el('button', { class: 'danger', text: T('Forget'), onclick: function () {
         if (confirm(T('Forget this device?'))) api('POST', '/devices', { id: d.id, forget: true }).then(function () { show('devices'); });
@@ -457,8 +476,12 @@ function voices(main, inPage) {
     if (data._status === 404) { box.appendChild(el('p', { class: 'muted', text: T('Turn on the plugin «Voices» to teach it who you are.') })); return; }
     if (!data.people.length) box.appendChild(el('p', { class: 'muted', text: T('Nobody yet: while nobody is known, it listens to everyone.') }));
     data.people.forEach(function (p) {
+      // Their score there has dropped lately (the microphone moved, a cold…): said once as a notice.
+      var warnings = (p.relearn || []).map(function (device) {
+        return el('div', { class: 'muted', style: 'color:var(--warn)', text: T('It would be good to learn their voice again on %s.').replace('%s', device) });
+      });
       box.appendChild(el('div', { class: 'row' }, [
-        el('div', { class: 'what' }, [el('b', { text: p.name }), el('div', { class: 'muted', text: p.samples + ' ' + T('phrases') + ' · ' + ago(p.since) })]),
+        el('div', { class: 'what' }, [el('b', { text: p.name }), el('div', { class: 'muted', text: p.samples + ' ' + T('phrases') + ' · ' + ago(p.since) })].concat(warnings)),
         el('button', { class: 'danger', text: T('Forget'), onclick: function () { api('POST', '/admin/voices', { forget: p.name }).then(draw); } })
       ]));
     });

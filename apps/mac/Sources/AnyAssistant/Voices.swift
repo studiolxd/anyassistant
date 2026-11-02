@@ -7,7 +7,7 @@ import SwiftUI
 
 @MainActor
 final class VoicesModel: ObservableObject {
-    @Published var people: [(name: String, samples: Int)] = []
+    @Published var people: [(name: String, samples: Int, relearn: [String])] = []  // relearn: the devices where their voice should be learnt again
     @Published var check = "off"
     @Published var off = false
     @Published var note: String?
@@ -32,7 +32,8 @@ final class VoicesModel: ObservableObject {
     private func show(_ answer: [String: Any]?) {
         guard let answer else { return }
         people = (answer["people"] as? [[String: Any]] ?? []).map {
-            (name: $0["name"] as? String ?? "", samples: $0["samples"] as? Int ?? 0)
+            (name: $0["name"] as? String ?? "", samples: $0["samples"] as? Int ?? 0,
+             relearn: $0["relearn"] as? [String] ?? [])
         }
         check = answer["check"] as? String ?? "off"
     }
@@ -56,12 +57,21 @@ struct VoicesView: View {
                         Text(T("Nobody yet: while nobody is known, it listens to everyone.")).foregroundStyle(.secondary)
                     }
                     ForEach(model.people, id: \.name) { person in
-                        HStack {
-                            Image(systemName: "person.wave.2")
-                            Text(person.name)
-                            Spacer()
-                            Button(T("Forget")) { Task { await model.forget(person.name) } }
-                                .foregroundStyle(.red)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Image(systemName: "person.wave.2")
+                                Text(person.name)
+                                Spacer()
+                                Button(T("Forget")) { Task { await model.forget(person.name) } }
+                                    .foregroundStyle(.red)
+                            }
+                            // Their score there has dropped lately: the microphone moved, a cold… (the server
+                            // said so once, as a notice).
+                            ForEach(person.relearn, id: \.self) { device in
+                                Label(String(format: T("It would be good to learn their voice again on %@."), device),
+                                      systemImage: "exclamationmark.triangle")
+                                    .font(.caption).foregroundStyle(.orange)
+                            }
                         }
                     }
                 } header: {

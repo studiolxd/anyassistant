@@ -11,6 +11,10 @@ Receives 48 kHz PCM in 20 ms chunks and downsamples it to 16 kHz.
 
 Sentences are delimited by the VAD plugin (vad/) in 512-sample windows (32 ms) and transcribed
 in a separate thread; the result goes to on_heard(text, timings).
+
+Each room is different: the VAD's thresholds aren't only the fixed ones but follow the room's
+noise as this device's microphone hears it (NoiseFloor), and a calibration (the plugin
+«calibration»: a few seconds of silence measured on the device, Measurement) sets where it starts.
 """
 
 import asyncio
@@ -31,8 +35,15 @@ from stt import RATE
 log = logging.getLogger("ear")
 
 WINDOW = 512  # samples at 16 kHz, what Silero expects
-THRESHOLD_ON = 0.5  # speech probability to start a sentence
+THRESHOLD_ON = 0.5  # speech probability to start a sentence (in a quiet room; NoiseFloor raises it)
 THRESHOLD_OFF = 0.35  # below this counts as silence
+OFF_RATIO = THRESHOLD_OFF / THRESHOLD_ON  # «off» follows «on» when the noise raises it
+MAX_ON = 0.85  # however noisy the room, a sentence can still start
+MARGIN = 0.3  # how far above what the noise itself scores on the VAD a sentence has to be
+SNR = 1.5  # how much louder than the noise floor (RMS) a window must be to start a sentence (~3.5 dB)
+RISE = 0.005  # the floor follows the room up slowly (per 32 ms window: ~6 s)…
+FALL = 0.05  # …and down fast (~0.6 s): a sentence shouldn't be lost because a fan stopped
+MAX_LEVEL = 0.05  # the loudest the floor can go (-26 dBFS): a loud room never gates speech out
 SILENCE = 0.6  # seconds of silence that end a sentence (--silence)
 MINIMUM = 0.2  # minimum seconds of speech to transcribe (a «hola» is ~0.3)
 MAXIMUM = 15  # maximum seconds of a sentence
@@ -43,11 +54,98 @@ LEVEL_SECONDS = 1.5  # how loud it heard its name: the loudest of the last secon
 _thread = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stt")
 
 
+def rms(window) -> float:
+    return float(np.sqrt(np.mean(np.square(window)))) if window is not None and len(window) else 0.0
+
+
+def decibels(level: float) -> float:
+    """An RMS level (0–1) in dBFS."""
+    return round(float(20 * np.log10(max(level, 1e-6))), 1)
+
+
+class NoiseFloor:
+    """The room's noise as this device's microphone hears it, so speech is told from it by more
+    than fixed thresholds: how loud the background is (`level`: the RMS of the windows that
+    weren't speech) and how much the VAD believes that noise is speech (`vad`). It follows the
+    room: up slowly (a fan, the TV), down fast (it went quiet). A calibration (the plugin
+    «calibration») sets where it starts, per device: `start(level, vad)`.
+
+    - thresholds(): the VAD probabilities that start a sentence and that count as silence: the
+      fixed ones, raised by what the noise itself scores (plus MARGIN), up to MAX_ON.
+    - loud(rms): whether a window stands above the noise (SNR): a sentence needs it to start.
+    With settings «noise_adapt» off, the fixed thresholds and nothing else.
+    """
+
+    def __init__(self, level: float = 0.0, vad: float = 0.0):
+        self.level = level
+        self.vad = vad
+
+    def start(self, level: float, vad: float):
+        """Where it starts: a calibration of this device (or what it knew when it last connected)."""
+        self.level, self.vad = min(MAX_LEVEL, float(level)), float(vad)
+
+    @staticmethod
+    def adapting() -> bool:
+        return settings.get("noise_adapt", True) is not False
+
+    def quiet(self, loudness: float, probability: float):
+        """A window that wasn't speech: the floor follows it, slowly up and quickly down."""
+        self.level = min(MAX_LEVEL, self.level + (loudness - self.level) * (RISE if loudness > self.level else FALL))
+        self.vad += (probability - self.vad) * (RISE if probability > self.vad else FALL)
+
+    @staticmethod
+    def proposal(vad: float) -> tuple[float, float]:
+        """The thresholds for a room whose noise scores `vad` on the VAD: (on, off)."""
+        on = min(MAX_ON, max(THRESHOLD_ON, vad + MARGIN))
+        return round(on, 2), round(on * OFF_RATIO, 2)
+
+    def thresholds(self) -> tuple[float, float]:
+        if not self.adapting():
+            return THRESHOLD_ON, THRESHOLD_OFF
+        return self.proposal(self.vad)
+
+    def loud(self, loudness: float) -> bool:
+        """Whether this window stands above the room's noise."""
+        return not self.adapting() or self.level <= 0 or loudness >= self.level * SNR
+
+
+class Measurement:
+    """A calibration: `seconds` of what the device hears while nobody talks, window by window
+    (the ear feeds it; Ear.calibrate). Its result(): the noise level (RMS and dBFS), what the VAD
+    makes of it (its 95th percentile), the thresholds that follow, and whether it heard talking
+    (then it isn't a measure of the room: the plugin asks again)."""
+
+    TALKING = 0.2  # more than this share of windows the VAD takes for speech: someone talked
+
+    def __init__(self, seconds: float, done=None):
+        self.wanted = max(1, int(seconds * RATE / WINDOW))
+        self.levels: list[float] = []
+        self.probabilities: list[float] = []
+        self.done = done or (lambda result: None)
+
+    def add(self, window: np.ndarray, probability: float):
+        self.levels.append(rms(window))
+        self.probabilities.append(float(probability))
+
+    @property
+    def full(self) -> bool:
+        return len(self.levels) >= self.wanted
+
+    def result(self) -> dict:
+        levels, probabilities = np.array(self.levels), np.array(self.probabilities)
+        level = float(np.sqrt(np.mean(np.square(levels)))) if len(levels) else 0.0
+        vad = float(np.percentile(probabilities, 95)) if len(probabilities) else 0.0
+        on, off = NoiseFloor.proposal(vad)
+        return {"level": round(level, 5), "db": decibels(level), "vad": round(vad, 3), "on": on, "off": off,
+                "talking": bool(len(probabilities)) and float(np.mean(probabilities >= THRESHOLD_ON)) > self.TALKING,
+                "seconds": round(len(levels) * WINDOW / RATE, 1)}
+
+
 class Ear:
     def __init__(
         self, stt, on_state, on_heard, wake=None, on_wake=None, on_sleep=None,
         deaf=None, record=None, silence=SILENCE, follow_up=FOLLOW_UP, on_interrupt=None,
-        busy=None, may_wake=None,
+        busy=None, may_wake=None, noise=None,
     ):
         self.stt = stt
         self.wake = wake
@@ -56,6 +154,8 @@ class Ear:
         self.on_wake = on_wake or (lambda: None)
         self.on_sleep = on_sleep or (lambda by_command: None)
         self.vad = vad.create()
+        self.noise = noise or NoiseFloor()  # this device's room: its thresholds
+        self.measuring = None  # a calibration going on (Measurement): it gets every window meanwhile
         self.pending = np.zeros(0, dtype=np.float32)
         self.pre_roll = []
         self.sentence = []
@@ -103,7 +203,11 @@ class Ear:
         if self.recording:
             self.recording.writeframes((np.clip(audio, -1, 1) * 32767).astype(np.int16).tobytes())
         if len(audio):  # how loud it hears now (devices compare it: hub.claim)
-            self.levels = (self.levels + [float(np.sqrt(np.mean(audio ** 2)))])[-int(LEVEL_SECONDS * RATE / len(audio)):]
+            self.levels = (self.levels + [rms(audio)])[-int(LEVEL_SECONDS * RATE / len(audio)):]
+        if self.measuring is not None:  # calibrating: it only measures (not while it speaks)
+            if not self.deaf():
+                self._measure(audio)
+            return
         if self.wake and (not self.awake or self.wake.continuous):
             heard = self.wake.listen(audio) and not self.deaf()
             if not self.awake:
@@ -137,6 +241,23 @@ class Ear:
         while len(self.pending) >= WINDOW:
             window, self.pending = self.pending[:WINDOW], self.pending[WINDOW:]
             self._window(window)
+
+    def calibrate(self, seconds: float, done) -> Measurement:
+        """Measures the room for `seconds` (while nobody talks; not while it speaks) and calls
+        done(result); meanwhile nothing else is heard (the plugin «calibration»)."""
+        self._reset()
+        self.measuring = Measurement(seconds, done)
+        return self.measuring
+
+    def _measure(self, audio: np.ndarray):
+        self.pending = np.concatenate([self.pending, audio])
+        while len(self.pending) >= WINDOW and self.measuring is not None:
+            window, self.pending = self.pending[:WINDOW], self.pending[WINDOW:]
+            self.measuring.add(window, self.vad.probability(window))
+            if self.measuring.full:
+                found, self.measuring = self.measuring, None
+                self._reset()
+                found.done(found.result())
 
     def _interrupted(self):
         sentence = getattr(self.wake, "heard_sentence", None)
@@ -210,6 +331,7 @@ class Ear:
 
     def _window(self, window: np.ndarray):
         probability = self.vad.probability(window)
+        on, off = self.noise.thresholds()  # this room's, not only the fixed ones
         if self.deaf():
             self._reset()
             self.last_activity = time.time()  # its own speech counts as activity too
@@ -224,16 +346,19 @@ class Ear:
                 return
             self.pre_roll.append(window)
             self.pre_roll = self.pre_roll[-int(PRE_ROLL * RATE / WINDOW):]
-            if probability >= THRESHOLD_ON:
+            loudness = rms(window)
+            if probability >= on and self.noise.loud(loudness):
                 self.speaking = True
                 self.sentence = list(self.pre_roll)
                 self.silence = 0.0
                 self.speech = WINDOW / RATE
                 self.on_state("hearing")
+            else:
+                self.noise.quiet(loudness, probability)  # the room, as it is now
             return
 
         self.sentence.append(window)
-        if probability < THRESHOLD_OFF:
+        if probability < off:
             self.silence += WINDOW / RATE
         else:
             self.silence = 0.0

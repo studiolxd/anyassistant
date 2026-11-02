@@ -136,11 +136,15 @@ def through(session) -> str:
 
 
 def _listing() -> list[dict]:
+    import kernel
+
     connected = {s.device for s in hub.all() if s.pc.connectionState == "connected"}
     current = hub.current()
+    calibration = kernel.module("calibration")  # its room's noise, if measured, and a calibration going on
     return [{"id": i, "name": d.get("name", ""), "room": d.get("room", ""), "connected": i in connected,
              "current": bool(current and current.device == i), "seen": d.get("seen"),
-             "press": bool(d.get("press")), "kind": kind(d.get("agent", "")), "llm": d.get("llm", "")}
+             "press": bool(d.get("press")), "kind": kind(d.get("agent", "")), "llm": d.get("llm", ""),
+             "noise": calibration.summary(i) if calibration else {}}
             for i, d in load().items()]
 
 
@@ -227,9 +231,13 @@ async def _change(request):
     if device not in load():
         return http.json_response({"error": "no such device"}, status=404)
     if data.get("forget"):
+        import kernel
+
         devices = load()
         devices.pop(device, None)
         _save(devices)
+        if calibration := kernel.module("calibration"):
+            calibration.forget(device)  # its room's calibration goes with it
         log.info("%s forgotten", device)
     elif "llm" in data:  # its own LLM, or "" for the general one
         import llm

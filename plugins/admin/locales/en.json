@@ -36,6 +36,17 @@
     "Room": "Room",
     "Forget": "Forget",
     "Forget this device? It will need a new code if pairing is on.": "Forget this device? It will need a new code if pairing is on.",
+    "Measuring: keep silent near the device…": "Measuring: keep silent near the device…",
+    "It heard talking: try again in silence.": "It heard talking: try again in silence.",
+    "Room noise: not measured": "Room noise: not measured",
+    "Room noise": "Room noise",
+    "quiet": "quiet",
+    "some noise": "some noise",
+    "noisy": "noisy",
+    "measured": "measured",
+    "Calibrate": "Calibrate",
+    "A few seconds of silence measured on the device: how it tells your voice from the room's noise.": "A few seconds of silence measured on the device: how it tells your voice from the room's noise.",
+    "It would be good to learn their voice again on %s.": "It would be good to learn their voice again on %s.",
     "Settings": "Settings",
     "They are saved as you change them (in settings.json). Empty: what comes.": "They are saved as you change them (in settings.json). Empty: what comes.",
     "restarts": "restarts",
@@ -133,6 +144,10 @@
     "Forget This Device": "Forget This Device",
     "It is forgotten here; if it connects again it is a new device.": "It is forgotten here; if it connects again it is a new device.",
     "Forget this device?": "Forget this device?",
-    "The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».": "The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina»."
+    "The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».": "The room is how you say it by voice: «pon una alarma en la cocina». It can also be changed by voice from the device itself: «esta es la de la cocina».",
+    "Not measured": "Not measured",
+    "Quiet": "Quiet",
+    "Some noise": "Some noise",
+    "Noisy": "Noisy"
   }
 }

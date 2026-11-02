@@ -27,6 +27,10 @@ def is_sleep_command(text: str) -> bool:
 class Sleep(Skill):
     order = -1  # before anything else: even an action waiting for a «yes» stays waiting
     local = False
+    harmless = True
+
+    def takes(self, text, toks) -> bool:
+        return is_sleep_command(text)
 
     def hear(self, text: str, assistant) -> bool:
         if not is_sleep_command(text):

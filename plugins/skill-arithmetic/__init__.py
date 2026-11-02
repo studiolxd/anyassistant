@@ -10,6 +10,7 @@ from .calc import calculate
 @skill
 class Arithmetic(Skill):
     order = 33
+    harmless = True
 
     def answer(self, text, toks):
         result = calculate(toks)

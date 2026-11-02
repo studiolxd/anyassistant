@@ -111,7 +111,7 @@ def test_follow_up_window(monkeypatch):
     slept = []
     ear = object.__new__(Ear)
     ear.wake, ear.awake, ear.speaking, ear.last_activity, ear.follow_up = object(), True, False, clock.now, 20
-    ear.deaf, ear.pre_roll = (lambda: False), []
+    ear.deaf, ear.pre_roll, ear.noise = (lambda: False), [], ear_module.NoiseFloor()
     busy = [False]
     ear.busy = lambda: busy[0]
     ear.vad = type("Silence", (), {"probability": lambda self, window: 0.0, "reset": lambda self: None})()

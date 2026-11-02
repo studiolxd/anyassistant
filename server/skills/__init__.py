@@ -36,10 +36,18 @@ class Skill:
     name = "?"
     order = 50
     local = True  # time, timers, sums… (settings «skills»); commands are always there
+    # Harmless: it only answers or stops it (the time, a sum, «stop», «go to sleep»): a voice that
+    # isn't clearly a stranger's may say it (the plugin «voices»); anything else changes something
+    # or goes to the LLM. Only a skill whose takes() has no side effects may be marked so.
+    harmless = False
 
     def answer(self, text: str, toks: list[Token]) -> str | None:
         """What to say, if the sentence is for this skill; None otherwise."""
         return None
+
+    def takes(self, text: str, toks: list[Token]) -> bool:
+        """Whether the sentence is for this skill, without doing anything (harmless skills)."""
+        return self.answer(text, toks) is not None
 
     def hear(self, text: str, assistant) -> bool:
         """Takes the sentence if it is for this skill: by default, says its answer."""
@@ -76,6 +84,12 @@ def ordered() -> list[Skill]:
 def hear(text: str, assistant) -> bool:
     """The first skill that takes the sentence handles it; False if none does (it goes to the LLM)."""
     return any(s.hear(text, assistant) for s in ordered())
+
+
+def harmless(text: str) -> bool:
+    """Whether a harmless skill takes the sentence (the time, a sum, «stop», «go to sleep»)."""
+    toks = tokens(text)
+    return any(s.takes(text, toks) for s in ordered() if s.harmless)
 
 
 def quick(text: str) -> str | None:
