@@ -21,7 +21,9 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 #banner { margin: 12px 20px 0; padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--warn) 15%, var(--panel));
           border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 #app { display: grid; grid-template-columns: 210px 1fr; min-height: calc(100vh - 56px); }
-nav { padding: 16px 10px; border-right: 1px solid var(--line); }
+nav { padding: 12px 10px; border-right: 1px solid var(--line); }
+nav .group { font-size: 12px; color: var(--muted); font-weight: 600; padding: 10px 12px 4px; }
+nav input.search { width: 100%; margin: 0 0 8px; }
 nav button { display: block; width: 100%; text-align: left; border: 0; background: none; color: var(--text);
              padding: 8px 12px; border-radius: 7px; font: inherit; cursor: pointer; margin-bottom: 2px; }
 nav button:hover { background: var(--line); }
@@ -82,6 +84,34 @@ form.inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; pad
 }
 
 .row.link { cursor: pointer; }
+.row .chevron { color: var(--muted); opacity: .6; font-size: 18px; }
+.row .kind { color: var(--muted); display: inline-flex; width: 30px; justify-content: center; }
+.row .kind.on, .head .kind.on, .what.accent { color: var(--accent); }
+.head { display: flex; gap: 14px; align-items: center; margin-bottom: 4px; }
+.head .kind { color: var(--muted); display: inline-flex; }
+.head h1 { margin: 0; }
+.head p.lead { margin: 0; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot.ok, .ok { color: var(--ok); background: currentColor; }
+span.ok { background: none; }
+.lock { color: var(--muted); display: inline-flex; vertical-align: middle; margin-left: 6px; }
+.warn { color: var(--warn); }
+.problem { color: var(--bad); font-size: 13px; margin-top: 4px; }
+.card.off { opacity: .5; pointer-events: none; }
+.small { font-size: 12px; }
+.between { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.phrase { font-size: 28px; font-weight: 600; line-height: 1.3; margin: 6px 0 12px; }
+button.back { margin-bottom: 10px; }
+.unavailable { text-align: center; padding: 14vh 16px; }
+.unavailable .symbol { font-size: 44px; color: var(--muted); }
+.unavailable h1 { font-size: 20px; margin: 10px 0 4px; }
+.unavailable p { margin: 0 0 18px; }
+/* The app's window (?window=): only that part, no header nor sidebar for devices and pairing. */
+body.window header { display: none; }
+body.window-devices #app, body.window-pair #app { grid-template-columns: 1fr; }
+body.window-devices nav, body.window-pair nav { display: none; }
+body.window main { padding: 18px 22px 40px; }
+body.window-devices main { max-width: none; }
 .row img.shot { flex: 0 0 auto; width: 64px; height: 102px; object-fit: cover; border-radius: 6px; background: #000; }
 .row.link:hover { background: rgba(127,127,127,.08); }
 input.search { width: 100%; max-width: 420px; margin: 4px 0 8px; }
