@@ -162,16 +162,24 @@ window.addEventListener('hashchange', asked);
 
 function community() {
   var section = document.getElementById('community');
+  var search = document.getElementById('community-search');
+  var PER_PAGE = 8;  // themes a page
+  var all = [];  // the catalog's themes
+  var page = 0;
+  var installing = {};  // ids being installed: their button says so, off
+  search.oninput = function () { page = 0; draw(); };
+  document.getElementById('pager-previous').onclick = function () { page -= 1; draw(); };
+  document.getElementById('pager-next').onclick = function () { page += 1; draw(); };
   fetch('/admin/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (me) {
     if (!me.owner) return;
     texts = me.texts || {};
     sounds(select.value);  // in its language
     document.getElementById('theme-label').textContent = T('Theme');
     document.title = 'AnyAssistant · ' + T('Themes');
-    document.getElementById('page-name').textContent = T('Themes');
     tabs();
-    section.querySelector('.lead').textContent = T('Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.');
-    load(false);
+    document.getElementById('community-title').textContent = T('Community themes');
+    search.placeholder = T('Search');
+    load();
   }).catch(function () {});
 
   function call(method, path, body) {
@@ -181,28 +189,42 @@ function community() {
       .then(function (r) { return r.json().then(function (data) { data._status = r.status; return data; }); });
   }
 
-  function load(refresh) {
-    call('GET', '/admin/community' + (refresh ? '?refresh=1' : '')).then(function (data) {
+  function load() {
+    call('GET', '/admin/community').then(function (data) {
       if (data._status !== 200) return;  // the plugin is off, or not the owner
       document.getElementById('tabs').hidden = false;
       asked();
       section.querySelector('.error').textContent = data.error || '';
-      var list = document.getElementById('packages');
-      list.innerHTML = '';
-      var themes = (data.packages || []).filter(function (p) { return p.kind === 'theme'; });
-      if (!themes.length && !data.error) list.textContent = T('Nothing to install yet.');
-      if (themes.length) {
-        var card = document.createElement('div');
-        card.className = 'card';
-        themes.forEach(function (p) { card.appendChild(row(p)); });
-        list.appendChild(card);
-      }
-      var again = document.createElement('button');
-      again.className = 'secondary';
-      again.textContent = T('Reload the catalog');
-      again.onclick = function () { load(true); };
-      list.appendChild(again);
+      all = (data.packages || []).filter(function (p) { return p.kind === 'theme'; });
+      draw();
     });
+  }
+
+  // The themes that match the search, a page of them, and the pager.
+  function draw() {
+    var words = search.value.trim().toLowerCase();
+    var found = all.filter(function (p) {
+      return !words || [p.name, p.description, p.author].join(' ').toLowerCase().indexOf(words) >= 0;
+    });
+    var pages = Math.max(1, Math.ceil(found.length / PER_PAGE));
+    page = Math.min(Math.max(page, 0), pages - 1);
+    var list = document.getElementById('packages');
+    list.innerHTML = '';
+    if (!found.length) {
+      var none = document.createElement('p');
+      none.className = 'muted';
+      none.textContent = all.length ? T('No results') : T('Nothing to install yet.');
+      list.appendChild(none);
+    } else {
+      var card = document.createElement('div');
+      card.className = 'card';
+      found.slice(page * PER_PAGE, (page + 1) * PER_PAGE).forEach(function (p) { card.appendChild(row(p)); });
+      list.appendChild(card);
+    }
+    document.getElementById('pager').hidden = pages < 2;
+    document.getElementById('pager-where').textContent = (page + 1) + ' / ' + pages;
+    document.getElementById('pager-previous').disabled = page === 0;
+    document.getElementById('pager-next').disabled = page >= pages - 1;
   }
 
   function row(p) {
@@ -222,7 +244,7 @@ function community() {
     if (p.installed) {
       var state = document.createElement('span');
       state.className = 'badge ' + (p.update ? 'warning' : 'success');
-      state.textContent = p.update ? T('update available') : T('installed') + ' ' + p.installed;
+      state.textContent = p.update ? T('update available') : p.installed;  // its version
       about.appendChild(state);
     }
     var meta = document.createElement('div');
@@ -234,36 +256,40 @@ function community() {
     text.textContent = p.can ? p.description : p.description + ' — ' + p.why;
     about.appendChild(text);
     made.appendChild(about);
-    var note = document.createElement('span');
-    note.className = 'muted';
-    made.appendChild(note);
-    function button(label, className, action) {
+    function button(label, className, action, off) {
       var b = document.createElement('button');
       b.textContent = label;
-      b.className = className;
+      b.className = 'button' + (className ? ' ' + className : '');
+      b.disabled = !!off;
       b.onclick = action;
       made.appendChild(b);
     }
+    // Installing it: its button says so, off, until it's done; it stays on this tab (the selector
+    // on the other gets it).
     function install() {
-      note.textContent = T('Installing…');
+      installing[p.id] = true;
+      draw();
       call('POST', '/admin/community', { install: { kind: 'theme', id: p.id } }).then(function (r) {
-        note.textContent = '';
-        if (r.error) { alert(r.error); return; }
-        config(p.id).then(function (data) { fill(data); show(data); showTab(false); });  // the new one, on screen
-        load(false);
+        delete installing[p.id];
+        if (r.error) alert(r.error);
+        config(select.value).then(fill);
+        load();
       });
     }
-    function remove() {
-      if (!confirm(T('Remove «%s»?').replace('%s', p.name))) return;
+    function uninstall() {
+      if (!confirm(T('Uninstall «%s»?').replace('%s', p.name))) return;
       call('POST', '/admin/community', { remove: { kind: 'theme', id: p.id } }).then(function (r) {
         if (r.error) { alert(r.error); return; }
-        config('').then(function (data) { fill(data); show(data); });
-        load(false);
+        var shown = select.value === p.id;
+        config(shown ? '' : select.value).then(function (data) { fill(data); if (shown) show(data); });
+        load();
       });
     }
-    if (p.installed) {
+    if (installing[p.id]) {
+      button(T('Installing…'), '', null, true);
+    } else if (p.installed) {
       if (p.update && p.can) button(T('Update'), '', install);
-      button(T('Remove'), 'danger', remove);
+      button(T('Uninstall'), 'danger', uninstall);
     } else if (p.can) {
       button(T('Install'), '', install);
     }

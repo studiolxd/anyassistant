@@ -1,0 +1,33 @@
+{
+  "installed": {
+    "theme:orb": {
+      "kind": "theme",
+      "id": "orb",
+      "name": "Orb",
+      "version": "1.0.0",
+      "installed": 1793630328.7705421,
+      "files": [
+        "locales/es.json",
+        "preview.png",
+        "theme.css",
+        "theme.html",
+        "theme.json"
+      ]
+    },
+    "theme:minimal": {
+      "kind": "theme",
+      "id": "minimal",
+      "name": "Minimal",
+      "version": "1.0.0",
+      "installed": 1793630558.614239,
+      "files": [
+        "locales/en.json",
+        "locales/es.json",
+        "preview.png",
+        "theme.css",
+        "theme.html",
+        "theme.json"
+      ]
+    }
+  }
+}

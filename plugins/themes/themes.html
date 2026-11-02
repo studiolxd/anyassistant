@@ -6,14 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AnyAssistant · Themes</title>
   <link rel="icon" href="/web/favicon.png">
-  <link rel="stylesheet" href="/web/tokens.css?v=9">
-  <link rel="stylesheet" href="/themes/themes.css?v=2">
+  <link rel="stylesheet" href="/web/tokens.css?v=11">
+  <link rel="stylesheet" href="/themes/themes.css?v=3">
 </head>
 <body class="ui">
   <header class="header">
     <img class="logo" src="/web/logo.png" alt="">
     <span class="name">AnyAssistant</span>
-    <span class="page" id="page-name">Themes</span>
     <!-- Installed / From the community: only for the owner (who may install), else just the first. -->
     <div class="end">
       <nav id="tabs" class="segmented" hidden>
@@ -30,9 +29,15 @@
   <div id="sounds"></div>
   <main id="states"></main>
   <section id="community" hidden>
-    <p class="lead"></p>
-    <div id="packages"></div>
+    <h1 id="community-title"></h1>
+    <input type="search" id="community-search" class="field">
     <p class="error"></p>
+    <div id="packages"></div>
+    <nav id="pager" class="pager" hidden>
+      <button id="pager-previous" class="button secondary">‹</button>
+      <span id="pager-where"></span>
+      <button id="pager-next" class="button secondary">›</button>
+    </nav>
   </section>
   <div id="full" hidden>
     <iframe id="full-view" title="state"></iframe>
@@ -43,6 +48,6 @@
       <button id="full-close" aria-label="close">✕</button>
     </div>
   </div>
-  <script src="/themes/themes.js?v=2"></script>
+  <script src="/themes/themes.js?v=3"></script>
 </body>
 </html>

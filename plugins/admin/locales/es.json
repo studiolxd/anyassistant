@@ -176,7 +176,6 @@
     "Alarm": "Alarma",
     "the theme's": "del tema",
     "the system's": "del sistema",
-    "Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.": "Temas y plugins compartidos por otras personas, de un catálogo público. Cada paquete se revisa antes de publicarlo.",
     "Installed themes": "Instalados",
     "Theme": "Tema",
     "Themes": "Temas",
@@ -193,6 +192,9 @@
     "What it remembers": "Recuerdos",
     "Rename…": "Cambiar nombre…",
     "Rename": "Cambiar nombre",
-    "What it remembers about them keeps the new name too.": "Sus recuerdos pasan al nombre nuevo. Si ya hay una voz con ese nombre, se juntan en una."
+    "What it remembers about them keeps the new name too.": "Sus recuerdos pasan al nombre nuevo. Si ya hay una voz con ese nombre, se juntan en una.",
+    "Community themes": "Temas de la comunidad",
+    "Uninstall": "Desinstalar",
+    "Uninstall «%s»?": "¿Desinstalar «%s»?"
   }
 }
