@@ -102,7 +102,12 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         link.camera.attach(this)
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme()) {
+            MaterialTheme(colorScheme = darkColorScheme(  // the Apple apps' blue, not Material's purple
+                primary = Color(0xff0a84ff), onPrimary = Color.White,
+                primaryContainer = Color(0xff0a84ff), onPrimaryContainer = Color.White,
+                secondary = Color(0xff0a84ff), onSecondary = Color.White,
+                secondaryContainer = Color(0xff1f3a5c), onSecondaryContainer = Color.White,
+                tertiary = Color(0xff0a84ff), onTertiary = Color.White)) {
                 if (paired && link.state != Link.State.UNPAIRED) Face() else Pair()
             }
         }
