@@ -293,6 +293,7 @@ struct MenuView: View {
         } else {
             faceItem
             Toggle(T("Listen on this Mac"), isOn: $client.listening)
+            if let paused = client.pausedText { Text(paused) }  // «Paused: Zoom is using the microphone»
             if client.refused { Button(M("Allow the microphone…")) { client.openPrivacy() } }
             if client.cameraRefused { Button(M("Allow the camera…")) { client.openPrivacy("Privacy_Camera") } }
             Button(M("Themes…")) { open("themes") }  // every state of each theme, to see them (the plugin «themes»)

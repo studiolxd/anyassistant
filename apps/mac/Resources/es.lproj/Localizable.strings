@@ -130,6 +130,8 @@
 "It has to be paired again." = "Hay que emparejarlo otra vez.";
 "Looking for the server…" = "Buscando el servidor…";
 "The microphone is off" = "El micrófono está apagado";
+"Paused: another app is using the microphone" = "En pausa: otra app usa el micrófono";
+"Paused: %@ is using the microphone" = "En pausa: %@ usa el micrófono";
 "Turn the microphone on" = "Encender el micrófono";
 "Another Mac's server" = "Conectarse a otro servidor";
 "Port" = "Puerto";

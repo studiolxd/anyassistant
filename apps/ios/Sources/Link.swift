@@ -2,12 +2,26 @@
 // up and its voice coming down, and the messages both ways, which change the face (FaceModel).
 // It reconnects by itself (the network drops, the Mac restarts); while disconnected in the
 // background, the microphone stays on so iOS keeps the app alive to reconnect.
+// Paused while another app uses the microphone (a call): the microphone stops, the WebSocket
+// stays (its face and its voice go on: an alarm must ring) and the server is told («paused»,
+// with why and the app; «listening» after), so its face explains it and nothing is transcribed.
+// On iOS the system interrupts the audio (Audio.swift); on the Mac, MicrophoneWatch asks
+// CoreAudio who else is recording.
 
 import Foundation
+#if os(iOS)
+import CallKit
+#endif
 
 @MainActor
 final class Link: NSObject, ObservableObject {
     enum State: String { case connecting, connected, lost, unpaired }
+
+    /// Why it is paused (microphone, call, interrupted) and by which app, if known.
+    struct Pause {
+        let why: String
+        let app: String
+    }
 
     let mac: Mac
     let audio = Audio()
@@ -15,6 +29,7 @@ final class Link: NSObject, ObservableObject {
     let face = FaceModel()
     let levels = Levels()
     @Published private(set) var state = State.connecting
+    @Published private(set) var paused: Pause?
 
     private var socket: URLSessionWebSocketTask?
     private var wanted = false
@@ -23,11 +38,15 @@ final class Link: NSObject, ObservableObject {
     private var eyes = false  // the Mac has «eyes» on: the camera may be used
     private var inFront = true  // the app is on screen (the camera only works then)
     private var lastLevel = Date.distantPast
+    #if os(iOS)
+    private let calls = CXCallObserver()  // whether a call is going on: «a call», not «another app»
+    #endif
 
     init(mac: Mac) {
         self.mac = mac
         super.init()
         audio.onRestartNeeded = { [weak self] in Task { @MainActor in self?.restartAudio() } }
+        audio.onInterruption = { [weak self] began in Task { @MainActor in self?.interrupted(began) } }
         audio.onSpeech = { [weak self] level in Task { @MainActor in self?.levels.speech = CGFloat(level) } }
         camera.onFrame = { [weak self] jpeg in
             Task { @MainActor in self?.send(["type": "frame", "jpeg": jpeg.base64EncodedString()]) }
@@ -38,6 +57,9 @@ final class Link: NSObject, ObservableObject {
 
     func start() {
         wanted = true
+        if paused?.why == "interrupted" || paused?.why == "call", state == .connected, !audio.running {
+            resume()  // back in front after a call whose end never came (iOS, in the background)
+        }
         connect()
     }
 
@@ -102,6 +124,19 @@ final class Link: NSObject, ObservableObject {
 
     private func connected() {
         set(.connected)
+        if let paused {  // still paused (the server is new to it): it says so, without the microphone
+            send(["type": "paused", "why": paused.why, "app": paused.app])
+        } else {
+            startAudio()
+        }
+        Task { await configure() }
+        if tapWhenConnected {
+            tapWhenConnected = false
+            send(["type": "tap"])
+        }
+    }
+
+    private func startAudio() {
         do {
             try audio.start { [weak self] pcm, level in
                 Task { @MainActor in self?.heard(pcm, level) }
@@ -109,10 +144,47 @@ final class Link: NSObject, ObservableObject {
         } catch {
             report("no microphone: \(error.localizedDescription)")
         }
-        Task { await configure() }
-        if tapWhenConnected {
-            tapWhenConnected = false
-            send(["type": "tap"])
+    }
+
+    // MARK: Paused: another app uses the microphone
+
+    /// Stops the microphone and tells the server why («microphone»: another app records, with its
+    /// name if known; «call»; «interrupted»: iOS gave the audio to another app). The face and the
+    /// voice go on. Nothing if the server doesn't want it (settings «pause_when_microphone_busy»).
+    func pause(why: String, app: String = "") {
+        guard face.shows("pause_when_microphone_busy") else { return }
+        if let paused, paused.why == why, paused.app == app { return }
+        let first = paused == nil
+        paused = Pause(why: why, app: app)
+        if first {
+            report("paused: \(why)\(app.isEmpty ? "" : " (\(app))")")
+            audio.stop()
+        }
+        send(["type": "paused", "why": why, "app": app])
+    }
+
+    /// The microphone again, and the server told.
+    func resume() {
+        guard paused != nil else { return }
+        paused = nil
+        report("listening again")
+        if state == .connected { startAudio() }
+        send(["type": "listening"])
+    }
+
+    /// iOS interrupted the audio (began), or the interruption ended. A call (CallKit knows: the
+    /// phone, FaceTime, WhatsApp…) is said as such. The ending may not come in the background:
+    /// the app resumes too when it comes to the front (App.swift: link.start()).
+    private func interrupted(_ began: Bool) {
+        if began {
+            #if os(iOS)
+            let inCall = calls.calls.contains { !$0.hasEnded }
+            #else
+            let inCall = false
+            #endif
+            pause(why: inCall ? "call" : "interrupted")
+        } else {
+            resume()
         }
     }
 
@@ -149,10 +221,10 @@ final class Link: NSObject, ObservableObject {
     }
 
     private func restartAudio() {
-        guard state == .connected else { return }
-        report("audio restarted (interrupted or its route changed)")
+        guard state == .connected, paused == nil else { return }
+        report("audio restarted (its route changed)")
         audio.stop()
-        connected()
+        startAudio()
     }
 
     /// The face's texts, theme and screen settings: the Mac's /config (as the page's), for this

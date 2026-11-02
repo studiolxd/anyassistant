@@ -44,17 +44,31 @@ final class Client: ObservableObject {
     }
     let mac = Mac(agent: "AnyAssistant Mac")
     let link: Link
+    /// Who else records on this Mac (a call in Zoom, FaceTime…): while they do, it is paused.
+    let microphone = MicrophoneWatch()
     private var watching: Set<AnyCancellable> = []
 
     private init() {
         link = Link(mac: mac)
         link.cameraAllowed(false)  // only while its window is open
-        // The menu bar follows the link and the face's name.
+        // The menu bar follows the link, whether it is paused, and the face's name.
         link.$state.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &watching)
+        link.$paused.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &watching)
         link.face.$name.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &watching)
+        microphone.onChange = { [weak self] app in
+            guard let self else { return }
+            if let app { link.pause(why: "microphone", app: app) } else { link.resume() }
+        }
     }
 
     var name: String { link.face.name }
+
+    /// «Paused: Zoom is using the microphone», for the menu; nil while it listens.
+    var pausedText: String? {
+        guard let paused = link.paused else { return nil }
+        return paused.app.isEmpty ? T("Paused: another app is using the microphone")
+            : String(format: T("Paused: %@ is using the microphone"), paused.app)
+    }
 
     /// Whether it has a server to talk to: this Mac's, or the one it's paired with.
     var ready: Bool { role == .server ? Server.shared.installed : mac.paired }
@@ -91,7 +105,11 @@ final class Client: ObservableObject {
     }
 
     func update() {
-        guard listening && ready else { return link.stop() }
+        guard listening && ready else {
+            microphone.stop()
+            return link.stop()
+        }
+        microphone.start()  // it pauses the link while another app records (if the settings want it)
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .notDetermined:  // asked once, before the microphone is opened
             AVCaptureDevice.requestAccess(for: .audio) { _ in Task { @MainActor in self.update() } }
@@ -127,7 +145,7 @@ final class Client: ObservableObject {
     /// What the menu says about it, as a client of another Mac.
     var status: String {
         switch link.state {
-        case .connected: String(format: T("Connected to %@"), mac.host)
+        case .connected: pausedText ?? String(format: T("Connected to %@"), mac.host)
         case .unpaired: T("It has to be paired again.")
         default: listening ? T("Looking for the server…") : T("The microphone is off")
         }

@@ -13,8 +13,11 @@ final class Audio {
     private var converter: AVAudioConverter?
     private var mono: AVAudioFormat?
     private(set) var running = false
-    /// The audio was cut off (a call, headphones plugged in…): it has to start again.
+    /// The audio was cut off (headphones plugged in, its route changed…): it has to start again.
     var onRestartNeeded: (() -> Void)?
+    /// iOS interrupted it: another app took the audio (a call, FaceTime, any app that records);
+    /// true when it begins (the engine is stopped by then), false when it ends (it may start again).
+    var onInterruption: ((Bool) -> Void)?
     /// How loud its own voice is now (0…1), for the face; about 20 times a second.
     var onSpeech: ((Float) -> Void)?
 
@@ -24,7 +27,8 @@ final class Audio {
         #if os(iOS)
         center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             let kind = (note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap(AVAudioSession.InterruptionType.init)
-            if kind == .ended { self?.onRestartNeeded?() }
+            if kind == .began { self?.onInterruption?(true) }
+            if kind == .ended { self?.onInterruption?(false) }
         }
         #endif
         center.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { [weak self] _ in
