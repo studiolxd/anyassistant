@@ -317,12 +317,14 @@ function enlarge(src, name) {
   var img = document.createElement('img');
   img.src = src;
   img.alt = name;
+  var bar = document.createElement('div');  // as the states' full view: ✕ in the lightbox's bar
+  bar.className = 'bar';
   var close = document.createElement('button');
-  close.className = 'button secondary close';
   close.textContent = '✕';
   close.setAttribute('aria-label', T('Close'));
+  bar.appendChild(close);
   box.appendChild(img);
-  box.appendChild(close);
+  box.appendChild(bar);
   var done = function () {
     document.removeEventListener('keydown', esc);
     box.remove();

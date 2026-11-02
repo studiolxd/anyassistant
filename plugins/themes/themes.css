@@ -45,16 +45,9 @@ iframe { width: 800px; height: 1280px; border: 0; transform: scale(0.25); transf
 .pkg .badge { margin-left: var(--space-2); }
 
 /* One state full screen: the whole page, with a small floating bar to go back or through the states. */
-#full { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 10; background: #000; }
-#full[hidden] { display: none; }
+/* One state full screen (the design system's lightbox, with its bar): the whole page, no veil. */
+#full { padding: 0; background: #000; cursor: default; }
 #full iframe { width: 100%; height: 100%; border: 0; transform: none; }
-#full .bar { position: absolute; top: var(--space-3); right: var(--space-3); display: flex; align-items: center;
-             padding: var(--space-1); background: var(--color-surface); border-radius: var(--radius-full); box-shadow: var(--shadow); }
-#full .bar > * { margin: 0 2px; }
-#full .bar span { padding: 0 var(--space-2); font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-secondary); }
-#full button { width: 36px; min-height: 36px; height: 36px; padding: 0; font-size: var(--text-xl); line-height: 1;
-               color: var(--color-text); background: transparent; border: 0; border-radius: var(--radius-full); }
-#full button:hover { opacity: 1; background: var(--color-surface-raised); }
 
 @media (max-width: 560px) {
   .header { flex-wrap: wrap; }

@@ -239,7 +239,16 @@ body.ui { color-scheme: dark; }
   align-items: center; justify-content: center; padding: var(--space-6); background: rgba(0, 0, 0, 0.85);
   cursor: zoom-out; }
 .ui .lightbox img { max-width: 100%; max-height: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow); }
-.ui .lightbox .close { position: absolute; top: var(--space-4); right: var(--space-4); }
+/* Its controls: a floating bar at the top right (✕; ‹ what › to go through several), round buttons. */
+.ui .lightbox .bar { position: absolute; top: var(--space-3); right: var(--space-3); display: flex; align-items: center;
+  padding: var(--space-1); background: var(--color-surface); border-radius: var(--radius-full); box-shadow: var(--shadow);
+  cursor: default; }
+.ui .lightbox .bar > * { margin: 0 2px; }
+.ui .lightbox .bar span { padding: 0 var(--space-2); font-family: var(--font-mono); font-size: var(--text-sm);
+  color: var(--color-text-secondary); }
+.ui .lightbox .bar button { width: 36px; min-height: 36px; height: 36px; padding: 0; font-size: var(--text-xl); line-height: 1;
+  color: var(--color-text); background: transparent; border: 0; border-radius: var(--radius-full); cursor: pointer; }
+.ui .lightbox .bar button:hover { background: var(--color-surface-raised); }
 .ui .zoomable { cursor: zoom-in; }
 
 /* A panel: a short task on a screen of its own (pairing, the QR page). .centered fills the screen
