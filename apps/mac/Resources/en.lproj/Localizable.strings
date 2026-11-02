@@ -272,3 +272,6 @@
 "If you keep it and its voice is learnt again under the same name, it remembers it again." = "If you keep it and its voice is learnt again under the same name, it remembers it again.";
 "Keep" = "Keep";
 "Erase" = "Erase";
+"Rename…" = "Rename…";
+"Rename" = "Rename";
+"What it remembers about them keeps the new name too." = "What it remembers about them goes to the new name. If a voice already has that name, they become one.";

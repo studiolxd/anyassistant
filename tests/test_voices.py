@@ -562,3 +562,26 @@ def test_forgetting_a_voice_keeps_or_deletes_what_it_remembers_of_them(tmp_path,
     answer = post({"forget": "Suvi", "memory": "delete"})
     assert [p["name"] for p in answer["people"]] == ["Ana"]
     assert memory.load()["people"] == {} and memory.load()["facts"] == ["The wifi is called Casa."]
+
+
+def test_renaming_a_voice_and_merging_it_with_one_of_that_name(tmp_path, monkeypatch):
+    """«Subi» (as transcribed) → «Suvi»; if «Suvi» is known already, one voice: prints and memories together."""
+    memory = kernel.load("memory")
+    monkeypatch.setattr(memory, "PATH", tmp_path / "memory.json")
+    (tmp_path / "memory.json").write_text(json.dumps({"facts": [], "people": {"Subi": ["Has a dog, Toby."]}}))
+    voices.learn("Subi", [unit(1.0)], "tablet")
+    assert voices.rename("Subi", "Suvi") and [p["name"] for p in voices.people()] == ["Suvi"]
+    memory.rename_person("Subi", "Suvi")
+    assert memory.load()["people"] == {"Suvi": ["Has a dog, Toby."]}
+
+    voices.learn("Ana", [unit(0, 1.0)], "tablet")
+    voices.learn("Ana", [unit(0, 0, 1.0)], "mac")
+    (tmp_path / "memory.json").write_text(json.dumps({"facts": [], "people": {"Suvi": ["Has a dog, Toby."],
+                                                                              "Ana": ["Likes jazz.", "Has a dog, Toby."]}}))
+    assert voices.rename("Ana", "suvi")  # another name it knows: merged
+    merged = voices.people()
+    assert [p["name"] for p in merged] == ["suvi"] and set(merged[0]["prints"]) == {"tablet", "mac"}
+    assert np.allclose(np.linalg.norm(merged[0]["prints"]["tablet"]), 1)  # the same device in both: averaged
+    memory.rename_person("Ana", "suvi")
+    assert memory.load()["people"] == {"suvi": ["Has a dog, Toby.", "Likes jazz."]}
+    assert not voices.rename("Nobody", "X") and not voices.rename("suvi", " ")

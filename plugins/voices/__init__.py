@@ -130,6 +130,39 @@ def forget(name: str) -> bool:
     return len(kept) != len(found)
 
 
+def rename(name: str, to: str) -> bool:
+    """A known voice called otherwise («Subi» → «Suvi»: the name as transcribed). If another voice
+    already has that name, they are one person: merged (a print per device; the same device in both,
+    their average). False if there is no such voice or the name is empty."""
+    to = to.strip()
+    found = people()
+    person = next((p for p in found if p["name"].lower() == name.lower()), None)
+    if person is None or not to:
+        return False
+    other = next((p for p in found if p is not person and p["name"].lower() == to.lower()), None)
+    if other is None:
+        person["name"] = to
+    else:
+        for old in (person, other):  # before a print per device: the one it had
+            if "print" in old:
+                old.setdefault("prints", {})["?"] = old.pop("print")
+        prints = other.setdefault("prints", {})
+        for device, mine in person.get("prints", {}).items():
+            if device in prints:
+                mean = (np.array(prints[device]) + np.array(mine)) / 2
+                prints[device] = [round(float(x), 6) for x in mean / np.linalg.norm(mean)]
+            else:
+                prints[device] = mine
+        other["samples"] = other.get("samples", 0) + person.get("samples", 0)
+        other["recent"] = other.get("recent", []) + person.get("recent", [])
+        other["since"] = min(other.get("since", time.time()), person.get("since", time.time()))
+        other["name"] = to
+        found.remove(person)
+        log.info("voices: %s merged into %s", name, to)
+    _save(found)
+    return True
+
+
 def checking() -> str:
     """What needs a known voice now: all, actions or off (off until someone is known)."""
     return settings.get("voice_check", "all") if people() else "off"
@@ -630,6 +663,7 @@ async def _list(request):
 @web.route("POST", "/admin/voices")
 async def _change(request):
     """{"learn": device id, "name"?: «Ana»} starts it on that device; {"cancel": device id};
+    {"rename": «Subi», "to": «Suvi»} (and what the plugin «memory» remembers of them);
     {"forget": «Ana», "memory"?: "delete"} (delete: what the plugin «memory» remembers of them too; else it
     stays under their name). Where each learning is: «learning» in the answer (GET too)."""
     if not web.owner(request):  # this computer, or an admin's browser
@@ -646,6 +680,13 @@ async def _change(request):
             hub.here.reset(token)
     elif "cancel" in data:
         cancel(str(data["cancel"]))
+    elif "rename" in data:
+        old, to = str(data["rename"]), str(data.get("to") or "").strip()
+        if not rename(old, to):
+            return http.json_response({"error": "no such voice, or an empty name", **_listing()}, status=400)
+        memory = kernel.module("memory")
+        if memory:
+            memory.rename_person(old, to)  # what it remembers of them goes with the name
     elif "forget" in data:
         forget(str(data["forget"]))
         memory = kernel.module("memory")

@@ -573,6 +573,7 @@ function voicesPage(main) {
   var box = el('div', { class: 'card' });
   main.appendChild(box);
   var asking = null;  // whose voice is being forgotten, while it asks about what it remembers of them
+  var renaming = null;  // whose name is being changed
   function forget(name, memory) {
     asking = null;
     api('POST', '/admin/voices', memory ? { forget: name, memory: memory } : { forget: name }).then(draw);
@@ -596,8 +597,26 @@ function voicesPage(main) {
         ]));
         return;
       }
+      if (renaming === p.name) {  // its new name, in the row («Subi» → «Suvi»; an existing name: one voice)
+        var field = el('input', { type: 'text', value: p.name });
+        var save = function () {
+          var to = field.value.trim();
+          renaming = null;
+          if (to && to !== p.name) api('POST', '/admin/voices', { rename: p.name, to: to }).then(draw);
+          else api('GET', '/admin/voices').then(draw);
+        };
+        field.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') save(); if (ev.key === 'Escape') { renaming = null; api('GET', '/admin/voices').then(draw); } });
+        box.appendChild(el('div', { class: 'row' }, [
+          el('div', { class: 'what' }, [field, el('div', { class: 'muted', text: T('What it remembers about them keeps the new name too.') })]),
+          el('button', { class: 'quiet', text: T('Cancel'), onclick: function () { renaming = null; api('GET', '/admin/voices').then(draw); } }),
+          el('button', { text: T('Rename'), onclick: save })
+        ]));
+        setTimeout(function () { field.focus(); field.select(); }, 0);
+        return;
+      }
       box.appendChild(el('div', { class: 'row' }, [
         el('div', { class: 'what' }, [el('b', { text: p.name })].concat(warnings)),
+        el('button', { class: 'quiet', text: T('Rename…'), onclick: function () { renaming = p.name; api('GET', '/admin/voices').then(draw); } }),
         el('button', { class: 'danger', text: T('Forget'), onclick: function () {
           if (p.facts) { asking = p.name; api('GET', '/admin/voices').then(draw); } else forget(p.name);
         } })

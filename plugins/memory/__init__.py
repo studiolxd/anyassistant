@@ -436,6 +436,23 @@ def forget_person(name: str) -> int:
     return len(facts)
 
 
+def rename_person(name: str, to: str):
+    """Their voice was renamed: their facts and conversation summaries go under the new name (merged
+    with any it already had)."""
+    data = load()
+    found = person(data, name)
+    target = person(data, to) or to  # someone it already remembers under that name (any case): together
+    if found and found != target:
+        data["people"].setdefault(target, [])
+        data["people"][target] += [f for f in data["people"].pop(found) if f not in data["people"][target]]
+    if target != to and target in data["people"]:  # written as the new name says
+        data["people"][to] = data["people"].pop(target)
+    for c in data["conversations"]:
+        if (c.get("who") or "").lower() == name.lower():
+            c["who"] = to
+    save(data)
+
+
 def count(name: str) -> int:
     """How many facts it remembers about a person."""
     data = load()

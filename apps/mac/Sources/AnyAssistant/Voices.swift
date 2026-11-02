@@ -40,6 +40,12 @@ final class VoicesModel: ObservableObject {
 
     func load() async { show(await call()) }
 
+    /// Another name for a known voice («Subi» → «Suvi»), and for what it remembers about them.
+    func rename(_ name: String, to: String) async {
+        note = nil
+        show(await call(["rename": name, "to": to]))
+    }
+
     /// memory: "keep" or "delete" what the plugin «memory» remembers about them (nil: it remembers nothing).
     func forget(_ name: String, memory: String? = nil) async {
         var body: [String: Any] = ["forget": name]
@@ -52,6 +58,8 @@ struct VoicesView: View {
     @StateObject private var model = VoicesModel()
     @Environment(\.openWindow) private var openWindow
     @State private var asking: String?  // whose voice is being forgotten, while it asks about what it remembers of them
+    @State private var renaming: String?  // whose name is being changed
+    @State private var newName = ""
 
     var body: some View {
         Form {
@@ -68,6 +76,7 @@ struct VoicesView: View {
                                 Image(systemName: "person.wave.2")
                                 Text(person.name)
                                 Spacer()
+                                Button(T("Rename…")) { newName = person.name; renaming = person.name }
                                 Button(T("Forget")) {
                                     if person.facts > 0 { asking = person.name } else { Task { await model.forget(person.name) } }
                                 }
@@ -110,6 +119,18 @@ struct VoicesView: View {
             Button(T("Cancel"), role: .cancel) {}
         } message: { _ in
             Text(T("If you keep it and its voice is learnt again under the same name, it remembers it again."))
+        }
+        .alert(T("Rename"), isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } }),
+               presenting: renaming) { name in
+            TextField(T("Name"), text: $newName)
+            Button(T("Rename")) {
+                let to = newName.trimmingCharacters(in: .whitespaces)
+                if !to.isEmpty, to != name { Task { await model.rename(name, to: to) } }
+            }
+            .keyboardShortcut(.defaultAction)
+            Button(T("Cancel"), role: .cancel) {}
+        } message: { _ in
+            Text(T("What it remembers about them keeps the new name too."))
         }
         .task { await model.load() }
         .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in

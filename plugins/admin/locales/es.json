@@ -190,6 +190,9 @@
     "If you keep it and its voice is learnt again under the same name, it remembers it again.": "Si lo conservas y vuelve a aprender su voz con el mismo nombre, lo recordará de nuevo.",
     "Keep": "Conservar",
     "Erase": "Borrar",
-    "What it remembers": "Recuerdos"
+    "What it remembers": "Recuerdos",
+    "Rename…": "Cambiar nombre…",
+    "Rename": "Cambiar nombre",
+    "What it remembers about them keeps the new name too.": "Sus recuerdos pasan al nombre nuevo. Si ya hay una voz con ese nombre, se juntan en una."
   }
 }
