@@ -55,8 +55,10 @@ body[data-look="alarm"] .light { background: #ff6d00; }
 body[data-look="error"] .light { background: #ff1744; }
 
 .status { font-size: 9vmin; font-weight: bold; margin: 4vmin 0; }
-.heard { font-size: 6vmin; margin: 0 0 2vmin; opacity: 0.75; }
-.answer { font-size: 7vmin; margin: 0; }
+/* What you said: two lines at most (its end; it scrolls); the answer, the space down to the
+   bottom (the column's height: it shrinks, the light doesn't move). */
+.heard { font-size: 6vmin; line-height: 1.25; max-height: 2.5em; flex-shrink: 0; margin: 0 0 2vmin; opacity: 0.75; }
+.answer { font-size: 7vmin; max-height: none; flex: 0 1 auto; margin: 0 0 4vmin; }
 .timers { margin-top: 3vmin; font-size: 7vmin; }
 .timers p { margin: 0 0 1vmin; }
 .stats { font-size: 3vmin; opacity: 0.5; }

@@ -140,8 +140,10 @@ document.getElementById('start').onclick = function () {
             // on the iPad doesn't show the permission prompt, and it stays «connecting»
 };
 
-// Tapping the face: goes back to full screen and, if it is speaking, stops it.
+// Tapping the face: goes back to full screen and, if it is speaking, stops it. A drag
+// (scrolling the captions) isn't a tap.
 document.getElementById('screen').onclick = function () {
+  if (Words.dragged()) return;
   if (!document.fullscreenElement) fullScreen();
   tell({ type: 'tap' });
 };
@@ -339,6 +341,7 @@ function message(m) {
   if (m.type === 'pong') rtt = Math.round(performance.now() - m.t);
   else if (m.type === 'state') showState(m.state, m.wake_phrase, m);
   else if (m.type === 'text') caption(m);
+  else if (m.type === 'speaking') Words.speaking(m);
   else if (m.type === 'pause' || m.type === 'resume') holdMicrophone(m.type === 'pause');  // the server paused it
   else if (m.type === 'look') showPhoto(m.at);
   else if (m.type === 'config') loadTexts();  // the settings changed
@@ -503,24 +506,164 @@ function photoFollows(state) {
 
 // Answers arrive in pieces with the same id: the same paragraph is updated.
 // Blocks: «heard» (what you said last), «answer» (its last answer), «captions» (both, with history).
+// Each scrolls in its own area (Words): what you said shows from its end; an answer, from its
+// start, and then follows the voice.
 function caption(m) {
-  if (m.author === 'assistant' ? screen.show_answer === false : screen.show_heard === false) return;
-  setText(m.author === 'assistant' ? 'answer' : 'heard', m.text);
+  var assistant = m.author === 'assistant';
+  if (assistant ? screen.show_answer === false : screen.show_heard === false) return;
+  var single = Theme.block(assistant ? 'answer' : 'heard');
+  if (single) {
+    var fresh = !assistant || single.getAttribute('data-id') !== String(m.id);
+    single.textContent = m.text;
+    single.setAttribute('data-id', m.id === undefined ? '' : m.id);
+    Words.show(single, single, assistant ? m.id : null, fresh);
+  }
   var list = Theme.block('captions');
   if (!list) return;
   var p = m.id && document.getElementById('answer-' + m.id);
   if (p) {
     p.textContent = m.text;
+    Words.show(list, p, m.id, false);
     return;
   }
   p = document.createElement('p');
   p.textContent = m.text;
   if (m.id) p.id = 'answer-' + m.id;
-  if (m.author === 'assistant') p.className = 'assistant';
+  if (assistant) p.className = 'assistant';
   list.appendChild(p);
   var history = screen.history === undefined ? 2 : screen.history;
   while (list.children.length > history + 1) list.removeChild(list.firstChild);
+  Words.show(list, p, assistant ? m.id : null, true);
 }
+
+// The words' areas (blocks captions, heard, answer): each scrolls inside the height its theme
+// gives it (system.css), without a scrollbar: a finger, the wheel or the trackpad. Following:
+// what you said, its end; an answer, its start until the voice says it, then the sentence it is
+// saying («speaking» from the server, when it starts playing here): a teleprompter. Scrolled by
+// hand, it stops following until you scroll back to the end or new words arrive. A fade at the
+// top or the bottom (classes more-above, more-below) where there is more.
+var Words = (function () {
+  var said = {};  // answer id: [start, end] of the sentence being said
+  var down = null;  // where a press started, to tell a tap from a drag
+  var moved = false;
+
+  function area(el) {
+    return el && el.closest ? el.closest('[data-block="captions"], [data-block="heard"], [data-block="answer"]') : null;
+  }
+  function scrolls(box) { return box.scrollHeight > box.clientHeight + 1; }
+  function end(box) { return Math.max(0, box.scrollHeight - box.clientHeight); }
+
+  function fades(box) {
+    box.classList.toggle('more-above', box.scrollTop > 1);
+    box.classList.toggle('more-below', box.scrollTop < end(box) - 1);
+  }
+
+  // Where the area should be: its end, the start of a paragraph, or the sentence being said
+  // (with a line of what came before above it, under the fade).
+  function aim(box) {
+    var to = box._aim;
+    if (!to) return box.scrollTop;
+    if (to.end) return end(box);
+    var base = box.getBoundingClientRect().top - box.scrollTop;  // the top of the area's content, on screen
+    var y = to.p === box ? 0 : to.p.getBoundingClientRect().top - base;
+    var range = said[to.id];
+    var text = to.p.firstChild;
+    if (range && text && text.nodeType === 3 && range[0] < text.length) {
+      var r = document.createRange();
+      r.setStart(text, range[0]);
+      r.setEnd(text, Math.min(range[1], text.length));
+      var rects = r.getClientRects();
+      var style = getComputedStyle(to.p);
+      var line = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.25 || 20;
+      if (rects.length) y = Math.max(y, rects[0].top - base - line);
+    }
+    return Math.max(0, Math.min(end(box), y));
+  }
+
+  // Smoothly there (its own animation: old Safari and Chrome 81 have no smooth scrollTo).
+  function glide(box) {
+    var from = box.scrollTop, to = aim(box);
+    cancelAnimationFrame(box._glide);
+    if (Math.abs(to - from) < 1) { fades(box); return; }
+    var started = null;
+    box._gliding = true;
+    var step = function (now) {
+      if (started === null) started = now;
+      var f = Math.min(1, (now - started) / 450);
+      box.scrollTop = from + (to - from) * (f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2);
+      if (f < 1) box._glide = requestAnimationFrame(step);
+      else box._gliding = false;
+      fades(box);
+    };
+    box._glide = requestAnimationFrame(step);
+  }
+
+  // New or changed words in an area: p (the paragraph, or the block itself), id (an answer's,
+  // null for what you said), fresh (new words: following again).
+  function show(box, p, id, fresh) {
+    if (fresh) box._follow = true;
+    if (fresh || (box._aim && box._aim.p === p)) box._aim = id === null || id === undefined ? { end: true } : { p: p, id: id };
+    if (box._follow !== false) glide(box);
+    else fades(box);
+  }
+
+  function speaking(m) {
+    said[m.id] = [m.start, m.end];
+    var single = Theme.block('answer');
+    if (single && single.getAttribute('data-id') === String(m.id)) show(single, single, m.id, false);
+    var p = document.getElementById('answer-' + m.id);
+    if (p) show(Theme.block('captions'), p, m.id, false);
+  }
+
+  // By hand (a finger, the wheel): it stops following; back at the end, it follows again.
+  function byHand(ev) {
+    var box = area(ev.target);
+    if (!box || !scrolls(box)) return;
+    box._follow = false;
+    cancelAnimationFrame(box._glide);
+    box._gliding = false;
+  }
+  var page = document.getElementById('screen');
+  page.addEventListener('wheel', byHand, { passive: true });
+  page.addEventListener('scroll', function (ev) {  // scroll doesn't bubble: caught on its way down
+    var box = area(ev.target);
+    if (!box) return;
+    fades(box);
+    if (box._follow === false && !box._gliding && box.scrollTop >= end(box) - 2) {
+      box._follow = true;
+      glide(box);
+    }
+  }, true);
+
+  // A press that moves isn't a tap (scrolling the captions with a finger, or a mouse drag).
+  function press(x, y) { down = { x: x, y: y }; moved = false; }
+  function move(x, y) { if (down && Math.abs(x - down.x) + Math.abs(y - down.y) > 10) moved = true; }
+  page.addEventListener('touchstart', function (ev) { press(ev.touches[0].clientX, ev.touches[0].clientY); }, { passive: true });
+  page.addEventListener('touchmove', function (ev) {
+    move(ev.touches[0].clientX, ev.touches[0].clientY);
+    if (moved) byHand(ev);
+  }, { passive: true });
+  page.addEventListener('mousedown', function (ev) { press(ev.clientX, ev.clientY); });
+  page.addEventListener('mousemove', function (ev) { if (ev.buttons) move(ev.clientX, ev.clientY); });
+
+  // The layout changes (the theme's CSS arrives, the window's size, timers that come and go):
+  // each area back to where it should be.
+  function again() {
+    ['captions', 'heard', 'answer'].forEach(function (name) {
+      var box = Theme.block(name);
+      if (box && !box._gliding) { if (box._follow !== false) glide(box); else fades(box); }
+    });
+  }
+  addEventListener('resize', again);
+  document.getElementById('theme-css').addEventListener('load', again);
+  setInterval(again, 1000);
+
+  return {
+    show: show,
+    speaking: speaking,
+    dragged: function () { var was = moved; moved = false; down = null; return was; }
+  };
+})();
 
 async function collectStats() {
   if (!pc || !screen.show_stats) return;
@@ -577,9 +720,29 @@ function demo() {
               { kind: 'reminder', at: now + 3 * 3600, label: text('demo_reminder') }]);
   caption({ text: text('demo_heard') });
   caption({ text: text('demo_answer'), author: 'assistant', id: 'demo' });
+  demoVoice(text('demo_answer'));
   setInterval(function () {  // a simulated voice: yours while «hearing»
     Theme.voice(Theme.current() === 'hearing' ? 0.3 + 0.3 * Math.sin(Date.now() / 150) : 0);
   }, 50);
   next();
   if (DEMO_STATES.indexOf(fixed) < 0) setInterval(next, 3000);
+}
+
+// The demo's voice: says the answer's sentences one after another (as «speaking» from the
+// server would), so the captions can be seen following it; then again from the start.
+function demoVoice(answer) {
+  var sentences = [];
+  var found = /[^.!?…;:\n]+(?:[.!?…;:]+|$)/g;
+  var m;
+  while ((m = found.exec(answer))) {
+    var start = m.index + m[0].length - m[0].replace(/^\s+/, '').length;
+    if (m[0].trim()) sentences.push([start, m.index + m[0].replace(/\s+$/, '').length]);
+  }
+  var i = 0;
+  var say = function () {
+    var s = sentences[i++ % sentences.length];
+    if (s) Words.speaking({ id: 'demo', start: s[0], end: s[1] });
+  };
+  say();
+  setInterval(say, 2500);
 }

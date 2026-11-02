@@ -100,3 +100,31 @@ body.camera-on [data-block="camera"] { position: fixed; left: 0; right: 0; margi
   from { transform: translateY(-50%); }
   to { transform: translateY(50%); }
 }
+
+/* The words (blocks captions, heard, answer): each scrolls inside its own area, without a
+   scrollbar (a finger, the wheel, the trackpad); app.js keeps it following the voice. A theme
+   gives its height (max-height, or a flex column that leaves it the space below the face);
+   30% of the screen if it doesn't. A fade at the edge where there is more (app.js puts
+   more-above, more-below). */
+[data-block="captions"], [data-block="heard"], [data-block="answer"] {
+  max-height: 30vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+[data-block="captions"]::-webkit-scrollbar, [data-block="heard"]::-webkit-scrollbar,
+[data-block="answer"]::-webkit-scrollbar { display: none; }
+.more-above {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 2em);
+  mask-image: linear-gradient(to bottom, transparent, #000 2em);
+}
+.more-below {
+  -webkit-mask-image: linear-gradient(to top, transparent, #000 2em);
+  mask-image: linear-gradient(to top, transparent, #000 2em);
+}
+.more-above.more-below {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 2em, #000 calc(100% - 2em), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 2em, #000 calc(100% - 2em), transparent);
+}

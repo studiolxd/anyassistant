@@ -32,8 +32,8 @@
     "alarm": "{label}",
     "demo_alarm": "Call mom",
     "demo_reminder": "Take out the laundry",
-    "demo_heard": "What time is it?",
-    "demo_answer": "It's 8:42 in the evening."
+    "demo_heard": "What can I make for dinner tonight with rice, two eggs, some spinach and half an onion?",
+    "demo_answer": "A quick fried rice works well with that. Chop the onion and soften it in a little oil for three minutes. Add the rice, cold if it's from yesterday, and stir until it's hot. Push it to one side, scramble the eggs in the gap, then mix everything together. Add the spinach at the end so it just wilts, and season with soy sauce or salt. It takes about fifteen minutes."
   },
   "options_title": {
     "theme": "Theme",
