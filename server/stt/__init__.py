@@ -31,7 +31,7 @@ register = _registry.register
 create = _registry.create
 available = _registry.available
 
-UNLOAD_MINUTES = 5  # settings «stt_unload_minutes»: 0 never
+UNLOAD_MINUTES = 30  # settings «stt_unload_minutes»: 0 never
 CHECK_SECONDS = 15  # how often Unloading looks at the clock
 
 

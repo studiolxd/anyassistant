@@ -191,7 +191,7 @@ all defined in `server/options.py`; most apply at once, the rest restart it.
 |---|---|---|
 | `stt` | `"parakeet"` | speech recognition: parakeet, mlx-whisper… *(restarts)* |
 | `stt_model` | — | its model *(restarts)* |
-| `stt_unload_minutes` | `5` | minutes without transcribing before the speech recognition model leaves memory (0: never); it comes back when needed |
+| `stt_unload_minutes` | `30` | minutes without transcribing before the speech recognition model leaves memory (0: never); it comes back when needed |
 | `tts` | `"avspeech"` | its voice engine: avspeech, macos… or none *(restarts)* |
 | `voice` | — | the voice (default: the language's); one, or one per language: {"es": "Mónica", "en": "Samantha"} *(restarts)* |
 | `rate` | — | words per minute *(restarts)* |

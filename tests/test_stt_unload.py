@@ -39,7 +39,7 @@ class Engine(stt.Transcriber):
 
 @pytest.fixture
 def quiet(monkeypatch):
-    """No conversation, the model unloads after 5 minutes."""
+    """No conversation, the model unloads after UNLOAD_MINUTES."""
     monkeypatch.setattr(settings, "active", {})
     busy = {"now": False}
     engine = Engine()
@@ -53,7 +53,7 @@ def test_it_unloads_after_the_minutes_without_use(quiet):
     assert wrapped.transcribe(np.zeros(8000, dtype=np.float32)) == "hola"
     assert not wrapped.check(now=wrapped.last_used + 4 * 60)
     assert engine.loaded
-    assert wrapped.check(now=wrapped.last_used + 5 * 60 + 1)
+    assert wrapped.check(now=wrapped.last_used + stt.UNLOAD_MINUTES * 60 + 1)
     assert not engine.loaded and engine.unloads == 1 and not wrapped.loaded
     assert not wrapped.check(now=wrapped.last_used + 10 * 60)  # already gone
 
@@ -84,7 +84,7 @@ def test_the_option_sets_the_minutes(quiet, monkeypatch):
 def test_the_next_sentence_loads_it_again_and_warms_it_up(quiet, caplog):
     engine, wrapped, _ = quiet
     caplog.set_level(logging.INFO, logger="stt")
-    wrapped.check(now=wrapped.last_used + 6 * 60)
+    wrapped.check(now=wrapped.last_used + (stt.UNLOAD_MINUTES + 1) * 60)
     assert not engine.loaded
     assert wrapped.transcribe(np.ones(16000, dtype=np.float32)) == "hola"
     assert engine.loaded and engine.loads == 1 and wrapped.loaded
@@ -94,7 +94,7 @@ def test_the_next_sentence_loads_it_again_and_warms_it_up(quiet, caplog):
 
 def test_waking_up_starts_loading_before_the_sentence(quiet):
     engine, wrapped, _ = quiet
-    wrapped.check(now=wrapped.last_used + 6 * 60)
+    wrapped.check(now=wrapped.last_used + (stt.UNLOAD_MINUTES + 1) * 60)
     wrapped.prepare()
     wrapped.prepare()  # twice: one load
     wrapped._preparing.join(5)

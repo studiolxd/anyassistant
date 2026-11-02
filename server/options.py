@@ -83,7 +83,7 @@ OPTIONS = [
     Option("stt", "parakeet", "speech recognition: parakeet, mlx-whisper…", "voice", "choice", _plugins("stt"),
            prefer=("parakeet", "parakeet-onnx", "faster-whisper", "mlx-whisper")),
     Option("stt_model", None, "its model", "voice", empty="the engine's own"),
-    Option("stt_unload_minutes", 5, "minutes without transcribing before the speech recognition model leaves memory "
+    Option("stt_unload_minutes", 30, "minutes without transcribing before the speech recognition model leaves memory "
            "(0: never); it comes back when needed", "voice", "int", live=True),
     Option("tts", "avspeech", "its voice engine: avspeech, macos… or none", "voice", "choice",
            lambda: _plugins("tts")() + ["none"], prefer=("avspeech", "kokoro", "piper", "macos", "none")),

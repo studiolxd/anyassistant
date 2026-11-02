@@ -102,7 +102,7 @@ function showLogin() {
 // people share, to install.
 var SECTIONS = [
   ['pair', 'Pair a device'], ['devices', 'Devices'], ['settings', 'Settings'], ['plugins', 'Plugins'],
-  ['community', 'Community'], ['admins', 'Admins']
+  ['admins', 'Admins']
 ];
 var current = 'pair';
 var timer = null;
@@ -117,7 +117,7 @@ function show(id) {
   var main = $('main');
   main.innerHTML = '';
   if (section !== id) pluginPage(main, id.slice(7));
-  else ({ pair: pair, devices: devices, settings: settingsPage, plugins: plugins, community: community, admins: adminsPage })[id](main);
+  else ({ pair: pair, devices: devices, settings: settingsPage, plugins: plugins, admins: adminsPage })[id](main);
   history.replaceState(null, '', '#' + id);
 }
 
@@ -373,6 +373,7 @@ function plugins(main) {
       main.appendChild(box);
       mine.forEach(function (p) { box.appendChild(pluginRow(p)); });
     });
+    community(main, true);  // the catalog's plugins, after the installed ones
   });
 }
 
@@ -576,9 +577,12 @@ function mail(main, inPage) {
 // The community (the plugin «community»): themes and plugins other people share, from a public
 // catalog: what is installed and whether an update exists; install (a plugin asks first, and
 // starts off), update, remove. Themes show their screenshot (fetched by the server).
-function community(main) {
-  main.appendChild(el('h1', { text: T('Community') }));
-  main.appendChild(el('p', { class: 'lead', text: T('Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.') }));
+// In Plugins (inPlugins): only the plugins, under «From the community» (themes: in the Themes page).
+function community(main, inPlugins) {
+  main.appendChild(el(inPlugins ? 'h2' : 'h1', { text: inPlugins ? T('From the community') : T('Community') }));
+  main.appendChild(el('p', { class: inPlugins ? 'muted' : 'lead', text: inPlugins
+    ? T('Plugins other people share, from a public catalog. Every package is reviewed before it is listed.')
+    : T('Themes and plugins other people share, from a public catalog. Every package is reviewed before it is listed.') }));
   var box = el('div');
   main.appendChild(box);
   function load(refresh) {
@@ -589,9 +593,9 @@ function community(main) {
         return;
       }
       if (data.error) box.appendChild(el('div', { class: 'card' }, [el('p', { class: 'error', text: data.error })]));
-      ['theme', 'plugin'].forEach(function (kind) {
+      (inPlugins ? ['plugin'] : ['theme', 'plugin']).forEach(function (kind) {
         var mine = (data.packages || []).filter(function (p) { return p.kind === kind; });
-        box.appendChild(el('h2', { text: kind === 'theme' ? T('Themes') : T('Plugins') }));
+        if (!inPlugins) box.appendChild(el('h2', { text: kind === 'theme' ? T('Themes') : T('Plugins') }));
         var card = el('div', { class: 'card' });
         box.appendChild(card);
         if (!mine.length) card.appendChild(el('p', { class: 'muted', text: T('Nothing to install yet.') }));
